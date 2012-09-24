@@ -31,7 +31,6 @@
 # 
 
 import string
-import hashlib
 import sys
 import re
 import os
@@ -41,38 +40,6 @@ class EDXMLError(Exception):
     self.value = value
   def __str__(self):
     return str(self.value)
-
-# This is the location on disk where hash linked binaries
-# should be written to. Used by Hashlink class.
-HashlinkFileTreePath = './hashlink-tree/'
-
-
-# This class writes supplied file body to disk. You can use
-# this whenever you generate an EDXML hashlink.
-#
-# Usage example:
-#
-# Hash = Hashlink(FileBody).GetHash()
-
-class Hashlink:
-  
-  def __init__(self, FileBody):
-
-    global HashlinkFileTreePath
-  
-    self.Hash = hashlib.sha1(FileBody).hexdigest()
-    Path = HashlinkFileTreePath + '/'.join(self.Hash[n:n+2] for n in range(0,len(self.Hash),2))
-    try:
-      os.makedirs(Path)
-    except:
-      pass
-    File = open(Path + '/' + self.Hash,'w')
-    File.write(FileBody)
-    File.close()
-
-  def GetHash(self):
-    return self.Hash
-
 
 class EDXMLBase():
 
