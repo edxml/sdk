@@ -84,6 +84,10 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
     return
 
+  # This function can be overridden to process objects.
+  def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
+    return
+
   # This function can be overridden to perform some
   # action as soon as the definitions are read and parsed.
   def DefinitionsLoaded(self):
