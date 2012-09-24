@@ -77,7 +77,8 @@ class EDXMLWriter(EDXMLBase):
 
     # Construct validating EDXML parser
     self.SaxParser = make_parser()
-    self.SaxParser.setContentHandler(EDXMLValidatingParser(self.SaxParser))
+    self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
+    self.SaxParser.setContentHandler(self.EDXMLParser)
 
     # Construct a bridge that will be used to connect the
     # output of the XML Generator to the parser / validator.
@@ -402,6 +403,7 @@ class EDXMLWriter(EDXMLBase):
   # Open an eventgroup
   def OpenEventGroup(self, EventTypeName, SourceID):
 
+    self.CurrentEventTypeName = EventTypeName
     self.OpenElement("eventgroup", {
       'event-type': EventTypeName,
       'source-id' : str(SourceID)
@@ -432,15 +434,43 @@ class EDXMLWriter(EDXMLBase):
   #
   #    NOTE: Timestamps MUST be given in the UTC!!
 
-  def AddObject(self, PropertyName, Value):
+  def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
 
-      if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
-        self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
+    if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
+      self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
 
+    try:
+      
+      # Even though the call to AddElement will already result
+      # in an object value validation, we actually need to 
+      # validate *before* the actual XML is generated. So, we 
+      # actually validate twice. If the first ValidateObject
+      # call fails, we can ignore the object if requested,
+      # omitting it from the XML stream. This allows users of
+      # the EDXMLWriter class to be sloppy about generating
+      # object values.
+      
+      ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, PropertyName)
+      ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
+      self.ValidateObject(Value, ObjectTypeName, ObjectTypeAttributes['data-type'])
+      
+      # This statement will generate the actual XML and
+      # trigger EDXMLValidatingParser.
+      
       self.AddElement("object", {
-        'property': PropertyName,
-        'value'   : self.Escape(Value)
-        })
+      'property': PropertyName,
+      'value'   : self.Escape(Value)
+      })
+
+    except EDXMLError:
+      
+      if IgnoreInvalid:
+        self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( Value, PropertyName )) )
+      else:
+        raise
+      
+        
+      
         
   # Add text content to an event. Must be UTF8 encoded.
   def AddContent(self, Text):

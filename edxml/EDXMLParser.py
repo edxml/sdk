@@ -184,6 +184,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       ObjectProperty  = attrs.get('property')
       ObjectValue = attrs.get('value')
       self.EventObjects.append({'property': ObjectProperty, 'value': ObjectValue})
+      self.ProcessObject(self.CurrentEventTypeName, ObjectProperty, ObjectValue)
       
     elif name == 'objecttype':
       ObjectTypeName = attrs.get('name')
@@ -277,6 +278,13 @@ class EDXMLValidatingParser(EDXMLParser):
           self.Error("Event type %s contains a property (%s) which refers to unknown object type %s" % (( EventTypeName, PropertyName, PropertyObjectType )) )
 
   # Overridden from EDXMLParser
+  def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
+    # Validate the object value against its data type
+    ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, ObjectProperty)
+    ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
+    self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
+    
+  # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
 
     UniquePropertyObjects = []
@@ -300,8 +308,6 @@ class EDXMLValidatingParser(EDXMLParser):
           else:
             self.Error("An event of type %s was found to have multiple objects of unique property %s." % (( EventTypeName, Object['property'] )) )
       
-      # Validate the object value against its data type
-      self.ValidateObject(Object['value'], ObjectTypeName, ObjectTypeAttributes['data-type'])
 
     if self.Definitions.EventTypeIsUnique(EventTypeName):
       # Verify that every unique properties has one object.
