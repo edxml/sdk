@@ -119,10 +119,10 @@ class EDXMLDefinitions(EDXMLBase):
         'name':              {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
         'object-type':       {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
-        'unique':            {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern},
-        'merge':             {'mandatory': False, 'length': None, 'pattern': self.MergeOptions},
-        'defines-entity':    {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern},
-        'entity-confidence': {'mandatory': False, 'length': None, 'pattern': self.DecimalPattern}
+        'unique':            {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
+        'merge':             {'mandatory': False, 'length': None, 'pattern': self.MergeOptions,     'default': 'drop'},
+        'defines-entity':    {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
+        'entity-confidence': {'mandatory': False, 'length': None, 'pattern': self.DecimalPattern,   'default': '0'}
       },
       'relation': {
         'property1':   {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
@@ -587,31 +587,31 @@ class EDXMLDefinitions(EDXMLBase):
         self.Error("Attribute %s of %s '%s' does not match previous definition:\nNew:      %s\nExisting: %s\n" % (( Attribute, Entity, EntityDescription, UpdatedAttributes[Attribute], CurrentAttributes[Attribute] )))
         
     # At the moment, we do not accept new attributes to appear or 
-    # existing attributes to disappear, even if they are optional.
-    # there are some exceptions, which we will get rid of as soon 
-    # as eventtype versioning is implemented.
+    # existing attributes to disappear, unless they are optional
+    # and have a default value. These optional attributes with
+    # or without defaults cause some exceptions to the above rule.
+    # We will get rid of most of these exceptions as soon as EDXML
+    # version 3 hits the road.
     
-    if len(AttribsAdded) > 0:
-      
-      if Entity == 'property':
-        for Attrib in AttribsAdded:
-          if Attrib in ['unique', 'defines-entity']:
-            if UpdatedAttributes[Attrib] == 'false':
-              continue
-          self.Error("Definition of %s '%s' contains attribute that were not previously defined: %s" % (( Entity, EntityDescription, Attrib)) )
+    for Attrib in AttribsAdded:
+      if self.EDXMLEntityAttributes[Entity][Attrib]['mandatory']:
+        self.Error("Definition of %s '%s' contains mandatory attribute that was not previously defined: %s" % (( Entity, EntityDescription, Attrib)) )
       else:
-        self.Error("Definition of %s '%s' contains attributes that were not previously defined: %s" % (( Entity, EntityDescription, ','.join(list(AttribsAdded)) )))
+        if 'default' in self.EDXMLEntityAttributes[Entity][Attrib]:
+          if UpdatedAttributes[Attrib] != self.EDXMLEntityAttributes[Entity][Attrib]['default']:
+            self.Error("Definition of %s '%s' contains attribute with non-default value (%s) that was not previously defined: %s" % (( Entity, EntityDescription, UpdatedAttributes[Attrib], Attrib)) )
+        else:
+          self.Error("Definition of %s '%s' contains attribute that was not previously defined and has no default value: %s" % (( Entity, EntityDescription, Attrib)) )
     
-    if len(AttribsRemoved) > 0:
-
-      if Entity == 'property':
-        for Attrib in AttribsAdded:
-          if Attrib in ['unique', 'defines-entity']:
-            if CurrentAttributes[Attrib] == 'false':
-              continue
-          self.Error("Definition of %s '%s' lacks attribute that was previously defined: %s" % (( Entity, EntityDescription, Attrib)) )
+    for Attrib in AttribsRemoved:
+      if self.EDXMLEntityAttributes[Entity][Attrib]['mandatory']:
+        self.Error("Definition of %s '%s' lacks mandatory attribute: %s" % (( Entity, EntityDescription, Attrib)) )
       else:
-        self.Error("Definition of %s '%s' lacks attributes that were present in previous definition: %s" % (( Entity, EntityDescription, ','.join(list(AttribsRemoved)) )))
+        if 'default' in self.EDXMLEntityAttributes[Entity][Attrib]:
+          if CurrentAttributes[Attrib] != self.EDXMLEntityAttributes[Entity][Attrib]['default']:
+            self.Error("Previous definition of %s '%s' contains optional attribute %s with non-default value (%s) while new definition does not define it." % (( Entity, EntityDescription, Attrib, CurrentAttributes[Attrib] )) )
+        else:
+          self.Error("Definition of %s '%s' lacks optional attribute that was previously defined and has no default value: %s" % (( Entity, EntityDescription, Attrib)) )
   
   # Checks the attributes of a specific EDXML entity (eventtype, 
   # objecttype, relation, ...) against the constaints as specified in
