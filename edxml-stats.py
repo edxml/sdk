@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #
@@ -28,7 +29,7 @@
 #  ===========================================================================
 #
 # 
-#  Python script that outputs various statistics for a set of EDXML files.
+#  This python script outputs various statistics for a set of EDXML files.
 #  It prints event counts, lists defined event types, object types, source
 #  URLs, and so on.
 
@@ -37,31 +38,43 @@ import string
 from xml.sax import make_parser, SAXNotSupportedException
 from edxml.EDXMLParser import EDXMLParser, EDXMLError
 
-SaxParser = make_parser()
+# Create a SAX parser, and provide it with
+# an EDXMLParser instance as content handler.
+# This places the EDXMLParser instance in the
+# XML processing chain, just after SaxParser.
 
-Parser = EDXMLParser(SaxParser, False)
+SaxParser = make_parser()
+Parser    = EDXMLParser(SaxParser, False)
 
 SaxParser.setContentHandler(Parser)
 
 if len(sys.argv) <= 1:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
   sys.stdout.flush()
+  
+  # Feed the parser from standard input.
   SaxParser.parse(sys.stdin)
 
 else:
+  
+  # We repeatedly use the same SAX parser and
+  # EDXMLParser to process all EDXML files in
+  # succession. This will raise EDXMLError as
+  # soon as inconsistencies are detected.
   
   for arg in sys.argv[1:]:
     sys.stderr.write("Processing %s..." % arg)
   
     try:
       SaxParser.parse(open(arg))
-    except SAXNotSupportedException:
-      pass
     except EDXMLError as Error:
       print("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( arg, str(Error) )) )
       sys.exit(1)
     except:
       raise
+
+# Now we query the Definitions instance in EDXMLParser
+# to obtain statistics about the data we parsed.
 
 print "\n"
 print "Total event count: %s\n" % Parser.GetEventCount()

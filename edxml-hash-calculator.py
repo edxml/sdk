@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #
@@ -28,12 +29,16 @@
 #  ===========================================================================
 #
 # 
-#  Python script that outputs sticky hashes for every event in a given 
+#  This script outputs sticky hashes for every event in a given 
 #  EDXML file or input stream. The hashes are printed to standard output.
 
 import sys
 from xml.sax import make_parser
 from edxml.EDXMLParser import EDXMLParser
+
+# We create a class based on EDXMLParser,
+# overriding the ProcessEvent to process
+# the events in the EDXML stream.
 
 class EDXMLEventHasher(EDXMLParser):
   
@@ -44,10 +49,20 @@ class EDXMLEventHasher(EDXMLParser):
   # Override of EDXMLParser implementation
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
 
+    # Use the EDXMLDefinitions instance in the 
+    # EDXMLParser class to compute the sticky hash
     print self.Definitions.ComputeStickyHash(EventTypeName, EventObjects, EventContent)
+
+# Create a SAX parser, and provide it with
+# an EDXMLEventHasher instance as content handler.
+# This places the EDXMLEventHasher instance in the
+# XML processing chain, just after SaxParser.
 
 SaxParser = make_parser()
 SaxParser.setContentHandler(EDXMLEventHasher(SaxParser))
+
+# Now we feed EDXML data into the Sax parser. This will trigger
+# calls to ProcessEvent in our EDXMLEventHasher, producing output.
 
 if len(sys.argv) < 2:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")

@@ -26,35 +26,56 @@
 #
 #  ===========================================================================
 #
-# 
-#  These classes can be used to base EDXML filtering scripts on. There is
-#  a generic EDXML stream filter class and a object editing class. Both of
-#  these classes are in turn based on EDXMLParser, so all parsed definitions 
-#  are available through the functionality offered by EDXMLParser.
+
+"""EDXMLFilter
+
+This module can be used to write EDXML filtering scripts, which can edit
+EDXML streams. All filtering classes are based on EDXMLParser, so you can
+conveniently use the EDXMLDefinitions instance of EDXMLParser to query
+details about all defined event types, object types, sources, and so on.
+
+Classes in this module:
+
+EDXMLStreamFilter: A generic stream filter
+EDXMLObjectEditor: Stream filter for editing individual objects in stream
+EDXMLEventEditor:  Stream filter for editing events in stream
+
+"""
 
 import sys
 from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesImpl
 from EDXMLParser import *
 
-# This class inherits from EDXMLParser and causes the
-# EDXML data to be passed through to STDOUT. It is used
-# as a base class for implementing EDXML filters.
-
 class EDXMLStreamFilter(EDXMLParser):
+  """Base class for implementing EDXML filters
+  
+  This class inherits from EDXMLParser and causes the
+  EDXML data to be passed through to STDOUT.
+  
+  """
   
   def __init__ (self, upstream, SkipEvents = False):
-
+    """Constructor.
+    
+    Parameters:
+    upstream   -- XML source (SaxParser instance in most cases)
+    SkipEvents -- Set to True to parse only the definitions section (default False)
+    
+    """
+    
     self.OutputEnabled = True
     self.Passthrough = XMLGenerator(sys.stdout, 'utf-8')
     EDXMLParser.__init__(self, upstream, SkipEvents)
   
-  # This function implements a global switch
-  # to turn XML passthrough on or off. You can
-  # use it to allow certain parts of EDXML files
-  # to pass through to STDOUT while other parts
-  # are filtered out.
   def SetOutputEnabled(self, YesOrNo):
+    """This function implements a global switch
+    to turn XML passthrough on or off. You can
+    use it to allow certain parts of EDXML files
+    to pass through to STDOUT while other parts
+    are filtered out.
+    
+    """
     self.OutputEnabled = YesOrNo
   
   def startElement(self, name, attrs):
@@ -100,15 +121,16 @@ class EDXMLStreamFilter(EDXMLParser):
       self.Passthrough.ignorableWhitespace(ws)
 
     
-# This class implements an EDXML filter which can
-# edit objects in an EDXML stream. It offers the
-# ProcessObject() function which can be overridden
-# to implement your own object editing EDXML processor.
-#
-# HINT: Use the AttributesImpl class from the xml.sax.xmlreader
-#       module to replace the attributes of an object.
-
 class EDXMLObjectEditor(EDXMLStreamFilter):
+  """This class implements an EDXML filter which can
+  be used to edit objects in an EDXML stream. It offers the
+  ProcessObject() function which can be overridden
+  to implement your own object editing EDXML processor.
+  
+   HINT: Use the AttributesImpl class from the xml.sax.xmlreader
+         module to replace the attributes of an object.
+  """
+  
   def __init__ (self, upstream):
 
     EDXMLStreamFilter.__init__(self, upstream, False)
@@ -136,12 +158,13 @@ class EDXMLObjectEditor(EDXMLStreamFilter):
     return attrs
     
     
-# This class implements an EDXML filter which can
-# edit events in an EDXML stream. It offers the
-# ProcessEvent() function which can be overridden
-# to implement your own event editing EDXML processor.
-
 class EDXMLEventEditor(EDXMLStreamFilter):
+  """This class implements an EDXML filter which can
+  use to edit events in an EDXML stream. It offers the
+  ProcessEvent() function which can be overridden
+  to implement your own event editing EDXML processor.
+  """
+  
   def __init__ (self, upstream):
 
     self.ReadingEvent = False

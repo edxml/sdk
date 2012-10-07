@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #
@@ -36,16 +37,29 @@ import sys
 from xml.sax import make_parser, SAXNotSupportedException
 from edxml.EDXMLParser import EDXMLParser, EDXMLError
 
-SaxParser = make_parser()
+# Create a SAX parser, and provide it with
+# an EDXMLParser instance as content handler.
+# This places the EDXMLParser instance in the
+# XML processing chain, just after SaxParser.
 
-Parser = EDXMLParser(SaxParser, True)
+SaxParser = make_parser()
+Parser    = EDXMLParser(SaxParser, True)
 
 SaxParser.setContentHandler(Parser)
+
+# Check commandline parameters
 
 if len(sys.argv) <= 1:
   sys.stderr.write("Please specify one or more filenames to check.");
   sys.exit(0)
-  
+
+# Now we feed each of the input files
+# to the Sax parser. This will effectively
+# cause the EDXMLParser instance to try and
+# merge the <definitions> section of all
+# input files, raising EDXMLError when it
+# detects a problem.
+
 for arg in sys.argv[1:]:
   print("Checking %s" % arg)
   
@@ -57,6 +71,8 @@ for arg in sys.argv[1:]:
     print("EDXML file %s is inconsistent with previous files:\n%s" % (( arg, str(Error) )) )
   except:
     raise
+
+# Print results.
 
 print("\n\nTotal Warnings: %d\nTotal Errors:   %d\n\n" % (( Parser.GetWarningCount(), Parser.GetErrorCount() )) )    
 

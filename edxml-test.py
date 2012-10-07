@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #
@@ -27,13 +28,17 @@
 #
 #  ===========================================================================
 # 
-#  Python script for checking EDXML data against the specification require-
-#  ments. The script assumes that the data has already been validated against
-#  the RelaxNG schema.
+#  This script checks EDXML data against the specification requirements. The
+#  script assumes that the data has already been validated against the RelaxNG schema.
 
 import sys
 from xml.sax import make_parser
 from edxml.EDXMLParser import EDXMLValidatingParser
+
+# This class is based on EDXMLValidatingParser. All it
+# does is overriding the Error and Warning calls, to
+# count them and allow processing to continue when 
+# EDXMLValidatingParser generates an error. 
 
 class EDXMLChecker(EDXMLValidatingParser):
   
@@ -66,11 +71,16 @@ class EDXMLChecker(EDXMLValidatingParser):
   def GetWarningCount(self):
     return self.WarningCount
     
-
+# Create a SAX parser, and provide it with
+# an MyChecker instance as content handler.
+# This places the EDXMLParser instance in the
+# XML processing chain, just after SaxParser.
 
 SaxParser = make_parser()
 MyChecker = EDXMLChecker(SaxParser)
 SaxParser.setContentHandler(MyChecker)
+
+# Feed the EDXML data to the Sax parser.
 
 if len(sys.argv) < 2:
   sys.stdout.write("\nNo filename was given, waiting for EDXML data on STDIN...")
@@ -80,13 +90,17 @@ else:
   sys.stdout.write("\nProcessing file %s:" % sys.argv[1] );
   SaxParser.parse(open(sys.argv[1]))
 
+# Fetch the error and warning counts
+
 ErrorCount   = MyChecker.GetErrorCount()
 WarningCount = MyChecker.GetWarningCount()
+
+# Print results.
 
 if ErrorCount == 0:
   sys.stdout.write("OK")
   sys.exit(0)
 else:
   sys.stdout.write("\nInput data is invalid: %d errors were found ( and %d warnings ).\n" % (( ErrorCount, WarningCount )) )
-  sys.exit(1)
+  sys.exit(255)
   

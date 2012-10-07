@@ -28,11 +28,13 @@
 #  ===========================================================================
 #
 #
-#  This class generates EDXML streams. It uses the EDXMLValidatingParser
-#  class to automatically validate the generated EDXML stream. The generated
-#  XML can be sent to any file-like object, like standard output, a file
-#  on disk, or a network socket.
 
+"""EDXMLWriter
+
+This module contains the EDXMLWriter class, which is used
+to generate EDXML streams.
+
+"""
 
 import string, sys
 
@@ -63,9 +65,16 @@ class SaxGeneratorParserBridge():
       self.Passthrough.write(Buffer)
 
 class EDXMLWriter(EDXMLBase):
+  """Class for generating EDXML streams"""
 
   def __init__(self, Output):
-
+    """Constructor.
+    The Output parameter is a file-like object
+    that will be used to send the XML data to.
+    This file-like object can be pretty much 
+    anything, as long as it has a write() call.
+    """
+    
     EDXMLBase.__init__(self)
   
     self.Indent = 0
@@ -73,7 +82,6 @@ class EDXMLWriter(EDXMLBase):
     
     # Expression used for replacing invalid XML unicode characters
     self.XMLReplaceRegexp = re.compile(u'[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]')
-
 
     # Construct validating EDXML parser
     self.SaxParser = make_parser()
@@ -146,42 +154,25 @@ class EDXMLWriter(EDXMLBase):
     self.XMLGenerator.startElement(ElementName, AttributesImpl(Attributes))
     self.XMLGenerator.endElement(ElementName)
     
-  # Opens a <definitions> block
   def OpenDefinitions(self):
+    """Opens a <definitions> block"""
     self.OpenElement("definitions")
 
-  # Opens an <eventtypes> block
   def OpenEventDefinitions(self):
+    """Opens an <eventtypes> block"""
     self.OpenElement("eventtypes")
 
-  # Defines an event type
-  #
-  #  Name:          Unique name of the event type. 
-  #                 To allow easy searching, construct names in a hierarchial
-  #                 fashion. A name like "communication-chat-message" is easier to
-  #                 find than a name like "message".
-  #  Description:   Guess what
-  #  ClassList:     Comma seperated list of class names. A class name is a short string
-  #                 representing a category that the eventtype belongs to. Example:
-  #
-  #                 "communication,email"
-  #
-  #  ShortReporter: String to translate an event into a human readable text. The string
-  #                 can contain placeholders which are replaced with object values. For
-  #                 instance, when the event has a property named "phone-caller", you
-  #                 could construct a reporter like:
-  #
-  #                   "The caller history contains phonenumber [[phone-caller]]."
-  #
-  #  LongReporter:  Long version of ShortReporter. The short version should be as brief
-  #                 as possible, containing only the one or two most important objects.
-  #                 The long version should contain ALL objects, as it is used to generate
-  #                 complete human readable version of the event.
-  #
-  #                 => Please be sure to read the EDXML specification for details about
-  #                    designing reporter strings.
-
   def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong):
+    """Opens an event type definition.
+    Parameters:
+    
+    Name          -- Name of the eventtype
+    Description   -- Description of the eventtype
+    ClassList     -- String containing a comma seperated list of class names
+    ReporterShort -- Short reporter string. Please refer to the specification for details.
+    LongReporter  -- Long reporter string. Please refer to the specification for details.
+    
+    """
 
     self.OpenElement("eventtype", {
       'name': Name, 
@@ -193,42 +184,22 @@ class EDXMLWriter(EDXMLBase):
 
 
   def OpenEventDefinitionProperties(self):
-
+    """Opens a <properties> section for defining eventtype properties."""
     self.OpenElement("properties")
 
-  # Add a property to an eventtype
-  #
-  #  Name:             Name of the property. Property names MUST be unique, but
-  #                    multiple eventtypes are allowed to have the same property.
-  #                    When you re-use a property, be sure to match the other
-  #                    function arguments (objecttype, ...) EXACTLY.
-  #                    In case you define eventtypes that share properties,
-  #                    be SURE that their definitions are identical.
-  #                    To allow easy searching, construct names in a hierarchial
-  #                    fashion. A name like "communication-chat-message" is easier to
-  #                    find than a name like "message".
-  #  ObjectTypeName:   Name of the objecttype of the property.
-  #  DefinesEntity:    Set to TRUE if the property could be used to define an entity. 
-  #  EntityConfidence: FLOAT number between 0.0 and 1.0 which indicates how strongly
-  #                    or weakly this property defines an entity. A social security
-  #                    number is usually strongly tied to a person (confidence = 1.0)
-  #                    while a shoe size is weak (confidence < 0.1 or so)
-  #                    Value is not relevant when DefinesEntity = FALSE.
-  #  Unique:           Indicates if the property is unique or not. There can be only one
-  #                    event in the database having a specific value of a unique property.
-  #                    Set to TRUE of FALSE.
-  #  Merge:            Any event having a Unique property must indicate a merge strategy
-  #                    for ALL of its properties. This strategy will be used by databases
-  #                    when unique events need to be merged.
-  #                    Indicate one of the following strategies:
-  #
-  #                    'drop'    (ignore new value)
-  #                    'add'     (add each new property value to the event)
-  #                    'replace' (replace previous property value)
-  #                    'min'     (keep lowest property value)
-  #                    'max'     (keep highest property value)
-  
   def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = ''):
+    """Adds a property to an event definition.
+    Parameters:
+    
+    Name              -- Name of the property
+    ObjectTypeName    -- Name of the object type
+    Description       -- Description of the property
+    DefinesEntity     -- Property is entity identifier or not (optional, default is False)
+    EntityConfideuce  -- Floating point confidence (optional, default is zero)
+    Unique            -- Property is unique or not (optional, default is False)
+    Merge             -- Merge strategy (only for unique properties)
+    
+    """
 
     Attributes = {
       'name': Name,
@@ -252,94 +223,59 @@ class EDXMLWriter(EDXMLBase):
     self.AddElement("property", Attributes)
       
   def CloseEventDefinitionProperties(self):
+    """Closes a previously opened <properties> section"""
     self.CloseElement()
 
   def OpenEventDefinitionRelations(self):
+    """Opens a <relations> section for defining property relations."""
     self.OpenElement("relations")
 
-  # Adds a relation between two event properties
-  #
-  #  PropertyName1/2:  Names of the two event properties
-  #  Type:             Type indicates in what way the two properties relate
-  #                    to each other. It is a string that exists of two parts seperated
-  #                    by a colon. The string in the left part may contain one of the strings
-  #                    
-  #                    "intra"
-  #                    "inter"
-  #                    "parent"
-  #                    "child"
-  #                    "other"
-  #                    
-  #                    which indicate the relation type in a generic way. An "intra" relation
-  #                    associates two different properties of the same entity. For example,
-  #                    when person A sends an email message to person B, one could relate the
-  #                    name of person A to the email adress of person A. This is a typical
-  #                    "intra" relation. Relating the email adresses of A and B should
-  #                    be done using a "inter" relation, connecting one entity to another.
-  #                    
-  #                    The part of the type string to the right of the colon should contain
-  #                    a very short characterization of the type of relation, describing how
-  #                    the two properties are related. Examples are:
-  #                    
-  #                    "makes use of"
-  #                    "is called"
-  #                    "is acquainted with"
-  #                    "is part of"
-  #                    "communicates with"
-  #  Description:      Describes how the two properties are related.
-  #  Confidence:       Indicates the odds of the relation being real, when
-  #                    the associated event is seen _once_.
-  #                    Example: The caller and callee in a single telephone call 
-  #                    will usually be related in some way. Unless the caller
-  #                    dialled the wrong number. Let's say the odds of a real
-  #                    actual relation is 0.9.
-  #                    FLOAT number between 0.0 and 1.0
-  
-  def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Strength):
-
+  def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Confidence):
+    """Adds a property relation to an event definition.
+    Parameters:
+    
+    PropertyName1     -- Name of first property
+    PropertyName2     -- Name of second property
+    Type              -- Relation type including predicate
+    Description       -- Relation description
+    Confidence        -- Floating point confidence value
+    
+    """
 
     self.AddElement("relation", {
       'property1': PropertyName1,
       'property2': PropertyName2,
       'description': Description,
-      'confidence': "%1.2f" % float(Strength),
+      'confidence': "%1.2f" % float(Confidence),
       'type': Type
       })
 
-  # Closes a relations block
   def CloseEventDefinitionRelations(self):
+    """Closes a previously opened <relations> section"""
     self.CloseElement()
 
-  # Closes an event definition
   def CloseEventDefinition(self):
+    """Closes a previously opened event definition"""
     self.CloseElement()
 
-  # Closes the event definitions block
   def CloseEventDefinitions(self):
+    """Closes a previously opened <eventtypes> section"""
     self.CloseElement()
 
-  # Open an object types definition block
   def OpenObjectTypes(self):
+    """Opens a <objecttypes> section for defining object types."""
     self.OpenElement("objecttypes")
 
-  # Define an object type
-  #
-  #  Name:                  Unique name of the object type. Whenever possible, existing
-  #                         names in the XML database should be re-used. When you re-use
-  #                         an existing name, be sure to match the other function argu-
-  #                         ments (description, fuzzy matching, ...) EXACTLY.
-  #                         To allow easy searching, construct names in a hierarchial
-  #                         fashion. A name like "communication-chat-message" is easier to
-  #                         find than a name like "message".
-  #  Description:           You know what
-  #  ObjectDataType:        Data type. Refer to EDXML specification for details.
-  #                         Example: "string:0:ci:u"
-  #
-  #  FuzzyMatching:         Indicates if and how string objects can be matched in a fuzzy manner.
-  #                         Refer to EDXML specification for details.
-
-
   def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = ''):
+    """Adds a object type definition.
+    Parameters:
+    
+    Name            -- Name of object type
+    Description     -- Description of object type
+    ObjectDataType  -- Data type
+    FuzzyMatching   -- Fuzzy matching technique (optional, defaults to none)
+    
+    """
 
     Attributes = {
       'name':        Name,
@@ -352,89 +288,76 @@ class EDXMLWriter(EDXMLBase):
         
     self.AddElement("objecttype", Attributes)
     
-
-  # Close an object type definition
   def CloseObjectTypes(self):
+    """Closes a previously opened <objecttypes> section"""
     self.CloseElement()
 
-  # Close the source definitions block
   def OpenSourceDefinitions(self):
+    """Opens a <sources> section for defining event sources."""
     self.OpenElement("sources")
 
-  # Adds a source definition, which describes where the data
-  # came from.
-  #
-  #  SourceID:      Any string or number of choice, used to identify
-  #                 this source. You need this ID when creating eventgroups.
-  #                 NOTE: This ID is used only to create cross-references
-  #                       inside the XML file. It should be unique only in
-  #                       the scope of one specific XML output file. You can
-  #                       use '1','2', 'foo', 'bar', or whatever you want.
-  #  URL:           The source location of the data, in URL form.
-  #                 Example:
-  #                           /company/offices/stuttgart/clientrecords/2009/
-  #
-  #  Description:   Guess what
-  #  DateAcquired:  The acquisition date, written as yyyymmdd.
-  #                 Example:
-  #                           20090228
+  def AddSource(self, SourceId, URL, DateAcquired, Description):
+    """Adds a source definition.
+    Parameters:
+    
+    SourceId       -- Source Id
+    URL            -- Source URL
+    DateAcquired   -- Acquisition date (yyyymmdd)
+    Description    -- Description of the source
 
-  def AddSource(self, SourceID, URL, DateAcquired, Description):
+    """
 
     self.AddElement("source", {
-      'source-id':     str(SourceID),
+      'source-id':     str(SourceId),
       'url':           string.lower(URL),
       'date-acquired': DateAcquired,
       'description':   Description
       })
       
-  # Close source definitions
   def CloseSourceDefinitions(self):
+    """Closes a previously opened <sources> section"""
     self.CloseElement()
 
-  # Close the definitions block
   def CloseDefinitions(self):
+    """Closes the <definitions> section"""
     self.CloseElement()
 
-  # Open the eventgroups block
   def OpenEventGroups(self):
+    """Opens the <eventgroups> section, containing all eventgroups"""
     self.OpenElement("eventgroups")
 
-  # Open an eventgroup
-  def OpenEventGroup(self, EventTypeName, SourceID):
+  def OpenEventGroup(self, EventTypeName, SourceId):
+    """Opens an event group.
+    Parameters:
+    
+    EventTypeName  -- Name of the eventtype
+    SourceId       -- Source Id
+    
+    """
 
     self.CurrentEventTypeName = EventTypeName
     self.OpenElement("eventgroup", {
       'event-type': EventTypeName,
-      'source-id' : str(SourceID)
+      'source-id' : str(SourceId)
       })
 
-  # Close an eventgroup
   def CloseEventGroup(self):
+    """Closes a previously opened event group"""
     self.CloseElement()
 
-  # Open an event
   def OpenEvent(self):
-
+    """Opens an event."""
     self.OpenElement("event")
 
-  # Add a object to an event
-  #
-  #  PropertyName:    name of the event property
-  #                   To allow easy searching, construct names in a hierarchial
-  #                   fashion. A name like "communication-chat-message" is easier to
-  #                   find than a name like "message".
-  #  Value:           guess what
-  #
-  #    You can provide zero or more objects for every event property. So, omitting
-  #    an object for one or more properties is allowed. Also, you can specify
-  #    multiple objects that all have the same property. Note that it is not possible
-  #    to indicate how these objects are related to each other, because they all
-  #    have the same property.
-  #
-  #    NOTE: Timestamps MUST be given in the UTC!!
-
   def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
+    """Adds an object to previously opened event.
+    Parameters:
+    
+    PropertyName       -- Name of object property
+    Value              -- Object value string
+    IgnoreInvalid      -- Generate a warning in stead of an error for invalid values (Optional, default is False)
+
+    """
 
     if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
       self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
@@ -469,38 +392,41 @@ class EDXMLWriter(EDXMLBase):
       else:
         raise
       
-        
-      
-        
-  # Add text content to an event. Must be UTF8 encoded.
-  def AddContent(self, Text):
-
+  def AddContent(self, ContentString):
+    """Adds plain text content to previously opened event.
+    Parameters:
+    
+    ContentString -- Object value
+    
+    """
     if len(Text) > 0:
       self.OpenElement('content')
-      self.XMLGenerator.characters(self.Escape(Text))
+      self.XMLGenerator.characters(self.Escape(ContentString))
       self.CloseElement()
 
-  # Add a content translation to an event
-  #
-  #  Language:    2-character ISO 639-1 language code
-  #  Interpreter: Name or alias of interpreter
-  #  Text:        The translation
-
-  def AddTranslation(self, Language, Interpreter, Text):
+  def AddTranslation(self, Language, Interpreter, TranslationString):
+    """Adds translated content to previously opened event.
+    Parameters:
+    
+    Language           -- ISO 639-1 language code
+    Interpreter        -- Name of interpreter
+    TranslationString  -- The translation
+    
+    """
 
     if len(Text) > 0:
       self.OpenElement("translation", {'language': Language, 'interpreter': Interpreter})
-      self.XMLGenerator.characters(self.Escape(Text))
+      self.XMLGenerator.characters(self.Escape(TranslationString))
       self.CloseElement()
     else:
       self.Warning("EDXMLWriter::AddTranslation: Empty content encountered. Content will be ignored!\n")
 
-  # Close an event
   def CloseEvent(self):
+    """Closes a previously opened event"""
     self.CloseElement()
 
-  # Close eventgroups
   def CloseEventGroups(self):
+    """Closes a previously opened <eventgroups> section"""
     self.CloseElement()
     self.CloseElement()
     self.SaxParser.close()

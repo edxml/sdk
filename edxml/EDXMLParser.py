@@ -27,26 +27,23 @@
 #
 #  ===========================================================================
 #
-#
-#  These classes parse and store information about eventtype, objecttype
-#  and source definitions in EDXML files. They can optionally skip reading
-#  the event data if you are only interested in the definitions. In that
-#  case, they will abort XML processing by raising the SAXNotSupportedException
-#  exception, which you can catch and handle.
-#
-#  The classes contain a Definitions property which is in instance of the
-#  EDXMLDefinitions class. All parsed information from the EDXML header is stored
-#  there, and you can use it to query information about event types, object types,
-#  and so on.
-#
-#  The EDXMLParser class features several functions that can be overridden to 
-#  implement custom EDXML processing scripts. An example of this can be found in
-#  the EDXMLValidatingParser class, which is also found in this source file. This
-#  class extends the functionality of EDXMLParser with thorough checking of the
-#  EDXML data. You can use the EDXMLValidatingParser class to parse EDXML data that
-#  you don't trust. The class will raise the EDXMLError exception when it finds
-#  problems in the data.
 
+"""EDXMLParser
+
+This module is used for parsing out information about eventtype, objecttype
+and source definitions from EDXML streams.
+
+The classes contain a Definitions property which is in instance of the
+EDXMLDefinitions class. All parsed information from the EDXML header is stored
+there, and you can use it to query information about event types, object types,
+and so on.
+
+Classes in this module:
+  
+EDXMLParser
+EDXMLValidatingParser
+  
+"""
 
 import sys
 import re
@@ -56,9 +53,25 @@ from xml.sax.saxutils import XMLFilterBase
 from EDXMLBase import *
 from EDXMLDefinitions import EDXMLDefinitions
 
-class EDXMLParser(EDXMLBase, XMLFilterBase):
 
+class EDXMLParser(EDXMLBase, XMLFilterBase):
+  """The EDXMLParser class can be used as a content
+  handler for Sax, and has several functions that
+  can be overridden to implement custom EDXML processing
+  scripts. It can optionally skip reading the event data
+  itself if you are only interested in obtaining the 
+  definitions. In that case, it will abort XML processing
+  by raising the SAXNotSupportedException exception, which
+  you can catch and handle."""
+  
   def __init__ (self, upstream, SkipEvents = False):
+    """Constructor.
+    
+    Parameters:
+    upstream   -- XML source (SaxParser instance in most cases)
+    SkipEvents -- Set to True to parse only the definitions section (default False)
+    
+    """
   
     self.EventCounters = {}
     self.TotalEventCount = 0
@@ -67,6 +80,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     self.AccumulatingEventContent = False
     self.CurrentEventContent = ''
     
+    """EDXMLDefinitions instance"""
     self.Definitions = EDXMLDefinitions()
     
     XMLFilterBase.__init__(self, upstream)
@@ -75,28 +89,47 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   def Error(self, Message):
     raise EDXMLError(Message)
   
-  # This function can be overridden to finish
-  # processing the event stream
   def EndOfStream(self):
+    """This function can be overridden to finish
+    processing the event stream."""
     return
 
-  # This function can be overridden to process events.
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
+    """This function can be overridden to process events. The
+    EventObjects parameter contains a list of dictionaries, one
+    for each object. Each dictionary has two keys. The 'property'
+    key contains the name of the property. The 'value' key contains
+    the value.
+    
+    Parameters:
+    EventTypeName -- The name of the event type
+    SourceId      -- Id of event source
+    EventObjects  -- List of objects
+    EventContent  -- String containing event content
+    
+    """
     return
 
-  # This function can be overridden to process objects.
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
+    """This function can be overridden to process objects.
+    
+    Parameters:
+    EventTypeName  -- The name of the event type
+    ObjectProperty -- The name of the object property
+    ObjectValue    -- String containing object value
+    
+    """
     return
 
-  # This function can be overridden to perform some
-  # action as soon as the definitions are read and parsed.
   def DefinitionsLoaded(self):
+    """This function can be overridden to perform some
+    action as soon as the definitions are read and parsed."""
     return
     
-  # Returns the number of events parsed. When an
-  # event type is passed, only the number of events
-  # of this type is returned.
   def GetEventCount(self, EventTypeName = None):
+    """Returns the number of events parsed. When an
+    event type is passed, only the number of events
+    of this type is returned."""
     if EventTypeName:
       if EventTypeName in self.EventCounters:
         return self.EventCounters[EventTypeName]
@@ -106,16 +139,15 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       return self.TotalEventCount
 
   def GetWarningCount(self):
+    """Returns the number of warnings issued"""
     return self.WarningCount + self.Definitions.GetWarningCount()
     
   def GetErrorCount(self):
+    """Returns the number of errors issued"""
     return self.ErrorCount + self.Definitions.GetErrorCount()
   
   def startElement(self, name, attrs):
 
-    #if name == 'events':
-      #self.SourceIDs = {}
-  
     if name == 'eventgroup':
       SourceId = attrs.get('source-id')
       EventType = attrs.get('event-type')
@@ -241,12 +273,13 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     if self.AccumulatingEventContent:
       self.CurrentEventContent += text
 
-# TODO:
-#
-# * Check for every event if the event reporter evaluates into an empty string, due
-#   to missing objects. Maybe look at objects in outermost substring.
-
 class EDXMLValidatingParser(EDXMLParser):
+  """This class extends the functionality of EDXMLParser with thorough
+  checking of the EDXML data. You can use the EDXMLValidatingParser 
+  class to parse EDXML data that you don't trust. The class will raise
+  the EDXMLError exception when it finds problems in the data. Validation
+  is implemented by overriding the DefinitionsLoaded, ProcessObject and
+  ProcessEvent calls."""  
   
   def __init__ (self, upstream, SkipEvents = False):
 

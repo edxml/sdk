@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #
@@ -35,120 +36,21 @@
 #  validation on the event data in the EDXML.
 
 import sys
-from xml.sax.saxutils import escape
-from lxml import etree
-from edxml.EDXMLParser import *
+from xml.sax import make_parser, SAXNotSupportedException
+from edxml.EDXMLParser import EDXMLParser
 
-class EDXMLSchemaGenerator(EDXMLParser):
-  
-  def __init__ (self, upstream, SkipEvents = False):
+# Create a SAX parser, and provide it with
+# an EDXMLParser instance as content handler.
+# This places the EDXMLParser instance in the
+# XML processing chain, just after SaxParser.
 
-    
-    EDXMLParser.__init__(self, upstream, SkipEvents)
-  
-  
-    
-  
-  def DefinitionsLoaded(self):
-        
-    self.OpenElement('element').set('name', 'events')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence')
-    self.OpenElement('element').set('name', 'definitions')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence')
-    self.OpenElement('element').set('name', 'eventtypes')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence')
+SaxParser   = make_parser()
+EDXMLParser = EDXMLParser(SaxParser, True)
 
-    for EventTypeName in self.Definitions.GetEventTypeNames():
-      self.GenerateEventTypeSchema(EventTypeName)
-     
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.OpenElement('element').set('name', 'objecttypes')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence')
+SaxParser.setContentHandler(EDXMLParser)
 
-    for ObjectTypeName in self.Definitions.GetObjectTypeNames():
-      self.OpenElement('element').set('name', 'objecttype')
-      self.OpenElement('complexType')
-      for Attribute, Value in self.Definitions.GetObjectTypeAttributes(ObjectTypeName).items():
-        self.OpenElement('attribute').set('name', 'name')
-        self.CurrentElement.set('name', Attribute)
-        self.CurrentElement.set('type', 'xs:string')
-        self.CurrentElement.set('fixed', Value)
-        self.CloseElement()
-      self.CloseElement()
-      self.CloseElement()
-    
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.OpenElement('element').set('name', 'sources')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence')
-
-    for SourceId in self.Definitions.GetSourceIDs():
-      self.OpenElement('element').set('name', 'source')
-      self.OpenElement('complexType')
-      for Attribute, Value in self.Definitions.GetSourceIdProperties(SourceId).items():
-        self.OpenElement('attribute').set('name', 'name')
-        self.CurrentElement.set('name', Attribute)
-        self.CurrentElement.set('type', 'xs:string')
-        self.CurrentElement.set('fixed', Value)
-        self.CloseElement()
-      self.CloseElement()
-      self.CloseElement()
-    
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-
-    self.OpenElement('element').set('name', 'eventgroups')
-    self.OpenElement('complexType')
-    self.OpenElement('sequence').set('minOccurs', '0')
-    self.CurrentElement.set('maxOccurs', 'unbounded')
-
-    self.OpenElement('element').set('name', 'eventgroup')
-    self.OpenElement('complexType')
-    
-    self.OpenElement('sequence').set('minOccurs', '0')
-    self.CurrentElement.set('maxOccurs', 'unbounded')
-    self.OpenElement('element').set('name', 'event')
-    
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.OpenElement('attribute')
-    self.CurrentElement.set('name', 'source-id')
-    self.CurrentElement.set('type', 'xs:string')
-    self.CloseElement()
-    self.OpenElement('attribute')
-    self.CurrentElement.set('name', 'event-type')
-    self.CurrentElement.set('type', 'xs:string')
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.CloseElement()
-    self.CloseElement()
-    self.CloseElement()
-    
-    self.CloseElement()
-    self.CloseElement()
-     
-    print etree.tostring(self.Schema, pretty_print = True, encoding='utf-8')
-    
-SaxParser = make_parser()
-SaxParser.setContentHandler(EDXMLSchemaGenerator(SaxParser, True))
+# Now we just push EDXML data into the Sax parser,
+# either from a file or from standard input.
 
 if len(sys.argv) < 2:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
@@ -159,8 +61,16 @@ if len(sys.argv) < 2:
     pass
 else:
   sys.stderr.write("\nProcessing file %s:" % sys.argv[1] );
-  
   try:
     SaxParser.parse(open(sys.argv[1]))
   except SAXNotSupportedException:
     pass
+
+# Finally, we use the XSD functions of the
+# EDXMLDefinitions instance of EDXMLParser
+# to generate an XSD schema.
+
+EDXMLParser.Definitions.OpenXSD()
+EDXMLParser.Definitions.GenerateFullXSD()
+
+print EDXMLParser.Definitions.CloseXSD()

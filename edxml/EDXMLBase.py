@@ -26,9 +26,16 @@
 #
 #
 #  ===========================================================================
-#
-#
-# 
+
+"""EDXMLBase
+
+This module contains generic (base)classes used throughout the SDK. It contains
+the following classes:
+
+EDXMLError: Generic EDXML exception class
+EDXMLBase:  Base class for most SDK subclasses
+
+"""
 
 import string
 import sys
@@ -36,12 +43,14 @@ import re
 import os
 
 class EDXMLError(Exception):
+  """Generic EDXML exception class"""
   def __init__(self, value):
     self.value = value
   def __str__(self):
     return str(self.value)
 
 class EDXMLBase():
+  """Base class for most SDK subclasses"""
 
   def __init__(self):
     
@@ -58,20 +67,44 @@ class EDXMLBase():
     self.PlaceHolderPattern = re.compile("\[\[([^\]]*)\]\]")
 
   def Error(self, Message):
+    """Raises EDXMLError.
+    Parameters:
+    
+    Message -- Error message
+    
+    """
+    
     self.ErrorCount += 1
     raise EDXMLError(unicode("ERROR: " + Message).encode('utf-8'))
 
   def Warning(self, Message):
+    """Prints a warning to sys.stderr.
+    Parameters:
+    
+    Message -- Warning message
+    
+    """
     self.WarningCount += 1
     sys.stderr.write(unicode("WARNING: " + Message + "\n").encode('utf-8'))
 
   def GetWarningCount(self):
+    """Returns the number of warnings generated"""
     return self.WarningCount
     
   def GetErrorCount(self):
+    """Returns the number of errors generated"""
     return self.ErrorCount
   
   def ValidateDataType(self, ObjectType, DataType):
+    """Validate a data type.
+    Parameters:
+    
+    ObjectType -- Object type having specified data type
+    DataType   -- The data type
+    
+    calls self.Error when datatype is invalid.
+    
+    """
 
     SplitDataType = DataType.split(':')
     
@@ -120,9 +153,18 @@ class EDXMLBase():
         return
     
     self.Error("EDXMLBase::ValidateDataType: Object type %s has an unsupported data type: %s" % (( ObjectType, DataType )) )
-  # Function for testing the validity of
-  # object types.
+
   def ValidateObject(self, Value, ObjectTypeName, DataType):
+    """Validate an object value.
+    Parameters:
+    
+    Value            -- Object value
+    ObjectTypeName   -- Object type
+    DataType         -- Data type of object
+    
+    calls self.Error when value is invalid.
+    
+    """
 
     ObjectDataType = DataType.split(':')
 
