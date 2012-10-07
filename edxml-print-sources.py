@@ -33,9 +33,11 @@
 #  specified EDXML file.
 
 import sys
-from xml.sax import make_parser, SAXNotSupportedException
+from xml.sax import make_parser
 from xml.sax.saxutils import XMLGenerator, XMLFilterBase
 from xml.sax.handler import ContentHandler
+from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
+from edxml.EDXMLParser import EDXMLParser
 
 class EDXMLParser(XMLFilterBase):
 
@@ -59,7 +61,7 @@ class EDXMLParser(XMLFilterBase):
         # We hit the end of the definitions block,
         # and we were instructed to skip parsing the
         # event data, so we should abort parsing now.
-        raise SAXNotSupportedException('')
+        raise EDXMLProcessingInterrupted('')
 
 
 SaxParser = make_parser()
@@ -71,7 +73,7 @@ sys.stderr.write("Waiting for XML data on stdin...")
 
 try:
   SaxParser.parse(open("/dev/stdin"))
-except SAXNotSupportedException:
+except EDXMLProcessingInterrupted:
   pass
 
 for Source in Parser.Sources:

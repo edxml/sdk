@@ -35,8 +35,9 @@
 
 import sys
 import string
-from xml.sax import make_parser, SAXNotSupportedException
-from edxml.EDXMLParser import EDXMLParser, EDXMLError
+from xml.sax import make_parser
+from edxml.EDXMLBase import EDXMLError
+from edxml.EDXMLParser import EDXMLParser
 
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.

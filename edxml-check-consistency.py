@@ -34,8 +34,9 @@
 #  in all specified EDXML files are mutually consistent.
 
 import sys
-from xml.sax import make_parser, SAXNotSupportedException
-from edxml.EDXMLParser import EDXMLParser, EDXMLError
+from xml.sax import make_parser
+from edxml.EDXMLParser import EDXMLParser
+from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
 
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
@@ -65,7 +66,7 @@ for arg in sys.argv[1:]:
   
   try:
     SaxParser.parse(open(arg))
-  except SAXNotSupportedException:
+  except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
     print("EDXML file %s is inconsistent with previous files:\n%s" % (( arg, str(Error) )) )

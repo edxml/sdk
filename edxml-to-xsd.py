@@ -36,7 +36,8 @@
 #  validation on the event data in the EDXML.
 
 import sys
-from xml.sax import make_parser, SAXNotSupportedException
+from xml.sax import make_parser
+from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
 
 # Create a SAX parser, and provide it with
@@ -57,13 +58,13 @@ if len(sys.argv) < 2:
   sys.stdout.flush()
   try:
     SaxParser.parse(sys.stdin)
-  except SAXNotSupportedException:
+  except EDXMLProcessingInterrupted:
     pass
 else:
   sys.stderr.write("\nProcessing file %s:" % sys.argv[1] );
   try:
     SaxParser.parse(open(sys.argv[1]))
-  except SAXNotSupportedException:
+  except EDXMLProcessingInterrupted:
     pass
 
 # Finally, we use the XSD functions of the

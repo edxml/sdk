@@ -48,7 +48,7 @@ EDXMLValidatingParser
 import sys
 import re
 from decimal import *
-from xml.sax import make_parser, SAXNotSupportedException
+from xml.sax import make_parser
 from xml.sax.saxutils import XMLFilterBase
 from EDXMLBase import *
 from EDXMLDefinitions import EDXMLDefinitions
@@ -61,7 +61,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   scripts. It can optionally skip reading the event data
   itself if you are only interested in obtaining the 
   definitions. In that case, it will abort XML processing
-  by raising the SAXNotSupportedException exception, which
+  by raising the EDXMLProcessingInterrupted exception, which
   you can catch and handle."""
   
   def __init__ (self, upstream, SkipEvents = False):
@@ -240,7 +240,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         # We hit the end of the definitions block,
         # and we were instructed to skip parsing the
         # event data, so we should abort parsing now.
-        raise SAXNotSupportedException('')
+        raise EDXMLProcessingInterrupted('')
 
     if name == 'eventtype':
       if not self.NewEventType:

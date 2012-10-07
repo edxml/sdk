@@ -40,10 +40,11 @@
 #  <definitions> sections from multiple EDXML sources.
 
 import sys
-from xml.sax import make_parser, SAXNotSupportedException
+from xml.sax import make_parser
 from xml.sax.xmlreader import AttributesImpl
 from xml.sax.saxutils import XMLGenerator
-from edxml.EDXMLParser import EDXMLParser, EDXMLError
+from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
+from edxml.EDXMLParser import EDXMLParser
 from edxml.EDXMLFilter import EDXMLStreamFilter
 
 # This class is based on the EDXMLStreamFilter class,
@@ -126,7 +127,7 @@ for FileName in sys.argv[1:]:
   
   try:
     SaxParser.parse(open(FileName))
-  except SAXNotSupportedException:
+  except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
     sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( arg, str(Error) )) )
@@ -177,7 +178,7 @@ for FileName in sys.argv[1:]:
   
   try:
     SaxParser.parse(open(FileName))
-  except SAXNotSupportedException:
+  except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
     sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( FileName, str(Error) )) )

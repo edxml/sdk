@@ -32,8 +32,9 @@
 This module contains generic (base)classes used throughout the SDK. It contains
 the following classes:
 
-EDXMLError: Generic EDXML exception class
-EDXMLBase:  Base class for most SDK subclasses
+EDXMLError:                 Generic EDXML exception class
+EDXMLProcessingInterrupted: Exception class signaling EDXML stream processing interruption
+EDXMLBase:                  Base class for most SDK subclasses
 
 """
 
@@ -44,6 +45,13 @@ import os
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
+  def __init__(self, value):
+    self.value = value
+  def __str__(self):
+    return str(self.value)
+
+class EDXMLProcessingInterrupted(Exception):
+  """Exception for signaling that EDXML processing was aborted"""
   def __init__(self, value):
     self.value = value
   def __str__(self):
