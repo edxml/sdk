@@ -91,7 +91,7 @@ class EDXMLWriter(EDXMLBase):
     # Construct a bridge that will be used to connect the
     # output of the XML Generator to the parser / validator.
     
-    Bridge = SaxGeneratorParserBridge(self.SaxParser, Output)
+    self.Bridge = SaxGeneratorParserBridge(self.SaxParser, Output)
     
     # Create an XML generator. We use the Bridge to output the
     # XML to, so we have built a chain that automatically validates
@@ -100,10 +100,10 @@ class EDXMLWriter(EDXMLBase):
     #
     # XMLGenerator => EDXMLValidatingParser => Output
     
-    self.XMLGenerator = XMLGenerator(Bridge, 'utf-8')
+    self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
 
     # Write XML declaration
-    Bridge.write('<?xml version="1.0" encoding="UTF-8" ?>')
+    self.Bridge.write('<?xml version="1.0" encoding="UTF-8" ?>')
     
     self.OpenElement('events')
 
@@ -153,7 +153,112 @@ class EDXMLWriter(EDXMLBase):
     self.XMLGenerator.ignorableWhitespace('\n'.ljust(self.Indent))
     self.XMLGenerator.startElement(ElementName, AttributesImpl(Attributes))
     self.XMLGenerator.endElement(ElementName)
+
+  def AddXmlDefinitionsElement(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
     
+    Use this function to insert a full <definitions> element.
+    
+    Parameters:
+    
+    XmlString: String containing the <definitions> element
+    
+    """
+    self.Bridge.write(XmlString)
+    
+  def AddXmlEventTypeElement(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert a full <eventtype> element.
+    
+    Parameters:
+    
+    XmlString: String containing the <eventtype> element
+    
+    """
+    self.Bridge.write(XmlString)
+    
+  def AddXmlObjectTypeTag(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert an <objecttype> tag.
+    
+    Parameters:
+    
+    XmlString: String containing the <objecttype> tag
+    
+    """
+    self.Bridge.write(XmlString)
+    
+  def AddXmlPropertyTag(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert a <property> tag.
+    
+    Parameters:
+    
+    XmlString: String containing the <property> tag
+    
+    """
+    self.Bridge.write(XmlString)
+    
+  def AddXmlRelationTag(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert a <relation> tag.
+    
+    Parameters:
+    
+    XmlString: String containing the <relation> tag
+    
+    """
+    self.Bridge.write(XmlString)
+    
+  def AddXmlSourceTag(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert a <source> tag.
+    
+    Parameters:
+    
+    XmlString: String containing the <source> tag
+    
+    """
+    self.Bridge.write(XmlString)
+
+  def AddXmlEventTag(self, XmlString):
+    """Apart from programmatically adding to an EDXML
+    stream, it is also possible to insert plain XML into
+    the stream. Both methods result in full automatic
+    validation of the EDXML stream.
+    
+    Use this function to insert a full <event> element.
+    
+    Parameters:
+    
+    XmlString: String containing the <event> element
+    
+    """
+    self.Bridge.write(XmlString)
+
   def OpenDefinitions(self):
     """Opens a <definitions> block"""
     self.OpenElement("definitions")
