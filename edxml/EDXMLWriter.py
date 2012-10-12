@@ -504,7 +504,7 @@ class EDXMLWriter(EDXMLBase):
     ContentString -- Object value
     
     """
-    if len(Text) > 0:
+    if len(ContentString) > 0:
       self.OpenElement('content')
       self.XMLGenerator.characters(self.Escape(ContentString))
       self.CloseElement()
@@ -519,7 +519,7 @@ class EDXMLWriter(EDXMLBase):
     
     """
 
-    if len(Text) > 0:
+    if len(TranslationString) > 0:
       self.OpenElement("translation", {'language': Language, 'interpreter': Interpreter})
       self.XMLGenerator.characters(self.Escape(TranslationString))
       self.CloseElement()
