@@ -67,12 +67,17 @@ class SaxGeneratorParserBridge():
 class EDXMLWriter(EDXMLBase):
   """Class for generating EDXML streams"""
 
-  def __init__(self, Output):
+  def __init__(self, Output, Validate = True):
     """Constructor.
     The Output parameter is a file-like object
     that will be used to send the XML data to.
     This file-like object can be pretty much 
     anything, as long as it has a write() call.
+    
+    The optional Validate parameter controls if
+    the generated EDXML stream should be auto-
+    validated or not. Automatic validation is
+    enabled by default.
     """
     
     EDXMLBase.__init__(self)
@@ -83,24 +88,34 @@ class EDXMLWriter(EDXMLBase):
     # Expression used for replacing invalid XML unicode characters
     self.XMLReplaceRegexp = re.compile(u'[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]')
 
-    # Construct validating EDXML parser
-    self.SaxParser = make_parser()
-    self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
-    self.SaxParser.setContentHandler(self.EDXMLParser)
+    if Validate:
 
-    # Construct a bridge that will be used to connect the
-    # output of the XML Generator to the parser / validator.
+      # Construct validating EDXML parser
+      self.SaxParser = make_parser()
+      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
+      self.SaxParser.setContentHandler(self.EDXMLParser)
+
+      # Construct a bridge that will be used to connect the
+      # output of the XML Generator to the parser / validator.
     
-    self.Bridge = SaxGeneratorParserBridge(self.SaxParser, Output)
+      self.Bridge = SaxGeneratorParserBridge(self.SaxParser, Output)
     
-    # Create an XML generator. We use the Bridge to output the
-    # XML to, so we have built a chain that automatically validates
-    # the EDXML stream while it is being generated. The chain now 
-    # looks like this:
-    #
-    # XMLGenerator => EDXMLValidatingParser => Output
+      # Create an XML generator. We use the Bridge to output the
+      # XML to, so we have built a chain that automatically validates
+      # the EDXML stream while it is being generated. The chain now 
+      # looks like this:
+      #
+      # XMLGenerator => EDXMLValidatingParser => Output
     
-    self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
+      self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
+
+    else:
+      
+      # Validation is disabled
+      self.XMLGenerator = XMLGenerator(Output, 'utf-8')
+      self.Bridge = Output
+      self.EDXMLParser = None
+      self.SaxParser = None
 
     # Write XML declaration
     self.Bridge.write('<?xml version="1.0" encoding="UTF-8" ?>')
@@ -469,18 +484,20 @@ class EDXMLWriter(EDXMLBase):
 
     try:
       
-      # Even though the call to AddElement will already result
-      # in an object value validation, we actually need to 
-      # validate *before* the actual XML is generated. So, we 
-      # actually validate twice. If the first ValidateObject
-      # call fails, we can ignore the object if requested,
-      # omitting it from the XML stream. This allows users of
-      # the EDXMLWriter class to be sloppy about generating
-      # object values.
+      if self.EDXMLParser:
       
-      ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, PropertyName)
-      ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
-      self.ValidateObject(Value, ObjectTypeName, ObjectTypeAttributes['data-type'])
+        # Even though the call to AddElement will already result
+        # in an object value validation, we actually need to 
+        # validate *before* the actual XML is generated. So, we 
+        # actually validate twice. If the first ValidateObject
+        # call fails, we can ignore the object if requested,
+        # omitting it from the XML stream. This allows users of
+        # the EDXMLWriter class to be sloppy about generating
+        # object values.
+      
+        ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, PropertyName)
+        ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
+        self.ValidateObject(Value, ObjectTypeName, ObjectTypeAttributes['data-type'])
       
       # This statement will generate the actual XML and
       # trigger EDXMLValidatingParser.
@@ -534,5 +551,9 @@ class EDXMLWriter(EDXMLBase):
     """Closes a previously opened <eventgroups> section"""
     self.CloseElement()
     self.CloseElement()
-    self.SaxParser.close()
+    
+    if self.SaxParser:
+      # This triggers well-formedness validation
+      # if validation is enabled.
+      self.SaxParser.close()
 
