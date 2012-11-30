@@ -307,7 +307,7 @@ class EDXMLWriter(EDXMLBase):
     """Opens a <properties> section for defining eventtype properties."""
     self.OpenElement("properties")
 
-  def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = ''):
+  def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = 'drop'):
     """Adds a property to an event definition.
     Parameters:
     
@@ -326,6 +326,7 @@ class EDXMLWriter(EDXMLBase):
       'object-type': ObjectTypeName,
       'description': Description,
       'unique': 'false',
+      'merge': Merge,
       'defines-entity': 'false',
       'entity-confidence': '0'
       }
@@ -336,9 +337,6 @@ class EDXMLWriter(EDXMLBase):
     if DefinesEntity:
       Attributes['defines-entity'] = 'true'
       Attributes['entity-confidence'] = "%1.2f" % float(EntityConfidence)
-
-    if len(Merge) > 0:
-      Attributes['merge'] = Merge
 
     self.AddElement("property", Attributes)
       
@@ -386,7 +384,7 @@ class EDXMLWriter(EDXMLBase):
     """Opens a <objecttypes> section for defining object types."""
     self.OpenElement("objecttypes")
 
-  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = ''):
+  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none'):
     """Adds a object type definition.
     Parameters:
     
@@ -398,14 +396,12 @@ class EDXMLWriter(EDXMLBase):
     """
 
     Attributes = {
-      'name':        Name,
-      'description': Description,
-      'data-type':   ObjectDataType
+      'name':           Name,
+      'description':    Description,
+      'data-type':      ObjectDataType
+      'fuzzy-matching': FuzzyMatching
       }
-      
-    if len(FuzzyMatching) > 0:
-      Attributes['fuzzy-matching'] = FuzzyMatching
-        
+    
     self.AddElement("objecttype", Attributes)
     
   def CloseObjectTypes(self):

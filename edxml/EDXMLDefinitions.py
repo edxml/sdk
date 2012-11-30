@@ -103,7 +103,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
     self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(match)$")
     self.RelationTypePattern  = re.compile("^(intra|inter|parent|child|other):.+")
-    self.FuzzyMatchingPattern = re.compile("^(phonetic)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
+    self.FuzzyMatchingPattern = re.compile("^(none)|(phonetic)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
     self.DataTypePattern      = re.compile("^(boolean)|(timestamp)|(ip)|(hashlink)|(" + \
                                              "(number:(" + \
                                                  "((((tiny)|(small)|(medium)|(big))?int)|(float)|(double))(:signed)?" + \
@@ -145,7 +145,7 @@ class EDXMLDefinitions(EDXMLBase):
       'objecttype': {
         'name':              {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
-        'fuzzy-matching':    {'mandatory': False, 'length': None,  'pattern': self.FuzzyMatchingPattern},
+        'fuzzy-matching':    {'mandatory': False, 'length': None,  'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
         'data-type':         {'mandatory': True,  'length': None,  'pattern': self.DataTypePattern}
       },
       'source': {
