@@ -121,6 +121,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.EDXMLEntityAttributes = {
       'eventtype': {
         'name':           {'mandatory': True, 'length': 40,   'pattern': self.SimpleNamePattern},
+        'display-name':   {'mandatory': False,  'length': 32,  'pattern': None},
         'description':    {'mandatory': True, 'length': 128,  'pattern': None},
         'classlist':      {'mandatory': True, 'length': None, 'pattern': None},
         'reporter-short': {'mandatory': True, 'length': None, 'pattern': None},
@@ -129,6 +130,7 @@ class EDXMLDefinitions(EDXMLBase):
       'property': {
         'name':              {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
+        'similar':           {'mandatory': False, 'length': 64,   'pattern': None},
         'object-type':       {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
         'unique':            {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
         'merge':             {'mandatory': False, 'length': None, 'pattern': self.MergeOptions,     'default': 'drop'},
@@ -144,8 +146,10 @@ class EDXMLDefinitions(EDXMLBase):
       },
       'objecttype': {
         'name':              {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
+        'display-name':      {'mandatory': False,  'length': 32,  'pattern': None},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
         'fuzzy-matching':    {'mandatory': False, 'length': None,  'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
+        'compress':          {'mandatory': False,  'length': None,  'pattern': self.TrueFalsePattern},
         'data-type':         {'mandatory': True,  'length': None,  'pattern': self.DataTypePattern}
       },
       'source': {
@@ -229,7 +233,17 @@ class EDXMLDefinitions(EDXMLBase):
     """Returns a dictionary containing all
     attributes of requested event type."""
     return self.EventTypes[EventTypeName]['attributes']
-
+    
+  def GetEventTypeParent(self, EventTypeName):
+    """Returns a dictionary containing all
+    attributes of the parent of requested eventtype.
+    Returns empty dictionary when event type has no
+    defined parent."""
+    if 'parent' in self.EventTypes[EventTypeName]:
+      return self.EventTypes[EventTypeName]['parent']
+    else:
+      return {}
+  
   def GetEventTypesHavingObjectType(self, ObjectTypeName):
     """Returns a list of event type names having specified object type."""
     if not ObjectTypeName in self.ObjectTypeEventTypes:
@@ -329,7 +343,24 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       # New event type
       self.AddNewEventType(EventTypeName, Attributes)
+  
+  def SetEventTypeParent(self, EventTypeName, Attributes):
+    """Configure a parent of specified event type.
     
+    Parameters:
+    
+    EventTypeName -- Name of event type
+    Attributes    -- Dictionary holding the attributes of the 'parent' tag.
+    
+    """
+    
+    if 'parent' in self.EventTypes[EventTypeName]:
+      # Parent definition was encountered before.
+      self.CheckEdxmlEntityConsistency('parent', Attributes['eventtype'], self.EventTypes[EventTypeName]['parent'], Attributes)
+    else:
+      # New parent definition
+      self.SetNewEventTypeParent(EventTypeName, Attributes)
+  
   def AddProperty(self, EventTypeName, PropertyName, Attributes):
     """Add a property to the collection of property
     definitions. If a property definition with the same
@@ -437,7 +468,11 @@ class EDXMLDefinitions(EDXMLBase):
       if not Class in self.EventTypeClasses:
         self.EventTypeClasses[Class] = set()
       self.EventTypeClasses[Class].add(EventTypeName)
-      
+  
+  # Internal use only.
+  def SetNewEventTypeParent(self, EventTypeName, Attributes):
+    self.EventTypes[EventTypeName]['parent'] = Attributes
+  
   # Internal use only.
   def AddNewProperty(self, EventTypeName, PropertyName, Attributes):
     self.PropertyNames[EventTypeName].append(PropertyName)
@@ -536,6 +571,41 @@ class EDXMLDefinitions(EDXMLBase):
       if not self.PropertyDefined(EventTypeName, PropertyB):
         self.Error("Event type %s defines relation %s which refers to property %s, which does not exist in this event type." % (( EventTypeName, RelationId, PropertyB )))
 
+  def CheckEventTypeParents(self, EventTypeName):
+    """Checks if parent definition of given event type
+    is valid, if there is any parent definition.
+    
+    Parameters:
+    
+    EventTypeName -- Name of event type
+    
+    """
+    
+    if not 'parent' in self.EventTypes[EventTypeName]: return
+    
+    ParentAttribs = self.EventTypes[EventTypeName]['parent']
+    
+    if not ParentAttribs['eventtype'] in self.EventTypes:
+      self.Error("Event type %s contains a parent definition which refers to event type %s which is not defined." % (( EventTypeName, ParentAttribs['eventtype'] )))
+    
+    try:
+    
+      ParentProperties = []
+    
+      for PropertyMapping in ParentAttribs['propertymap'].split(','):
+        ChildProperty, ParentProperty = PropertyMapping.split(':')
+        ParentProperties.append(ParentProperty)
+        
+        if not ChildProperty in self.EventTypes[EventTypeName]['properties']:
+          self.Error("Event type %s contains a parent definition which refers to unknown child property '%s'." % (( EventTypeName, ChildProperty )) )
+        
+        if not ParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
+          self.Error("Event type %s contains a parent definition which refers to parent property '%s', but this property is not unique, or is does not exist." % (( EventTypeName, ParentProperty )) )
+          
+    except KeyError, ValueError:
+      
+      self.Error("Event type %s contains a parent definition which has an invalid or missing property map." % EventTypeName)
+    
   def CheckReporterString(self, EventTypeName, String, PropertyNames, CheckCompleteness = False):
     """Checks if given event type reporter string makes sense. Optionally,
     it can also check if all given properties are present in the string.

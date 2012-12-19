@@ -398,7 +398,7 @@ class EDXMLWriter(EDXMLBase):
     Attributes = {
       'name':           Name,
       'description':    Description,
-      'data-type':      ObjectDataType
+      'data-type':      ObjectDataType,
       'fuzzy-matching': FuzzyMatching
       }
     

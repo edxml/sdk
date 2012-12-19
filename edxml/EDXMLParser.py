@@ -194,6 +194,12 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         self.Definitions.AddProperty(self.CurrentEventTypeName, PropertyName, dict(attrs.items()))
       except EDXMLError as Error:
         self.Error(Error)
+      
+    elif name == 'parent':
+      try:
+        self.Definitions.SetEventTypeParent(self.CurrentEventTypeName, dict(attrs.items()))
+      except EDXMLError as Error:
+        self.Error(Error)
           
     elif name == 'relation':
       Property1Name = attrs.get('property1')
@@ -296,6 +302,8 @@ class EDXMLValidatingParser(EDXMLParser):
       self.Definitions.CheckReporterString(EventTypeName, Attributes['reporter-long'], PropertyNames, True)
       # Check relations
       self.Definitions.CheckEventTypeRelations(EventTypeName)
+      # Check parent definitions
+      self.Definitions.CheckEventTypeParents(EventTypeName)
       # Check if properties refer to existing object types
       for PropertyName in PropertyNames:
         PropertyAttributes = self.Definitions.GetPropertyAttributes(EventTypeName, PropertyName)
