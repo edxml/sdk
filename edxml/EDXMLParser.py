@@ -47,7 +47,6 @@ EDXMLValidatingParser
 
 import sys
 import re
-from decimal import *
 from xml.sax import make_parser
 from xml.sax.saxutils import XMLFilterBase
 from EDXMLBase import *

@@ -38,6 +38,7 @@ EDXMLBase:                  Base class for most SDK subclasses
 
 """
 
+from decimal import *
 import string
 import sys
 import re
@@ -262,3 +263,49 @@ class EDXMLBase():
     else:
       self.Error("EDXMLBase::ValidateObject: Invalid data type: '%s'" % str(DataType) )
 
+  def NormalizeObject(self, Value, DataType):
+    """Normalize an object value to a unicode string"""
+    if DataType[0] == 'timestamp':
+      return u'%.6f' % Decimal(Value)
+    elif DataType[0] == 'number':
+      if DataType[1] == 'decimal':
+        DecimalPrecision = DataType[3]
+        return unicode('%.' + DecimalPrecision + 'f') % Decimal(Value)
+      elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
+        return u'%d' % int(Value)
+      else:
+        # Anything else is floating point, which we ignore.
+        return u'%f' % float(Value)
+    elif DataType[0] == 'ip':
+      try:
+        Octets = Value.split('.')
+      except Exception as Except:
+        self.Error("NormalizeObject: Invalid IP: '%s': %s" % (( Value, Except )))
+      else:
+        try:
+          return unicode('%d.%d.%d.%d' % (( int(Octets[0]), int(Octets[1]), int(Octets[2]), int(Octets[3]) ))  )
+        except:
+          self.Error("NormalizeObject: Invalid IP: '%s'" % Value)
+
+    elif DataType[0] == 'string':
+
+      if not isinstance(Value, unicode):
+        if not isinstance(Value, str):
+          sys.stderr.write("NormalizeObject: WARNING: Expected a string, but passed value is no string: '%s'" % str(Value) )
+          Value = unicode(Value)
+        try:
+          Value = Value.decode('utf-8')
+        except UnicodeDecodeError:
+          # String is not proper UTF8. Lets try to decode it as Latin1
+          try:
+            Value = Value.decode('latin-1').encode('utf-8').decode('utf-8')
+          except:
+            self.Error("NormalizeObject: Failed to convert string object to unicode: '%s'." % repr(Value) )
+
+      if DataType[2] == 'ci':
+        Value = Value.lower()
+      return unicode(Value)
+    elif DataType[0] == 'boolean':
+      return unicode(Value.lower())
+    else:
+      return unicode(Value )

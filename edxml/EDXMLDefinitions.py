@@ -898,15 +898,15 @@ class EDXMLDefinitions(EDXMLBase):
     should be a list containing dictionaries representing the objects. The
     dictionaries should contain the property name stored under the 'property'
     key and the value stored under the 'value' key.
-    
+
     Returns a hexadecimal string representation of the hash.
-    
+
     """
 
     ObjectStrings = []
-  
+
     for EventObject in EventObjects:
-      Property = EventObject['property']
+      Property = unicode(EventObject['property'])
       Value    = EventObject['value']
       if self.EventTypeIsUnique(EventTypeName) and self.PropertyIsUnique(EventTypeName, Property) == False:
         # We use only unique properties for
@@ -914,59 +914,70 @@ class EDXMLDefinitions(EDXMLBase):
         continue
       ObjectType = self.GetPropertyObjectType(EventTypeName, Property)
       DataType = self.GetObjectTypeDataType(ObjectType).split(':')
-      if DataType[0] == 'timestamp':
-        ObjectStrings.append(u'%s:%.6f' % (( Property, Decimal(Value) )) )
-      elif DataType[0] == 'number':
-        if DataType[1] == 'decimal':
-          DecimalPrecision = DataType[3]
-          ObjectStrings.append(unicode('%s:%.' + DecimalPrecision + 'f') % (( Property, Decimal(Value) )) )
-        elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
-          ObjectStrings.append(u'%s:%d' % (( Property, int(Value) )) )
-        else:
-          # Anything else is floating point, which we ignore.
-          continue
-          
-      elif DataType[0] == 'ip':
-        try:
-          Octets = Value.split('.')
-          ObjectStrings.append(unicode('%s:%d.%d.%d.%d' % (( Property, int(Octets[0]), int(Octets[1]), int(Octets[2]), int(Octets[3]) ))  ))
-        except Exception as Except:
-          self.Error("Invalid IP in property %s of event type %s: '%s': %s" % (( Property, EventTypeName, Value, Except )))
-      elif DataType[0] == 'string':
-        
-        if not isinstance(Value, unicode):
-          if not isinstance(Value, str):
-            sys.stderr.write("ComputeStickyHash: WARNING: Expected a string, but passed value is no string: '%s'" % str(Value) )
-            Value = unicode(Value)
-          try:
-            Value = Value.decode('utf-8')
-          except UnicodeDecodeError:
-            # String is not proper UTF8. Lets try to decode it as Latin1
-            try:
-              Value = Value.decode('latin-1').encode('utf-8').decode('utf-8')
-            except:
-              self.Error("ComputeStickyHash: Failed to convert string object to unicode: '%s'." % repr(Value) )
-              
-        if DataType[2] == 'ci':
-          Value = Value.lower()
-        if self.ObjectTypeRequiresUnicode(ObjectType):
-          ObjectStrings.append(unicode('%s:%s' % (( Property, Value )) ))
-        else:
-          ObjectStrings.append(unicode('%s:%s' % (( Property, Value )) ))
-      elif DataType[0] == 'boolean':
-        ObjectStrings.append(unicode('%s:%s' % (( Property, Value.lower() )) ))
-      else:
-        ObjectStrings.append(unicode('%s:%s' % (( Property, Value )) ))
+
+      if DataType[0] == 'number' and DataType[1] in ['float', 'double']:
+        # Floating point objects are ignored.
+        continue
+
+      # Normalize the object value to a unicode string
+      try:
+        NormalizedValue = self.NormalizeObject(Value, DataType)
+      except EDXMLError as Except:
+        self.Error("Invalid value in property %s of event type %s: '%s': %s" % (( Property, EventTypeName, Value, Except )))
+
+      ObjectStrings.append(Property + u':' + NormalizedValue)
 
     # Now we compute the SHA1 hash value of the unicode
     # string representation of the event, and output in hex
-    
+
     if self.EventTypeIsUnique(EventTypeName):
       return hashlib.sha1((EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings))).encode('utf-8')).hexdigest()
-    else:    
+    else:
       return hashlib.sha1((EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings)) + '\n' + EventContent).encode('utf-8')).hexdigest()
 
-      
+  def ComputeStickyHashV3(self, EventTypeName, SourceUrl, EventObjects, EventContent):
+    """Computes a sticky hash from given event, using the hashing algorithm
+    from EDXML specification version 3.x. The EventObjects argument
+    should be a list containing dictionaries representing the objects. The
+    dictionaries should contain the property name stored under the 'property'
+    key and the value stored under the 'value' key.
+
+    Returns a hexadecimal string representation of the hash.
+
+    """
+
+    ObjectStrings = []
+
+    for EventObject in EventObjects:
+      Property = unicode(EventObject['property'])
+      Value    = EventObject['value']
+      if self.EventTypeIsUnique(EventTypeName) and self.PropertyIsUnique(EventTypeName, Property) == False:
+        # We use only unique properties for
+        # hash computation. Skip this one.
+        continue
+      ObjectType = self.GetPropertyObjectType(EventTypeName, Property)
+      DataType = self.GetObjectTypeDataType(ObjectType).split(':')
+
+      if DataType[0] == 'number' and DataType[1] in ['float', 'double']:
+        # Floating point objects are ignored.
+        continue
+
+      # Normalize the object value to a unicode string
+      try:
+        NormalizedValue = self.NormalizeObject(Value, DataType)
+      except EDXMLError as Except:
+        self.Error("Invalid value in property %s of event type %s: '%s': %s" % (( Property, EventTypeName, Value, Except )))
+
+      ObjectStrings.append(Property + u':' + NormalizedValue)
+
+    # Now we compute the SHA1 hash value of the unicode
+    # string representation of the event, and output in hex
+
+    if self.EventTypeIsUnique(EventTypeName):
+      return hashlib.sha1((EventTypeName + '\n' + SourceUrl + '\n' + '\n'.join(sorted(ObjectStrings))).encode('utf-8')).hexdigest()
+    else:
+      return hashlib.sha1((EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings)) + '\n' + EventContent).encode('utf-8')).hexdigest()
+
   def GenerateEventTypeXML(self, EventTypeName, XMLGenerator, Indent = 0):
     """Generates an EDXML fragment which defines specified
     eventtype. Can be useful for constructing new EDXML
