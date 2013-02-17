@@ -55,17 +55,22 @@ class EDXMLStreamFilter(EDXMLParser):
   
   """
   
-  def __init__ (self, upstream, SkipEvents = False):
+  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
     """Constructor.
+
+    You can pass any file-like object using the Output parameter, which
+    will be used to send the filtered data stream to. It defaults to
+    sys.stdout (standard output).
     
     Parameters:
     upstream   -- XML source (SaxParser instance in most cases)
     SkipEvents -- Set to True to parse only the definitions section (default False)
+    Output     -- An optional file-like object, defaults to sys.stdout
     
     """
     
     self.OutputEnabled = True
-    self.Passthrough = XMLGenerator(sys.stdout, 'utf-8')
+    self.Passthrough = XMLGenerator(Output, 'utf-8')
     EDXMLParser.__init__(self, upstream, SkipEvents)
   
   def SetOutputEnabled(self, YesOrNo):
@@ -131,9 +136,19 @@ class EDXMLObjectEditor(EDXMLStreamFilter):
          module to replace the attributes of an object.
   """
   
-  def __init__ (self, upstream):
+  def __init__ (self, upstream, Output = sys.stdout):
+    """ Constructor.
 
-    EDXMLStreamFilter.__init__(self, upstream, False)
+    You can pass any file-like object using the Output parameter, which
+    will be used to send the filtered data stream to. It defaults to
+    sys.stdout (standard output).
+
+    Parameters:
+    upstream   -- XML source (SaxParser instance in most cases)
+    Output     -- An optional file-like object, defaults to sys.stdout
+    """
+
+    EDXMLStreamFilter.__init__(self, upstream, False, Output)
   
   def InsertObject(self, PropertyName, Value):
     self.InsertedObjects.append({'property': PropertyName, 'value': Value})
@@ -165,14 +180,24 @@ class EDXMLEventEditor(EDXMLStreamFilter):
   to implement your own event editing EDXML processor.
   """
   
-  def __init__ (self, upstream):
+  def __init__ (self, upstream, Output = sys.stdout):
+    """ Constructor.
+
+    You can pass any file-like object using the Output parameter, which
+    will be used to send the filtered data stream to. It defaults to
+    sys.stdout (standard output).
+
+    Parameters:
+    upstream   -- XML source (SaxParser instance in most cases)
+    Output     -- An optional file-like object, defaults to sys.stdout
+    """
 
     self.ReadingEvent = False
     self.CurrentEvent = []
     self.CurrentEventAttributes = AttributesImpl({})
     self.ReceivingEventContent = False
     
-    EDXMLStreamFilter.__init__(self, upstream, False)
+    EDXMLStreamFilter.__init__(self, upstream, False, Output)
   
   def startElement(self, name, attrs):
     
