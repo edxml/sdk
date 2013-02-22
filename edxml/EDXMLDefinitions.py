@@ -107,7 +107,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.DataTypePattern      = re.compile("^(boolean)|(timestamp)|(ip)|(hashlink)|(" + \
                                              "(number:(" + \
                                                  "((((tiny)|(small)|(medium)|(big))?int)|(float)|(double))(:signed)?" + \
-                                               "))|(number:decimal:[0-9]+:[0-9]+(:signed)?)|(enum:.*)|(string:(" + \
+                                               "))|(number:decimal:[0-9]+:[0-9]+(:signed)?)|(number:hex:[0-9]+(:[0-9]+:.)?)|(enum:.*)|(string:(" + \
                                                  "[0-9]+:((cs)|(ci))(:[ru]+)?" + \
                                                "))|(binstring:(" + \
                                                  "[0-9]+(:r)?" + \

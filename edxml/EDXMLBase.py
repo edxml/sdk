@@ -145,15 +145,28 @@ class EDXMLBase():
             try:
               int(SplitDataType[2])
               int(SplitDataType[3])
-              return
             except:
               pass
-            if int(SplitDataType[3]) > int(SplitDataType[2]):
-              self.Error("Invalid Decimal: " + DataType)
-            if len (SplitDataType) > 4:
-              if len (SplitDataType) == 5:
-                if SplitDataType[4] == 'signed':
-                  return
+            else:
+              if int(SplitDataType[3]) > int(SplitDataType[2]):
+                self.Error("Invalid Decimal: " + DataType)
+              if len (SplitDataType) > 4:
+                if len (SplitDataType) == 5:
+                  if SplitDataType[4] == 'signed':
+                    return
+        elif SplitDataType[1] == 'hex':
+          if len(SplitDataType) > 3:
+            try:
+              HexLength        = int(SplitDataType[2])
+              DigitGroupLength = int(SplitDataType[3])
+            except:
+              pass
+            else:
+              if HexLength % DigitGroupLength != 0:
+                self.Error("Length of hex datatype is not a multiple of separator distance: " + DataType)
+              if len(SplitDataType[4]) == 0 and len(SplitDataType) == 6:
+                # This happens if the colon ':' is used as separator
+                return
     elif SplitDataType[0] == 'string':
       if re.match(self.StringDataTypePattern, DataType):
         return
@@ -183,16 +196,26 @@ class EDXMLBase():
       except ValueError:
         self.Error("Invalid timestamp '%s' of object type %s." % (( str(Value), ObjectTypeName )))
     elif ObjectDataType[0] == 'number':
-      try:
-        float(Value)
-      except ValueError:
-        self.Error("Invalid number '%s' of object type %s." % (( str(Value), ObjectTypeName )))
       if ObjectDataType[1] == 'decimal':
         if len(ObjectDataType) < 5:
           # Decimal is unsigned.
           if Value < 0:
             self.Error("Unsigned decimal value '%s' of object type %s is negative." % (( str(Value), ObjectTypeName )))
+      elif ObjectDataType[1] == 'hex':
+        if len(ObjectDataType) > 3:
+          HexSeparator = ObjectDataType[5]
+          if len(HexSeparator) == 0:
+            HexSeparator = ':'
+            Value = ''.join(c for c in Value if c != HexSeparator)
+        try:
+          Value.decode("hex")
+        except:
+          self.Error("Invalid hexadecimal value '%s' of object type %s." % (( str(Value), ObjectTypeName )))
       elif ObjectDataType[1] == 'float' or ObjectDataType[1] == 'double':
+        try:
+          float(Value)
+        except ValueError:
+          self.Error("Invalid number '%s' of object type %s." % (( str(Value), ObjectTypeName )))
         if len(ObjectDataType) < 3:
           # number is unsigned.
           if Value < 0:
