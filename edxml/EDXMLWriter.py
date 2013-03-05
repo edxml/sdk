@@ -477,6 +477,7 @@ class EDXMLWriter(EDXMLBase):
 
     if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
       self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
+      return
 
     try:
       
