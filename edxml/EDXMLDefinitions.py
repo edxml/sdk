@@ -98,6 +98,7 @@ class EDXMLDefinitions(EDXMLBase):
     # Some validation patterns
   
     self.SimpleNamePattern    = re.compile("^[a-z0-9-]*$")
+    self.DisplayNamePattern   = re.compile("^[ a-zA-Z0-9]+/[ a-zA-Z0-9]+$")
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
     self.DecimalPattern       = re.compile("^[0-9.]+$")
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
@@ -120,12 +121,12 @@ class EDXMLDefinitions(EDXMLBase):
     
     self.EDXMLEntityAttributes = {
       'eventtype': {
-        'name':           {'mandatory': True, 'length': 40,   'pattern': self.SimpleNamePattern},
-        'display-name':   {'mandatory': False,  'length': 32,  'pattern': None},
-        'description':    {'mandatory': True, 'length': 128,  'pattern': None},
-        'classlist':      {'mandatory': True, 'length': None, 'pattern': None},
-        'reporter-short': {'mandatory': True, 'length': None, 'pattern': None},
-        'reporter-long':  {'mandatory': True, 'length': None, 'pattern': None}
+        'name':           {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
+        'display-name':   {'mandatory': False, 'length': 64,   'pattern': self.DisplayNamePattern},
+        'description':    {'mandatory': True,  'length': 128,  'pattern': None},
+        'classlist':      {'mandatory': True,  'length': None, 'pattern': None},
+        'reporter-short': {'mandatory': True,  'length': None, 'pattern': None},
+        'reporter-long':  {'mandatory': True,  'length': None, 'pattern': None}
       },
       'property': {
         'name':              {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
@@ -142,21 +143,21 @@ class EDXMLDefinitions(EDXMLBase):
         'property2':   {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
         'description': {'mandatory': True,  'length': 255,  'pattern': None},
         'type':        {'mandatory': True,  'length': 32,   'pattern': self.RelationTypePattern},
-        'confidence':  {'mandatory': True, 'length': None, 'pattern': self.DecimalPattern}
+        'confidence':  {'mandatory': True,  'length': None, 'pattern': self.DecimalPattern}
       },
       'objecttype': {
         'name':              {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
-        'display-name':      {'mandatory': False,  'length': 32,  'pattern': None},
+        'display-name':      {'mandatory': False, 'length': 64,   'pattern': None},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
-        'fuzzy-matching':    {'mandatory': False, 'length': None,  'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
-        'compress':          {'mandatory': False,  'length': None,  'pattern': self.TrueFalsePattern},
-        'data-type':         {'mandatory': True,  'length': None,  'pattern': self.DataTypePattern}
+        'fuzzy-matching':    {'mandatory': False, 'length': None, 'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
+        'compress':          {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern},
+        'data-type':         {'mandatory': True,  'length': None, 'pattern': self.DataTypePattern}
       },
       'source': {
-        'source-id':        {'mandatory': True,  'length': None,   'pattern': None},
-        'url':              {'mandatory': True,  'length': None,   'pattern': None},
-        'date-acquired':    {'mandatory': True,  'length': None,   'pattern': self.SourceDatePattern},
-        'description':      {'mandatory': True,  'length': 128,  'pattern': None},
+        'source-id':        {'mandatory': True,  'length': None,  'pattern': None},
+        'url':              {'mandatory': True,  'length': None,  'pattern': None},
+        'date-acquired':    {'mandatory': True,  'length': None,  'pattern': self.SourceDatePattern},
+        'description':      {'mandatory': True,  'length': 128,   'pattern': None},
       },
     }
   
