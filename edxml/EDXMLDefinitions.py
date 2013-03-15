@@ -91,7 +91,7 @@ class EDXMLDefinitions(EDXMLBase):
 
     self.KnownFormatters = ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
                             'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'FILESERVER', 
-                            'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
+                            'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY']
                             
     self.ReporterPlaceholderPattern = re.compile('\\[\\[([^\\]]*)\\]\\]')
   
@@ -610,18 +610,18 @@ class EDXMLDefinitions(EDXMLBase):
   def CheckReporterString(self, EventTypeName, String, PropertyNames, CheckCompleteness = False):
     """Checks if given event type reporter string makes sense. Optionally,
     it can also check if all given properties are present in the string.
-    
+
     Parameters:
-    
+
     EventTypeName     -- Name of event type
     String            -- The reporter string
     PropertyNames     -- List of property names of event type
     CheckCompleteness -- Check if all properties are present in string. (optional, defaults to False)
-    
+
     """
     PlaceholderStrings = re.findall(self.ReporterPlaceholderPattern, String)
     ReferredProperties = []
-    
+
     for String in PlaceholderStrings:
       StringComponents = String.split(':')
       if len(StringComponents) == 1:
@@ -649,7 +649,7 @@ class EDXMLDefinitions(EDXMLBase):
         else:
           if not StringComponents[0] in self.KnownFormatters:
             self.Error("Event type %s contains a reporter string which refers to an unknown formatter: %s" % (( EventTypeName, StringComponents[0] )) )
-            
+
           if StringComponents[0] in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
             # Check that only one property is specified after the formatter
             if len(StringComponents[1].split(',')) > 1:
@@ -673,7 +673,11 @@ class EDXMLDefinitions(EDXMLBase):
           elif StringComponents[0] == 'CURRENCY':
             if len(StringComponents) != 3:
               self.Error("Event type %s contains a reporter string which uses a malformed %s formatter: %s" % (( EventTypeName, StringComponents[0], String )) )
-              
+
+          elif StringComponents[0] == 'EMPTY':
+            if len(StringComponents) != 3:
+              self.Error("Event type %s contains a reporter string which uses a malformed %s formatter: %s" % (( EventTypeName, StringComponents[0], String )) )
+
           elif StringComponents[0] == 'BOOLEAN_STRINGCHOICE':
             if len(StringComponents) != 4:
               self.Error("Event type %s contains a reporter string which uses a malformed %s formatter: %s" % (( EventTypeName, StringComponents[0], String )) )
@@ -683,19 +687,18 @@ class EDXMLDefinitions(EDXMLBase):
 
           else:
               self.Error("Event type %s contains a reporter string which uses an unknown formatter: %s" % (( EventTypeName, StringComponents[0] )) )
-            
-              
+
           if StringComponents[1] in PropertyNames:
             ReferredProperties.append(StringComponents[1])
             continue
-          
+
       self.Error("Event type %s contains a reporter string which refers to one or more nonexisting properties: %s" % (( EventTypeName, String )) )
-  
+
     if CheckCompleteness:
       for PropertyName in PropertyNames:
           if not PropertyName in ReferredProperties:
             self.Warning("Event type %s contains an incomplete long reporter string. The property '%s' is missing." % (( EventTypeName, PropertyName )))
-  
+
   # Checks if two sets of attributes of EDXML entities (eventtype, property, relation, ...)
   # are mutually consistent. The parameters CurrentAttributes and UpdatedAttributes
   # should contain dictionaries with attributes of the entity.
