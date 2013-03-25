@@ -154,6 +154,8 @@ class EDXMLBase():
                 if len (SplitDataType) == 5:
                   if SplitDataType[4] == 'signed':
                     return
+              else:
+                return
         elif SplitDataType[1] == 'hex':
           if len(SplitDataType) > 3:
             try:
@@ -167,6 +169,8 @@ class EDXMLBase():
               if len(SplitDataType[4]) == 0 and len(SplitDataType) == 6:
                 # This happens if the colon ':' is used as separator
                 return
+          else:
+            return
     elif SplitDataType[0] == 'string':
       if re.match(self.StringDataTypePattern, DataType):
         return
@@ -297,7 +301,6 @@ class EDXMLBase():
       elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
         return u'%d' % int(Value)
       else:
-        # Anything else is floating point, which we ignore.
         return u'%f' % float(Value)
     elif DataType[0] == 'ip':
       try:
