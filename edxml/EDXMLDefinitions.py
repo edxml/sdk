@@ -903,11 +903,14 @@ class EDXMLDefinitions(EDXMLBase):
     dictionaries should contain the property name stored under the 'property'
     key and the value stored under the 'value' key.
 
+    Note that the supplied object values must be normalized using the
+    NormalizeObject method of the EDXMLBase class.
+
     Returns a hexadecimal string representation of the hash.
 
     """
 
-    ObjectStrings = []
+    ObjectStrings = set()
 
     for EventObject in EventObjects:
       Property = unicode(EventObject['property'])
@@ -929,7 +932,7 @@ class EDXMLDefinitions(EDXMLBase):
       except EDXMLError as Except:
         self.Error("Invalid value in property %s of event type %s: '%s': %s" % (( Property, EventTypeName, Value, Except )))
 
-      ObjectStrings.append(Property + u':' + NormalizedValue)
+      ObjectStrings.add(Property + u':' + NormalizedValue)
 
     # Now we compute the SHA1 hash value of the unicode
     # string representation of the event, and output in hex
@@ -946,11 +949,14 @@ class EDXMLDefinitions(EDXMLBase):
     dictionaries should contain the property name stored under the 'property'
     key and the value stored under the 'value' key.
 
+    Note that the supplied object values must be normalized using the
+    NormalizeObject method of the EDXMLBase class.
+
     Returns a hexadecimal string representation of the hash.
 
     """
 
-    ObjectStrings = []
+    ObjectStrings = set()
 
     for EventObject in EventObjects:
       Property = unicode(EventObject['property'])
@@ -972,15 +978,15 @@ class EDXMLDefinitions(EDXMLBase):
       except EDXMLError as Except:
         self.Error("Invalid value in property %s of event type %s: '%s': %s" % (( Property, EventTypeName, Value, Except )))
 
-      ObjectStrings.append(Property + u':' + NormalizedValue)
+      ObjectStrings.add(Property + u':' + NormalizedValue)
 
     # Now we compute the SHA1 hash value of the unicode
     # string representation of the event, and output in hex
 
     if self.EventTypeIsUnique(EventTypeName):
-      return hashlib.sha1((EventTypeName + '\n' + SourceUrl + '\n' + '\n'.join(sorted(ObjectStrings))).encode('utf-8')).hexdigest()
+      return hashlib.sha1((SourceUrl + '\n' + EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings))).encode('utf-8')).hexdigest()
     else:
-      return hashlib.sha1((EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings)) + '\n' + EventContent).encode('utf-8')).hexdigest()
+      return hashlib.sha1((SourceUrl + '\n' + EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings)) + '\n' + EventContent).encode('utf-8')).hexdigest()
 
   def GenerateEventTypeXML(self, EventTypeName, XMLGenerator, Indent = 0):
     """Generates an EDXML fragment which defines specified
