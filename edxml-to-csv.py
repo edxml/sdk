@@ -131,7 +131,7 @@ class EDXML2CSV(EDXMLParser):
           self.IterateGenerateLines(Columns, PropertyObjects, Line, LineEnd, Column)
           return
 
-      sys.stdout.write(Line + LineEnd + '\n')
+      sys.stdout.write(unicode(Line + LineEnd + '\n').encode('utf-8'))
 
 def PrintHelp():
 
