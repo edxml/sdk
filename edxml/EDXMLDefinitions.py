@@ -90,7 +90,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.SchemaXSD = None
 
     self.KnownFormatters = ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-                            'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'FILESERVER', 
+                            'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER', 
                             'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY']
                             
     self.ReporterPlaceholderPattern = re.compile('\\[\\[([^\\]]*)\\]\\]')
@@ -658,7 +658,7 @@ class EDXMLDefinitions(EDXMLBase):
             if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, StringComponents[1])) != 'timestamp':
               self.Error("Event type %s contains a reporter string which uses the %s formatter. The used property (%s) is not a timestamp, though." % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
 
-          elif StringComponents[0] in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+          elif StringComponents[0] in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
             # Check that no additional options are present
             if len(StringComponents) > 2:
               self.Error("Event type %s contains a reporter string which uses the %s formatter. This formatter accepts no options, but they were specified: %s" % (( EventTypeName, StringComponents[0], String )) )
