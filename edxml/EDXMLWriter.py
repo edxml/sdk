@@ -461,9 +461,22 @@ class EDXMLWriter(EDXMLBase):
     """Closes a previously opened event group"""
     self.CloseElement()
 
-  def OpenEvent(self):
-    """Opens an event."""
-    self.OpenElement("event")
+  def OpenEvent(self, ParentHashes = []):
+    """Opens an event.
+
+    The optional ParentHashes parameter may contain
+    a list of sticky hashes of explicit parent events,
+    in hexadecimal string representation.
+
+    Parameters:
+
+    ParentHashes -- List of explicit parent events
+
+    """
+    if len(ParentHashes) > 0:
+      self.OpenElement("event", {'parents': ','.join(ParentHashes)})
+    else:
+      self.OpenElement("event")
 
   def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
     """Adds an object to previously opened event.

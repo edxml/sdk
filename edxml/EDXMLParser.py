@@ -93,7 +93,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     processing the event stream."""
     return
 
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
+  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
     """This function can be overridden to process events. The
     EventObjects parameter contains a list of dictionaries, one
     for each object. Each dictionary has two keys. The 'property'
@@ -105,6 +105,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     SourceId      -- Id of event source
     EventObjects  -- List of objects
     EventContent  -- String containing event content
+    Parents       -- List of hashes of explicit parent events
     
     """
     return
@@ -215,6 +216,8 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         self.Error(Error)
           
     elif name == 'event':
+      self.ExplicitEventParents = []
+      if attrs.has_key('parents'): self.ExplicitEventParents = attrs.get('parents').split(',')
       self.EventObjects = []
       self.CurrentEventContent = ''
 
@@ -265,7 +268,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     elif name == 'event':
       self.TotalEventCount += 1
       self.EventCounters[self.CurrentEventTypeName] += 1
-      self.ProcessEvent(self.CurrentEventTypeName, self.CurrentSourceId, self.EventObjects, self.CurrentEventContent)
+      self.ProcessEvent(self.CurrentEventTypeName, self.CurrentSourceId, self.EventObjects, self.CurrentEventContent, self.ExplicitEventParents)
 
     elif name == 'events':
       self.EndOfStream()
@@ -329,7 +332,7 @@ class EDXMLValidatingParser(EDXMLParser):
     self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
     
   # Overridden from EDXMLParser
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
+  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
 
     UniquePropertyObjects = []
     
