@@ -47,7 +47,7 @@ class EDXMLEventHasher(EDXMLParser):
     EDXMLParser.__init__(self, upstream)
   
   # Override of EDXMLParser implementation
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
+  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
 
     # Use the EDXMLDefinitions instance in the 
     # EDXMLParser class to compute the sticky hash

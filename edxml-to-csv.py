@@ -77,7 +77,7 @@ class EDXML2CSV(EDXMLParser):
       sys.stdout.write('event type' + self.ColumnSeparator + self.ColumnSeparator.join(self.PropertyNames) + '\n')
 
   # Override of EDXMLParser implementation
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent):
+  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
 
     PropertyObjects = {}
     EscapedEventContent = EventContent.replace('\n', '\\n').replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
