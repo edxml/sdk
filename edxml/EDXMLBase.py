@@ -132,6 +132,10 @@ class EDXMLBase():
     elif SplitDataType[0] == 'boolean':
       if len(SplitDataType) == 1:
         return
+    elif SplitDataType[0] == 'geo':
+      if len(SplitDataType) == 2:
+        if SplitDataType[1] == 'point':
+          return
     elif SplitDataType[0] == 'number':
       if len(SplitDataType) >= 2:
         if SplitDataType[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double']:
@@ -229,6 +233,10 @@ class EDXMLBase():
           # number is unsigned.
           if Value < 0:
             self.Error("Unsigned integer value '%s' of object type %s is negative." % (( str(Value), ObjectTypeName )))
+    elif ObjectDataType[0] == 'geo':
+      if ObjectDataType[1] == 'point':
+        # This is the only option at the moment.
+        pass
     elif ObjectDataType[0] == 'string':
       # First, we check if value is a unicode
       # string. If not, we convert it to unicode.

@@ -108,13 +108,16 @@ class EDXMLDefinitions(EDXMLBase):
     self.DataTypePattern      = re.compile("^(boolean)|(timestamp)|(ip)|(hashlink)|(" + \
                                              "(number:(" + \
                                                  "((((tiny)|(small)|(medium)|(big))?int)|(float)|(double))(:signed)?" + \
-                                               "))|(number:decimal:[0-9]+:[0-9]+(:signed)?)|(number:hex:[0-9]+(:[0-9]+:.)?)|(enum:.*)|(string:(" + \
+                                               "))|(number:decimal:[0-9]+:[0-9]+(:signed)?)|(number:hex:[0-9]+(:[0-9]+:.)?)|(enum:.*)|(" + \
+                                             "geo:(" + \
+                                                 "(point)" + \
+                                               "))|(string:(" + \
                                                  "[0-9]+:((cs)|(ci))(:[ru]+)?" + \
                                                "))|(binstring:(" + \
                                                  "[0-9]+(:r)?" + \
                                                "))" + \
                                            ")$")
-  
+ 
     # This dictionary contains constraints of attribute values of EDXML
     # entities, like eventtype, objecttype, property, etc. The restrictions
     # are extracted from the RelaxNG schema.
