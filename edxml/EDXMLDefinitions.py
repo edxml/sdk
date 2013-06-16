@@ -89,7 +89,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.SchemaRelaxNG = None
     self.SchemaXSD = None
 
-    self.KnownFormatters = ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
+    self.KnownFormatters = ['TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
                             'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER', 
                             'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY']
                             
@@ -588,7 +588,7 @@ class EDXMLDefinitions(EDXMLBase):
     if not 'parent' in self.EventTypes[EventTypeName]: return
     
     ParentAttribs = self.EventTypes[EventTypeName]['parent']
-    
+
     if not ParentAttribs['eventtype'] in self.EventTypes:
       self.Error("Event type %s contains a parent definition which refers to event type %s which is not defined." % (( EventTypeName, ParentAttribs['eventtype'] )))
     
@@ -636,8 +636,10 @@ class EDXMLDefinitions(EDXMLBase):
         # Some kind of string formatter was used.
         # Figure out which one, and check if it
         # is used correctly.
-        if StringComponents[0] == 'DURATION':
+        if StringComponents[0] in ['DURATION', 'TIMESPAN']:
           DurationProperties = StringComponents[1].split(',')
+          if len(DurationProperties) != 2:
+            self.Error("Event type %s contains a reporter string containing a string formatter (%s) which requires two properties, but %d properties were specified." % (( EventTypeName, StringComponents[0], len(DurationProperties) )) )
           if DurationProperties[0] in PropertyNames and DurationProperties[1] in PropertyNames:
             ReferredProperties.append(DurationProperties[0])
             ReferredProperties.append(DurationProperties[1])
