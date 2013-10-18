@@ -334,9 +334,14 @@ class EDXMLValidatingParser(EDXMLParser):
   # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
 
-    UniquePropertyObjects = []
-    
+    PropertyObjects = {}
+
     for Object in EventObjects:
+
+      if Object['property'] in PropertyObjects:
+        PropertyObjects[Object['property']].append(Object['value'])
+      else:
+        PropertyObjects[Object['property']] = [Object['value']]
 
       # Check if the property is actually
       # supposed to be in this event.
@@ -346,22 +351,20 @@ class EDXMLValidatingParser(EDXMLParser):
       ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, Object['property'])
       ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
       PropertyAttributes = self.Definitions.GetPropertyAttributes(EventTypeName, Object['property'])
-      
-      if 'unique' in PropertyAttributes:
-        if PropertyAttributes['unique'].lower() == "true":
-          # We have a unique property here.
-          if not Object['property'] in UniquePropertyObjects:
-            UniquePropertyObjects.append(Object['property'])
-          else:
-            self.Error("An event of type %s was found to have multiple objects of unique property %s." % (( EventTypeName, Object['property'] )) )
-      
 
     if self.Definitions.EventTypeIsUnique(EventTypeName):
-      # Verify that every unique properties has one object.
-      for PropertyName in self.Definitions.GetUniqueProperties(EventTypeName):
-        if not PropertyName in UniquePropertyObjects:
+      # Verify that match, min and max properties have an object.
+      for PropertyName in self.Definitions.GetMandatoryObjectProperties(EventTypeName):
+        if not PropertyName in PropertyObjects:
           EventObjectStrings = []
           for Object in EventObjects:
             EventObjectStrings.append("%s = %s" % (( Object['property'], Object['value'] )) )
-          self.Error("An event of type %s is missing an object for unique property %s:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings) )) )
+          self.Error("An event of type %s is missing an object for property %s, while it must have an object due to its configured merge strategy:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings) )) )
+      for PropertyName in self.Definitions.GetSingletonObjectProperties(EventTypeName):
+        if PropertyName in PropertyObjects:
+          if len(PropertyObjects[PropertyName]) > 1:
+            EventObjectStrings = []
+            for Object in EventObjects:
+              EventObjectStrings.append("%s = %s" % (( Object['property'], Object['value'] )) )
+            self.Error("An event of type %s has multiple objects of property %s, while it cannot have more than one due to its configured merge strategy:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings))))
 

@@ -202,7 +202,15 @@ class EDXMLDefinitions(EDXMLBase):
   def GetUniqueProperties(self, EventTypeName):
     """Returns a list of names of unique properties"""
     return self.EventTypes[EventTypeName]['unique-properties']
-  
+
+  def GetMandatoryObjectProperties(self, EventTypeName):
+    """Returns a list of names of properties which must have an object"""
+    return self.EventTypes[EventTypeName]['mandatory-properties']
+
+  def GetSingletonObjectProperties(self, EventTypeName):
+    """Returns a list of names of properties which cannot have multiple objects"""
+    return self.EventTypes[EventTypeName]['singleton-properties']
+
   def PropertyDefinesEntity(self, EventTypeName, PropertyName):
     """Returns boolean indicating if property of given event type is an entity identifier."""
     return PropertyName in self.EntityProperties[EventTypeName]
@@ -460,11 +468,13 @@ class EDXMLDefinitions(EDXMLBase):
     self.ValidateEdxmlEntityAttributes('eventtype', Attributes)
 
     self.EventTypes[EventTypeName] = {
-      'attributes': Attributes, 
-      'properties': {}, 
-      'unique-properties': set(), 
-      'relations': {}, 
-      'related-properties': set(), 
+      'attributes': Attributes,
+      'properties': {},
+      'unique-properties': set(),
+      'mandatory-properties': set(),
+      'singleton-properties': set(),
+      'relations': {},
+      'related-properties': set(),
       'unique': False
       }
 
@@ -488,10 +498,16 @@ class EDXMLDefinitions(EDXMLBase):
     if not ObjectType in self.ObjectTypeEventTypes:
       self.ObjectTypeEventTypes[ObjectType] = set()
     self.ObjectTypeEventTypes[ObjectType].add(EventTypeName)
-    
+
     if 'unique' in Attributes and Attributes['unique'].lower() == 'true':
       self.EventTypes[EventTypeName]['unique'] = True
       self.EventTypes[EventTypeName]['unique-properties'].add(PropertyName)
+
+    if 'merge' in Attributes:
+      if Attributes['merge'] in ['match', 'min', 'max']:
+        self.EventTypes[EventTypeName]['mandatory-properties'].add(PropertyName)
+      if Attributes['merge'] in ['match', 'replace', 'min', 'max']:
+        self.EventTypes[EventTypeName]['singleton-properties'].add(PropertyName)
 
     if 'defines-entity' in Attributes and Attributes['defines-entity'].lower() == 'true':
       self.EntityProperties[EventTypeName].add(PropertyName)
