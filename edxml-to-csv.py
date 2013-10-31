@@ -206,7 +206,7 @@ SaxParser.setContentHandler(EDXML2CSV(SaxParser, OutputColumns, ColumnSeparator,
 # calls to ProcessEvent in our EDXML2CSV, producing output.
 
 if len(InputFile) == 0:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
+  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN (use the -h switch for options).")
   sys.stdout.flush()
   SaxParser.parse(sys.stdin)
 else:
