@@ -47,9 +47,11 @@ EDXMLValidatingParser
 
 import sys
 import re
-from decimal import *
+from cStringIO import StringIO
+from lxml import etree
 from xml.sax import make_parser
-from xml.sax.saxutils import XMLFilterBase
+from xml.sax.saxutils import XMLFilterBase, XMLGenerator
+from xml.sax.xmlreader import AttributesImpl
 from EDXMLBase import *
 from EDXMLDefinitions import EDXMLDefinitions
 
@@ -79,7 +81,18 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     self.NewEventType = True
     self.AccumulatingEventContent = False
     self.CurrentEventContent = ''
-    
+    self.StreamCopyEnabled = True
+
+    # This buffer will be used to compile a copy of the incoming EDXML
+    # stream that has all event data filtered out. We use this stripped
+    # copy to do RelaxNG validation, as Python has no incremental XML
+    # validator like for instance PHP does.
+    self.DefinitionsXMLStringIO = StringIO()
+
+    # And this is the XMLGenerator instance that we will use
+    # to fill the buffer.
+    self.DefinitionsXMLGenerator = XMLGenerator(self.DefinitionsXMLStringIO, 'utf-8')
+
     """EDXMLDefinitions instance"""
     self.Definitions = EDXMLDefinitions()
     
@@ -148,6 +161,9 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   
   def startElement(self, name, attrs):
 
+    if self.StreamCopyEnabled:
+      self.DefinitionsXMLGenerator.startElement(name, attrs)
+
     if name == 'eventgroup':
       SourceId = attrs.get('source-id')
       EventType = attrs.get('event-type')
@@ -160,6 +176,8 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         self.Error("An eventgroup refers to Source ID %s, which is not defined." % SourceId )
       if not self.Definitions.EventTypeDefined(EventType):
         self.Error("An eventgroup refers to eventtype %s, which is not defined." % EventType )
+
+      self.StreamCopyEnabled = False
 
     elif name == 'source':
       Url = attrs.get('url')
@@ -231,25 +249,45 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   
   def endElement(self, name):
 
-    if name == 'definitions':
-      
+    if name == 'event':
+      self.TotalEventCount += 1
+      self.EventCounters[self.CurrentEventTypeName] += 1
+      self.ProcessEvent(self.CurrentEventTypeName, self.CurrentSourceId, self.EventObjects, self.CurrentEventContent, self.ExplicitEventParents)
+
+    elif name == 'content':
+      self.AccumulatingEventContent = False
+
+    elif name == 'definitions':
+
+      # Definitions section is complete, which means we can
+      # finish the stream copy by adding the <eventgroups> tag
+      # and closing the <events> tag. It is then ready for
+      # RelaxNG validation.
+
+      self.StreamCopyEnabled = True
+      self.DefinitionsXMLGenerator.endElement(name)
+      self.DefinitionsXMLGenerator.startElement('eventgroups', AttributesImpl({}))
+      self.DefinitionsXMLGenerator.endElement('eventgroups')
+      self.DefinitionsXMLGenerator.endElement('events')
+
+      # Invoke callback
       self.DefinitionsLoaded()
-      
+
       if self.SkipEvents:
-  
+
         # We hit the end of the definitions block,
         # and we were instructed to skip parsing the
         # event data, so we should abort parsing now.
         raise EDXMLProcessingInterrupted('')
 
-    if name == 'eventtype':
+    elif name == 'eventtype':
       if not self.NewEventType:
         try:
           self.Definitions.CheckEventTypePropertyConsistency(self.CurrentEventTypeName, self.CurrentEventTypeProperties)
         except EDXMLError as Error:
           self.Error(Error)
-        
-    if name == 'objecttypes':
+
+    elif name == 'objecttypes':
       # Check if all objecttypes that properties
       # refer to are actually defined.
       try:
@@ -265,9 +303,10 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     elif name == 'events':
       self.EndOfStream()
 
-    elif name == 'content':
-      self.AccumulatingEventContent = False
-      
+    if self.StreamCopyEnabled:
+      self.DefinitionsXMLGenerator.endElement(name)
+      self.DefinitionsXMLGenerator.ignorableWhitespace("\n")
+
   def characters(self, text):
 
     if self.AccumulatingEventContent:
@@ -287,6 +326,7 @@ class EDXMLValidatingParser(EDXMLParser):
     
   # Overridden from EDXMLParser
   def DefinitionsLoaded(self):
+
     ObjectTypeNames = self.Definitions.GetObjectTypeNames()
     for EventTypeName in self.Definitions.GetEventTypeNames():
       Attributes = self.Definitions.GetEventTypeAttributes(EventTypeName)
@@ -313,6 +353,17 @@ class EDXMLValidatingParser(EDXMLParser):
               self.Error("Property %s of event type %s is not unique, but it has its 'match' attribute set to 'match'." % (( PropertyName, EventTypeName )))
         if not PropertyObjectType in ObjectTypeNames:
           self.Error("Event type %s contains a property (%s) which refers to unknown object type %s" % (( EventTypeName, PropertyName, PropertyObjectType )) )
+
+    # We perform RelaxNG validation *after* running the above checks, because
+    # XML validators generate rather cryptic errors. If the above code catches
+    # a problem, the generated error message will be far more helpful. The RelaxNG
+    # validation is really a double check that complements the above code.
+    SchemaString = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/edxml-schema.xml')
+    Schema = etree.RelaxNG(SchemaString)
+    try:
+      Schema.assertValid(etree.fromstring(self.DefinitionsXMLStringIO.getvalue()))
+    except etree.DocumentInvalid as ValidationError:
+      self.Error("Invalid EDXML detected in the generated <definitions> section: %s\nThe RelaxNG validator generated the following error: %s" % (( self.DefinitionsXMLStringIO.getvalue(), ValidationError )) )
 
   # Overridden from EDXMLParser
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
