@@ -894,9 +894,14 @@ class EDXMLDefinitions(EDXMLBase):
 
         elif MergeStrategy == 'replace':
           Target[PropertyName] = Source[PropertyName]
-          
+
+    # Remove any objects due to replace strategy
+    for PropertyName in [Property for Property in self.GetEventTypeProperties(EventTypeName) if Property not in Source and Property in Target]:
+      if self.EventTypes[EventTypeName]['properties'][PropertyName]['merge'] == 'replace':
+        Target[PropertyName] = set()
+
     # Determine if anything changed
-    
+
     EventUpdated = False
     for PropertyName in self.GetEventTypeProperties(EventTypeName):
       if not PropertyName in Original and len(Target[PropertyName]) > 0:
