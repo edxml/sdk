@@ -6,7 +6,7 @@
 # 
 #                        EDXML Sticky Hash Calculator
 #
-#                  Copyright (c) 2010 - 2013 by D.H.J. Takken
+#                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
 #
 #          This file is part of the EDXML Software Development Kit (SDK).
