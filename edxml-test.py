@@ -4,7 +4,9 @@
 #
 #  ===========================================================================
 # 
-#                       EDXML Specification Validator
+#                              EDXML Validator
+#
+#                            EXAMPLE APPLICATION
 #
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
@@ -28,8 +30,9 @@
 #
 #  ===========================================================================
 # 
-#  This script checks EDXML data against the specification requirements. The
-#  script assumes that the data has already been validated against the RelaxNG schema.
+#  This script checks EDXML data against the specification requirements. Its exit
+#  status will be zero if the provided data is valid EDXML. The utility accepts both
+#  regular files and EDXML data streams on standard input.
 
 import sys
 from xml.sax import make_parser

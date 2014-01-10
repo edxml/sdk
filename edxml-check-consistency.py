@@ -4,7 +4,9 @@
 #
 #  ===========================================================================
 # 
-#                          EDXML Consistency Checker
+#                          Relative EDXML Validator
+#
+#                            EXAMPLE APPLICATION
 #
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
@@ -30,8 +32,8 @@
 #
 #
 # 
-#  Python script that checks if the <definitions> sections
-#  in all specified EDXML files are mutually consistent.
+#  Python script that checks if the ontologies in de <definitions>
+#  sections in all specified EDXML files are compatible.
 
 import sys
 from xml.sax import make_parser
@@ -57,7 +59,7 @@ if len(sys.argv) <= 1:
 # Now we feed each of the input files
 # to the Sax parser. This will effectively
 # cause the EDXMLParser instance to try and
-# merge the <definitions> section of all
+# merge the <definitions> sections of all
 # input files, raising EDXMLError when it
 # detects a problem.
 

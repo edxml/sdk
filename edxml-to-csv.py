@@ -4,7 +4,9 @@
 #
 #  ===========================================================================
 # 
-#                             EDXML to CSV converter
+#                   EDXML to column separated text converter
+#
+#                            EXAMPLE APPLICATION
 #
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
@@ -31,7 +33,7 @@
 # 
 #  This script accepts EDXML data as input and writes the events to standard
 #  output, formatted in rows and columns. For every event property, a output
-#  column is generated. If one property has multiple objects, multiple  output
+#  column is generated. If one property has multiple objects, multiple output
 #  lines are generated.
 
 import sys

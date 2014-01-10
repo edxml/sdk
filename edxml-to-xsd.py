@@ -5,7 +5,9 @@
 #  ===========================================================================
 # 
 #                           EDXML to XSD Converter
-#
+
+#                            EXAMPLE APPLICATION
+##
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
 #
@@ -31,9 +33,11 @@
 # 
 #  This utility reads EDXML from a file or from standard input, and prints
 #  an XSD schema to STDOUT. The XSD is constructed to match the definitions
-#  section of the input EDXML file *exactly*. You can use it to check if
-#  two EDXML files are identical, definitions-wise. The XSD does not do any
-#  validation on the event data in the EDXML.
+#  section of the input EDXML file *exactly*, due to the limitations of XSD
+#  schemas. Even the order of eventtype definitions must match. You can use
+#  it to check if two EDXML files have identical ontologies. The XSD does not
+#  do any validation on the event data in the EDXML, again due to limitions
+#  of XSD schemas.
 
 import sys
 from xml.sax import make_parser

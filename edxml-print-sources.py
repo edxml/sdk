@@ -4,7 +4,9 @@
 #
 #  ===========================================================================
 # 
-#                            EDXML Source Printer
+#                         EDXML Source URL Extractor
+#
+#                            EXAMPLE APPLICATION
 #
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
