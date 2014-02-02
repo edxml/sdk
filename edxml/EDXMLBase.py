@@ -236,7 +236,21 @@ class EDXMLBase():
     elif ObjectDataType[0] == 'geo':
       if ObjectDataType[1] == 'point':
         # This is the only option at the moment.
-        pass
+        SplitGeoPoint = Value.split(',')
+        if len(SplitGeoPoint) != 2:
+          self.Error("The geo:point value '%s' is not formatted correctly." % str(Value))
+        try:
+          GeoLat = float(SplitGeoPoint[0])
+          GeoLon = float(SplitGeoPoint[1])
+        except ValueError:
+          self.Error("The geo:point value '%s' is not formatted correctly." % str(Value))
+          return
+        if GeoLat < -90 or GeoLat > 90:
+          self.Error("The geo:point value '%s' contains a latitude that is not within range [-90,90]." % str(Value))
+        if GeoLon < -180 or GeoLon > 180:
+          self.Error("The geo:point value '%s' contains a longitude that is not within range [-180,180]." % str(Value))
+      else:
+        self.Error("Invalid geo data type: '%s'" % str(DataType) )
     elif ObjectDataType[0] == 'string':
       # First, we check if value is a unicode
       # string. If not, we convert it to unicode.
@@ -320,6 +334,9 @@ class EDXMLBase():
           return unicode('%d.%d.%d.%d' % (( int(Octets[0]), int(Octets[1]), int(Octets[2]), int(Octets[3]) ))  )
         except:
           self.Error("NormalizeObject: Invalid IP: '%s'" % Value)
+    elif DataType[0] == 'geo':
+      if DataType[1] == 'point':
+        return u'%.6f,%.6f' % Value.split(',')
 
     elif DataType[0] == 'string':
 
