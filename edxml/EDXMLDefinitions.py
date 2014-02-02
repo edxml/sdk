@@ -638,6 +638,20 @@ class EDXMLDefinitions(EDXMLBase):
     CheckCompleteness -- Check if all properties are present in string. (optional, defaults to False)
 
     """
+
+    # Test if reporter string grammar is correct, by
+    # checking that curly brackets are balanced.
+    CurlyNestings = {'{': 1, '}': -1}
+    Nesting = 0
+    for Curly in [Char for Char in String if Char in ['{', '}']]:
+      Nesting += CurlyNestings[Curly]
+      if Nesting < 0:
+        self.Error('The following reporter string contains unbalanced curly brackets:\n%s\n' % String)
+        Nesting = 0
+        break
+    if Nesting != 0:
+      self.Error('The following reporter string contains unbalanced curly brackets:\n%s\n' % String)
+
     PlaceholderStrings = re.findall(self.ReporterPlaceholderPattern, String)
     ReferredProperties = []
 
