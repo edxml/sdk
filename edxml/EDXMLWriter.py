@@ -37,6 +37,7 @@ to generate EDXML streams.
 """
 
 import string, sys
+from cStringIO import StringIO
 
 from xml.sax import make_parser
 from xml.sax.saxutils import escape
@@ -56,13 +57,42 @@ from EDXMLParser import EDXMLValidatingParser
 class SaxGeneratorParserBridge():
   
   def __init__(self, Parser, Passthrough = None):
+    self.BufferOutput = False
+    self.Parse = True
+    self.Buffer = ''
     self.Parser = Parser
     self.Passthrough = Passthrough
-  
-  def write(self, Buffer):
-    self.Parser.feed(Buffer)
+
+  def DisableParser(self):
+    self.Parse = False
+
+  def EnableParser(self):
+    self.Parse = True
+
+  def EnableBuffering(self):
+    self.BufferOutput = True
+
+  def ClearBuffer(self):
+    self.Buffer = ''
+
+  def DisableBuffering(self):
+    self.BufferOutput = False
     if self.Passthrough:
-      self.Passthrough.write(Buffer)
+      self.Passthrough.write(self.Buffer)
+      self.Passthrough.flush()
+      self.Buffer = ''
+
+  def write(self, String):
+    if self.Parse:
+      self.Parser.feed(String)
+    if self.Passthrough:
+      if self.BufferOutput:
+        # Add to buffer
+        self.Buffer += String
+      else:
+        # Write directly to output
+        self.Passthrough.write(String)
+        self.Passthrough.flush()
 
 class EDXMLWriter(EDXMLBase):
   """Class for generating EDXML streams"""
@@ -83,12 +113,15 @@ class EDXMLWriter(EDXMLBase):
     EDXMLBase.__init__(self)
   
     self.Indent = 0
+    self.InvalidEvents = 0
+    self.Validate = Validate
+    self.Output = Output
     self.ElementStack = []
     
     # Expression used for replacing invalid XML unicode characters
     self.XMLReplaceRegexp = re.compile(u'[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]')
 
-    if Validate:
+    if self.Validate:
 
       # Construct validating EDXML parser
       self.SaxParser = make_parser()
@@ -436,7 +469,13 @@ class EDXMLWriter(EDXMLBase):
 
   def CloseDefinitions(self):
     """Closes the <definitions> section"""
+
+    # Create a backup copy of the generated XML so far,
+    # which we can use to recover from generating invalid events.
+    self.Definitions = self.EDXMLParser.DefinitionsXMLStringIO.getvalue() + '</definitions>'
+
     self.CloseElement()
+
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
@@ -452,6 +491,7 @@ class EDXMLWriter(EDXMLBase):
     """
 
     self.CurrentEventTypeName = EventTypeName
+    self.CurrentEventSourceId = SourceId
     self.OpenElement("eventgroup", {
       'event-type': EventTypeName,
       'source-id' : str(SourceId)
@@ -473,6 +513,14 @@ class EDXMLWriter(EDXMLBase):
     ParentHashes -- List of explicit parent events
 
     """
+
+    if self.Validate:
+      # We enable buffering at this point, until we know
+      # for certain that the event is valid. If the event
+      # turns out to be invalid, the applcation can continue
+      # generating the EDXML stream, skipping the invalid event.
+      self.Bridge.EnableBuffering()
+
     if len(ParentHashes) > 0:
       self.OpenElement("event", {'parents': ','.join(ParentHashes)})
     else:
@@ -555,13 +603,77 @@ class EDXMLWriter(EDXMLBase):
 
   def CloseEvent(self):
     """Closes a previously opened event"""
-    self.CloseElement()
+
+    try:
+      # This triggers event structure validation.
+      self.CloseElement()
+    except EDXMLError as Error:
+
+      # Ok, the EDXMLParser instance that handles the content
+      # from the SAX parser has borked on an invalid event.
+      # This means that the SAX parser cannot continue. We
+      # have no other choice than rebuild the data processing
+      # chain from scratch and restore the state of both the
+      # EDXMLParser instance and XML Generator to the point
+      # where it can output events again.
+
+      # Create new SAX parser and validating EDXML parser
+      self.SaxParser = make_parser()
+      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
+
+      # Install the new EDXMLParser as content handler.
+      self.SaxParser.setContentHandler(self.EDXMLParser)
+
+      # Reconstruct the bridge
+      self.Bridge = SaxGeneratorParserBridge(self.SaxParser, self.Output)
+
+      # Create a new XML generator. We will feed it some XML to
+      # restore its state later.
+      self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
+
+      # We need to push some XML into the XMLGenerator and into
+      # the bridge, but we do not want that to end up in the
+      # output. So, we enable buffering and clear the buffer later.
+      self.Bridge.EnableBuffering()
+
+      # Push the EDXML definitions header into the bridge, which
+      # will restore the state of the EDXMLParser instance.
+      self.Bridge.write(self.Definitions)
+
+      # We need to keep XMLGenerator happy, so we insert
+      # the events tag to keep the tags balanced. We do not
+      # want the EDXMLParser instance to receive it, so
+      # we temporarily disable parsing in the bridge.
+      self.Bridge.DisableParser()
+      self.XMLGenerator.startElement('events', AttributesImpl({}))
+      self.Bridge.EnableParser()
+
+      # Now, we re-open the eventgroup.
+      self.XMLGenerator.startElement('eventgroups', AttributesImpl({}))
+      self.XMLGenerator.startElement('eventgroup', AttributesImpl({'event-type': self.CurrentEventTypeName, 'source-id' : str(self.CurrentEventSourceId)}))
+
+      # Discard all buffered output and stop buffering. Now,
+      # our processing chain is in the state that it was when
+      # we started producing events.
+      self.Bridge.ClearBuffer()
+      self.Bridge.DisableBuffering()
+
+      self.InvalidEvents += 1
+
+      # Now we can throw an exception, which the
+      # application can catch and recover from.
+      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % Error)
+
+    if self.Validate:
+      # At this point, the event has been validated. We disable
+      # buffering, which pushes it to the output.
+      self.Bridge.DisableBuffering()
 
   def CloseEventGroups(self):
     """Closes a previously opened <eventgroups> section"""
     self.CloseElement()
     self.CloseElement()
-    
+
     if self.SaxParser:
       # This triggers well-formedness validation
       # if validation is enabled.
