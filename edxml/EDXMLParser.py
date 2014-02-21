@@ -252,7 +252,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     if name == 'event':
       self.TotalEventCount += 1
       self.EventCounters[self.CurrentEventTypeName] += 1
-      self.ProcessEvent(self.CurrentEventTypeName, self.CurrentSourceId, self.EventObjects, self.CurrentEventContent, self.ExplicitEventParents)
+      self.ProcessEvent(self.CurrentEventTypeName, self.CurrentSourceId, self.EventObjects, self.CurrentEventContent)
 
     elif name == 'content':
       self.AccumulatingEventContent = False
