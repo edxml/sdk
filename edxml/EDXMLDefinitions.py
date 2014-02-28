@@ -256,6 +256,18 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       return {}
   
+  def GetEventTypeParentMapping(self, EventTypeName):
+    """Returns a dictionary containing all property
+    names of the event type that map to a parent property.
+    The value of each key corresponds to the name of the
+    parent property that the child property maps to.
+    Returns empty dictionary when event type has no
+    defined parent."""
+    if 'parent' in self.EventTypes[EventTypeName]:
+      return self.EventTypes[EventTypeName]['parentmapping']
+    else:
+      return {}
+  
   def GetEventTypesHavingObjectType(self, ObjectTypeName):
     """Returns a list of event type names having specified object type."""
     if not ObjectTypeName in self.ObjectTypeEventTypes:
@@ -348,7 +360,6 @@ class EDXMLDefinitions(EDXMLBase):
     Attributes    -- Dictionary holding the attributes of the 'eventtype' tag.
     
     """
-    self.RequiredObjectTypes = set()
     if EventTypeName in self.EventTypes:
       # Event type definition was encountered before.
       self.CheckEdxmlEntityConsistency('eventtype', EventTypeName, self.EventTypes[EventTypeName]['attributes'], Attributes)
@@ -473,6 +484,7 @@ class EDXMLDefinitions(EDXMLBase):
       'unique-properties': set(),
       'mandatory-properties': set(),
       'singleton-properties': set(),
+      'parentmapping': {},
       'relations': {},
       'related-properties': set(),
       'unique': False
@@ -486,6 +498,16 @@ class EDXMLDefinitions(EDXMLBase):
   # Internal use only.
   def SetNewEventTypeParent(self, EventTypeName, Attributes):
     self.EventTypes[EventTypeName]['parent'] = Attributes
+
+    try:
+
+      for PropertyMapping in Attributes['propertymap'].split(','):
+        ChildProperty, ParentProperty = PropertyMapping.split(':')
+        self.EventTypes[EventTypeName]['parentmapping'][ChildProperty] = ParentProperty
+
+    except KeyError, ValueError:
+
+      self.Error("Event type %s contains a parent definition which has an invalid or missing property map." % EventTypeName)
   
   # Internal use only.
   def AddNewProperty(self, EventTypeName, PropertyName, Attributes):
@@ -507,6 +529,8 @@ class EDXMLDefinitions(EDXMLBase):
       if Attributes['merge'] in ['match', 'min', 'max']:
         self.EventTypes[EventTypeName]['mandatory-properties'].add(PropertyName)
       if Attributes['merge'] in ['match', 'replace', 'min', 'max']:
+        self.EventTypes[EventTypeName]['singleton-properties'].add(PropertyName)
+      if PropertyName in self.EventTypes[EventTypeName]['parentmapping']:
         self.EventTypes[EventTypeName]['singleton-properties'].add(PropertyName)
 
     if 'defines-entity' in Attributes and Attributes['defines-entity'].lower() == 'true':
@@ -602,30 +626,29 @@ class EDXMLDefinitions(EDXMLBase):
     """
     
     if not 'parent' in self.EventTypes[EventTypeName]: return
-    
+
     ParentAttribs = self.EventTypes[EventTypeName]['parent']
 
     if not ParentAttribs['eventtype'] in self.EventTypes:
       self.Error("Event type %s contains a parent definition which refers to event type %s which is not defined." % (( EventTypeName, ParentAttribs['eventtype'] )))
-    
-    try:
-    
-      ParentProperties = []
-    
-      for PropertyMapping in ParentAttribs['propertymap'].split(','):
-        ChildProperty, ParentProperty = PropertyMapping.split(':')
-        ParentProperties.append(ParentProperty)
-        
-        if not ChildProperty in self.EventTypes[EventTypeName]['properties']:
-          self.Error("Event type %s contains a parent definition which refers to unknown child property '%s'." % (( EventTypeName, ChildProperty )) )
-        
-        if not ParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
-          self.Error("Event type %s contains a parent definition which refers to parent property '%s', but this property is not unique, or is does not exist." % (( EventTypeName, ParentProperty )) )
-          
-    except KeyError, ValueError:
+
+    for UniqueParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
+      if not UniqueParentProperty in self.EventTypes[EventTypeName]['parentmapping'].values():
+        self.Error("Event type %s contains a parent definition which lacks a mapping for unique parent property '%s'." % (( EventTypeName, UniqueParentProperty )) )
       
-      self.Error("Event type %s contains a parent definition which has an invalid or missing property map." % EventTypeName)
-    
+    for ChildProperty, ParentProperty in self.EventTypes[EventTypeName]['parentmapping'].items():
+      ChildMergeStrategy = self.EventTypes[EventTypeName]['properties'][ChildProperty]['merge']
+
+      if not ChildProperty in self.EventTypes[EventTypeName]['properties']:
+        self.Error("Event type %s contains a parent definition which refers to unknown child property '%s'." % (( EventTypeName, ChildProperty )) )
+
+      if ChildMergeStrategy != 'match' and ChildMergeStrategy != 'drop':
+        self.Error("Event type %s contains a parent definition which refers to child property '%s'. This property has merge strategy %s, which is not allowed for properties that are used in parent definitions." % (( EventTypeName, ChildProperty, ChildMergeStrategy )) )
+
+      if not ParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
+        self.Error("Event type %s contains a parent definition which refers to parent property '%s', but this property is not unique, or is does not exist." % (( EventTypeName, ParentProperty )) )
+
+
   def CheckReporterString(self, EventTypeName, String, PropertyNames, CheckCompleteness = False):
     """Checks if given event type reporter string makes sense. Optionally,
     it can also check if all given properties are present in the string.

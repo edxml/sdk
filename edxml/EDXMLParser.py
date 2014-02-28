@@ -95,6 +95,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     """EDXMLDefinitions instance"""
     self.Definitions = EDXMLDefinitions()
+    self.Definitions.Error = self.Error
     
     XMLFilterBase.__init__(self, upstream)
     EDXMLBase.__init__(self)
@@ -381,11 +382,14 @@ class EDXMLValidatingParser(EDXMLParser):
   # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
 
+    ParentPropertyMapping = self.Definitions.GetEventTypeParentMapping(EventTypeName)
     PropertyObjects = {}
 
     for Object in EventObjects:
 
       if Object['property'] in PropertyObjects:
+        if Object['property'] in ParentPropertyMapping:
+          self.Error("An event of type %s contains multiple objects of property %s, but this property can only have one object due to it being used in an implicit parent definition." % (( EventTypeName, Object['property'] )) )
         PropertyObjects[Object['property']].append(Object['value'])
       else:
         PropertyObjects[Object['property']] = [Object['value']]
@@ -413,5 +417,5 @@ class EDXMLValidatingParser(EDXMLParser):
             EventObjectStrings = []
             for Object in EventObjects:
               EventObjectStrings.append("%s = %s" % (( Object['property'], Object['value'] )) )
-            self.Error("An event of type %s has multiple objects of property %s, while it cannot have more than one due to its configured merge strategy:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings))))
+            self.Error("An event of type %s has multiple objects of property %s, while it cannot have more than one due to its configured merge strategy or due to a implicit parent definition:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings))))
 
