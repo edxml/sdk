@@ -46,17 +46,11 @@ import os
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
-  def __init__(self, value):
-    self.value = value
-  def __str__(self):
-    return str(self.value)
+  pass
 
 class EDXMLProcessingInterrupted(Exception):
   """Exception for signaling that EDXML processing was aborted"""
-  def __init__(self, value):
-    self.value = value
-  def __str__(self):
-    return str(self.value)
+  pass
 
 class EDXMLBase():
   """Base class for most SDK subclasses"""
