@@ -57,51 +57,94 @@ from edxml.EDXMLFilter import EDXMLStreamFilter
 # the source-id attributes in the <eventgroup> tags,
 # assuring the uniqueness of Source ID.
 
-class EDXMLEventGroupFilter(EDXMLStreamFilter):
-  def __init__ (self, upstream, SourceUrlIdMapping):
+class EDXMLMerger(EDXMLStreamFilter):
+  def __init__ (self, upstream, MergedDefinitions, SourceUrlIdMapping):
 
     # Call parent constructor
     EDXMLStreamFilter.__init__(self, upstream, False)
-    
+
     # Initialize source id / url mappings
     self.SourceUrlIdMapping = SourceUrlIdMapping
     self.SourceIdUrlMapping = {}
-    
-    # Disable output of EDXMLStreamFilter.
-    self.SetOutputEnabled(False)
-  
+
+    self.Feedback = False
+    self.DefinitionsWritten = False
+    self.MergedDefinitions = MergedDefinitions
+
+  def Close(self):
+    self.SetOutputEnabled(True)
+    EDXMLStreamFilter.endElement(self, 'eventgroups')
+    EDXMLStreamFilter.endElement(self, 'events')
+
   def startElement(self, name, attrs):
     AttributeItems = {}
     # Populate the AttributeItems dictionary.
     for AttributeName, AttributeValue in attrs.items():
       AttributeItems[AttributeName] = AttributeValue
-      
-    if name == 'source':
+
+    if self.Feedback:
+      # We are in the process of feeding ourselves
+      # with merged definitions. Just pass through
+      # whatever it is.
+      EDXMLStreamFilter.startElement(self, name, AttributesImpl(AttributeItems))
+      return
+
+    if name == 'events':
+      if self.DefinitionsWritten:
+        # This is the <events> tag from a second, third, ...
+        # EDXML stream that is fed to us. Turn output off
+        # until we get to a <eventgroup> tag.
+        self.SetOutputEnabled(False)
+        return
+
+    if name == 'definitions' and not self.Feedback:
+      # Turn filter output off.
+      self.SetOutputEnabled(False)
+      return
+
+    if name == 'source' and not self.Feedback:
       # Store the relations between source URL and ID
       self.SourceIdUrlMapping[AttributeItems['source-id']] = AttributeItems['url']
-      # Translate the source ID of this source definition
-      NewSourceId = self.SourceUrlIdMapping[AttributeItems['url']]
-      AttributeItems['source-id'] = NewSourceId
-      
+
     if name == 'eventgroup':
-      # Turn filter output back on.
-      self.SetOutputEnabled(True)
+
       # Edit the AttributeItems dictionary to ensure that the
       # source IDs in the output stream are unique.
       GroupSourceUrl = self.SourceIdUrlMapping[AttributeItems['source-id']]
       AttributeItems['source-id'] = self.SourceUrlIdMapping[GroupSourceUrl]
 
-    # Call parent startElement to generate the output XML element.
+      # Turn output back on.
+      self.SetOutputEnabled(True)
+
+    if name == 'eventgroups' and self.DefinitionsWritten:
+      self.SetOutputEnabled(True)
+      return
+
     EDXMLStreamFilter.startElement(self, name, AttributesImpl(AttributeItems))
 
   def endElement(self, name):
+
+    if name == 'definitions' and not self.DefinitionsWritten and not self.Feedback:
+      self.Feedback = True
+      self.SetOutputEnabled(True)
+      self.MergedDefinitions.GenerateXMLDefinitions(self)
+      self.Feedback = False
+
+      # Output a <eventgroups> tag
+      EDXMLStreamFilter.startElement(self, 'eventgroups', AttributesImpl({}))
+
+      self.DefinitionsWritten = True
+
+      # Turn filter output off.
+      #self.SetOutputEnabled(False)
+      return
+
+    if name == 'eventgroups':
+      self.SetOutputEnabled(False)
+      return
+
     # Call parent implementation
     EDXMLStreamFilter.endElement(self, name)
-
-    if name == 'eventgroup':
-      # Turn filter output off
-      self.SetOutputEnabled(False)
-      
 
 # Program starts here. Check commandline arguments.
 
@@ -137,47 +180,25 @@ for FileName in sys.argv[1:]:
   except:
     raise
 
-# Instantiate a Sax XML generator, and open
-# the <events> tag. This will be our new
-# output EDXML stream.
-
-XMLGenerator = XMLGenerator(sys.stdout, 'utf-8')
-XMLGenerator.startElement('events', AttributesImpl({}))
-XMLGenerator.ignorableWhitespace("\n  ")
-
 # Use the EDXMLDefinitions instance of EDXMLParser to
 # generate a set of new, unique source IDs. The resulting
 # dictionary maps Source URLs to source IDs.
 
 SourceIdMapping = EDXMLParser.Definitions.UniqueSourceIDs()
 
-# Now we can use the EDXMLParser to generate a new
-# <definitions> section, containing all previously
-# compiled event types, object types and sources.
-# The definitions section is output to STDOUT
+SaxParser = make_parser()
+Merger    = EDXMLMerger(SaxParser, EDXMLParser.Definitions, SourceIdMapping)
 
-EDXMLParser.Definitions.GenerateXMLDefinitions(XMLGenerator)
-
-# Next, we will output the eventgroups from all input files.
-# Open the <eventgroups> tag.
-
-XMLGenerator.startElement('eventgroups', AttributesImpl({}))
-XMLGenerator.ignorableWhitespace("\n    ")
+SaxParser.setContentHandler(Merger)
 
 # Now we process each of the specified EDXML files
 # a second time. We will feed each file into the
-# EventGroupFilter, which will only output the <eventgroup>
-# sections from the EDXML files to STDOUT, and translate
-# event source IDs.
-
-SaxParser        = make_parser()
-EventGroupFilter = EDXMLEventGroupFilter(SaxParser, SourceIdMapping)
-
-SaxParser.setContentHandler(EventGroupFilter)
+# Merger, which will output the merged
+# definitions and translate event source IDs.
 
 for FileName in sys.argv[1:]:
   sys.stderr.write("\nMerging file %s:" % FileName );
-  
+
   try:
     SaxParser.parse(open(FileName))
   except EDXMLProcessingInterrupted:
@@ -189,9 +210,4 @@ for FileName in sys.argv[1:]:
     raise
 
 # Finish the EDXML stream.
-
-XMLGenerator.ignorableWhitespace("\n")    
-XMLGenerator.endElement('eventgroups')
-XMLGenerator.ignorableWhitespace("\n")
-XMLGenerator.endElement('events')
-XMLGenerator.ignorableWhitespace("\n")
+Merger.Close()
