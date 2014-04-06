@@ -79,14 +79,18 @@ class EDXMLStreamFilter(EDXMLParser):
     use it to allow certain parts of EDXML files
     to pass through to STDOUT while other parts
     are filtered out.
-    
+
+    Note that the output of the filter is validated,
+    so be careful not to break the EDXML data while
+    filtering it.
+
     """
     self.OutputEnabled = YesOrNo
   
   def startElement(self, name, attrs):
   
-    EDXMLParser.startElement(self, name, attrs)
     if self.OutputEnabled:
+      EDXMLParser.startElement(self, name, attrs)
       self.Passthrough.startElement(name, attrs)
   
   def startElementNS(self, name, qname, attrs):
@@ -96,8 +100,8 @@ class EDXMLStreamFilter(EDXMLParser):
   
   def endElement(self, name):
   
-    EDXMLParser.endElement(self, name)
     if self.OutputEnabled:
+      EDXMLParser.endElement(self, name)
       self.Passthrough.endElement(name)
   
   def endElementNS(self, name, qname):
