@@ -36,9 +36,10 @@ details about all defined event types, object types, sources, and so on.
 
 Classes in this module:
 
-EDXMLStreamFilter: A generic stream filter
-EDXMLObjectEditor: Stream filter for editing individual objects in stream
-EDXMLEventEditor:  Stream filter for editing events in stream
+EDXMLStreamFilter:           A generic stream filter
+EDXMLValidatingStreamFilter: A validating, generic stream filter
+EDXMLObjectEditor:           Stream filter for editing individual objects in stream
+EDXMLEventEditor:            Stream filter for editing events in stream
 
 """
 
@@ -129,7 +130,88 @@ class EDXMLStreamFilter(EDXMLParser):
     if self.OutputEnabled:
       self.Passthrough.ignorableWhitespace(ws)
 
-    
+class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
+  """Base class for implementing EDXML filters
+
+  This class is identical to the EDXMLStreamFilter class, except that
+  it fully validates each event that is output by the filter.
+
+  """
+
+  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
+    """Constructor.
+
+    You can pass any file-like object using the Output parameter, which
+    will be used to send the filtered data stream to. It defaults to
+    sys.stdout (standard output).
+
+    Parameters:
+    upstream   -- XML source (SaxParser instance in most cases)
+    SkipEvents -- Set to True to parse only the definitions section (default False)
+    Output     -- An optional file-like object, defaults to sys.stdout
+
+    """
+
+    self.OutputEnabled = True
+    self.Passthrough = XMLGenerator(Output, 'utf-8')
+    EDXMLValidatingParser.__init__(self, upstream, SkipEvents)
+
+  def SetOutputEnabled(self, YesOrNo):
+    """This function implements a global switch
+    to turn XML passthrough on or off. You can
+    use it to allow certain parts of EDXML files
+    to pass through to STDOUT while other parts
+    are filtered out.
+
+    Note that the output of the filter is validated,
+    so be careful not to break the EDXML data while
+    filtering it.
+
+    """
+    self.OutputEnabled = YesOrNo
+
+  def startElement(self, name, attrs):
+
+    if self.OutputEnabled:
+      EDXMLValidatingParser.startElement(self, name, attrs)
+      self.Passthrough.startElement(name, attrs)
+
+  def startElementNS(self, name, qname, attrs):
+
+    if self.OutputEnabled:
+      self.Passthrough.startElementNS(name, qname, attrs)
+
+  def endElement(self, name):
+
+    if self.OutputEnabled:
+      EDXMLValidatingParser.endElement(self, name)
+      self.Passthrough.endElement(name)
+
+  def endElementNS(self, name, qname):
+
+    if self.OutputEnabled:
+      self.Passthrough.endElementNS(name, qname)
+
+  def processingInstruction(self, target, body):
+
+    if self.OutputEnabled:
+      self.Passthrough.processingInstruction(target, body)
+
+  def comment(self, body):
+
+    if self.OutputEnabled:
+      self.Passthrough.comment(body)
+
+  def characters(self, text):
+
+    if self.OutputEnabled:
+      self.Passthrough.characters(text)
+
+  def ignorableWhitespace(self, ws):
+
+    if self.OutputEnabled:
+      self.Passthrough.ignorableWhitespace(ws)
+
 class EDXMLObjectEditor(EDXMLStreamFilter):
   """This class implements an EDXML filter which can
   be used to edit objects in an EDXML stream. It offers the
