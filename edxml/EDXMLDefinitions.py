@@ -866,7 +866,7 @@ class EDXMLDefinitions(EDXMLBase):
         
         if not isinstance(Value, unicode):
           if not isinstance(Value, str):
-            sys.stderr.write("ComputeStickyHash: WARNING: Expected a string, but passed value is no string: '%s'" % str(Value) )
+            self.Warning("ComputeStickyHash: Expected a string, but passed value is no string: '%s'" % str(Value) )
             Value = unicode(Value)
           try:
             Value = Value.decode('utf-8')
