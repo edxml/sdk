@@ -250,7 +250,7 @@ class EDXMLBase():
       # string. If not, we convert it to unicode.
       if not isinstance(Value, unicode):
         if not isinstance(Value, str):
-          sys.stderr.write("EDXMLBase::ValidateObject: WARNING: Expected a string, but passed value is no string: '%s'" % str(Value) )
+          self.Warning("EDXMLBase::ValidateObject: Expected a string, but passed value is no string: '%s'" % str(Value) )
           Value = str(Value)
         try:
           Value = Value.decode('utf-8')
@@ -336,7 +336,7 @@ class EDXMLBase():
 
       if not isinstance(Value, unicode):
         if not isinstance(Value, str):
-          sys.stderr.write("NormalizeObject: WARNING: Expected a string, but passed value is no string: '%s'" % str(Value) )
+          self.Warning("NormalizeObject: Expected a string, but passed value is no string: '%s'" % str(Value) )
           Value = unicode(Value)
         try:
           Value = Value.decode('utf-8')
