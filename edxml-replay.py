@@ -41,6 +41,18 @@ from xml.sax import make_parser
 from xml.sax.xmlreader import AttributesImpl
 from edxml.EDXMLFilter import EDXMLEventEditor
 
+# This is a wrapper to create an unbuffered
+# version of sys.stdout.
+
+class UnbufferedStdout(object):
+   def __init__(self, Stream):
+       self.Stream = Stream
+   def write(self, Data):
+       self.Stream.write(Data)
+       self.Stream.flush()
+   def __getattr__(self, Attr):
+       return getattr(self.Stream, Attr)
+
 # We create a class based on EDXMLEventEditor,
 # overriding the EditEvent callback to inspect
 # the event timestamps, wait a little and
@@ -57,7 +69,7 @@ class EDXMLReplay(EDXMLEventEditor):
     # Create Sax parser
     self.SaxParser = make_parser()
     # Call parent class constructor
-    EDXMLEventEditor.__init__(self, self.SaxParser)
+    EDXMLEventEditor.__init__(self, self.SaxParser, UnbufferedStdout(sys.stdout))
     # Set self as content handler
     self.SaxParser.setContentHandler(self)
 
