@@ -95,6 +95,10 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     """EDXMLDefinitions instance"""
     self.Definitions = EDXMLDefinitions()
+
+    # We want the EDXMLDefinitions instance to call our
+    # error handler, so anyone who wishes to extend the EDXMLParser
+    # class can reimplement it to handle all generated errors.
     self.Definitions.Error = self.Error
     
     XMLFilterBase.__init__(self, upstream)
@@ -180,11 +184,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     elif name == 'source':
       Url = attrs.get('url')
-      try:
-        self.Definitions.AddSource(Url, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
-        
+      self.Definitions.AddSource(Url, dict(attrs.items()))
 
     elif name == 'eventtype':
       self.CurrentEventTypeProperties = []
@@ -193,10 +193,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         self.NewEventType = False
       else:
         self.NewEventType = True
-      try:
-        self.Definitions.AddEventType(self.CurrentEventTypeName, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.AddEventType(self.CurrentEventTypeName, dict(attrs.items()))
       
     elif name == 'property':
       PropertyName = attrs.get('name')
@@ -207,16 +204,10 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
           # property is not known in the existing eventtype
           # definition.
           self.Error("Property %s of eventtype %s did not exist in previous definition of this eventtype." % (( PropertyName, self.CurrentEventTypeName )) )
-      try:
-        self.Definitions.AddProperty(self.CurrentEventTypeName, PropertyName, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.AddProperty(self.CurrentEventTypeName, PropertyName, dict(attrs.items()))
       
     elif name == 'parent':
-      try:
-        self.Definitions.SetEventTypeParent(self.CurrentEventTypeName, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.SetEventTypeParent(self.CurrentEventTypeName, dict(attrs.items()))
           
     elif name == 'relation':
       Property1Name = attrs.get('property1')
@@ -227,10 +218,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
           # the previous eventtype definition.
           self.Error("Relation between %s and %s in eventtype %s did not exist in previous definition of this eventtype." % (( Property1Name, Property2Name, self.CurrentEventTypeName )) )
       
-      try:
-        self.Definitions.AddRelation(self.CurrentEventTypeName, Property1Name, Property2Name, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.AddRelation(self.CurrentEventTypeName, Property1Name, Property2Name, dict(attrs.items()))
           
     elif name == 'event':
       self.ExplicitEventParents = []
@@ -249,10 +237,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       
     elif name == 'objecttype':
       ObjectTypeName = attrs.get('name')
-      try:
-        self.Definitions.AddObjectType(ObjectTypeName, dict(attrs.items()))
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.AddObjectType(ObjectTypeName, dict(attrs.items()))
   
   def endElement(self, name):
 
@@ -289,18 +274,12 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     elif name == 'eventtype':
       if not self.NewEventType:
-        try:
-          self.Definitions.CheckEventTypePropertyConsistency(self.CurrentEventTypeName, self.CurrentEventTypeProperties)
-        except EDXMLError as Error:
-          self.Error(str(Error))
+        self.Definitions.CheckEventTypePropertyConsistency(self.CurrentEventTypeName, self.CurrentEventTypeProperties)
 
     elif name == 'objecttypes':
       # Check if all objecttypes that properties
       # refer to are actually defined.
-      try:
-        self.Definitions.CheckPropertyObjectTypes()
-      except EDXMLError as Error:
-        self.Error(str(Error))
+      self.Definitions.CheckPropertyObjectTypes()
 
     elif name == 'events':
       self.EndOfStream()
