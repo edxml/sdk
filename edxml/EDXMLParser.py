@@ -100,9 +100,6 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     XMLFilterBase.__init__(self, upstream)
     EDXMLBase.__init__(self)
 
-  def Error(self, Message):
-    raise EDXMLError(Message)
-  
   def EndOfStream(self):
     """This function can be overridden to finish
     processing the event stream."""
@@ -186,7 +183,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.AddSource(Url, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
         
 
     elif name == 'eventtype':
@@ -199,7 +196,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.AddEventType(self.CurrentEventTypeName, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
       
     elif name == 'property':
       PropertyName = attrs.get('name')
@@ -213,13 +210,13 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.AddProperty(self.CurrentEventTypeName, PropertyName, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
       
     elif name == 'parent':
       try:
         self.Definitions.SetEventTypeParent(self.CurrentEventTypeName, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
           
     elif name == 'relation':
       Property1Name = attrs.get('property1')
@@ -233,7 +230,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.AddRelation(self.CurrentEventTypeName, Property1Name, Property2Name, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
           
     elif name == 'event':
       self.ExplicitEventParents = []
@@ -255,7 +252,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.AddObjectType(ObjectTypeName, dict(attrs.items()))
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
   
   def endElement(self, name):
 
@@ -295,7 +292,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
         try:
           self.Definitions.CheckEventTypePropertyConsistency(self.CurrentEventTypeName, self.CurrentEventTypeProperties)
         except EDXMLError as Error:
-          self.Error(Error)
+          self.Error(str(Error))
 
     elif name == 'objecttypes':
       # Check if all objecttypes that properties
@@ -303,7 +300,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       try:
         self.Definitions.CheckPropertyObjectTypes()
       except EDXMLError as Error:
-        self.Error(Error)
+        self.Error(str(Error))
 
     elif name == 'events':
       self.EndOfStream()
@@ -369,7 +366,7 @@ class EDXMLValidatingParser(EDXMLParser):
     Schema = etree.RelaxNG(SchemaString)
     try:
       Schema.assertValid(etree.fromstring(self.DefinitionsXMLStringIO.getvalue()))
-    except etree.DocumentInvalid as ValidationError:
+    except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
       self.Error("Invalid EDXML detected in the generated <definitions> section: %s\nThe RelaxNG validator generated the following error: %s" % (( self.DefinitionsXMLStringIO.getvalue(), ValidationError )) )
 
   # Overridden from EDXMLParser
