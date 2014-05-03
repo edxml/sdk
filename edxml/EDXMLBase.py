@@ -266,9 +266,12 @@ class EDXMLBase():
         self.Error("EDXMLBase::ValidateObject: Invalid string data type: %s" % DataType)
 
       # Check length of object value
-      StringLength = int(ObjectDataType[1])
-      if StringLength > 0 and len(Value) > StringLength:
-        self.Error("EDXMLBase::ValidateObject: string too long for object type %s: '%s'" % (( ObjectTypeName, Value )))
+      if Value == '':
+        self.Error("EDXMLBase::ValidateObject: Value of %s object is empty." % ObjectTypeName)
+      MaxStringLength = int(ObjectDataType[1])
+      if MaxStringLength > 0:
+        if len(Value) > MaxStringLength:
+          self.Error("EDXMLBase::ValidateObject: string too long for object type %s: '%s'" % (( ObjectTypeName, Value )))
 
       # Check character set of object value
       if len(ObjectDataType) < 4 or 'u' not in ObjectDataType[3]:
