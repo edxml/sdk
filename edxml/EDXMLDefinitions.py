@@ -1132,13 +1132,14 @@ class EDXMLDefinitions(EDXMLBase):
     XMLGenerator.startElement('source', AttributesImpl(self.GetSourceURLProperties(SourceUrl)))
     XMLGenerator.endElement('source')
       
-  def GenerateXMLDefinitions(self, XMLGenerator):
+  def GenerateXMLDefinitions(self, XMLGenerator, IncludeSources = True):
     """Generates a full EDXML <definitions> section, containing
-    all known event types, event types and sources.
+    all known event types, event types and optionally sources.
     
     Parameters:
     
-    XMLGenerator -- Sax XMLGenerator instance
+    XMLGenerator   -- Sax XMLGenerator instance
+    IncludeSources -- Optional boolean, include source definitions yes or no (default is True)
     
     """
     
@@ -1172,9 +1173,10 @@ class EDXMLDefinitions(EDXMLBase):
     XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
     XMLGenerator.startElement('sources', AttributesImpl({}))
     Indent += 2
-    
-    for SourceUrl in self.GetSourceURLs():
-      self.GenerateEventSourceXML(SourceUrl, XMLGenerator, Indent)
+
+    if IncludeSources:
+      for SourceUrl in self.GetSourceURLs():
+        self.GenerateEventSourceXML(SourceUrl, XMLGenerator, Indent)
     
     XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
     XMLGenerator.endElement('sources')
