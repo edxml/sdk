@@ -381,7 +381,7 @@ class EDXMLWriter(EDXMLBase):
     """Opens a <relations> section for defining property relations."""
     self.OpenElement("relations")
 
-  def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Confidence):
+  def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Confidence, Directed = True):
     """Adds a property relation to an event definition.
     Parameters:
     
@@ -390,6 +390,7 @@ class EDXMLWriter(EDXMLBase):
     Type              -- Relation type including predicate
     Description       -- Relation description
     Confidence        -- Floating point confidence value
+    Directed          -- Boolean indicating if relation is directed or not
     
     """
 
@@ -398,7 +399,8 @@ class EDXMLWriter(EDXMLBase):
       'property2': PropertyName2,
       'description': Description,
       'confidence': "%1.2f" % float(Confidence),
-      'type': Type
+      'type': Type,
+      'directed': ['false', 'true'][int(Directed)]
       })
 
   def CloseEventDefinitionRelations(self):

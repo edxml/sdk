@@ -144,6 +144,7 @@ class EDXMLDefinitions(EDXMLBase):
       'relation': {
         'property1':   {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
         'property2':   {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
+        'directed':    {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'true'},
         'description': {'mandatory': True,  'length': 255,  'pattern': None},
         'type':        {'mandatory': True,  'length': 32,   'pattern': self.RelationTypePattern},
         'confidence':  {'mandatory': True,  'length': None, 'pattern': self.DecimalPattern}
