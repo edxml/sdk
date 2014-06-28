@@ -155,6 +155,7 @@ class EDXMLDefinitions(EDXMLBase):
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
         'fuzzy-matching':    {'mandatory': False, 'length': None, 'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
         'compress':          {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
+        'enp':               {'mandatory': False, 'length': None, 'pattern': None, 'default': '0'},
         'data-type':         {'mandatory': True,  'length': None, 'pattern': self.DataTypePattern}
       },
       'source': {
