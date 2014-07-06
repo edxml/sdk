@@ -72,7 +72,8 @@ class EDXMLDefinitions(EDXMLBase):
     self.RelationPredicates = set()
     self.RequiredObjectTypes = set()
     self.EntityProperties = {}
-    
+    self.CompiledObjectTypePatterns = {}
+
     # These arrays hold names of event types,
     # properties and sources, in the exact
     # order they were encountered
@@ -156,6 +157,7 @@ class EDXMLDefinitions(EDXMLBase):
         'fuzzy-matching':    {'mandatory': False, 'length': None, 'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
         'compress':          {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
         'enp':               {'mandatory': False, 'length': None, 'pattern': None, 'default': '0'},
+        'regexp':            {'mandatory': False, 'length': 128,  'pattern': None},
         'data-type':         {'mandatory': True,  'length': None, 'pattern': self.DataTypePattern}
       },
       'source': {
@@ -547,6 +549,14 @@ class EDXMLDefinitions(EDXMLBase):
     self.ValidateEdxmlEntityAttributes('objecttype', Attributes)
     self.ValidateDataType(ObjectTypeName, Attributes['data-type'])
 
+    if 'regexp' in Attributes:
+      try:
+        # Note that XML schema regular expressions match the entire object
+        # value. We wrap the expression in anchors to mimic this behavior
+        self.CompiledObjectTypePatterns[ObjectTypeName] = re.compile('^%s$' % Attributes['regexp'])
+      except sre_constants.error as Except:
+        self.Error('Definition of object type %s has an invalid regular expresion: "%s"' % (( ObjectTypeName, Attributes['regexp'] )) )
+
     self.ObjectTypes[ObjectTypeName] = Attributes
     self.ObjectTypeNames.append(ObjectTypeName)
 
@@ -830,7 +840,7 @@ class EDXMLDefinitions(EDXMLBase):
           if len(Value) > self.EDXMLEntityAttributes[EntityName][Attribute]['length']:
             self.Error("Value of %s attribute %s is too long: %s " % (( EntityName, Attribute, Value )))
         if self.EDXMLEntityAttributes[EntityName][Attribute]['pattern']:
-          if re.match(self.EDXMLEntityAttributes[EntityName][Attribute]['pattern'], Value) == None:
+          if not re.match(self.EDXMLEntityAttributes[EntityName][Attribute]['pattern'], Value):
             self.Error("Value of %s attribute %s is invalid: %s " % (( EntityName, Attribute, Value )))
     
     UnknownAttributes = list(set(Attributes.keys()) - set(self.EDXMLEntityAttributes[EntityName].keys()))

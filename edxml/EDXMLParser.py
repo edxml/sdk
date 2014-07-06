@@ -232,8 +232,8 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     elif name == 'object':
       ObjectProperty  = attrs.get('property')
       ObjectValue = attrs.get('value')
-      self.EventObjects.append({'property': ObjectProperty, 'value': ObjectValue})
       self.ProcessObject(self.CurrentEventTypeName, ObjectProperty, ObjectValue)
+      self.EventObjects.append({'property': ObjectProperty, 'value': ObjectValue})
       
     elif name == 'objecttype':
       ObjectTypeName = attrs.get('name')
@@ -353,7 +353,7 @@ class EDXMLValidatingParser(EDXMLParser):
     # Validate the object value against its data type
     ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, ObjectProperty)
     ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
-    self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
+    self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'], self.Definitions.CompiledObjectTypePatterns.get(ObjectTypeName))
     
   # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
@@ -394,4 +394,3 @@ class EDXMLValidatingParser(EDXMLParser):
             for Object in EventObjects:
               EventObjectStrings.append("%s = %s" % (( Object['property'], Object['value'] )) )
             self.Error("An event of type %s has multiple objects of property %s, while it cannot have more than one due to its configured merge strategy or due to a implicit parent definition:\n%s" % (( EventTypeName, PropertyName, '\n'.join(EventObjectStrings))))
-

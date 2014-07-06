@@ -178,14 +178,15 @@ class EDXMLBase():
     
     self.Error("EDXMLBase::ValidateDataType: Object type %s has an unsupported data type: %s" % (( ObjectType, DataType )) )
 
-  def ValidateObject(self, Value, ObjectTypeName, DataType):
+  def ValidateObject(self, Value, ObjectTypeName, DataType, Regexp = None):
     """Validate an object value.
     Parameters:
     
     Value            -- Object value
     ObjectTypeName   -- Object type
     DataType         -- Data type of object
-    
+    Regexp           -- Optional regular expression for checking Value
+
     calls self.Error when value is invalid.
     
     """
@@ -262,7 +263,7 @@ class EDXMLBase():
             self.Warning("EDXMLBase::ValidateObject: Failed to convert value to unicode: '%s'. Some characters were replaced by the Unicode replacement character." % repr(Value) )
 
       # Check if data type matches regexp pattern
-      if re.match(self.StringDataTypePattern, DataType) == False:
+      if not re.match(self.StringDataTypePattern, DataType):
         self.Error("EDXMLBase::ValidateObject: Invalid string data type: %s" % DataType)
 
       # Check length of object value
@@ -280,14 +281,20 @@ class EDXMLBase():
           unicode(Value).encode('latin1')
         except:
           self.Error("EDXMLBase::ValidateObject: string of latin1 objecttype %s contains unicode characters: %s" % (( ObjectTypeName, Value )))
+      if Regexp:
+        if len(ObjectDataType) >= 4 and 'i' in ObjectDataType[3]:
+          # Perform regex matching on lower case string
+          Value = Value.lower()
+        if not re.match(Regexp, Value):
+          self.Error("EDXMLBase::ValidateObject: Object value '%s' of object type %s does not match regexp '%s' of the object type." % (( Value, ObjectTypeName, Regexp.pattern )) )
     elif ObjectDataType[0] == 'binstring':
       # Check if data type matches regexp pattern
-      if re.match(self.BinstringDataTypePattern, DataType) == False:
+      if not re.match(self.BinstringDataTypePattern, DataType):
         self.Error("EDXMLBase::ValidateObject: Invalid binstring data type: %s" % DataType)
       if ObjectDataType[1] > 0 and len(Value) > ObjectDataType[1]:
           self.Error("EDXMLBase::ValidateObject: binstring too long for object type %s: '%s'" % (( ObjectTypeName, Value )))
     elif ObjectDataType[0] == 'hashlink':
-      if re.match(self.HashlinkPattern, Value) == False:
+      if not re.match(self.HashlinkPattern, Value):
         self.Error("EDXMLBase::ValidateObject: Invalid hashlink: '%s'" % str(Value) )
     elif ObjectDataType[0] == 'ip':
       SplitIp = Value.split('.')
