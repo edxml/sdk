@@ -157,7 +157,7 @@ class EDXMLDefinitions(EDXMLBase):
         'fuzzy-matching':    {'mandatory': False, 'length': None, 'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
         'compress':          {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
         'enp':               {'mandatory': False, 'length': None, 'pattern': None, 'default': '0'},
-        'regexp':            {'mandatory': False, 'length': 128,  'pattern': None},
+        'regexp':            {'mandatory': False, 'length': 128,  'pattern': None, 'default': '[\s\S]*'},
         'data-type':         {'mandatory': True,  'length': None, 'pattern': self.DataTypePattern}
       },
       'source': {
@@ -549,7 +549,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.ValidateEdxmlEntityAttributes('objecttype', Attributes)
     self.ValidateDataType(ObjectTypeName, Attributes['data-type'])
 
-    if 'regexp' in Attributes:
+    if 'regexp' in Attributes and Attributes['regexp'] != '[\s\S]*':
       try:
         # Note that XML schema regular expressions match the entire object
         # value. We wrap the expression in anchors to mimic this behavior
