@@ -126,7 +126,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.EDXMLEntityAttributes = {
       'eventtype': {
         'name':           {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
-        'display-name':   {'mandatory': False, 'length': 64,   'pattern': self.DisplayNamePattern},
+        'display-name':   {'mandatory': False, 'length': 64,   'pattern': self.DisplayNamePattern, 'default': '/'},
         'description':    {'mandatory': True,  'length': 128,  'pattern': None},
         'classlist':      {'mandatory': True,  'length': None, 'pattern': None},
         'reporter-short': {'mandatory': True,  'length': None, 'pattern': None},
@@ -152,7 +152,7 @@ class EDXMLDefinitions(EDXMLBase):
       },
       'objecttype': {
         'name':              {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
-        'display-name':      {'mandatory': False, 'length': 64,   'pattern': None},
+        'display-name':      {'mandatory': False, 'length': 64,   'pattern': self.DisplayNamePattern, 'default': '/'},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
         'fuzzy-matching':    {'mandatory': False, 'length': None, 'pattern': self.FuzzyMatchingPattern, 'default': 'none'},
         'compress':          {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
