@@ -820,29 +820,27 @@ class EDXMLDefinitions(EDXMLBase):
   # Checks the attributes of a specific EDXML entity (eventtype, 
   # objecttype, relation, ...) against the constaints as specified in
   # self.EDXMLEntityAttributes.
+  #
+  # Automatically sets default values for missing attributes.
   # 
   # Internal use only.
   def ValidateEdxmlEntityAttributes(self, EntityName, Attributes):
 
     for Attribute in self.EDXMLEntityAttributes[EntityName]:
       
-      if Attribute in Attributes:
-        Value = Attributes[Attribute]
-      else:
+      if not Attribute in Attributes:
         if self.EDXMLEntityAttributes[EntityName][Attribute]['mandatory']:
           self.Error("Definition of %s lacks mandatory attribute '%s'." % (( EntityName, Attribute )) )
         else:
-          Value = None
-    
-      if Value:
-    
-        if self.EDXMLEntityAttributes[EntityName][Attribute]['length']:
-          if len(Value) > self.EDXMLEntityAttributes[EntityName][Attribute]['length']:
-            self.Error("Value of %s attribute %s is too long: %s " % (( EntityName, Attribute, Value )))
-        if self.EDXMLEntityAttributes[EntityName][Attribute]['pattern']:
-          if not re.match(self.EDXMLEntityAttributes[EntityName][Attribute]['pattern'], Value):
-            self.Error("Value of %s attribute %s is invalid: %s " % (( EntityName, Attribute, Value )))
-    
+          Attributes[Attribute] = self.EDXMLEntityAttributes[EntityName][Attribute]['default']
+
+      if self.EDXMLEntityAttributes[EntityName][Attribute]['length']:
+        if len(Attributes[Attribute]) > self.EDXMLEntityAttributes[EntityName][Attribute]['length']:
+          self.Error("Value of %s attribute %s is too long: %s " % (( EntityName, Attribute, Attributes[Attribute] )))
+      if self.EDXMLEntityAttributes[EntityName][Attribute]['pattern']:
+        if not re.match(self.EDXMLEntityAttributes[EntityName][Attribute]['pattern'], Attributes[Attribute]):
+          self.Error("Value of %s attribute %s is invalid: %s " % (( EntityName, Attribute, Attributes[Attribute] )))
+
     UnknownAttributes = list(set(Attributes.keys()) - set(self.EDXMLEntityAttributes[EntityName].keys()))
 
     if len(UnknownAttributes) > 0:
