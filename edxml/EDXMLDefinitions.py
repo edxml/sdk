@@ -135,7 +135,7 @@ class EDXMLDefinitions(EDXMLBase):
       'property': {
         'name':              {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
         'description':       {'mandatory': True,  'length': 128,  'pattern': None},
-        'similar':           {'mandatory': False, 'length': 64,   'pattern': None},
+        'similar':           {'mandatory': False, 'length': 64,   'pattern': None, 'default': ''},
         'object-type':       {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
         'unique':            {'mandatory': False, 'length': None, 'pattern': self.TrueFalsePattern, 'default': 'false'},
         'merge':             {'mandatory': False, 'length': None, 'pattern': self.MergeOptions,     'default': 'drop'},
