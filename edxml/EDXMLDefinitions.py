@@ -42,6 +42,13 @@ from lxml import etree
 from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesImpl
 
+try:
+  # SimpleXMLWriter is not a very common module.
+  from elementtree.SimpleXMLWriter import XMLWriter
+except ImportError:
+  sys.stderr.write('Failed to import the elementtree Python package. Please install it.\n')
+  sys.exit(1)
+
 class EDXMLDefinitions(EDXMLBase):
   """Class for managing information from EDXML <definitions> sections.
   
@@ -1061,140 +1068,187 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       return hashlib.sha1((SourceUrl + '\n' + EventTypeName + '\n' + '\n'.join(sorted(ObjectStrings)) + '\n' + EventContent).encode('utf-8')).hexdigest()
 
-  def GenerateEventTypeXML(self, EventTypeName, XMLGenerator, Indent = 0):
+  def GenerateEventTypeXML(self, EventTypeName, XMLGenerator):
     """Generates an EDXML fragment which defines specified
     eventtype. Can be useful for constructing new EDXML
     files based on existing event type definitions.
     
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+
     Arguments:
     
     EventTypeName -- Name of the event type
-    XMLGenerator  -- Sax XMLGenerator instance
-    Indent        -- Number of spaces of indentation in output lines (optional, defaults to zero)
+    XMLGenerator  -- XMLGenerator / XMLWriter instance
     
     """
     
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('eventtype', AttributesImpl(self.GetEventTypeAttributes(EventTypeName)))
-    Indent += 2
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('properties', AttributesImpl({}))
-    Indent += 2
-    
-    for PropertyName in self.GetEventTypeProperties(EventTypeName):
-    
-      XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-      XMLGenerator.startElement('property', AttributesImpl(self.GetPropertyAttributes(EventTypeName, PropertyName)))
-      XMLGenerator.endElement('property')
-  
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('properties')
-    Indent -= 2
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('relations', AttributesImpl({}))
-    Indent += 2
+    if not 'start' in dir(XMLGenerator):
 
-    for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
-      
-      XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-      XMLGenerator.startElement('relation', AttributesImpl(self.GetPropertyRelationAttributes(EventTypeName, RelationId)))
-      XMLGenerator.endElement('relation')
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('relations')
-    Indent -= 2
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('eventtype')
-    Indent -= 2
+      # Using SAX XML Generator:
 
-  def GenerateObjectTypeXML(self, ObjectTypeName, XMLGenerator, Indent = 0):
+      XMLGenerator.startElement('eventtype', AttributesImpl(self.GetEventTypeAttributes(EventTypeName)))
+      XMLGenerator.startElement('properties', AttributesImpl({}))
+
+      for PropertyName in self.GetEventTypeProperties(EventTypeName):
+
+        XMLGenerator.startElement('property', AttributesImpl(self.GetPropertyAttributes(EventTypeName, PropertyName)))
+        XMLGenerator.endElement('property')
+
+      XMLGenerator.endElement('properties')
+
+      XMLGenerator.startElement('relations', AttributesImpl({}))
+
+      for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
+
+        XMLGenerator.startElement('relation', AttributesImpl(self.GetPropertyRelationAttributes(EventTypeName, RelationId)))
+        XMLGenerator.endElement('relation')
+
+      XMLGenerator.endElement('relations')
+
+      XMLGenerator.endElement('eventtype')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.start('eventtype', self.GetEventTypeAttributes(EventTypeName))
+      XMLGenerator.start('properties')
+
+      for PropertyName in self.GetEventTypeProperties(EventTypeName):
+        XMLGenerator.element('property', '', self.GetPropertyAttributes(EventTypeName, PropertyName))
+
+      XMLGenerator.end('properties')
+
+      XMLGenerator.start('relations')
+
+      for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
+        XMLGenerator.element('relation', '', self.GetPropertyRelationAttributes(EventTypeName, RelationId))
+
+      XMLGenerator.end('relations')
+      XMLGenerator.end('eventtype')
+
+  def GenerateObjectTypeXML(self, ObjectTypeName, XMLGenerator):
     """Generates an EDXML fragment which defines specified
     object type. Can be useful for constructing new EDXML
     files based on existing object type definitions.
     
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+    
     Arguments:
     
     EventTypeName -- Name of the event type
-    XMLGenerator  -- Sax XMLGenerator instance
-    Indent        -- Number of spaces of indentation in output lines (optional, defaults to zero)
-    
+    XMLGenerator  -- XMLGenerator / XMLWriter instance
+
     """
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('objecttype', AttributesImpl(self.GetObjectTypeAttributes(ObjectTypeName)))
-    XMLGenerator.endElement('objecttype')
-    
-  def GenerateEventSourceXML(self, SourceUrl, XMLGenerator, Indent = 0):
+
+    if not 'start' in dir(XMLGenerator):
+
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('objecttype', AttributesImpl(self.GetObjectTypeAttributes(ObjectTypeName)))
+      XMLGenerator.endElement('objecttype')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.element('objecttype', '', self.GetObjectTypeAttributes(ObjectTypeName))
+
+  def GenerateEventSourceXML(self, SourceUrl, XMLGenerator):
     """Generates an EDXML fragment which defines specified
     event source. Can be useful for constructing new EDXML
     files based on existing event source definitions.
     
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+    
     EventTypeName -- Name of the event type
-    XMLGenerator  -- Sax XMLGenerator instance
-    Indent        -- Number of spaces of indentation in output lines (optional, defaults to zero)
+    XMLGenerator  -- XMLGenerator / XMLWriter instance
 
     """
-  
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('source', AttributesImpl(self.GetSourceURLProperties(SourceUrl)))
-    XMLGenerator.endElement('source')
-      
+
+    if not 'start' in dir(XMLGenerator):
+
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('source', AttributesImpl(self.GetSourceURLProperties(SourceUrl)))
+      XMLGenerator.endElement('source')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.element('source', '', self.GetSourceURLProperties(SourceUrl))
+
   def GenerateXMLDefinitions(self, XMLGenerator, IncludeSources = True):
     """Generates a full EDXML <definitions> section, containing
     all known event types, event types and optionally sources.
     
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+
     Parameters:
     
-    XMLGenerator   -- Sax XMLGenerator instance
+    XMLGenerator   -- XMLGenerator / XMLWriter instance
     IncludeSources -- Optional boolean, include source definitions yes or no (default is True)
     
     """
-    
-    Indent = 2
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('definitions', AttributesImpl({}))
-    Indent += 2
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('eventtypes', AttributesImpl({}))
-    Indent += 2
-    
-    for EventTypeName in self.GetEventTypeNames():
-      self.GenerateEventTypeXML(EventTypeName, XMLGenerator, Indent)
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('eventtypes')
-    Indent -= 2
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('objecttypes', AttributesImpl({}))
-    Indent += 2
-    
-    for ObjectTypeName in self.GetObjectTypeNames():
-      self.GenerateObjectTypeXML(ObjectTypeName, XMLGenerator, Indent)
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('objecttypes')
-    Indent -= 2
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.startElement('sources', AttributesImpl({}))
-    Indent += 2
 
-    if IncludeSources:
-      for SourceUrl in self.GetSourceURLs():
-        self.GenerateEventSourceXML(SourceUrl, XMLGenerator, Indent)
-    
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('sources')
-    Indent -= 2
+    if not 'start' in dir(XMLGenerator):
 
-    XMLGenerator.ignorableWhitespace('\n'.ljust(Indent))
-    XMLGenerator.endElement('definitions')
-    Indent -= 2
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('definitions', AttributesImpl({}))
+      XMLGenerator.startElement('eventtypes', AttributesImpl({}))
+
+      for EventTypeName in self.GetEventTypeNames():
+        self.GenerateEventTypeXML(EventTypeName, XMLGenerator)
+
+      XMLGenerator.endElement('eventtypes')
+
+      XMLGenerator.startElement('objecttypes', AttributesImpl({}))
+
+      for ObjectTypeName in self.GetObjectTypeNames():
+        self.GenerateObjectTypeXML(ObjectTypeName, XMLGenerator)
+
+      XMLGenerator.endElement('objecttypes')
+
+      XMLGenerator.startElement('sources', AttributesImpl({}))
+
+      if IncludeSources:
+        for SourceUrl in self.GetSourceURLs():
+          self.GenerateEventSourceXML(SourceUrl, XMLGenerator)
+
+      XMLGenerator.endElement('sources')
+      XMLGenerator.endElement('definitions')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.start('definitions')
+      XMLGenerator.start('eventtypes')
+
+      for EventTypeName in self.GetEventTypeNames():
+        self.GenerateEventTypeXML(EventTypeName, XMLGenerator)
+
+      XMLGenerator.end('eventtypes')
+      XMLGenerator.start('objecttypes')
+
+      for ObjectTypeName in self.GetObjectTypeNames():
+        self.GenerateObjectTypeXML(ObjectTypeName, XMLGenerator)
+
+      XMLGenerator.end('objecttypes')
+      XMLGenerator.start('sources')
+
+      if IncludeSources:
+        for SourceUrl in self.GetSourceURLs():
+          self.GenerateEventSourceXML(SourceUrl, XMLGenerator)
+
+      XMLGenerator.end('sources')
+      XMLGenerator.end('definitions')
 
   def OpenXSD(self):
     """Start generating an XSD schema from stored
