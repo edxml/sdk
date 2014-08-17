@@ -1455,25 +1455,38 @@ class EDXMLDefinitions(EDXMLBase):
     
     self.OpenElementRelaxNG('element').set('name', 'eventtype')
     for Attribute, Value in self.GetEventTypeAttributes(EventTypeName).items():
+      OptionalAttribute = False
+      if self.EDXMLEntityAttributes['eventtype'][Attribute]['mandatory'] == False and Value == self.EDXMLEntityAttributes['eventtype'][Attribute]['default']:
+        OptionalAttribute = True
+        self.OpenElementRelaxNG('optional')
       self.OpenElementRelaxNG('attribute').set('name', Attribute)
       self.OpenElementRelaxNG('value').set('type', 'string')
       self.CurrentElementRelaxNG.text = Value
       self.CloseElementRelaxNG()
       self.CloseElementRelaxNG()
-      
+      if OptionalAttribute:
+        self.CloseElementRelaxNG()
+
     self.OpenElementRelaxNG('element').set('name', 'properties')
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
     for EventPropertyName in self.GetEventTypeProperties(EventTypeName):
       self.OpenElementRelaxNG('element').set('name', 'property')
       for Attribute, Value in self.GetPropertyAttributes(EventTypeName, EventPropertyName).items():
+        OptionalAttribute = False
+        if self.EDXMLEntityAttributes['property'][Attribute]['mandatory'] == False and Value == self.EDXMLEntityAttributes['property'][Attribute]['default']:
+          OptionalAttribute = True
+          self.OpenElementRelaxNG('optional')
         self.OpenElementRelaxNG('attribute').set('name', Attribute)
         self.OpenElementRelaxNG('value').set('type', 'string')
         self.CurrentElementRelaxNG.text = Value
         self.CloseElementRelaxNG()
         self.CloseElementRelaxNG()
+        if OptionalAttribute:
+          self.CloseElementRelaxNG()
+
       self.CloseElementRelaxNG()
-      
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
@@ -1487,11 +1500,18 @@ class EDXMLDefinitions(EDXMLBase):
       for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
         self.OpenElementRelaxNG('element').set('name', 'relation')
         for Attribute, Value in self.GetPropertyRelationAttributes(EventTypeName, RelationId).items():
+          OptionalAttribute = False
+          if self.EDXMLEntityAttributes['relation'][Attribute]['mandatory'] == False and Value == self.EDXMLEntityAttributes['relation'][Attribute]['default']:
+            OptionalAttribute = True
+            self.OpenElementRelaxNG('optional')
           self.OpenElementRelaxNG('attribute').set('name', Attribute)
           self.OpenElementRelaxNG('value').set('type', 'string')
           self.CurrentElementRelaxNG.text = Value
           self.CloseElementRelaxNG()
           self.CloseElementRelaxNG()
+          if OptionalAttribute:
+            self.CloseElementRelaxNG()
+
         self.CloseElementRelaxNG()
       
     else:
@@ -1535,11 +1555,18 @@ class EDXMLDefinitions(EDXMLBase):
       
     self.OpenElementRelaxNG('element').set('name', 'objecttype')
     for Attribute, Value in self.GetObjectTypeAttributes(ObjectTypeName).items():
+      OptionalAttribute = False
+      if self.EDXMLEntityAttributes['objecttype'][Attribute]['mandatory'] == False and Value == self.EDXMLEntityAttributes['objecttype'][Attribute]['default']:
+        OptionalAttribute = True
+        self.OpenElementRelaxNG('optional')
       self.OpenElementRelaxNG('attribute').set('name', Attribute)
       self.OpenElementRelaxNG('value').set('type', 'string')
       self.CurrentElementRelaxNG.text = Value
       self.CloseElementRelaxNG()
       self.CloseElementRelaxNG()
+      if OptionalAttribute:
+        self.CloseElementRelaxNG()
+
     self.CloseElementRelaxNG()
     return
   
