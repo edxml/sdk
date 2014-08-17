@@ -94,32 +94,12 @@ class EDXMLStreamFilter(EDXMLParser):
       EDXMLParser.startElement(self, name, attrs)
       self.Passthrough.startElement(name, attrs)
   
-  def startElementNS(self, name, qname, attrs):
-  
-    if self.OutputEnabled:
-      self.Passthrough.startElementNS(name, qname, attrs)
-  
   def endElement(self, name):
   
     if self.OutputEnabled:
       EDXMLParser.endElement(self, name)
       self.Passthrough.endElement(name)
   
-  def endElementNS(self, name, qname):
-  
-    if self.OutputEnabled:
-      self.Passthrough.endElementNS(name, qname)
-  
-  def processingInstruction(self, target, body):
-
-    if self.OutputEnabled:
-      self.Passthrough.processingInstruction(target, body)
-  
-  def comment(self, body):
-  
-    if self.OutputEnabled:
-      self.Passthrough.comment(body)
-
   def characters(self, text):
 
     if self.OutputEnabled:
