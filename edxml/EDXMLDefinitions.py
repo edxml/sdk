@@ -99,7 +99,7 @@ class EDXMLDefinitions(EDXMLBase):
     # Some validation patterns
   
     self.SimpleNamePattern    = re.compile("^[a-z0-9-]*$")
-    self.DisplayNamePattern   = re.compile("^[ a-zA-Z0-9]+/[ a-zA-Z0-9]+$")
+    self.DisplayNamePattern   = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
     self.DecimalPattern       = re.compile("^[0-9.]+$")
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
