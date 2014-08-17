@@ -1241,6 +1241,8 @@ class EDXMLDefinitions(EDXMLBase):
         self.CurrentElementXSD.set('name', Attribute)
         self.CurrentElementXSD.set('type', 'xs:string')
         self.CurrentElementXSD.set('fixed', Value)
+        if self.EDXMLEntityAttributes['property'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['property'][Attribute]['default']:
+          self.CurrentElementXSD.set('use', 'required')
         self.CloseElementXSD()
       self.CloseElementXSD()
       self.CloseElementXSD()
@@ -1261,6 +1263,8 @@ class EDXMLDefinitions(EDXMLBase):
         self.CurrentElementXSD.set('name', Attribute)
         self.CurrentElementXSD.set('type', 'xs:string')
         self.CurrentElementXSD.set('fixed', Value)
+        if self.EDXMLEntityAttributes['relation'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['relation'][Attribute]['default']:
+          self.CurrentElementXSD.set('use', 'required')
         self.CloseElementXSD()
       self.CloseElementXSD()
       self.CloseElementXSD()
@@ -1275,6 +1279,8 @@ class EDXMLDefinitions(EDXMLBase):
       self.CurrentElementXSD.set('name', Attribute)
       self.CurrentElementXSD.set('type', 'xs:string')
       self.CurrentElementXSD.set('fixed', Value)
+      if self.EDXMLEntityAttributes['eventtype'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['eventtype'][Attribute]['default']:
+        self.CurrentElementXSD.set('use', 'required')
       self.CloseElementXSD()
     
     self.CloseElementXSD()
@@ -1297,6 +1303,8 @@ class EDXMLDefinitions(EDXMLBase):
       self.CurrentElementXSD.set('name', Attribute)
       self.CurrentElementXSD.set('type', 'xs:string')
       self.CurrentElementXSD.set('fixed', Value)
+      if self.EDXMLEntityAttributes['objecttype'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['objecttype'][Attribute]['default']:
+        self.CurrentElementXSD.set('use', 'required')
       self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
@@ -1332,7 +1340,6 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementXSD('sequence')
 
     for ObjectTypeName in self.GetObjectTypeNames():
-      print ObjectTypeName
       self.GenerateObjectTypeXSD(ObjectTypeName)
     
     self.CloseElementXSD()
@@ -1351,6 +1358,7 @@ class EDXMLDefinitions(EDXMLBase):
         self.CurrentElementXSD.set('name', Attribute)
         self.CurrentElementXSD.set('type', 'xs:string')
         self.CurrentElementXSD.set('fixed', Value)
+        self.CurrentElementXSD.set('use', 'required')
         self.CloseElementXSD()
       self.CloseElementXSD()
       self.CloseElementXSD()
@@ -1381,10 +1389,12 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementXSD('attribute')
     self.CurrentElementXSD.set('name', 'source-id')
     self.CurrentElementXSD.set('type', 'xs:string')
+    self.CurrentElementXSD.set('use', 'required')
     self.CloseElementXSD()
     self.OpenElementXSD('attribute')
     self.CurrentElementXSD.set('name', 'event-type')
     self.CurrentElementXSD.set('type', 'xs:string')
+    self.CurrentElementXSD.set('use', 'required')
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
