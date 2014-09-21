@@ -59,10 +59,11 @@ class UnbufferedStdout(object):
 # output the event.
 
 class EDXMLReplay(EDXMLEventEditor):
-  def __init__ (self, SpeedMultiplier):
+  def __init__ (self, SpeedMultiplier, BufferStufferEnabled):
 
     self.TimeShift = None
     self.SpeedMultiplier = SpeedMultiplier
+    self.BufferStufferEnabled = BufferStufferEnabled
     self.TimestampProperties = []
     self.KnownProperties = []
 
@@ -79,6 +80,10 @@ class EDXMLReplay(EDXMLEventEditor):
     TimestampObjects = []
     NewEventObjects = []
     CurrentEventTimestamp = 0
+
+    if self.BufferStufferEnabled:
+      # Generate a 4K comment.
+      print('<!-- ' + 'x' * 4096 +' -->')
 
     # Find all timestamps in event
     for Object in EventObjects:
@@ -154,6 +159,11 @@ def PrintHelp():
                       time appear to pass faster, a value smaller than 1.0 slows down
                       event output. Default value is 1.0.
 
+     -b               Enable the "Buffer Stuffer", which inserts bogus comments between
+                      the output events. Some applications may buffer their input, resulting
+                      in high response latency when feeding them with events at very low rates.
+                      This option may help to "write through" their input buffer.
+
    Example:
 
      cat data.edxml | edxml-replay.py -s 10
@@ -163,6 +173,7 @@ def PrintHelp():
 InputFile = ''
 SpeedMultiplier = 1.0
 CurrOption = 1
+BufferStufferEnabled = False
 
 while CurrOption < len(sys.argv):
 
@@ -178,9 +189,12 @@ while CurrOption < len(sys.argv):
     CurrOption += 1
     SpeedMultiplier = 1.0 / (1e-9 + float(sys.argv[CurrOption]))
 
+  elif sys.argv[CurrOption] == '-b':
+    BufferStufferEnabled = True
+
   CurrOption += 1
 
-ReplayFilter = EDXMLReplay(SpeedMultiplier)
+ReplayFilter = EDXMLReplay(SpeedMultiplier, BufferStufferEnabled)
 
 # Now we feed EDXML data into the Sax parser from EDXMLReplay. This
 # will trigger calls to ProcessEvent in our EDXMLReplay class, producing output.
