@@ -437,24 +437,34 @@ class EDXMLWriter(EDXMLBase):
     """Opens a <objecttypes> section for defining object types."""
     self.OpenElement("objecttypes")
 
-  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none'):
+  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none', DisplayName = None, Compress = False, ENP = 0, Regex = None):
     """Adds a object type definition.
     Parameters:
-    
+
     Name            -- Name of object type
     Description     -- Description of object type
     ObjectDataType  -- Data type
     FuzzyMatching   -- Fuzzy matching technique (optional, defaults to none)
-    
+    DisplayName     -- Display name (optional, defaults to none)
+    Compress        -- Use data compression (True) or not (False) (optional, defaults to False)
+    ENP             -- Entity Naming Priority (optional, defaults to zero)
+
     """
 
     Attributes = {
       'name':           Name,
       'description':    Description,
       'data-type':      ObjectDataType,
-      'fuzzy-matching': FuzzyMatching
+      'fuzzy-matching': FuzzyMatching,
+      'compress':       ['false', 'true'][int(Compress)],
+      'enp':            str(ENP)
       }
-    
+
+    if DisplayName:
+      Attributes['display-name'] = DisplayName
+    if Regex:
+      Attributes['regex'] = Regex
+
     self.AddElement("objecttype", Attributes)
     
   def CloseObjectTypes(self):
