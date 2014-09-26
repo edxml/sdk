@@ -339,11 +339,21 @@ class EDXMLWriter(EDXMLBase):
     if DisplayName:
       Attributes['display-name'] = DisplayName
 
+  def AddEventTypeParent(self, EventTypeName, PropertyMapping):
+    """Adds a parent to an event definition.
+    Parameters:
+
+    EventTypeName     -- Name of the parent eventtype
+    PropertyMapping   -- Value of the EDXML propertymap attribute
+
+    """
+    self.AddElement("property", { 'eventtype': EventTypeName, 'propertymap': PropertyMapping})
+
   def OpenEventDefinitionProperties(self):
     """Opens a <properties> section for defining eventtype properties."""
     self.OpenElement("properties")
 
-  def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = 'drop'):
+  def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = 'drop', Similar = None):
     """Adds a property to an event definition.
     Parameters:
     
@@ -354,6 +364,7 @@ class EDXMLWriter(EDXMLBase):
     EntityConfideuce  -- Floating point confidence (optional, default is zero)
     Unique            -- Property is unique or not (optional, default is False)
     Merge             -- Merge strategy (only for unique properties)
+    Similar           -- Optional EDXML similar attribute value
     
     """
 
@@ -373,6 +384,10 @@ class EDXMLWriter(EDXMLBase):
     if DefinesEntity:
       Attributes['defines-entity'] = 'true'
       Attributes['entity-confidence'] = "%1.2f" % float(EntityConfidence)
+
+    if Similar:
+      Attributes['similar'] = Similar
+
 
     self.AddElement("property", Attributes)
       
