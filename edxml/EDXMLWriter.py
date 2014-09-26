@@ -315,7 +315,7 @@ class EDXMLWriter(EDXMLBase):
     """Opens an <eventtypes> block"""
     self.OpenElement("eventtypes")
 
-  def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong):
+  def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = None):
     """Opens an event type definition.
     Parameters:
     
@@ -324,17 +324,20 @@ class EDXMLWriter(EDXMLBase):
     ClassList     -- String containing a comma seperated list of class names
     ReporterShort -- Short reporter string. Please refer to the specification for details.
     LongReporter  -- Long reporter string. Please refer to the specification for details.
+    DisplayName   -- EDXML display-name attribute (optional, defaults to none)
     
     """
 
     self.OpenElement("eventtype", {
-      'name': Name, 
+      'name': Name,
       'description': Description,
       'classlist': ClassList,
       'reporter-short': ReporterShort,
       'reporter-long': ReporterLong
       })
 
+    if DisplayName:
+      Attributes['display-name'] = DisplayName
 
   def OpenEventDefinitionProperties(self):
     """Opens a <properties> section for defining eventtype properties."""
