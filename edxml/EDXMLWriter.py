@@ -509,6 +509,7 @@ class EDXMLWriter(EDXMLBase):
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
+    if self.ElementStack[-1] != 'events': self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
     self.OpenElement("eventgroups")
 
   def OpenEventGroup(self, EventTypeName, SourceId):
@@ -544,6 +545,8 @@ class EDXMLWriter(EDXMLBase):
 
     """
 
+    if self.ElementStack[-1] != 'eventgroup': self.Error('An <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
+
     if self.Validate:
       # We enable buffering at this point, until we know
       # for certain that the event is valid. If the event
@@ -565,6 +568,8 @@ class EDXMLWriter(EDXMLBase):
     IgnoreInvalid      -- Generate a warning in stead of an error for invalid values (Optional, default is False)
 
     """
+
+    if self.ElementStack[-1] != 'event': self.Error('An <object> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
 
     if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
       self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
@@ -609,6 +614,8 @@ class EDXMLWriter(EDXMLBase):
     ContentString -- Object value
     
     """
+    if self.ElementStack[-1] != 'event': self.Error('A <content> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
+
     if len(ContentString) > 0:
       self.OpenElement('content')
       self.XMLGenerator.characters(self.Escape(ContentString))
@@ -624,6 +631,8 @@ class EDXMLWriter(EDXMLBase):
     
     """
 
+    if self.ElementStack[-1] != 'event': self.Error('A <translation> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
+
     if len(TranslationString) > 0:
       self.OpenElement("translation", {'language': Language, 'interpreter': Interpreter})
       self.XMLGenerator.characters(self.Escape(TranslationString))
@@ -633,6 +642,8 @@ class EDXMLWriter(EDXMLBase):
 
   def CloseEvent(self):
     """Closes a previously opened event"""
+
+    if self.ElementStack[-1] != 'event': self.Error('Attempt to close an <event> tag without a corresponding opening tag.')
 
     try:
       # This triggers event structure validation.
@@ -701,6 +712,8 @@ class EDXMLWriter(EDXMLBase):
 
   def CloseEventGroups(self):
     """Closes a previously opened <eventgroups> section"""
+    if self.ElementStack[-1] != 'eventgroups': self.Error('Unbalanced <eventgroups> tag. Did you forget to call CloseEventGroup()?')
+
     self.CloseElement()
     self.CloseElement()
 
