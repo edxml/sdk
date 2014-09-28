@@ -196,7 +196,7 @@ class EDXMLBase():
     if ObjectDataType[0] == 'timestamp':
       try:
         float(Value)
-      except ValueError:
+      except:
         self.Error("Invalid timestamp '%s' of object type %s." % (( str(Value), ObjectTypeName )))
     elif ObjectDataType[0] == 'number':
       if ObjectDataType[1] == 'decimal':
@@ -217,7 +217,7 @@ class EDXMLBase():
       elif ObjectDataType[1] == 'float' or ObjectDataType[1] == 'double':
         try:
           float(Value)
-        except ValueError:
+        except:
           self.Error("Invalid number '%s' of object type %s." % (( str(Value), ObjectTypeName )))
         if len(ObjectDataType) < 3:
           # number is unsigned.
@@ -237,7 +237,7 @@ class EDXMLBase():
         try:
           GeoLat = float(SplitGeoPoint[0])
           GeoLon = float(SplitGeoPoint[1])
-        except ValueError:
+        except:
           self.Error("The geo:point value '%s' is not formatted correctly." % str(Value))
           return
         if GeoLat < -90 or GeoLat > 90:
@@ -304,7 +304,7 @@ class EDXMLBase():
         try:
           if not 0 <= int(SplitIpPart) <= 255:
             self.Error("EDXMLBase::ValidateObject: Invalid IP address: '%s'" % str(Value) )
-        except ValueError:
+        except:
             self.Error("EDXMLBase::ValidateObject: Invalid IP address: '%s'" % str(Value) )
     elif ObjectDataType[0] == 'boolean':
       ObjectString = Value.lower()
@@ -327,7 +327,10 @@ class EDXMLBase():
       elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
         return u'%d' % int(Value)
       else:
-        return u'%f' % float(Value)
+        try:
+          return u'%f' % float(Value)
+        except Exception as Except:
+          self.Error("NormalizeObject: Invalid non-integer: '%s': %s" % (( Value, Except )))
     elif DataType[0] == 'ip':
       try:
         Octets = Value.split('.')
