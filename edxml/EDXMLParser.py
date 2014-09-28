@@ -301,10 +301,19 @@ class EDXMLValidatingParser(EDXMLParser):
   is implemented by overriding the DefinitionsLoaded, ProcessObject and
   ProcessEvent calls."""  
   
-  def __init__ (self, upstream, SkipEvents = False):
+  def __init__ (self, upstream, SkipEvents = False, ValidateObjects = True):
+    """Constructor.
 
+    Parameters:
+    upstream        -- XML source (SaxParser instance in most cases)
+    SkipEvents      -- Set to True to parse only the definitions section (default False)
+    ValidateObjects -- Set to False to skip automatic object value validation (default True)
+
+    """
+
+    self.ValidateObjects = ValidateObjects
     EDXMLParser.__init__(self, upstream, SkipEvents)
-    
+
   # Overridden from EDXMLParser
   def DefinitionsLoaded(self):
 
@@ -350,10 +359,11 @@ class EDXMLValidatingParser(EDXMLParser):
 
   # Overridden from EDXMLParser
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
-    # Validate the object value against its data type
-    ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, ObjectProperty)
-    ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
-    self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'], self.Definitions.CompiledObjectTypePatterns.get(ObjectTypeName))
+    if self.ValidateObjects:
+      # Validate the object value against its data type
+      ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, ObjectProperty)
+      ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
+      self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'], self.Definitions.CompiledObjectTypePatterns.get(ObjectTypeName))
     
   # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
