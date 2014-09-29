@@ -52,65 +52,6 @@ except ImportError:
 from EDXMLBase import *
 from EDXMLParser import EDXMLValidatingParser
 
-# SaxParser instances can only be fed using the
-# feed() function. On the other hand, etree.xmlfile
-# instances can only write to file like objects.
-# This helper class acts like a file object, passing
-# through to a SaxParser instance.
-
-class XMLParserBridge():
-
-  def __init__(self, Parser, Passthrough = None):
-    self.BufferOutput = False
-    self.Parse = True
-    self.ParseError = None
-    self.Buffer = ''
-    self.Parser = Parser
-    self.Passthrough = Passthrough
-
-  def ReplaceParser(self, Parser):
-    self.Parser = Parser
-
-  def DisableParser(self):
-    self.Parse = False
-
-  def EnableParser(self):
-    self.Parse = True
-
-  def EnableBuffering(self):
-    self.BufferOutput = True
-
-  def ClearBuffer(self):
-    self.Buffer = ''
-
-  def DisableBuffering(self):
-    self.BufferOutput = False
-    if self.Passthrough:
-      self.Passthrough.write(self.Buffer)
-      self.Passthrough.flush()
-      self.Buffer = ''
-
-  def write(self, String):
-    if self.Parse:
-      try:
-        self.Parser.feed(String)
-      except EDXMLError as Except:
-        # We catch parsing exceptions here, because lxml does
-        # not handle them correctly: It transforms any exception
-        # in its output object into a general IO error, which means
-        # that the information about the validation exception is lost.
-        # So, we store the original exception here to allow EDXMLWriter
-        # to check for it and raise a proper exception.
-        self.ParseError = Except
-    if self.Passthrough:
-      if self.BufferOutput:
-        # Add to buffer
-        self.Buffer += String
-      else:
-        # Write directly to output
-        self.Passthrough.write(String)
-        self.Passthrough.flush()
-
 class EDXMLWriter(EDXMLBase):
   """Class for generating EDXML streams"""
 
@@ -152,7 +93,7 @@ class EDXMLWriter(EDXMLBase):
       #
       # lxml.etree generator => EDXMLValidatingParser => Output
 
-      self.Bridge = XMLParserBridge(self.SaxParser, Output)
+      self.Bridge = EDXMLWriter.XMLParserBridge(self.SaxParser, Output)
 
     else:
 
@@ -183,6 +124,65 @@ class EDXMLWriter(EDXMLBase):
     self.CurrentElementType = ""
     self.EventTypes = {}
     self.ObjectTypes = {}
+
+  # SaxParser instances can only be fed using the
+  # feed() function. On the other hand, etree.xmlfile
+  # instances can only write to file like objects.
+  # This helper class acts like a file object, passing
+  # through to a SaxParser instance.
+
+  class XMLParserBridge():
+
+    def __init__(self, Parser, Passthrough = None):
+      self.BufferOutput = False
+      self.Parse = True
+      self.ParseError = None
+      self.Buffer = ''
+      self.Parser = Parser
+      self.Passthrough = Passthrough
+
+    def ReplaceParser(self, Parser):
+      self.Parser = Parser
+
+    def DisableParser(self):
+      self.Parse = False
+
+    def EnableParser(self):
+      self.Parse = True
+
+    def EnableBuffering(self):
+      self.BufferOutput = True
+
+    def ClearBuffer(self):
+      self.Buffer = ''
+
+    def DisableBuffering(self):
+      self.BufferOutput = False
+      if self.Passthrough:
+        self.Passthrough.write(self.Buffer)
+        self.Passthrough.flush()
+        self.Buffer = ''
+
+    def write(self, String):
+      if self.Parse:
+        try:
+          self.Parser.feed(String)
+        except EDXMLError as Except:
+          # We catch parsing exceptions here, because lxml does
+          # not handle them correctly: It transforms any exception
+          # in its output object into a general IO error, which means
+          # that the information about the validation exception is lost.
+          # So, we store the original exception here to allow EDXMLWriter
+          # to check for it and raise a proper exception.
+          self.ParseError = Except
+      if self.Passthrough:
+        if self.BufferOutput:
+          # Add to buffer
+          self.Buffer += String
+        else:
+          # Write directly to output
+          self.Passthrough.write(String)
+          self.Passthrough.flush()
 
   def __OuterXMLSerialiserCoRoutine(self):
     """Coroutine which performs the actual XML serialisation"""
