@@ -43,11 +43,11 @@ from edxml.EDXMLParser import EDXMLParser
 # the events in the EDXML stream.
 
 class EDXMLEventHasher(EDXMLParser):
-  
+
   def __init__ (self, upstream):
 
     EDXMLParser.__init__(self, upstream)
-  
+
   # Override of EDXMLParser implementation
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
 

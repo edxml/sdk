@@ -39,10 +39,10 @@ there, and you can use it to query information about event types, object types,
 and so on.
 
 Classes in this module:
-  
+
 EDXMLParser
 EDXMLValidatingParser
-  
+
 """
 
 import sys
@@ -65,16 +65,16 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   definitions. In that case, it will abort XML processing
   by raising the EDXMLProcessingInterrupted exception, which
   you can catch and handle."""
-  
+
   def __init__ (self, upstream, SkipEvents = False):
     """Constructor.
-    
+
     Parameters:
     upstream   -- XML source (SaxParser instance in most cases)
     SkipEvents -- Set to True to parse only the definitions section (default False)
-    
+
     """
-  
+
     self.EventCounters = {}
     self.TotalEventCount = 0
     self.SkipEvents = SkipEvents
@@ -100,7 +100,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     # error handler, so anyone who wishes to extend the EDXMLParser
     # class can reimplement it to handle all generated errors.
     self.Definitions.Error = self.Error
-    
+
     XMLFilterBase.__init__(self, upstream)
     EDXMLBase.__init__(self)
 
@@ -115,25 +115,25 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     for each object. Each dictionary has two keys. The 'property'
     key contains the name of the property. The 'value' key contains
     the value.
-    
+
     Parameters:
     EventTypeName -- The name of the event type
     SourceId      -- Id of event source
     EventObjects  -- List of objects
     EventContent  -- String containing event content
     Parents       -- List of hashes of explicit parent events
-    
+
     """
     return
 
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
     """This function can be overridden to process objects.
-    
+
     Parameters:
     EventTypeName  -- The name of the event type
     ObjectProperty -- The name of the object property
     ObjectValue    -- String containing object value
-    
+
     """
     return
 
@@ -141,7 +141,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     """This function can be overridden to perform some
     action as soon as the definitions are read and parsed."""
     return
-    
+
   def GetEventCount(self, EventTypeName = None):
     """Returns the number of events parsed. When an
     event type is passed, only the number of events
@@ -157,11 +157,11 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
   def GetWarningCount(self):
     """Returns the number of warnings issued"""
     return self.WarningCount + self.Definitions.GetWarningCount()
-    
+
   def GetErrorCount(self):
     """Returns the number of errors issued"""
     return self.ErrorCount + self.Definitions.GetErrorCount()
-  
+
   def startElement(self, name, attrs):
 
     if self.StreamCopyEnabled:
@@ -194,7 +194,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       else:
         self.NewEventType = True
       self.Definitions.AddEventType(self.CurrentEventTypeName, dict(attrs.items()))
-      
+
     elif name == 'property':
       PropertyName = attrs.get('name')
       self.CurrentEventTypeProperties.append(PropertyName)
@@ -205,10 +205,10 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
           # definition.
           self.Error("Property %s of eventtype %s did not exist in previous definition of this eventtype." % (( PropertyName, self.CurrentEventTypeName )) )
       self.Definitions.AddProperty(self.CurrentEventTypeName, PropertyName, dict(attrs.items()))
-      
+
     elif name == 'parent':
       self.Definitions.SetEventTypeParent(self.CurrentEventTypeName, dict(attrs.items()))
-          
+
     elif name == 'relation':
       Property1Name = attrs.get('property1')
       Property2Name = attrs.get('property2')
@@ -217,9 +217,9 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
           # Apparently, the relation was not defined in
           # the previous eventtype definition.
           self.Error("Relation between %s and %s in eventtype %s did not exist in previous definition of this eventtype." % (( Property1Name, Property2Name, self.CurrentEventTypeName )) )
-      
+
       self.Definitions.AddRelation(self.CurrentEventTypeName, Property1Name, Property2Name, dict(attrs.items()))
-          
+
     elif name == 'event':
       self.ExplicitEventParents = []
       if attrs.has_key('parents'): self.ExplicitEventParents = attrs.get('parents').split(',')
@@ -228,17 +228,17 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     elif name == 'content':
       self.AccumulatingEventContent = True
-      
+
     elif name == 'object':
       ObjectProperty  = attrs.get('property')
       ObjectValue = attrs.get('value')
       self.ProcessObject(self.CurrentEventTypeName, ObjectProperty, ObjectValue)
       self.EventObjects.append({'property': ObjectProperty, 'value': ObjectValue})
-      
+
     elif name == 'objecttype':
       ObjectTypeName = attrs.get('name')
       self.Definitions.AddObjectType(ObjectTypeName, dict(attrs.items()))
-  
+
   def endElement(self, name):
 
     if name == 'event':
@@ -300,7 +300,7 @@ class EDXMLValidatingParser(EDXMLParser):
   the EDXMLError exception when it finds problems in the data. Validation
   is implemented by overriding the DefinitionsLoaded, ProcessObject and
   ProcessEvent calls."""  
-  
+
   def __init__ (self, upstream, SkipEvents = False, ValidateObjects = True):
     """Constructor.
 
@@ -364,7 +364,7 @@ class EDXMLValidatingParser(EDXMLParser):
       ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, ObjectProperty)
       ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(ObjectTypeName)
       self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'], self.Definitions.CompiledObjectTypePatterns.get(ObjectTypeName))
-    
+
   # Overridden from EDXMLParser
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
 

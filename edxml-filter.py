@@ -69,16 +69,16 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
     EDXMLStreamFilter.__init__(self, self.SaxParser, False)
     # Set self as content handler
     self.SaxParser.setContentHandler(self)
-  
+
   def startElement(self, name, attrs):
-      
+
     if name == 'eventgroup':
-      
+
       SourceUrl = self.SourceUrlMapping[attrs.get('source-id')]
       if re.match(self.SourceUrlPattern, SourceUrl) == None:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
-        
+
       if self.EventTypeName and attrs.get('event-type') != self.EventTypeName:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
@@ -86,7 +86,7 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
     elif name == 'source':
       # Remember which Source ID belongs to which URL
       self.SourceUrlMapping[attrs.get('source-id')] = attrs.get('url')
-      
+
       if re.match(self.SourceUrlPattern, attrs.get('url')) == None:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
@@ -95,14 +95,14 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
         self.SetOutputEnabled(True)
 
     elif name == 'eventtype':
-      
+
       if self.EventTypeName and attrs.get('name') != self.EventTypeName:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
       else:
         # Turn filter output back on
         self.SetOutputEnabled(True)
-      
+
     # Call parent startElement to generate the output XML element.
     EDXMLStreamFilter.startElement(self, name, attrs)
 
@@ -113,7 +113,7 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
     if name == 'eventgroup':
       # Turn filter output back on
       self.SetOutputEnabled(True)
-      
+
     if name == 'sources':
       # Turn filter output back on
       self.SetOutputEnabled(True)
@@ -128,11 +128,11 @@ EventTypeFilter = None
 # Parse commandline arguments
 
 while CurrentArgument < ArgumentCount:
-  
+
   if sys.argv[CurrentArgument] == '-s':
     CurrentArgument += 1
     SourceFilter = re.compile(sys.argv[CurrentArgument])
-    
+
   elif sys.argv[CurrentArgument] == '-e':
     CurrentArgument += 1
     EventTypeFilter = sys.argv[CurrentArgument]
@@ -140,7 +140,7 @@ while CurrentArgument < ArgumentCount:
   else:
     sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
     sys.exit()
-    
+
   CurrentArgument += 1
 
 # Instantiate EDXMLEventGroupFilter

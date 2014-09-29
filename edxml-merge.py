@@ -166,10 +166,10 @@ SaxParser.setContentHandler(EDXMLParser)
 # using the EDXMLParser, which will compile
 # and merge all event type, object type
 # and source definitions in the EDXML files.
-  
+
 for FileName in sys.argv[1:]:
   sys.stderr.write("\nParsing file %s:" % FileName );
-  
+
   try:
     SaxParser.parse(open(FileName))
   except EDXMLProcessingInterrupted:

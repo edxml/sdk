@@ -51,7 +51,7 @@ except ImportError:
 
 class EDXMLDefinitions(EDXMLBase):
   """Class for managing information from EDXML <definitions> sections.
-  
+
   This class is used for managing definitions of event types, object
   types and sources from EDXML files. It is used for storing parsed
   definitions, querying definitions, and merging definitions from
@@ -61,15 +61,15 @@ class EDXMLDefinitions(EDXMLBase):
   the definitions are automatically checked for compatibility with
   previously stored definitions. The EDXMLError exception is raised when
   problems are detected.
- 
+
   The class also offers methods to generate EDXML <definitions> sections
   from the stored definitions, or generate (partial) XSD and RelaxNG
   schemas which can be used for validation of EDXML files.
-  
+
   """
-  
+
   def __init__(self):
-    
+
     self.SourceIDs = {}
     self.SourceURLs = {}
     self.EventTypes = {}
@@ -93,18 +93,18 @@ class EDXMLDefinitions(EDXMLBase):
 
     # Used for XSD generation
     self.XSD = {'xs': 'http://www.w3.org/2001/XMLSchema'}
-    
+
     self.SchemaRelaxNG = None
     self.SchemaXSD = None
 
     self.KnownFormatters = ['TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
                             'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER', 
                             'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY']
-                            
+
     self.ReporterPlaceholderPattern = re.compile('\\[\\[([^\\]]*)\\]\\]')
-  
+
     # Some validation patterns
-  
+
     self.SimpleNamePattern    = re.compile("^[a-z0-9-]*$")
     self.DisplayNamePattern   = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
@@ -125,11 +125,11 @@ class EDXMLDefinitions(EDXMLBase):
                                                  "[0-9]+(:r)?" + \
                                                "))" + \
                                            ")$")
- 
+
     # This dictionary contains constraints of attribute values of EDXML
     # entities, like eventtype, objecttype, property, etc. The restrictions
     # are extracted from the RelaxNG schema.
-    
+
     self.EDXMLEntityAttributes = {
       'eventtype': {
         'name':           {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
@@ -174,34 +174,34 @@ class EDXMLDefinitions(EDXMLBase):
         'description':      {'mandatory': True,  'length': 128,   'pattern': None},
       },
     }
-  
+
     EDXMLBase.__init__(self)
-  
+
   def SourceIdDefined(self, SourceId):
     """Returns boolean indicating if given Source ID exists."""
     return SourceId in self.SourceIDs.keys()
-  
+
   def EventTypeDefined(self, EventTypeName):
     """Returns boolean indicating if given event type is defined."""
     return EventTypeName in self.EventTypes
-  
+
   def PropertyDefined(self, EventTypeName, PropertyName):
     """Returns boolean indicating if given property is defined."""
     return PropertyName in self.EventTypes[EventTypeName]['properties']
-      
+
   def ObjectTypeDefined(self, ObjectTypeName):
     """Returns boolean indicating if given object type is defined."""
     return ObjectTypeName in self.ObjectTypes
-  
+
   def RelationDefined(self, EventTypeName, Property1Name, Property2Name):
     """Returns boolean indicating if given property relation is defined."""
     RelationId = Property1Name + ' -> ' + Property2Name
     return RelationId in self.EventTypes[EventTypeName]['relations']
-  
+
   def GetRelationPredicates(self):
     """Returns list of known relation predicates."""
     return list(self.RelationPredicates)
-  
+
   def EventTypeIsUnique(self, EventTypeName):
     """Returns a boolean indicating if given eventtype is unique or not."""
     return self.EventTypes[EventTypeName]['unique']
@@ -225,13 +225,13 @@ class EDXMLDefinitions(EDXMLBase):
   def PropertyDefinesEntity(self, EventTypeName, PropertyName):
     """Returns boolean indicating if property of given event type is an entity identifier."""
     return PropertyName in self.EntityProperties[EventTypeName]
-  
+
   def PropertyInRelation(self, EventTypeName, PropertyName):
     """Returns a boolean indicating if given
     property of specified event type is involved
     in any defined property relation."""
     return PropertyName in self.EventTypes[EventTypeName]['related-properties']
-  
+
   def GetSourceURLs(self):
     """Returns an ordered list of all parsed
     source URLs. The order as they
@@ -241,7 +241,7 @@ class EDXMLDefinitions(EDXMLBase):
   def GetSourceIDs(self):
     """Returns a list of all known source ID"""
     return self.Sources
-    
+
   def GetSourceId(self, Url):
     """Returns the ID of event source having specified URL"""
     return self.SourceURLs[Url]['source-id']
@@ -251,12 +251,12 @@ class EDXMLDefinitions(EDXMLBase):
     event type names. The order as they
     appeared in the EDXML stream is preserved."""
     return self.EventTypeNames
-    
+
   def GetEventTypeAttributes(self, EventTypeName):
     """Returns a dictionary containing all
     attributes of requested event type."""
     return self.EventTypes[EventTypeName]['attributes']
-    
+
   def GetEventTypeParent(self, EventTypeName):
     """Returns a dictionary containing all
     attributes of the parent of requested eventtype.
@@ -266,7 +266,7 @@ class EDXMLDefinitions(EDXMLBase):
       return self.EventTypes[EventTypeName]['parent']
     else:
       return {}
-  
+
   def GetEventTypeParentMapping(self, EventTypeName):
     """Returns a dictionary containing all property
     names of the event type that map to a parent property.
@@ -278,18 +278,18 @@ class EDXMLDefinitions(EDXMLBase):
       return self.EventTypes[EventTypeName]['parentmapping']
     else:
       return {}
-  
+
   def GetEventTypesHavingObjectType(self, ObjectTypeName):
     """Returns a list of event type names having specified object type."""
     if not ObjectTypeName in self.ObjectTypeEventTypes:
       return []
     else:
       return list(self.ObjectTypeEventTypes[ObjectTypeName])
-    
+
   def GetEventTypeNamesInClass(self, ClassName):
     """Returns a list of event type names that belong to specified class."""
     return list(self.EventTypeClasses[ClassName])
-    
+
   def GetEventTypeNamesInClasses(self, ClassNames):
     """Returns a list of event type names that belong to specified list of classes."""
     EventTypeNames = set()
@@ -297,27 +297,27 @@ class EDXMLDefinitions(EDXMLBase):
       for EventTypeName in self.EventTypeClasses[ClassName]:
         EventTypeNames.add(EventTypeName)
     return list(EventTypeNames)
-    
+
   def GetObjectTypeAttributes(self, ObjectTypeName):
     """Returns a dictionary containing all attributes of specified object type."""
     return self.ObjectTypes[ObjectTypeName]
-    
+
   def GetEventTypeProperties(self, EventTypeName):
     """Returns a list of all property names
     of given event type. The order as they
     appeared in the EDXML stream is preserved."""
     return self.PropertyNames[EventTypeName]
-    
+
   def GetEventTypePropertyRelations(self, EventTypeName):
     """Returns a list of all IDs of property relations
     in given event type. The order as they
     appeared in the EDXML stream is preserved."""
     return self.PropertyRelations[EventTypeName]
-  
+
   def GetPropertyRelationAttributes(self, EventTypeName, RelationId):
     """Returns a dictionary containing all attributes of requested object type."""
     return self.EventTypes[EventTypeName]['relations'][RelationId]
-  
+
   def GetObjectTypeNames(self):
     """Returns a list of all known object type names.
     The order as they appeared in the EDXML stream is preserved."""
@@ -330,7 +330,7 @@ class EDXMLDefinitions(EDXMLBase):
   def GetSourceIdProperties(self, SourceId):
     """Returns dictionary containing source attributes of the source specified by given Source ID."""
     return self.SourceURLs[self.SourceIDs[SourceId]]
-  
+
   def ObjectTypeRequiresUnicode(self, ObjectTypeName):
     """Returns True when given string object type requires
     unicode characters, return False otherwise."""
@@ -339,7 +339,7 @@ class EDXMLDefinitions(EDXMLBase):
       return False
     else:
       return True
-    
+
   def GetPropertyObjectType(self, EventTypeName, PropertyName):
     """Return the name of the object type of specified event property."""
     if EventTypeName in self.EventTypes:
@@ -364,12 +364,12 @@ class EDXMLDefinitions(EDXMLBase):
     definitions. If an event type definition with the same
     name exists, it will be checked for consistency with
     the existing definition.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type
     Attributes    -- Dictionary holding the attributes of the 'eventtype' tag.
-    
+
     """
     if EventTypeName in self.EventTypes:
       # Event type definition was encountered before.
@@ -377,36 +377,36 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       # New event type
       self.AddNewEventType(EventTypeName, Attributes)
-  
+
   def SetEventTypeParent(self, EventTypeName, Attributes):
     """Configure a parent of specified event type.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type
     Attributes    -- Dictionary holding the attributes of the 'parent' tag.
-    
+
     """
-    
+
     if 'parent' in self.EventTypes[EventTypeName]:
       # Parent definition was encountered before.
       self.CheckEdxmlEntityConsistency('parent', Attributes['eventtype'], self.EventTypes[EventTypeName]['parent'], Attributes)
     else:
       # New parent definition
       self.SetNewEventTypeParent(EventTypeName, Attributes)
-  
+
   def AddProperty(self, EventTypeName, PropertyName, Attributes):
     """Add a property to the collection of property
     definitions. If a property definition with the same
     name exists, it will be checked for consistency with
     the existing definition.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type
     PropertyName  -- Name of property
     Attributes    -- Dictionary holding the attributes of the 'property' tag.
-    
+
     """
     if PropertyName in self.EventTypes[EventTypeName]['properties']:
       # Property definition was encountered before.
@@ -414,20 +414,20 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       # New property
       self.AddNewProperty(EventTypeName, PropertyName, Attributes)
-        
+
   def AddRelation(self, EventTypeName, Property1Name, Property2Name, Attributes):
     """Add a relation to the collection of relation
     definitions. If a relation definition with the same
     properties exists, it will be checked for consistency with
     the existing definition.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type
     Property1Name -- Name of property 1
     Property2Name -- Name of property 2
     Attributes    -- Dictionary holding the attributes of the 'relation' tag.
-    
+
     """
     RelationId = Property1Name + ' -> ' + Property2Name
     if RelationId in self.EventTypes[EventTypeName]['relations']:
@@ -435,19 +435,19 @@ class EDXMLDefinitions(EDXMLBase):
       self.CheckEdxmlEntityConsistency('relation', RelationId, self.EventTypes[EventTypeName]['relations'][RelationId], Attributes)
     else:
       self.AddNewRelation(EventTypeName, RelationId, Property1Name, Property2Name, Attributes)
-      
+
   def AddObjectType(self, ObjectTypeName, Attributes, WarnNotUsed = True):
     """Add an object type to the collection of object type
     definitions. If an object type definition with the same
     name exists, it will be checked for consistency with
     the existing definition.
-    
+
     Parameters:
-    
+
     ObjectTypeName -- Name of event type
     Attributes     -- Dictionary holding the attributes of the 'objecttype' tag.
     WarnNotUsed    -- Generate a warning if no property uses the object type (optional, default is True)
-    
+
     """
     if WarnNotUsed:
       if not ObjectTypeName in self.RequiredObjectTypes:
@@ -458,18 +458,18 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       # New object type
       self.AddNewObjectType(ObjectTypeName, Attributes)
-      
+
   def AddSource(self, SourceUrl, Attributes):
     """Add a source to the collection of event source
     definitions. If a source definition with the same
     URL exists, it will be checked for consistency with
     the existing definition.
-    
+
     Parameters:
-    
+
     SourceUrl   -- URL of event source
     Attributes  -- Dictionary holding the attributes of the 'source' tag.
-    
+
     """
     SourceId = Attributes['source-id']
     self.SourceIDs[SourceId] = SourceUrl
@@ -478,15 +478,15 @@ class EDXMLDefinitions(EDXMLBase):
     else:
       self.Sources.append(SourceId)
       self.AddNewSource(SourceUrl, Attributes)
-  
+
   # Internal use only.
   def AddNewEventType(self, EventTypeName, Attributes):
-    
+
     self.EventTypeNames.append(EventTypeName)
     self.PropertyNames[EventTypeName] = []
     self.EntityProperties[EventTypeName] = set()
     self.PropertyRelations[EventTypeName] = []
-    
+
     self.ValidateEdxmlEntityAttributes('eventtype', Attributes)
 
     self.EventTypes[EventTypeName] = {
@@ -505,7 +505,7 @@ class EDXMLDefinitions(EDXMLBase):
       if not Class in self.EventTypeClasses:
         self.EventTypeClasses[Class] = set()
       self.EventTypeClasses[Class].add(EventTypeName)
-  
+
   # Internal use only.
   def SetNewEventTypeParent(self, EventTypeName, Attributes):
     self.EventTypes[EventTypeName]['parent'] = Attributes
@@ -519,13 +519,13 @@ class EDXMLDefinitions(EDXMLBase):
     except KeyError, ValueError:
 
       self.Error("Event type %s contains a parent definition which has an invalid or missing property map." % EventTypeName)
-  
+
   # Internal use only.
   def AddNewProperty(self, EventTypeName, PropertyName, Attributes):
     self.PropertyNames[EventTypeName].append(PropertyName)
 
     self.ValidateEdxmlEntityAttributes('property', Attributes)
-    
+
     ObjectType = Attributes['object-type']
     self.RequiredObjectTypes.add(ObjectType)
     if not ObjectType in self.ObjectTypeEventTypes:
@@ -546,13 +546,13 @@ class EDXMLDefinitions(EDXMLBase):
 
     if 'defines-entity' in Attributes and Attributes['defines-entity'].lower() == 'true':
       self.EntityProperties[EventTypeName].add(PropertyName)
-      
+
     self.EventTypes[EventTypeName]['properties'][PropertyName] = {'unique': 'false', 'defines-entity': 'false'}
     self.EventTypes[EventTypeName]['properties'][PropertyName].update(Attributes)
 
   # Internal use only.
   def AddNewObjectType(self, ObjectTypeName, Attributes):
-    
+
     self.ValidateEdxmlEntityAttributes('objecttype', Attributes)
     self.ValidateDataType(ObjectTypeName, Attributes['data-type'])
 
@@ -578,7 +578,7 @@ class EDXMLDefinitions(EDXMLBase):
     SplitEventType = Attributes['type'].split(':')
     if len(SplitEventType) == 2:
       self.RelationPredicates.add(SplitEventType[1])
-    
+
     self.EventTypes[EventTypeName]['relations'][RelationId] = Attributes
 
   # Internal use only.
@@ -606,12 +606,12 @@ class EDXMLDefinitions(EDXMLBase):
     """Check if the relation definitions for
     specified eventtype are correct.
     Calls self.Error when a problem is detected."""
-    
+
     for RelationId in self.EventTypes[EventTypeName]['relations']:
       PropertyA   = None
       PropertyB   = None
       Description = None
-      
+
       for Attribute in self.EventTypes[EventTypeName]['relations'][RelationId]:
         if Attribute == 'property1':
           PropertyA = self.EventTypes[EventTypeName]['relations'][RelationId][Attribute]
@@ -619,31 +619,31 @@ class EDXMLDefinitions(EDXMLBase):
           PropertyB = self.EventTypes[EventTypeName]['relations'][RelationId][Attribute]
         elif Attribute == 'description':
           Description = self.EventTypes[EventTypeName]['relations'][RelationId][Attribute]
-      
+
       Placeholders = re.findall(self.PlaceHolderPattern, Description)
-      
+
       if not PropertyA in Placeholders:
         self.Error("Event type %s defines relation %s which does not have one of its properties (%s) in the description." % (( EventTypeName, RelationId, PropertyA )) )
-    
+
       if not PropertyB in Placeholders:
         self.Error("Event type %s defines relation %s which does not have one of its properties (%s) in the description." % (( EventTypeName, RelationId, PropertyB )) )
-        
+
       if not self.PropertyDefined(EventTypeName, PropertyA):
         self.Error("Event type %s defines relation %s which refers to property %s, which does not exist in this event type." % (( EventTypeName, RelationId, PropertyA )))
-        
+
       if not self.PropertyDefined(EventTypeName, PropertyB):
         self.Error("Event type %s defines relation %s which refers to property %s, which does not exist in this event type." % (( EventTypeName, RelationId, PropertyB )))
 
   def CheckEventTypeParents(self, EventTypeName):
     """Checks if parent definition of given event type
     is valid, if there is any parent definition.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type
-    
+
     """
-    
+
     if not 'parent' in self.EventTypes[EventTypeName]: return
 
     ParentAttribs = self.EventTypes[EventTypeName]['parent']
@@ -654,7 +654,7 @@ class EDXMLDefinitions(EDXMLBase):
     for UniqueParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
       if not UniqueParentProperty in self.EventTypes[EventTypeName]['parentmapping'].values():
         self.Error("Event type %s contains a parent definition which lacks a mapping for unique parent property '%s'." % (( EventTypeName, UniqueParentProperty )) )
-      
+
     for ChildProperty, ParentProperty in self.EventTypes[EventTypeName]['parentmapping'].items():
       ChildMergeStrategy = self.EventTypes[EventTypeName]['properties'][ChildProperty]['merge']
 
@@ -782,28 +782,28 @@ class EDXMLDefinitions(EDXMLBase):
   #
   # Internal use only.
   def CheckEdxmlEntityConsistency(self, Entity, EntityDescription, CurrentAttributes, UpdatedAttributes):
-    
+
     Current = set(CurrentAttributes.keys())
     Update  = set(UpdatedAttributes.keys())
-    
+
     AttribsAdded    = Update - Current
     AttribsRetained = Update & Current
     AttribsRemoved  = Current - Update
-    
+
     # First we check if the attributes that are retained in the
     # update are consistent with the exiting atribute values.
-    
+
     for Attribute in AttribsRetained:
       if CurrentAttributes[Attribute] != UpdatedAttributes[Attribute]:
         self.Error("Attribute %s of %s '%s' does not match previous definition:\nNew:      %s\nExisting: %s\n" % (( Attribute, Entity, EntityDescription, UpdatedAttributes[Attribute], CurrentAttributes[Attribute] )))
-        
+
     # At the moment, we do not accept new attributes to appear or 
     # existing attributes to disappear, unless they are optional
     # and have a default value. These optional attributes with
     # or without defaults cause some exceptions to the above rule.
     # We will get rid of most of these exceptions as soon as EDXML
     # version 3 hits the road.
-    
+
     for Attrib in AttribsAdded:
       if self.EDXMLEntityAttributes[Entity][Attrib]['mandatory']:
         self.Error("Definition of %s '%s' contains mandatory attribute that was not previously defined: %s" % (( Entity, EntityDescription, Attrib)) )
@@ -813,7 +813,7 @@ class EDXMLDefinitions(EDXMLBase):
             self.Error("Definition of %s '%s' contains attribute with non-default value (%s) that was not previously defined: %s" % (( Entity, EntityDescription, UpdatedAttributes[Attrib], Attrib)) )
         else:
           self.Error("Definition of %s '%s' contains attribute that was not previously defined and has no default value: %s" % (( Entity, EntityDescription, Attrib)) )
-    
+
     for Attrib in AttribsRemoved:
       if self.EDXMLEntityAttributes[Entity][Attrib]['mandatory']:
         self.Error("Definition of %s '%s' lacks mandatory attribute: %s" % (( Entity, EntityDescription, Attrib)) )
@@ -823,7 +823,7 @@ class EDXMLDefinitions(EDXMLBase):
             self.Error("Previous definition of %s '%s' contains optional attribute %s with non-default value (%s) while new definition does not define it." % (( Entity, EntityDescription, Attrib, CurrentAttributes[Attrib] )) )
         else:
           self.Error("Definition of %s '%s' lacks optional attribute that was previously defined and has no default value: %s" % (( Entity, EntityDescription, Attrib)) )
-  
+
   # Checks the attributes of a specific EDXML entity (eventtype, 
   # objecttype, relation, ...) against the constaints as specified in
   # self.EDXMLEntityAttributes.
@@ -834,7 +834,7 @@ class EDXMLDefinitions(EDXMLBase):
   def ValidateEdxmlEntityAttributes(self, EntityName, Attributes):
 
     for Attribute in self.EDXMLEntityAttributes[EntityName]:
-      
+
       if not Attribute in Attributes:
         if self.EDXMLEntityAttributes[EntityName][Attribute]['mandatory']:
           self.Error("Definition of %s lacks mandatory attribute '%s'." % (( EntityName, Attribute )) )
@@ -852,7 +852,7 @@ class EDXMLDefinitions(EDXMLBase):
 
     if len(UnknownAttributes) > 0:
       self.Error("Definition of %s contains unknown attributes: %s" % (( EntityName, ','.join(UnknownAttributes) )) )
-    
+
   def UniqueSourceIDs(self):
     """Source IDs are required to be unique only
     within a single EDXML file. When multiple 
@@ -860,10 +860,10 @@ class EDXMLDefinitions(EDXMLBase):
     instance, it may happen that different sources have
     the same ID. This function changes the Source IDs
     of all known sources to be unique.
-    
+
     It returns a mapping that maps old Source ID into
     new Source ID."""
-  
+
     Counter = 1
     Mapping = {}
     for SourceUrl in self.SourceURLs:
@@ -878,26 +878,26 @@ class EDXMLDefinitions(EDXMLBase):
     of another event 'A'. The arguments EventObjectsA
     and EventObjectsB should be dictionaries where the keys are
     property names and the values lists of object values.
-    
+
     The objects in EventObjectsA are updated using the
     objects from EventObjectsB. It returns True when EventObjectsA
     was modified, False otherwise.
-    
+
     Parameters:
-    
+
     EventTypeName -- Name of event type of the events
     EventObjectsA -- Objects of event A
     EventObjectsB -- Objects of event B
-    
+
     """
-    
+
     if self.EventTypes[EventTypeName]['unique'] == False:
       self.Error("MergeEvent was called for event type %s, which is not a unique event type." % EventTypeName)
-    
+
     Original = {}
     Source = {}
     Target = {}
-    
+
     for PropertyName in self.GetEventTypeProperties(EventTypeName):
       if PropertyName in EventObjectsA: 
         Original[PropertyName] = set(EventObjectsA[PropertyName])
@@ -907,7 +907,7 @@ class EDXMLDefinitions(EDXMLBase):
         Target[PropertyName] = set()
       if PropertyName in EventObjectsB: Source[PropertyName] = set(EventObjectsB[PropertyName])
       else: Source[PropertyName] = set()
-    
+
     # Now we update the objects in Target
     # using the values in Source
     for PropertyName in Source:
@@ -915,19 +915,19 @@ class EDXMLDefinitions(EDXMLBase):
       if not PropertyName in self.EventTypes[EventTypeName]['unique-properties']:
         # Not a unique property, needs to be merged.
         MergeStrategy = self.EventTypes[EventTypeName]['properties'][PropertyName]['merge']
-        
+
         if MergeStrategy in ['min', 'max']:
           SplitDataType = self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, PropertyName)).split(':')
           if SplitDataType[0] in ['number', 'timestamp']:
-            
+
             Values = set()
-            
+
             if SplitDataType[0] == 'timestamp':
-              
+
               Values = Source[PropertyName] | Target[PropertyName]
 
             else:  
-              
+
               if SplitDataType[1] in ['float', 'double']:
                 for Value in Source[PropertyName]: Values.add(float(Value))
                 for Value in Target[PropertyName]: Values.add(float(Value))
@@ -937,12 +937,12 @@ class EDXMLDefinitions(EDXMLBase):
               else:
                 for Value in Source[PropertyName]: Values.add(int(Value))
                 for Value in Target[PropertyName]: Values.add(int(Value))
-              
+
             if MergeStrategy == 'min':
               Target[PropertyName] = set([str(min(Values))])
             else:
               Target[PropertyName] = set([str(max(Values))])
-          
+
         elif MergeStrategy == 'add':
           Target[PropertyName] = Source[PropertyName] | Target[PropertyName]
 
@@ -964,9 +964,9 @@ class EDXMLDefinitions(EDXMLBase):
       if Target[PropertyName] != Original[PropertyName]:
         EventUpdated = True
         break
-    
+
     # Modify EventObjectsA if needed
-    
+
     if EventUpdated:
       EventObjectsA.clear()
       for PropertyName in Target:
@@ -1072,17 +1072,17 @@ class EDXMLDefinitions(EDXMLBase):
     """Generates an EDXML fragment which defines specified
     eventtype. Can be useful for constructing new EDXML
     files based on existing event type definitions.
-    
+
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
     Arguments:
-    
+
     EventTypeName -- Name of the event type
     XMLGenerator  -- XMLGenerator / XMLWriter instance
-    
+
     """
-    
+
     if not 'start' in dir(XMLGenerator):
 
       # Using SAX XML Generator:
@@ -1132,12 +1132,12 @@ class EDXMLDefinitions(EDXMLBase):
     """Generates an EDXML fragment which defines specified
     object type. Can be useful for constructing new EDXML
     files based on existing object type definitions.
-    
+
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
-    
+
     Arguments:
-    
+
     EventTypeName -- Name of the event type
     XMLGenerator  -- XMLGenerator / XMLWriter instance
 
@@ -1160,10 +1160,10 @@ class EDXMLDefinitions(EDXMLBase):
     """Generates an EDXML fragment which defines specified
     event source. Can be useful for constructing new EDXML
     files based on existing event source definitions.
-    
+
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
-    
+
     EventTypeName -- Name of the event type
     XMLGenerator  -- XMLGenerator / XMLWriter instance
 
@@ -1185,15 +1185,15 @@ class EDXMLDefinitions(EDXMLBase):
   def GenerateXMLDefinitions(self, XMLGenerator, IncludeSources = True):
     """Generates a full EDXML <definitions> section, containing
     all known event types, event types and optionally sources.
-    
+
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
     Parameters:
-    
+
     XMLGenerator   -- XMLGenerator / XMLWriter instance
     IncludeSources -- Optional boolean, include source definitions yes or no (default is True)
-    
+
     """
 
     if not 'start' in dir(XMLGenerator):
@@ -1260,29 +1260,29 @@ class EDXMLDefinitions(EDXMLBase):
   def CloseXSD(self):
     """Finalize generated XSD and return it as a string."""
     return etree.tostring(self.SchemaXSD, pretty_print = True, encoding='utf-8')
-    
+
   # Internal convenience function
   def OpenElementXSD(self, ElementName):
     self.CurrentElementXSD = etree.SubElement(self.CurrentElementXSD, "{%s}%s" % (( self.XSD['xs'], ElementName )) )
     return self.CurrentElementXSD
-  
+
   # Internal convenience function
   def CloseElementXSD(self):
     self.CurrentElementXSD = self.CurrentElementXSD.getparent()
-    
+
   def GenerateEventTypeXSD(self, EventTypeName):
     """Generates an XSD fragment related to the event type
     definition of specified event type. Can be useful for
     generating modular XSD schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenXSD() first.
-    
+
     """
-    
+
     self.OpenElementXSD('element').set('name', 'eventtype')
     self.OpenElementXSD('complexType')
-    
+
     self.OpenElementXSD('sequence')
     self.OpenElementXSD('element').set('name', 'properties')
     self.OpenElementXSD('complexType')
@@ -1301,7 +1301,7 @@ class EDXMLDefinitions(EDXMLBase):
       self.CloseElementXSD()
       self.CloseElementXSD()
     self.CloseElementXSD()
-      
+
     self.CloseElementXSD()
     self.CloseElementXSD()
 
@@ -1322,12 +1322,12 @@ class EDXMLDefinitions(EDXMLBase):
         self.CloseElementXSD()
       self.CloseElementXSD()
       self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     for Attribute, Value in self.GetEventTypeAttributes(EventTypeName).items():
       self.OpenElementXSD('attribute').set('name', 'name')
       self.CurrentElementXSD.set('name', Attribute)
@@ -1336,7 +1336,7 @@ class EDXMLDefinitions(EDXMLBase):
       if self.EDXMLEntityAttributes['eventtype'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['eventtype'][Attribute]['default']:
         self.CurrentElementXSD.set('use', 'required')
       self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
 
@@ -1345,11 +1345,11 @@ class EDXMLDefinitions(EDXMLBase):
     definition of specified object type. Can be useful for
     generating modular XSD schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenXSD() first.
 
     """
-    
+
     self.OpenElementXSD('element').set('name', 'objecttype')
     self.OpenElementXSD('complexType')
     for Attribute, Value in self.GetObjectTypeAttributes(ObjectTypeName).items():
@@ -1371,7 +1371,7 @@ class EDXMLDefinitions(EDXMLBase):
     Make sure to call OpenXSD() first.
 
     """
-  
+
     self.OpenElementXSD('element').set('name', 'events')
     self.OpenElementXSD('complexType')
     self.OpenElementXSD('sequence')
@@ -1384,22 +1384,22 @@ class EDXMLDefinitions(EDXMLBase):
 
     for EventTypeName in self.GetEventTypeNames():
       self.GenerateEventTypeXSD(EventTypeName)
-     
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.OpenElementXSD('element').set('name', 'objecttypes')
     self.OpenElementXSD('complexType')
     self.OpenElementXSD('sequence')
 
     for ObjectTypeName in self.GetObjectTypeNames():
       self.GenerateObjectTypeXSD(ObjectTypeName)
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.OpenElementXSD('element').set('name', 'sources')
     self.OpenElementXSD('complexType')
     self.OpenElementXSD('sequence')
@@ -1416,11 +1416,11 @@ class EDXMLDefinitions(EDXMLBase):
         self.CloseElementXSD()
       self.CloseElementXSD()
       self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
@@ -1432,14 +1432,14 @@ class EDXMLDefinitions(EDXMLBase):
 
     self.OpenElementXSD('element').set('name', 'eventgroup')
     self.OpenElementXSD('complexType')
-    
+
     self.OpenElementXSD('sequence').set('minOccurs', '0')
     self.CurrentElementXSD.set('maxOccurs', 'unbounded')
     self.OpenElementXSD('element').set('name', 'event')
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.OpenElementXSD('attribute')
     self.CurrentElementXSD.set('name', 'source-id')
     self.CurrentElementXSD.set('type', 'xs:string')
@@ -1452,14 +1452,14 @@ class EDXMLDefinitions(EDXMLBase):
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
     self.CloseElementXSD()
-    
+
     self.CloseElementXSD()
     self.CloseElementXSD()
-  
+
   def OpenRelaxNG(self):
     """Start generating a RelaxNG schema from stored
     definitions. Always call this before constructing
@@ -1471,24 +1471,24 @@ class EDXMLDefinitions(EDXMLBase):
     Schema = etree.tostring(self.SchemaRelaxNG, pretty_print = True, encoding='utf-8')
     self.SchemaRelaxNG = None
     return Schema
-    
+
   # Internal convenience function
   def OpenElementRelaxNG(self, ElementName):
     self.CurrentElementRelaxNG = etree.SubElement(self.CurrentElementRelaxNG, ElementName )
     return self.CurrentElementRelaxNG
-  
+
   # Internal convenience function
   def CloseElementRelaxNG(self):
     self.CurrentElementRelaxNG = self.CurrentElementRelaxNG.getparent()
-    
+
   def GenerateEventTypeRelaxNG(self, EventTypeName):
     """Generates a RelaxNG fragment related to the event type
     definition of specified event type. Can be useful for
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenRelaxNG() first.
-    
+
     """
 
     if self.SchemaRelaxNG == None:
@@ -1499,14 +1499,14 @@ class EDXMLDefinitions(EDXMLBase):
       self.SchemaRelaxNG = self.CurrentElementRelaxNG
     else:
       self.OpenElementRelaxNG('grammar')
-    
+
     self.OpenElementRelaxNG('start')
     self.OpenElementRelaxNG('ref').set('name', 'eventtypedef')
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('define').set('name', 'eventtypedef')
-    
+
     self.OpenElementRelaxNG('element').set('name', 'eventtype')
     for Attribute, Value in self.GetEventTypeAttributes(EventTypeName).items():
       OptionalAttribute = False
@@ -1546,11 +1546,11 @@ class EDXMLDefinitions(EDXMLBase):
     self.CloseElementRelaxNG()
 
     Relations = self.GetEventTypePropertyRelations(EventTypeName)
-    
+
     self.OpenElementRelaxNG('element').set('name', 'relations')
-    
+
     if len(Relations) > 0:
-    
+
       for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
         self.OpenElementRelaxNG('element').set('name', 'relation')
         for Attribute, Value in self.GetPropertyRelationAttributes(EventTypeName, RelationId).items():
@@ -1567,12 +1567,12 @@ class EDXMLDefinitions(EDXMLBase):
             self.CloseElementRelaxNG()
 
         self.CloseElementRelaxNG()
-      
+
     else:
-      
+
       self.OpenElementRelaxNG('empty')
       self.CloseElementRelaxNG()
-      
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
@@ -1586,11 +1586,11 @@ class EDXMLDefinitions(EDXMLBase):
     definition of specified object type. Can be useful for
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenRelaxNG() first.
-    
+
     """
-    
+
     if self.SchemaRelaxNG == None:
       # Apparently, we are generating an objecttype
       # definition that is not part of a bigger schema.
@@ -1604,9 +1604,9 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('ref').set('name', 'objecttypedef')
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('define').set('name', 'objecttypedef')
-      
+
     self.OpenElementRelaxNG('element').set('name', 'objecttype')
     for Attribute, Value in self.GetObjectTypeAttributes(ObjectTypeName).items():
       OptionalAttribute = False
@@ -1623,18 +1623,18 @@ class EDXMLDefinitions(EDXMLBase):
 
     self.CloseElementRelaxNG()
     return
-  
+
 
   def GenerateEventRelaxNG(self, EventTypeName):
     """Generates a RelaxNG fragment related to the object type
     definition of specified object type. Can be useful for
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenRelaxNG() first.
-    
+
     """
-    
+
     if self.SchemaRelaxNG == None:
       # Apparently, we are generating an objecttype
       # definition that is not part of a bigger schema.
@@ -1648,28 +1648,28 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('ref').set('name', 'eventdef-' + EventTypeName)
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('define').set('name', 'eventdef-' + EventTypeName)
-    
+
     # Ideally, one would like to use an <interleave> pattern
     # here to define the mix of mandatory and optional objects.
     # However, since all objects have the same element name, 
     # this cannot be done. Interleave patterns don't allow it.
     # For now, we just check if all objects have a property
     # name that is allowed for the relevant event type.
-    
+
     self.OpenElementRelaxNG('element').set('name', 'event')
     self.OpenElementRelaxNG('oneOrMore')
-      
+
     self.OpenElementRelaxNG('element').set('name', 'object')
     self.OpenElementRelaxNG('attribute').set('name', 'property')
     self.OpenElementRelaxNG('choice')
-      
+
     for PropertyName in self.GetEventTypeProperties(EventTypeName):
       self.OpenElementRelaxNG('value').set('type', 'string')
       self.CurrentElementRelaxNG.text = PropertyName
       self.CloseElementRelaxNG()
-      
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.OpenElementRelaxNG('attribute').set('name', 'value')
@@ -1679,27 +1679,27 @@ class EDXMLDefinitions(EDXMLBase):
     self.CloseElementRelaxNG()
 
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('optional')
     self.OpenElementRelaxNG('element').set('name', 'content')
     self.OpenElementRelaxNG('text')
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.CloseElementRelaxNG()
-    
+
     self.CloseElementRelaxNG()
     return
-    
+
   def GenerateGenericSourcesRelaxNG(self):
     """Generates a RelaxNG fragment representing an event source. Can be useful for
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
-    
+
     Make sure to call OpenRelaxNG() first.
-    
+
     """
-    
+
     self.OpenElementRelaxNG('element').set('name', 'source')
     self.OpenElementRelaxNG('attribute').set('name', 'source-id')
     self.OpenElementRelaxNG('data').set('type', 'token')
@@ -1736,25 +1736,25 @@ class EDXMLDefinitions(EDXMLBase):
     in stead of generating the schema patterns in place. This might be
     useful if you have a central storage for event type definitions or
     object type definitions.
-    
+
     Make sure to call OpenRelaxNG() first.
-    
+
     Parameters:
-    
+
     EventRefs      -- Optional dictionary containing URI of event schema for every event type name
     EventTypeRefs  -- Optional dictionary containing URI of event type schema for every event type name
     ObjectTypeRefs -- Optional dictionary containing URI of object type schema for every object type name
-    
+
     """
-    
+
     self.SchemaRelaxNG = etree.Element('element')
     self.SchemaRelaxNG.set('name', 'events')
     self.SchemaRelaxNG.set('xmlns', 'http://relaxng.org/ns/structure/1.0')
     self.SchemaRelaxNG.set('datatypeLibrary', 'http://www.w3.org/2001/XMLSchema-datatypes')
     self.CurrentElementRelaxNG = self.SchemaRelaxNG
-    
+
     self.OpenElementRelaxNG('element').set('name', 'definitions')
-    
+
     self.OpenElementRelaxNG('element').set('name', 'eventtypes')
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
@@ -1766,16 +1766,16 @@ class EDXMLDefinitions(EDXMLBase):
       for EventTypeName in self.GetEventTypeNames():
         self.OpenElementRelaxNG('externalRef').set('href', EventTypeRefs[EventTypeName])
         self.CloseElementRelaxNG()
-      
-    
+
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('element').set('name', 'objecttypes')
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
-    
+
     if ObjectTypeRefs == None:
       for ObjectTypeName in self.GetObjectTypeNames():
         self.GenerateObjectTypeRelaxNG(ObjectTypeName)
@@ -1783,19 +1783,19 @@ class EDXMLDefinitions(EDXMLBase):
       for ObjectTypeName in self.GetObjectTypeNames():
         self.OpenElementRelaxNG('externalRef').set('href', ObjectTypeRefs[ObjectTypeName])
         self.CloseElementRelaxNG()
-      
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('element').set('name', 'sources')
     self.OpenElementRelaxNG('oneOrMore')
-    
+
     self.GenerateGenericSourcesRelaxNG()
-      
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.CloseElementRelaxNG()
 
     self.OpenElementRelaxNG('element').set('name', 'eventgroups')
@@ -1809,10 +1809,10 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('data').set('type', 'token')
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
+
     self.OpenElementRelaxNG('zeroOrMore')
     self.OpenElementRelaxNG('choice')
-    
+
     if EventRefs == None:
       for EventTypeName in self.GetEventTypeNames():
         self.GenerateEventRelaxNG(EventTypeName)
@@ -1820,12 +1820,11 @@ class EDXMLDefinitions(EDXMLBase):
       for EventTypeName in self.GetEventTypeNames():
         self.OpenElementRelaxNG('externalRef').set('href', EventRefs[EventTypeName])
         self.CloseElementRelaxNG()
-    
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    
-    
+
+
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
-    

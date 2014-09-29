@@ -56,10 +56,10 @@ class EDXMLBase():
   """Base class for most SDK subclasses"""
 
   def __init__(self):
-    
+
     self.WarningCount = 0
     self.ErrorCount = 0
-    
+
     # Expression used for matching SHA1 hashlinks
     self.HashlinkPattern = re.compile("^[0-9a-zA-Z]{40}$")
     # Expression used for matching string datatypes
@@ -72,20 +72,20 @@ class EDXMLBase():
   def Error(self, Message):
     """Raises EDXMLError.
     Parameters:
-    
+
     Message -- Error message
-    
+
     """
-    
+
     self.ErrorCount += 1
     raise EDXMLError(unicode("ERROR: " + Message).encode('utf-8'))
 
   def Warning(self, Message):
     """Prints a warning to sys.stderr.
     Parameters:
-    
+
     Message -- Warning message
-    
+
     """
     self.WarningCount += 1
     sys.stderr.write(unicode("WARNING: " + Message + "\n").encode('utf-8'))
@@ -93,24 +93,24 @@ class EDXMLBase():
   def GetWarningCount(self):
     """Returns the number of warnings generated"""
     return self.WarningCount
-    
+
   def GetErrorCount(self):
     """Returns the number of errors generated"""
     return self.ErrorCount
-  
+
   def ValidateDataType(self, ObjectType, DataType):
     """Validate a data type.
     Parameters:
-    
+
     ObjectType -- Object type having specified data type
     DataType   -- The data type
-    
+
     calls self.Error when datatype is invalid.
-    
+
     """
 
     SplitDataType = DataType.split(':')
-    
+
     if SplitDataType[0] == 'enum':
       if len(SplitDataType) > 1:
         return
@@ -175,20 +175,20 @@ class EDXMLBase():
     elif SplitDataType[0] == 'binstring':
       if re.match(self.BinstringDataTypePattern, DataType):
         return
-    
+
     self.Error("EDXMLBase::ValidateDataType: Object type %s has an unsupported data type: %s" % (( ObjectType, DataType )) )
 
   def ValidateObject(self, Value, ObjectTypeName, DataType, Regexp = None):
     """Validate an object value.
     Parameters:
-    
+
     Value            -- Object value
     ObjectTypeName   -- Object type
     DataType         -- Data type of object
     Regexp           -- Optional regular expression for checking Value
 
     calls self.Error when value is invalid.
-    
+
     """
 
     ObjectDataType = DataType.split(':')

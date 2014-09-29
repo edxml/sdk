@@ -44,22 +44,22 @@ from edxml.EDXMLParser import EDXMLParser
 class EDXMLParser(XMLFilterBase):
 
   def __init__ (self, upstream, SkipEvents = False):
-  
+
     self.Sources = []
     self.SkipEvents = SkipEvents
     XMLFilterBase.__init__(self, upstream)
-  
+
   def startElement(self, name, attrs):
 
     if name == 'source':
       Url = attrs.get('url',"")
       if not Url in self.Sources: self.Sources.append(Url)
-  
+
   def endElement(self, name):
 
     if self.SkipEvents:
       if name == 'definitions':
-  
+
         # We hit the end of the definitions block,
         # and we were instructed to skip parsing the
         # event data, so we should abort parsing now.

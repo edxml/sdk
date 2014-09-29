@@ -44,36 +44,36 @@ from edxml.EDXMLParser import EDXMLValidatingParser
 # EDXMLValidatingParser generates an error. 
 
 class EDXMLChecker(EDXMLValidatingParser):
-  
+
   def __init__ (self, upstream, SkipEvents = False):
 
     EDXMLValidatingParser.__init__(self, upstream, SkipEvents)
-    
+
     self.ErrorCount = 0
     self.WarningCount = 0
-  
+
   # Override of EDXMLParser implementation
   def Error(self, Message):
     if self.ErrorCount == 0:
       print ""
-    
+
     print(unicode("ERROR: %s" % Message).encode('utf-8'))
     self.ErrorCount += 1
-  
+
   # Override of EDXMLParser implementation
   def Warning(self, Message):
     if self.WarningCount == 0:
       print ""
-      
+
     print(unicode("WARNING: " + Message).encode('utf-8'))
     self.WarningCount += 1
 
   def GetErrorCount(self):
     return self.ErrorCount
-  
+
   def GetWarningCount(self):
     return self.WarningCount
-    
+
 # Create a SAX parser, and provide it with
 # an MyChecker instance as content handler.
 # This places the EDXMLParser instance in the
@@ -106,4 +106,4 @@ if ErrorCount == 0:
 else:
   sys.stdout.write("\nInput data is invalid: %d errors were found ( and %d warnings ).\n" % (( ErrorCount, WarningCount )) )
   sys.exit(255)
-  
+

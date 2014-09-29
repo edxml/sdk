@@ -54,20 +54,20 @@ SaxParser.setContentHandler(Parser)
 if len(sys.argv) <= 1:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
   sys.stdout.flush()
-  
+
   # Feed the parser from standard input.
   SaxParser.parse(sys.stdin)
 
 else:
-  
+
   # We repeatedly use the same SAX parser and
   # EDXMLParser to process all EDXML files in
   # succession. This will raise EDXMLError as
   # soon as inconsistencies are detected.
-  
+
   for arg in sys.argv[1:]:
     sys.stderr.write("Processing %s..." % arg)
-  
+
     try:
       SaxParser.parse(open(arg))
     except EDXMLError as Error:

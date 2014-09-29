@@ -61,20 +61,20 @@ class EDXMLWriter(EDXMLBase):
     that will be used to send the XML data to.
     This file-like object can be pretty much 
     anything, as long as it has a write() call.
-    
+
     The optional Validate parameter controls if
     the generated EDXML stream should be auto-
     validated or not. Automatic validation is
     enabled by default.
     """
-    
+
     EDXMLBase.__init__(self)
-  
+
     self.InvalidEvents = 0
     self.Validate = Validate
     self.Output = Output
     self.ElementStack = []
-    
+
     # Expression used for replacing invalid XML unicode characters
     self.XMLReplaceRegexp = re.compile(u'[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]')
 
@@ -228,88 +228,88 @@ class EDXMLWriter(EDXMLBase):
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a full <definitions> element.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <definitions> element
-    
+
     """
     self.Bridge.write(XmlString)
-    
+
   def AddXmlEventTypeElement(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a full <eventtype> element.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <eventtype> element
-    
+
     """
     self.Bridge.write(XmlString)
-    
+
   def AddXmlObjectTypeTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert an <objecttype> tag.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <objecttype> tag
-    
+
     """
     self.Bridge.write(XmlString)
-    
+
   def AddXmlPropertyTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a <property> tag.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <property> tag
-    
+
     """
     self.Bridge.write(XmlString)
-    
+
   def AddXmlRelationTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a <relation> tag.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <relation> tag
-    
+
     """
     self.Bridge.write(XmlString)
-    
+
   def AddXmlSourceTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a <source> tag.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <source> tag
-    
+
     """
     self.Bridge.write(XmlString)
 
@@ -318,13 +318,13 @@ class EDXMLWriter(EDXMLBase):
     stream, it is also possible to insert plain XML into
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
-    
+
     Use this function to insert a full <event> element.
-    
+
     Parameters:
-    
+
     XmlString: String containing the <event> element
-    
+
     """
     self.Bridge.write(XmlString)
 
@@ -340,14 +340,14 @@ class EDXMLWriter(EDXMLBase):
   def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = None):
     """Opens an event type definition.
     Parameters:
-    
+
     Name          -- Name of the eventtype
     Description   -- Description of the eventtype
     ClassList     -- String containing a comma seperated list of class names
     ReporterShort -- Short reporter string. Please refer to the specification for details.
     LongReporter  -- Long reporter string. Please refer to the specification for details.
     DisplayName   -- EDXML display-name attribute (optional, defaults to none)
-    
+
     """
 
     if self.ElementStack[-1].tag != 'eventtypes': self.Error('A <eventtype> tag must be child of an <eventtypes> tag. Did you forget to call OpenEventDefinitions()?')
