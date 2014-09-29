@@ -38,30 +38,38 @@ to generate EDXML streams.
 
 import string, sys
 from cStringIO import StringIO
-
 from xml.sax import make_parser
-from xml.sax.saxutils import escape
 from xml.sax.saxutils import XMLGenerator
-from xml.sax.xmlreader import AttributesImpl
+import traceback
+
+try:
+  # lxml is not a very common module.
+  from lxml import etree
+except ImportError:
+  sys.stderr.write('Failed to import the lxml Python package. Please install it.\n')
+  sys.exit(1)
 
 from EDXMLBase import *
 from EDXMLParser import EDXMLValidatingParser
 
-
 # SaxParser instances can only be fed using the
-# feed() function. On the other hand, XMLGenerator
+# feed() function. On the other hand, etree.xmlfile
 # instances can only write to file like objects.
 # This helper class acts like a file object, passing
 # through to a SaxParser instance.
 
-class SaxGeneratorParserBridge():
-  
+class XMLParserBridge():
+
   def __init__(self, Parser, Passthrough = None):
     self.BufferOutput = False
     self.Parse = True
+    self.ParseError = None
     self.Buffer = ''
     self.Parser = Parser
     self.Passthrough = Passthrough
+
+  def ReplaceParser(self, Parser):
+    self.Parser = Parser
 
   def DisableParser(self):
     self.Parse = False
@@ -84,7 +92,16 @@ class SaxGeneratorParserBridge():
 
   def write(self, String):
     if self.Parse:
-      self.Parser.feed(String)
+      try:
+        self.Parser.feed(String)
+      except EDXMLError as Except:
+        # We catch parsing exceptions here, because lxml does
+        # not handle them correctly: It transforms any exception
+        # in its output object into a general IO error, which means
+        # that the information about the validation exception is lost.
+        # So, we store the original exception here to allow EDXMLWriter
+        # to check for it and raise a proper exception.
+        self.ParseError = Except
     if self.Passthrough:
       if self.BufferOutput:
         # Add to buffer
@@ -112,7 +129,6 @@ class EDXMLWriter(EDXMLBase):
     
     EDXMLBase.__init__(self)
   
-    self.Indent = 0
     self.InvalidEvents = 0
     self.Validate = Validate
     self.Output = Output
@@ -125,82 +141,87 @@ class EDXMLWriter(EDXMLBase):
 
       # Construct validating EDXML parser
       self.SaxParser = make_parser()
-      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
+      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = False)
       self.SaxParser.setContentHandler(self.EDXMLParser)
 
       # Construct a bridge that will be used to connect the
       # output of the XML Generator to the parser / validator.
-    
-      self.Bridge = SaxGeneratorParserBridge(self.SaxParser, Output)
-    
-      # Create an XML generator. We use the Bridge to output the
-      # XML to, so we have built a chain that automatically validates
-      # the EDXML stream while it is being generated. The chain now 
-      # looks like this:
+      # We use the Bridge to output the XML to, so we have built
+      # a chain that automatically validates the EDXML stream while
+      # it is being generated. The full chain looks like this:
       #
-      # XMLGenerator => EDXMLValidatingParser => Output
-    
-      self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
+      # lxml.etree generator => EDXMLValidatingParser => Output
+
+      self.Bridge = XMLParserBridge(self.SaxParser, Output)
 
     else:
-      
-      # Validation is disabled
-      self.XMLGenerator = XMLGenerator(Output, 'utf-8')
+
+      # Validation is disabled. 
       self.Bridge = Output
       self.EDXMLParser = None
       self.SaxParser = None
 
-    # Write XML declaration
-    self.Bridge.write('<?xml version="1.0" encoding="UTF-8" ?>')
-    
-    self.OpenElement('events')
+    # Initialize lxml.etree based XML generators. This
+    # will write the XML declaration and open the
+    # <events> tag.
+    # Note that we use two XML generators. Due to the way
+    # coroutines work, we can only flush the output buffer
+    # after generating sub-elements of the <events> element
+    # which contains the entire EDXML stream. That means we
+    # need to build <eventgroup> tags in memory, which is
+    # not acceptable. We solve that issue by writing the event
+    # groups into a secondary XML generator, allowing us to
+    # flush after each event.
+    self.XMLWriter = self.__OuterXMLSerialiserCoRoutine()
+    self.XMLWriter.next()
 
-    self.CurrentEventType = ""
+    # We still need a SAX XMLGenerator instance in order to
+    # extract a backup copy of the definitions element.
+    self.Definitions = StringIO()
+    self.SaxGenerator = XMLGenerator(self.Definitions, 'utf-8')
+
+    self.CurrentElementType = ""
     self.EventTypes = {}
     self.ObjectTypes = {}
 
-  # String escaping, for internal use only.
-  def Escape(self, String):
-
-    if not isinstance(String, unicode):
-    
-      if not isinstance(String, str): String = str(String)
-    
-      try:
-        String = String.decode('utf-8')
-      except UnicodeDecodeError:
-        # String is not proper UTF8. Lets try to decode it as Latin1
+  def __OuterXMLSerialiserCoRoutine(self):
+    """Coroutine which performs the actual XML serialisation"""
+    with etree.xmlfile(self.Bridge, encoding='utf-8') as Writer:
+      if not 'flush' in dir(Writer):
+        raise Exception('The installed version of lxml is too old. Please install version >= 3.4.')
+      Writer.write_declaration()
+      with Writer.element('events'):
+        Writer.flush()
         try:
-          String = String.decode('latin-1').encode('utf-8').decode('utf-8')
-        except:
-          # That did not work either. We have no other choice but to replace the invalid
-          # characters with the Unicode replacement character.
-          String = unicode(String, errors='replace')
+          while True:
+            Element = (yield)
+            if Element == None:
+              # Sending None signals the end of the generation of
+              # the definitions element, and the beginning of the
+              # eventgroups element.
+              with Writer.element('eventgroups'):
+                Writer.flush()
+                while True:
+                  Element = (yield)
+                  Writer.write(Element, pretty_print=True)
+                  Writer.flush()
+            Writer.write(Element, pretty_print=True)
+            Writer.flush()
+        except GeneratorExit:
+          pass
 
-    return re.sub(self.XMLReplaceRegexp, '?', String)
-
-  # For internal use only.
-  def OpenElement(self, ElementName, Attributes = {}):
-    
-    self.XMLGenerator.ignorableWhitespace('\n'.ljust(self.Indent))
-    self.ElementStack.append(ElementName)
-    self.Indent += 2
-    
-    return self.XMLGenerator.startElement(ElementName, AttributesImpl(Attributes))
-
-  # For internal use only.
-  def CloseElement(self):
-    self.Indent -= 2
-    self.XMLGenerator.ignorableWhitespace('\n'.ljust(self.Indent))
-    self.XMLGenerator.endElement(self.ElementStack.pop())
-    
-  
-  # For internal use only.
-  def AddElement(self, ElementName, Attributes = {}):
-    
-    self.XMLGenerator.ignorableWhitespace('\n'.ljust(self.Indent))
-    self.XMLGenerator.startElement(ElementName, AttributesImpl(Attributes))
-    self.XMLGenerator.endElement(ElementName)
+  def __InnerXMLSerialiserCoRoutine(self, EventTypeName, EventSourceId):
+    """Coroutine which performs the actual XML serialisation of eventgroups"""
+    with etree.xmlfile(self.Bridge, encoding='utf-8') as Writer:
+      with Writer.element('eventgroup', **{'event-type': EventTypeName, 'source-id': EventSourceId}):
+        Writer.flush()
+        try:
+          while True:
+            Element = (yield)
+            Writer.write(Element, pretty_print=True)
+            Writer.flush()
+        except GeneratorExit:
+          pass
 
   def AddXmlDefinitionsElement(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -308,12 +329,13 @@ class EDXMLWriter(EDXMLBase):
     self.Bridge.write(XmlString)
 
   def OpenDefinitions(self):
-    """Opens a <definitions> block"""
-    self.OpenElement("definitions")
+    """Opens the <definitions> element"""
+    self.ElementStack.append(etree.Element('definitions'))
 
   def OpenEventDefinitions(self):
-    """Opens an <eventtypes> block"""
-    self.OpenElement("eventtypes")
+    """Opens the <eventtypes> element"""
+    if self.ElementStack[-1].tag != 'definitions': self.Error('A <eventtypes> tag must be child of an <definitions> tag. Did you forget to call OpenDefinitions()?')
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'eventtypes'))
 
   def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = None):
     """Opens an event type definition.
@@ -328,16 +350,20 @@ class EDXMLWriter(EDXMLBase):
     
     """
 
-    self.OpenElement("eventtype", {
+    if self.ElementStack[-1].tag != 'eventtypes': self.Error('A <eventtype> tag must be child of an <eventtypes> tag. Did you forget to call OpenEventDefinitions()?')
+
+    Attributes = {
       'name': Name,
       'description': Description,
       'classlist': ClassList,
       'reporter-short': ReporterShort,
       'reporter-long': ReporterLong
-      })
+      }
 
     if DisplayName:
       Attributes['display-name'] = DisplayName
+
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'eventtype', **Attributes))
 
   def AddEventTypeParent(self, EventTypeName, PropertyMapping):
     """Adds a parent to an event definition.
@@ -347,16 +373,19 @@ class EDXMLWriter(EDXMLBase):
     PropertyMapping   -- Value of the EDXML propertymap attribute
 
     """
-    self.AddElement("property", { 'eventtype': EventTypeName, 'propertymap': PropertyMapping})
+    if self.ElementStack[-1].tag != 'eventtype': self.Error('A <parent> tag must be child of an <eventtype> tag. Did you forget to call OpenEventDefinition()?')
+
+    etree.SubElement(self.ElementStack[-1], 'parent', eventtype = EventTypeName, propertymap = PropertyMapping)
 
   def OpenEventDefinitionProperties(self):
-    """Opens a <properties> section for defining eventtype properties."""
-    self.OpenElement("properties")
+    """Opens a <properties> element for defining eventtype properties."""
+    if self.ElementStack[-1].tag != 'eventtype': self.Error('A <properties> tag must be child of an <eventtype> tag. Did you forget to call OpenEventDefinition()?')
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'properties'))
 
   def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = 'drop', Similar = None):
     """Adds a property to an event definition.
     Parameters:
-    
+
     Name              -- Name of the property
     ObjectTypeName    -- Name of the object type
     Description       -- Description of the property
@@ -365,8 +394,10 @@ class EDXMLWriter(EDXMLBase):
     Unique            -- Property is unique or not (optional, default is False)
     Merge             -- Merge strategy (only for unique properties)
     Similar           -- Optional EDXML similar attribute value
-    
+
     """
+
+    if self.ElementStack[-1].tag != 'properties': self.Error('A <property> tag must be child of an <properties> tag. Did you forget to call OpenEventDefinitionProperties()?')
 
     Attributes = {
       'name': Name,
@@ -377,7 +408,7 @@ class EDXMLWriter(EDXMLBase):
       'defines-entity': 'false',
       'entity-confidence': '0'
       }
-  
+
     if Unique:
       Attributes['unique'] = 'true'
 
@@ -388,54 +419,63 @@ class EDXMLWriter(EDXMLBase):
     if Similar:
       Attributes['similar'] = Similar
 
+    etree.SubElement(self.ElementStack[-1], 'property', **Attributes)
 
-    self.AddElement("property", Attributes)
-      
   def CloseEventDefinitionProperties(self):
     """Closes a previously opened <properties> section"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'properties': self.Error('Unbalanced <properties> tag. Did you forget to call OpenEventDefinitionProperties()?')
+    self.ElementStack.pop()
 
   def OpenEventDefinitionRelations(self):
     """Opens a <relations> section for defining property relations."""
-    self.OpenElement("relations")
+    if self.ElementStack[-1].tag != 'eventtype': self.Error('A <relations> tag must be child of an <eventtype> tag. Did you forget to call OpenEventDefinition()?')
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'relations'))
 
   def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Confidence, Directed = True):
     """Adds a property relation to an event definition.
     Parameters:
-    
+
     PropertyName1     -- Name of first property
     PropertyName2     -- Name of second property
     Type              -- Relation type including predicate
     Description       -- Relation description
     Confidence        -- Floating point confidence value
     Directed          -- Boolean indicating if relation is directed or not
-    
+
     """
 
-    self.AddElement("relation", {
+    if self.ElementStack[-1].tag != 'relations': self.Error('A <relation> tag must be child of an <relations> tag. Did you forget to call OpenEventDefinitionRelations()?')
+
+    Attributes = {
       'property1': PropertyName1,
       'property2': PropertyName2,
       'description': Description,
       'confidence': "%1.2f" % float(Confidence),
       'type': Type,
       'directed': ['false', 'true'][int(Directed)]
-      })
+      }
+
+    etree.SubElement(self.ElementStack[-1], 'relation', **Attributes)
 
   def CloseEventDefinitionRelations(self):
     """Closes a previously opened <relations> section"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'relations': self.Error('Unbalanced <relations> tag. Did you forget to call OpenEventDefinitionRelations()?')
+    self.ElementStack.pop()
 
   def CloseEventDefinition(self):
     """Closes a previously opened event definition"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'eventtype': self.Error('Unbalanced <eventtype> tag. Did you forget to call CloseEventDefinitionRelations()?')
+    self.ElementStack.pop()
 
   def CloseEventDefinitions(self):
     """Closes a previously opened <eventtypes> section"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'eventtypes': self.Error('Unbalanced <eventtypes> tag. Did you forget to call CloseEventDefinition()?')
+    self.ElementStack.pop()
 
   def OpenObjectTypes(self):
     """Opens a <objecttypes> section for defining object types."""
-    self.OpenElement("objecttypes")
+    if self.ElementStack[-1].tag != 'definitions': self.Error('A <objecttypes> tag must be child of an <definitions> tag. Did you forget to call OpenDefinitions()?')
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'objecttypes'))
 
   def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none', DisplayName = None, Compress = False, ENP = 0, Regex = None):
     """Adds a object type definition.
@@ -451,6 +491,8 @@ class EDXMLWriter(EDXMLBase):
 
     """
 
+    if self.ElementStack[-1].tag != 'objecttypes': self.Error('A <objecttype> tag must be child of an <objecttypes> tag. Did you forget to call OpenObjectTypes()?')
+
     Attributes = {
       'name':           Name,
       'description':    Description,
@@ -465,20 +507,22 @@ class EDXMLWriter(EDXMLBase):
     if Regex:
       Attributes['regex'] = Regex
 
-    self.AddElement("objecttype", Attributes)
-    
+    etree.SubElement(self.ElementStack[-1], 'objecttype', **Attributes)
+
   def CloseObjectTypes(self):
     """Closes a previously opened <objecttypes> section"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'objecttypes': self.Error('Unbalanced <objecttypes> tag. Did you forget to call OpenObjectTypes()?')
+    self.ElementStack.pop()
 
   def OpenSourceDefinitions(self):
     """Opens a <sources> section for defining event sources."""
-    self.OpenElement("sources")
+    if self.ElementStack[-1].tag != 'definitions': self.Error('A <sources> tag must be child of an <definitions> tag. Did you forget to call OpenObjectTypes()?')
+    self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'sources'))
 
   def AddSource(self, SourceId, URL, DateAcquired, Description):
     """Adds a source definition.
     Parameters:
-    
+
     SourceId       -- Source Id
     URL            -- Source URL
     DateAcquired   -- Acquisition date (yyyymmdd)
@@ -486,51 +530,155 @@ class EDXMLWriter(EDXMLBase):
 
     """
 
-    self.AddElement("source", {
+    if self.ElementStack[-1].tag != 'sources': self.Error('A <source> tag must be child of an <sources> tag. Did you forget to call OpenSourceDefinitions()?')
+
+    Attributes = {
       'source-id':     str(SourceId),
       'url':           string.lower(URL),
       'date-acquired': DateAcquired,
       'description':   Description
-      })
-      
+      }
+
+    etree.SubElement(self.ElementStack[-1], 'source', **Attributes)
+
   def CloseSourceDefinitions(self):
     """Closes a previously opened <sources> section"""
-    self.CloseElement()
+    if self.ElementStack[-1].tag != 'sources': self.Error('Unbalanced <sources> tag. Did you forget to call OpenSourceDefinitions()?')
+    self.ElementStack.pop()
 
   def CloseDefinitions(self):
     """Closes the <definitions> section"""
 
-    # Create a backup copy of the generated XML so far,
-    # which we can use to recover from generating invalid events.
-    self.Definitions = self.EDXMLParser.DefinitionsXMLStringIO.getvalue() + '</definitions>'
+    if self.ElementStack[-1].tag != 'definitions': self.Error('Unbalanced <definitions> tag. Did you forget to call OpenDefinitions()?')
 
-    self.CloseElement()
+    # The definitions element is complete. Send it
+    # to the coroutine, which will write it into
+    # the Output or into the Bridge. If an EDXMLParser
+    # has been created, any problems in the definitions
+    # element will raise an exception here.
+    self.XMLWriter.send(self.ElementStack.pop())
 
+    if self.EDXMLParser:
+      # We survived validation. Create a backup copy of the definitions element,
+      # which we can use to recover from generating invalid events.
+      self.EDXMLParser.Definitions.GenerateXMLDefinitions(self.SaxGenerator)
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
-    if self.ElementStack[-1] != 'events': self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
-    self.OpenElement("eventgroups")
+    if len(self.ElementStack) > 0: self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
+
+    # We send None to the outer XML generator, to
+    # hint it that the definitions element has been
+    # completed and we want it to generate the
+    # eventgroups opening tag.
+    self.XMLWriter.send(None)
+
+    self.ElementStack.append('eventgroups')
 
   def OpenEventGroup(self, EventTypeName, SourceId):
     """Opens an event group.
     Parameters:
-    
+
     EventTypeName  -- Name of the eventtype
     SourceId       -- Source Id
-    
+
     """
 
-    self.CurrentEventTypeName = EventTypeName
-    self.CurrentEventSourceId = SourceId
-    self.OpenElement("eventgroup", {
+    if self.ElementStack[-1] != 'eventgroups': self.Error('An <eventgroup> tag must be child of an <eventgroups> tag. Did you forget to call CloseEventGroup()?')
+    self.ElementStack.append('eventgroup')
+
+    self.CurrentElementTypeName = EventTypeName
+    self.CurrentElementSourceId = SourceId
+
+    Attributes = {
       'event-type': EventTypeName,
       'source-id' : str(SourceId)
-      })
+      }
+
+    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, str(self.CurrentElementSourceId))
+    self.EventGroupXMLWriter.next()
 
   def CloseEventGroup(self):
     """Closes a previously opened event group"""
-    self.CloseElement()
+    if self.ElementStack[-1] != 'eventgroup': self.Error('Unbalanced <eventgroup> tag. Did you forget to call CloseEvent()?')
+    self.ElementStack.pop()
+
+    # This closes the generator, writing the closing eventgroup tag.
+    self.EventGroupXMLWriter.close()
+
+  def AddEvent(self, PropertyObjects, Content = '', ParentHashes = [], IgnoreInvalidObjects = False):
+    """Alternative method for adding an event
+
+    This method expects a dictionary containing a list of
+    object values for every property.
+
+    The optional ParentHashes parameter may contain
+    a list of sticky hashes of explicit parent events,
+    in hexadecimal string representation.
+
+    Parameters:
+
+    PropertyObjects      -- Object dictionary
+    Content              -- Event content
+    ParentHashes         -- List of explicit parent events
+    IgnoreInvalidObjects -- Option to ignore invalid object values
+
+    """
+
+    if self.ElementStack[-1] != 'eventgroup': self.Error('A <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
+
+    EventAttributes = {}
+
+    if ParentHashes:
+      EventAttributes['parents'] = ','.join(ParentHashes)
+
+    Event = etree.Element('event', **EventAttributes)
+
+    for PropertyName, Objects in PropertyObjects.items():
+      for ObjectValue in Objects:
+        if self.EDXMLParser:
+          try:
+            ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentElementTypeName, PropertyName)
+            ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
+            self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
+          except EDXMLError:
+            if IgnoreInvalidObjects:
+              self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( ObjectValue, PropertyName )) )
+              continue
+            else:
+              raise
+
+        etree.SubElement(Event, 'object', property = PropertyName, value = unicode(ObjectValue))
+
+    if Content:
+      etree.SubElement(Event, 'content').text = Content
+
+    if self.Validate:
+
+      # We enable buffering at this point, until we know
+      # for certain that the event is valid. If the event
+      # turns out to be invalid, the applcation can continue
+      # generating the EDXML stream, skipping the invalid event.
+      self.Bridge.ParseError = None
+      self.Bridge.EnableBuffering()
+
+    # Send element to coroutine, which will use lxml.etree
+    # to write the event.
+    self.EventGroupXMLWriter.send(Event)
+
+    if self.Bridge.ParseError != None:
+
+      self.RecoverInvalidEvent()
+      self.InvalidEvents += 1
+
+      # Now we can throw an exception, which the
+      # application can catch and recover from.
+      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % self.Bridge.ParseError)
+
+    if self.Validate:
+      # At this point, the event has been validated. We disable
+      # buffering, which pushes it to the output.
+      self.Bridge.DisableBuffering()
 
   def OpenEvent(self, ParentHashes = []):
     """Opens an event.
@@ -547,175 +695,174 @@ class EDXMLWriter(EDXMLBase):
 
     if self.ElementStack[-1] != 'eventgroup': self.Error('An <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
 
+
     if self.Validate:
+
       # We enable buffering at this point, until we know
       # for certain that the event is valid. If the event
       # turns out to be invalid, the applcation can continue
       # generating the EDXML stream, skipping the invalid event.
+      self.Bridge.ParseError = None
       self.Bridge.EnableBuffering()
 
-    if len(ParentHashes) > 0:
-      self.OpenElement("event", {'parents': ','.join(ParentHashes)})
-    else:
-      self.OpenElement("event")
+    Attributes = {}
+
+    if ParentHashes:
+      Attributes['parents'] = ','.join(ParentHashes)
+
+    self.ElementStack.append(etree.Element('event', **Attributes))
 
   def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
     """Adds an object to previously opened event.
     Parameters:
-    
+
     PropertyName       -- Name of object property
     Value              -- Object value string
     IgnoreInvalid      -- Generate a warning in stead of an error for invalid values (Optional, default is False)
 
     """
 
-    if self.ElementStack[-1] != 'event': self.Error('An <object> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
+    if self.ElementStack[-1].tag != 'event': self.Error('An <object> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
 
     if ( isinstance(Value, str) or isinstance(Value, unicode) ) and len(Value) == 0:
       self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
       return
 
     try:
-      
+
       if self.EDXMLParser:
-      
-        # Even though the call to AddElement will already result
-        # in an object value validation, we actually need to 
-        # validate *before* the actual XML is generated. So, we 
-        # actually validate twice. If the first ValidateObject
-        # call fails, we can ignore the object if requested,
-        # omitting it from the XML stream. This allows users of
+
+        # We disabled the automatic object validation in the
+        # EDXMLValidatingParser instance, because we want to
+        # validate the object values before writing them into
+        # the Bridge. So, we manually invoke object validation
+        # here and handle any exceptions if they occur, optionally
+        # skipping any invalid objects. This allows users of
         # the EDXMLWriter class to be sloppy about generating
         # object values.
-      
-        ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, PropertyName)
+
+        ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentElementTypeName, PropertyName)
         ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
         self.ValidateObject(Value, ObjectTypeName, ObjectTypeAttributes['data-type'])
-      
-      # This statement will generate the actual XML and
-      # trigger EDXMLValidatingParser.
-      
-      self.AddElement("object", {
-      'property': PropertyName,
-      'value'   : self.Escape(Value)
-      })
 
     except EDXMLError:
-      
+
       if IgnoreInvalid:
         self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( Value, PropertyName )) )
       else:
         raise
-      
+
+    else:
+      # We survived object validation, which means that we
+      # can safely add the object to the 
+      # This statement will generate the actual XML and
+      # trigger EDXMLValidatingParser.
+      etree.SubElement(self.ElementStack[-1], 'object', property = PropertyName, value = unicode(Value))
+
   def AddContent(self, ContentString):
     """Adds plain text content to previously opened event.
     Parameters:
-    
+
     ContentString -- Object value
-    
+
     """
-    if self.ElementStack[-1] != 'event': self.Error('A <content> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
+    if self.ElementStack[-1].tag != 'event': self.Error('A <content> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
 
     if len(ContentString) > 0:
-      self.OpenElement('content')
-      self.XMLGenerator.characters(self.Escape(ContentString))
-      self.CloseElement()
+      etree.SubElement(self.ElementStack[-1], 'content').text = ContentString
 
   def AddTranslation(self, Language, Interpreter, TranslationString):
     """Adds translated content to previously opened event.
     Parameters:
-    
+
     Language           -- ISO 639-1 language code
     Interpreter        -- Name of interpreter
     TranslationString  -- The translation
-    
+
     """
 
-    if self.ElementStack[-1] != 'event': self.Error('A <translation> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
+    if self.ElementStack[-1].tag != 'event': self.Error('A <translation> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
 
     if len(TranslationString) > 0:
-      self.OpenElement("translation", {'language': Language, 'interpreter': Interpreter})
-      self.XMLGenerator.characters(self.Escape(TranslationString))
-      self.CloseElement()
+      etree.SubElement(self.ElementStack[-1], 'translation', language = Language, interpreter = Interpreter).text = TranslationString
     else:
       self.Warning("EDXMLWriter::AddTranslation: Empty content encountered. Content will be ignored!\n")
 
   def CloseEvent(self):
     """Closes a previously opened event"""
 
-    if self.ElementStack[-1] != 'event': self.Error('Attempt to close an <event> tag without a corresponding opening tag.')
+    if self.ElementStack[-1].tag != 'event': self.Error('Attempt to close an <event> tag without a corresponding opening tag.')
 
-    try:
-      # This triggers event structure validation.
-      self.CloseElement()
-    except EDXMLError as Error:
-
-      # Ok, the EDXMLParser instance that handles the content
-      # from the SAX parser has borked on an invalid event.
-      # This means that the SAX parser cannot continue. We
-      # have no other choice than rebuild the data processing
-      # chain from scratch and restore the state of both the
-      # EDXMLParser instance and XML Generator to the point
-      # where it can output events again.
-
-      # Create new SAX parser and validating EDXML parser
-      self.SaxParser = make_parser()
-      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser)
-
-      # Install the new EDXMLParser as content handler.
-      self.SaxParser.setContentHandler(self.EDXMLParser)
-
-      # Reconstruct the bridge
-      self.Bridge = SaxGeneratorParserBridge(self.SaxParser, self.Output)
-
-      # Create a new XML generator. We will feed it some XML to
-      # restore its state later.
-      self.XMLGenerator = XMLGenerator(self.Bridge, 'utf-8')
-
-      # We need to push some XML into the XMLGenerator and into
-      # the bridge, but we do not want that to end up in the
-      # output. So, we enable buffering and clear the buffer later.
-      self.Bridge.EnableBuffering()
-
-      # Push the EDXML definitions header into the bridge, which
-      # will restore the state of the EDXMLParser instance.
-      self.Bridge.write(self.Definitions)
-
-      # We need to keep XMLGenerator happy, so we insert
-      # the events tag to keep the tags balanced. We do not
-      # want the EDXMLParser instance to receive it, so
-      # we temporarily disable parsing in the bridge.
-      self.Bridge.DisableParser()
-      self.XMLGenerator.startElement('events', AttributesImpl({}))
-      self.Bridge.EnableParser()
-
-      # Now, we re-open the eventgroup.
-      self.XMLGenerator.startElement('eventgroups', AttributesImpl({}))
-      self.XMLGenerator.startElement('eventgroup', AttributesImpl({'event-type': self.CurrentEventTypeName, 'source-id' : str(self.CurrentEventSourceId)}))
-
-      # Discard all buffered output and stop buffering. Now,
-      # our processing chain is in the state that it was when
-      # we started producing events.
-      self.Bridge.ClearBuffer()
-      self.Bridge.DisableBuffering()
-
-      self.InvalidEvents += 1
-
-      # Now we can throw an exception, which the
-      # application can catch and recover from.
-      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % Error)
+    # This triggers event structure validation.
+    # CATCH: It looks like lxml eats the exceptions thrown by validator and spits
+    # out a general IO error... We need to handle and report parser exceptions
+    # in the Bridge..
+    self.EventGroupXMLWriter.send(self.ElementStack.pop())
 
     if self.Validate:
+      if self.Bridge.ParseError != None:
+
+        self.RecoverInvalidEvent()
+        self.InvalidEvents += 1
+
+        # Now we can throw an exception, which the
+        # application can catch and recover from.
+        self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % self.Bridge.ParseError)
+
       # At this point, the event has been validated. We disable
       # buffering, which pushes it to the output.
       self.Bridge.DisableBuffering()
 
+  def RecoverInvalidEvent(self):
+    # Ok, the EDXMLParser instance that handles the content
+    # from the SAX parser has borked on an invalid event.
+    # This means that the SAX parser cannot continue. We
+    # have no other choice than rebuild the data processing
+    # chain from scratch and restore the state of both the
+    # EDXMLParser instance and XML Generator to the point
+    # where it can output events again.
+
+    # Create new SAX parser and validating EDXML parser
+    self.SaxParser = make_parser()
+    self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = False)
+
+    # Install the new EDXMLParser as content handler.
+    self.SaxParser.setContentHandler(self.EDXMLParser)
+
+    # Replace the parser in the bridge
+    self.Bridge.ReplaceParser(self.SaxParser)
+
+    # We need to push some XML into the XMLGenerator and into
+    # the bridge, but we do not want that to end up in the
+    # output. So, we enable buffering and clear the buffer later.
+    self.Bridge.EnableBuffering()
+
+    # Push the EDXML definitions header into the bridge, which
+    # will restore the state of the EDXMLParser instance.
+    self.Bridge.write('<events>\n%s\n  <eventgroups>\n' % self.Definitions.getvalue())
+
+    # Close the XML generator that is generating the
+    # current event group. We do not want the resulting
+    # closing eventgroup tag to reach the parser.
+    self.Bridge.DisableParser()
+    self.EventGroupXMLWriter.close()
+    self.Bridge.EnableParser()
+
+    # Create a new XML generator.
+    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, str(self.CurrentElementSourceId))
+    self.EventGroupXMLWriter.next()
+
+    # Discard all buffered output and stop buffering. Now,
+    # our processing chain is in the state that it was when
+    # we started producing events.
+    self.Bridge.ClearBuffer()
+
   def CloseEventGroups(self):
     """Closes a previously opened <eventgroups> section"""
     if self.ElementStack[-1] != 'eventgroups': self.Error('Unbalanced <eventgroups> tag. Did you forget to call CloseEventGroup()?')
+    self.ElementStack.pop()
 
-    self.CloseElement()
-    self.CloseElement()
+    self.XMLWriter.close()
 
     if self.SaxParser:
       # This triggers well-formedness validation
