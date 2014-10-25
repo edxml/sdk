@@ -505,7 +505,7 @@ class EDXMLWriter(EDXMLBase):
     if DisplayName:
       Attributes['display-name'] = DisplayName
     if Regex:
-      Attributes['regex'] = Regex
+      Attributes['regexp'] = Regex
 
     etree.SubElement(self.ElementStack[-1], 'objecttype', **Attributes)
 
