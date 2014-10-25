@@ -507,6 +507,13 @@ class EDXMLWriter(EDXMLBase):
     if Regex:
       Attributes['regexp'] = Regex
 
+    if 'regexp' in Attributes:
+      try:
+        # Note that XML schema regular expressions match the entire object
+        # value. We wrap the expression in anchors to mimic this behavior
+        re.compile('^%s$' % Attributes['regexp'])
+      except sre_constants.error as Except:
+        self.Error('Definition of object type %s has an invalid regular expression in its regexp attribute: "%s"' % (( Name, Attributes['regexp'] )) )
     etree.SubElement(self.ElementStack[-1], 'objecttype', **Attributes)
 
   def CloseObjectTypes(self):
