@@ -112,7 +112,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
     self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(match)$")
     self.RelationTypePattern  = re.compile("^(intra|inter|parent|child|other):.+")
-    self.FuzzyMatchingPattern = re.compile("^(none)|(phonetic)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
+    self.FuzzyMatchingPattern = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
     self.DataTypePattern      = re.compile("^(boolean)|(timestamp)|(ip)|(hashlink)|(" + \
                                              "(number:(" + \
                                                  "((((tiny)|(small)|(medium)|(big))?int)|(float)|(double))(:signed)?" + \
@@ -562,7 +562,13 @@ class EDXMLDefinitions(EDXMLBase):
         # value. We wrap the expression in anchors to mimic this behavior
         self.CompiledObjectTypePatterns[ObjectTypeName] = re.compile('^%s$' % Attributes['regexp'])
       except sre_constants.error as Except:
-        self.Error('Definition of object type %s has an invalid regular expresion: "%s"' % (( ObjectTypeName, Attributes['regexp'] )) )
+        self.Error('Definition of object type %s has an invalid regular expression in its regexp attribute: "%s"' % (( ObjectTypeName, Attributes['regexp'] )) )
+
+    if 'fuzzy-matching' in Attributes and Attributes['fuzzy-matching'][:10] == 'substring:':
+      try:
+        re.compile('%s' % Attributes['fuzzy-matching'][10:])
+      except sre_constants.error as Except:
+        self.Error('Definition of object type %s has an invalid regular expresion in its fuzzy-matching attribute: "%s"' % (( ObjectTypeName, Attributes['fuzzy-matching'] )) )
 
     self.ObjectTypes[ObjectTypeName] = Attributes
     self.ObjectTypeNames.append(ObjectTypeName)

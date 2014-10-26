@@ -514,6 +514,13 @@ class EDXMLWriter(EDXMLBase):
         re.compile('^%s$' % Attributes['regexp'])
       except sre_constants.error as Except:
         self.Error('Definition of object type %s has an invalid regular expression in its regexp attribute: "%s"' % (( Name, Attributes['regexp'] )) )
+
+    if Attributes['fuzzy-matching'][:10] == 'substring:':
+      try:
+        re.compile('%s' % Attributes['fuzzy-matching'][10:])
+      except sre_constants.error as Except:
+        self.Error('Definition of object type %s has an invalid regular expresion in its fuzzy-matching attribute: "%s"' % (( Name, Attributes['fuzzy-matching'] )) )
+
     etree.SubElement(self.ElementStack[-1], 'objecttype', **Attributes)
 
   def CloseObjectTypes(self):
