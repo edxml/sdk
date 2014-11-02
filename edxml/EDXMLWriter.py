@@ -680,7 +680,7 @@ class EDXMLWriter(EDXMLBase):
     # to write the event.
     self.EventGroupXMLWriter.send(Event)
 
-    if self.Bridge.ParseError != None:
+    if self.Validate and self.Bridge.ParseError != None:
 
       self.RecoverInvalidEvent()
       self.InvalidEvents += 1
