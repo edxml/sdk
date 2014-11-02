@@ -889,6 +889,8 @@ class EDXMLDefinitions(EDXMLBase):
     objects from EventObjectsB. It returns True when EventObjectsA
     was modified, False otherwise.
 
+    Note that this method does NOT merge parent hashes, only the property objects.
+
     Parameters:
 
     EventTypeName -- Name of event type of the events
