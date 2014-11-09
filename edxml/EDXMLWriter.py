@@ -489,17 +489,18 @@ class EDXMLWriter(EDXMLBase):
     if self.ElementStack[-1].tag != 'definitions': self.Error('A <objecttypes> tag must be child of an <definitions> tag. Did you forget to call OpenDefinitions()?')
     self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'objecttypes'))
 
-  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none', DisplayName = None, Compress = False, ENP = 0, Regex = None):
+  def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none', DisplayName = '/', Compress = False, ENP = 0, Regexp = '[\s\S]*'):
     """Adds a object type definition.
     Parameters:
 
     Name            -- Name of object type
     Description     -- Description of object type
     ObjectDataType  -- Data type
-    FuzzyMatching   -- Fuzzy matching technique (optional, defaults to none)
-    DisplayName     -- Display name (optional, defaults to none)
+    FuzzyMatching   -- Fuzzy matching technique (optional, defaults to 'none')
+    DisplayName     -- Display name (optional, defaults to '/')
     Compress        -- Use data compression (True) or not (False) (optional, defaults to False)
     ENP             -- Entity Naming Priority (optional, defaults to zero)
+    Regexp          -- Regular expression (optional, defaults to '[\s\S]*')
 
     """
 
@@ -511,15 +512,12 @@ class EDXMLWriter(EDXMLBase):
       'data-type':      ObjectDataType,
       'fuzzy-matching': FuzzyMatching,
       'compress':       ['false', 'true'][int(Compress)],
-      'enp':            str(ENP)
+      'enp':            str(ENP),
+      'regexp':         Regexp,
+      'display-name':   DisplayName
       }
 
-    if DisplayName:
-      Attributes['display-name'] = DisplayName
-    if Regex:
-      Attributes['regexp'] = Regex
-
-    if 'regexp' in Attributes:
+    if 'regexp' != '[\s\S]*':
       try:
         # Note that XML schema regular expressions match the entire object
         # value. We wrap the expression in anchors to mimic this behavior
