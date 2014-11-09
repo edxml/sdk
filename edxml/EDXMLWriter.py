@@ -55,7 +55,7 @@ from EDXMLParser import EDXMLValidatingParser
 class EDXMLWriter(EDXMLBase):
   """Class for generating EDXML streams"""
 
-  def __init__(self, Output, Validate = True):
+  def __init__(self, Output, Validate = True, ValidateObjects = True):
     """Constructor.
     The Output parameter is a file-like object
     that will be used to send the XML data to.
@@ -65,7 +65,19 @@ class EDXMLWriter(EDXMLBase):
     The optional Validate parameter controls if
     the generated EDXML stream should be auto-
     validated or not. Automatic validation is
-    enabled by default.
+    enabled by default. This parameter applies
+    to all aspects of EDXML validation, except
+    for object value validation, which is covered
+    by the ValidateObjects parameter.
+
+    Enabling object value validation always results
+    in full EDXML validation, regardless of the value
+    of the Validate parameter.
+
+    Parameters:
+    Output          -- File-like output object
+    Validate        -- Optional boolean for enabling validation
+    ValidateObjects -- Optional boolean for enabling object validation
     """
 
     EDXMLBase.__init__(self)
@@ -82,7 +94,7 @@ class EDXMLWriter(EDXMLBase):
 
       # Construct validating EDXML parser
       self.SaxParser = make_parser()
-      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = False)
+      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = ValidateObjects)
       self.SaxParser.setContentHandler(self.EDXMLParser)
 
       # Construct a bridge that will be used to connect the
