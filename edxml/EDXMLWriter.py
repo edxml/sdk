@@ -870,6 +870,7 @@ class EDXMLWriter(EDXMLBase):
     # our processing chain is in the state that it was when
     # we started producing events.
     self.Bridge.ClearBuffer()
+    self.Bridge.DisableBuffering()
 
   def CloseEventGroups(self):
     """Closes a previously opened <eventgroups> section"""
