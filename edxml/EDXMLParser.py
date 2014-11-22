@@ -330,11 +330,13 @@ class EDXMLValidatingParser(EDXMLParser):
       self.Definitions.CheckEventTypeParents(EventTypeName)
       # Check if properties refer to existing object types
       for PropertyName in PropertyNames:
-        PropertyAttributes = self.Definitions.GetPropertyAttributes(EventTypeName, PropertyName)
-        PropertyObjectType = self.Definitions.GetPropertyObjectType(EventTypeName, PropertyName)
+        PropertyAttributes   = self.Definitions.GetPropertyAttributes(EventTypeName, PropertyName)
+        PropertyObjectType   = self.Definitions.GetPropertyObjectType(EventTypeName, PropertyName)
+        ObjectTypeAttributes = self.Definitions.GetObjectTypeAttributes(PropertyObjectType)
         if self.Definitions.EventTypeIsUnique(EventTypeName):
           if not 'merge' in PropertyAttributes:
             self.Error("Property %s in unique event type %s does not have its 'merge' attribute set." % (( PropertyName, EventTypeName,  )) )
+
           if self.Definitions.PropertyIsUnique(EventTypeName, PropertyName):
             # All unique properties in a unique event type
             # must have the 'match' merge attribute.
@@ -343,6 +345,11 @@ class EDXMLValidatingParser(EDXMLParser):
           else:
             if PropertyAttributes['merge'] == 'match':
               self.Error("Property %s of event type %s is not unique, but it has its 'match' attribute set to 'match'." % (( PropertyName, EventTypeName )))
+
+          if PropertyAttributes['merge'] in ['min', 'max', 'increment', 'sum', 'multiply']:
+            # Numerical merge strategies require numerical data types.
+            if (ObjectTypeAttributes['data-type'].split(':')[0] != 'number' or ObjectTypeAttributes['data-type'].split(':')[1] == 'hex') and ObjectTypeAttributes['data-type'] != 'timestamp':
+              self.Error("Unique property %s of event type %s has its 'match' attribute set to '%s', but its object type does not have a numerical or timestamp data type." % (( PropertyName, EventTypeName, PropertyAttributes['merge'] )))
         if not PropertyObjectType in ObjectTypeNames:
           self.Error("Event type %s contains a property (%s) which refers to unknown object type %s" % (( EventTypeName, PropertyName, PropertyObjectType )) )
 

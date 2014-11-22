@@ -110,7 +110,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
     self.DecimalPattern       = re.compile("^[0-9.]+$")
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
-    self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(match)$")
+    self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(increment)|(sum)|(multiply)|(match)$")
     self.RelationTypePattern  = re.compile("^(intra|inter|parent|child|other):.+")
     self.FuzzyMatchingPattern = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
     self.DataTypePattern      = re.compile("^(boolean)|(timestamp)|(ip)|(hashlink)|(" + \
@@ -537,9 +537,9 @@ class EDXMLDefinitions(EDXMLBase):
       self.EventTypes[EventTypeName]['unique-properties'].add(PropertyName)
 
     if 'merge' in Attributes:
-      if Attributes['merge'] in ['match', 'min', 'max']:
+      if Attributes['merge'] in ['match', 'min', 'max', 'increment', 'sum', 'multiply']:
         self.EventTypes[EventTypeName]['mandatory-properties'].add(PropertyName)
-      if Attributes['merge'] in ['match', 'replace', 'min', 'max']:
+      if Attributes['merge'] in ['match', 'replace', 'min', 'max', 'increment', 'sum', 'multiply']:
         self.EventTypes[EventTypeName]['singleton-properties'].add(PropertyName)
       if PropertyName in self.EventTypes[EventTypeName]['parentmapping']:
         self.EventTypes[EventTypeName]['singleton-properties'].add(PropertyName)
@@ -924,32 +924,64 @@ class EDXMLDefinitions(EDXMLBase):
         # Not a unique property, needs to be merged.
         MergeStrategy = self.EventTypes[EventTypeName]['properties'][PropertyName]['merge']
 
-        if MergeStrategy in ['min', 'max']:
+        if MergeStrategy in ['min', 'max', 'increment', 'sum', 'multiply']:
           SplitDataType = self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, PropertyName)).split(':')
           if SplitDataType[0] in ['number', 'timestamp']:
 
-            Values = set()
+            if MergeStrategy in ['min', 'max']:
+              Values = set()
 
-            if SplitDataType[0] == 'timestamp':
-
-              Values = Source[PropertyName] | Target[PropertyName]
-
-            else:  
-
-              if SplitDataType[1] in ['float', 'double']:
-                for Value in Source[PropertyName]: Values.add(float(Value))
-                for Value in Target[PropertyName]: Values.add(float(Value))
-              elif SplitDataType[1] == 'decimal':
+              if SplitDataType[0] == 'timestamp':
                 for Value in Source[PropertyName]: Values.add(Decimal(Value))
                 for Value in Target[PropertyName]: Values.add(Decimal(Value))
               else:
-                for Value in Source[PropertyName]: Values.add(int(Value))
-                for Value in Target[PropertyName]: Values.add(int(Value))
+                if SplitDataType[1] in ['float', 'double']:
+                  for Value in Source[PropertyName]: Values.add(float(Value))
+                  for Value in Target[PropertyName]: Values.add(float(Value))
+                elif SplitDataType[1] == 'decimal':
+                  for Value in Source[PropertyName]: Values.add(Decimal(Value))
+                  for Value in Target[PropertyName]: Values.add(Decimal(Value))
+                elif SplitDataType[1] != 'hex':
+                  for Value in Source[PropertyName]: Values.add(int(Value))
+                  for Value in Target[PropertyName]: Values.add(int(Value))
 
-            if MergeStrategy == 'min':
-              Target[PropertyName] = set([str(min(Values))])
-            else:
-              Target[PropertyName] = set([str(max(Values))])
+              if MergeStrategy == 'min':
+                Target[PropertyName] = set([str(min(Values))])
+              else:
+                Target[PropertyName] = set([str(max(Values))])
+
+            elif MergeStrategy == 'increment':
+              if SplitDataType[0] == 'timestamp':
+                Target[PropertyName] = set(['%.6f' % (Decimal(list(Target[PropertyName])[0]) + Decimal(1))])
+              else:
+                if SplitDataType[1] in ['float', 'double']:
+                  Target[PropertyName] = set([str(float(list(Target[PropertyName])[0]) + 1)])
+                elif SplitDataType[1] == 'decimal':
+                  Target[PropertyName] = set([str(Decimal(list(Target[PropertyName])[0]) + Decimal(1))])
+                elif SplitDataType[1] != 'hex':
+                  Target[PropertyName] = set([str(int(list(Target[PropertyName])[0]) + 1)])
+
+            elif MergeStrategy == 'sum':
+              if SplitDataType[0] == 'timestamp':
+                Target[PropertyName] = set(['%.6f' % (Decimal(list(Source[PropertyName])[0]) + Decimal(list(Target[PropertyName])[0]))])
+              else:
+                if SplitDataType[1] in ['float', 'double']:
+                  Target[PropertyName] = set([str(float(list(Source[PropertyName])[0]) + float(list(Target[PropertyName])[0]))])
+                elif SplitDataType[1] == 'decimal':
+                  Target[PropertyName] = set([str(Decimal(list(Source[PropertyName])[0]) + Decimal(list(Target[PropertyName])[0]))])
+                elif SplitDataType[1] != 'hex':
+                  Target[PropertyName] = set([str(int(list(Source[PropertyName])[0]) + int(list(Target[PropertyName])[0]))])
+
+            elif MergeStrategy == 'multiply':
+              if SplitDataType[0] == 'timestamp':
+                Target[PropertyName] = set(['%.6f' % (Decimal(list(Source[PropertyName])[0]) * Decimal(list(Target[PropertyName])[0]))])
+              else:
+                if SplitDataType[1] in ['float', 'double']:
+                  Target[PropertyName] = set([str(float(list(Source[PropertyName])[0]) * float(list(Target[PropertyName])[0]))])
+                elif SplitDataType[1] == 'decimal':
+                  Target[PropertyName] = set([str((Decimal(list(Source[PropertyName])[0]) * Decimal(list(Target[PropertyName])[0])).quantize(Decimal(list(Source[PropertyName])[0])))])
+                elif SplitDataType[1] != 'hex':
+                  Target[PropertyName] = set([str(int(list(Source[PropertyName])[0]) * int(list(Target[PropertyName])[0]))])
 
         elif MergeStrategy == 'add':
           Target[PropertyName] = Source[PropertyName] | Target[PropertyName]
