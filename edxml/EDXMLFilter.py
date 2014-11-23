@@ -318,12 +318,30 @@ class EDXMLEventEditor(EDXMLValidatingStreamFilter):
       self.CurrentEventContent += text
     EDXMLValidatingStreamFilter.characters(self, text)
     
-  # Call this function from EditEvent() to delete
-  # an event in stead of just editing it.
   def DeleteEvent(self):
+    """Delete an event while editing
+
+    Call this function from EditEvent() to delete
+    an event in stead of just editing it.
+    """
     self.CurrentEventDeleted = True
     
-  # This function can be overridden to process single
-  # events. It should return the modified event attributes, objects and content.
   def EditEvent(self, SourceId, EventTypeName, EventObjects, EventContent, EventAttributes):
+    """Modifies an event
+
+    This function can be overridden to process single
+    events. It should modified copies of the EventObjects,
+    EventContent and EventAttributes parameters, in that order.
+
+    The EventObjects parameter is a list of dictionaries. Each
+    dictionary represents one object, containing a 'property'
+    key and a 'value' key.
+
+    Parameters:
+    SourceId        -- EDXML source identifier
+    EventTypeName   -- Name of the event type
+    EventObjects    -- List of event objects
+    EventContent    -- Event content string
+    EventAttributes -- Sax AttributesImpl instance containing event tag attributes
+    """
     return EventObjects, EventContent, EventAttributes
