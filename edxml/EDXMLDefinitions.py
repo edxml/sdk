@@ -59,8 +59,8 @@ class EDXMLDefinitions(EDXMLBase):
   from multiple EDXML streams in succession, which results in the
   definitions from all streams being merged together. During the merge,
   the definitions are automatically checked for compatibility with
-  previously stored definitions. The EDXMLError exception is raised when
-  problems are detected.
+  previously stored definitions. The :class:`edxml.EDXMLBase.EDXMLError`
+  exception is raised when problems are detected.
 
   The class also offers methods to generate EDXML <definitions> sections
   from the stored definitions, or generate (partial) XSD and RelaxNG
@@ -178,90 +178,226 @@ class EDXMLDefinitions(EDXMLBase):
     EDXMLBase.__init__(self)
 
   def SourceIdDefined(self, SourceId):
-    """Returns boolean indicating if given Source ID exists."""
+    """Returns boolean indicating if given Source ID exists.
+
+    Args:
+      SourceId (str): EDXML Source Identifier
+
+    Returns:
+      bool. Source ID exists (True) or not (False)
+    """
     return SourceId in self.SourceIDs.keys()
 
   def EventTypeDefined(self, EventTypeName):
-    """Returns boolean indicating if given event type is defined."""
+    """Returns boolean indicating if given event type is defined.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+    Returns:
+      bool. Event type exists (True) or not (False)
+
+    """
     return EventTypeName in self.EventTypes
 
   def PropertyDefined(self, EventTypeName, PropertyName):
-    """Returns boolean indicating if given property is defined."""
+    """Returns boolean indicating if given property is defined.
+
+    Args:
+      EventTypeName (str): Event type name
+
+      PropertyName (str):  Property Name
+
+    Returns:
+      bool. Property exists (True) or not (False)
+    """
     return PropertyName in self.EventTypes[EventTypeName]['properties']
 
   def ObjectTypeDefined(self, ObjectTypeName):
-    """Returns boolean indicating if given object type is defined."""
+    """Returns boolean indicating if given object type is defined.
+
+    Args:
+      ObjectTypeName (str): Object type name
+
+    Returns:
+      bool. Object type exists (True) or not (False)
+    """
     return ObjectTypeName in self.ObjectTypes
 
   def RelationDefined(self, EventTypeName, Property1Name, Property2Name):
-    """Returns boolean indicating if given property relation is defined."""
+    """Returns boolean indicating if given property relation is defined.
+
+    Args:
+      EventTypeName (str): Event type name
+
+      Property1Name (str): Name of event type property
+
+      Property2Name (str): Name of event type property
+
+    Returns:
+      bool. Relation exists (True) or not (False)
+    """
     RelationId = Property1Name + ' -> ' + Property2Name
     return RelationId in self.EventTypes[EventTypeName]['relations']
 
   def GetRelationPredicates(self):
-    """Returns list of known relation predicates."""
+    """Returns list of known relation predicates.
+
+    Returns:
+      list. List of predicates
+    """
     return list(self.RelationPredicates)
 
   def EventTypeIsUnique(self, EventTypeName):
-    """Returns a boolean indicating if given eventtype is unique or not."""
+    """Returns a boolean indicating if given eventtype is unique or not.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+    Returns:
+      bool. Event type is unique (True) or not (False)
+    """
     return self.EventTypes[EventTypeName]['unique']
 
   def PropertyIsUnique(self, EventTypeName, PropertyName):
-    """Returns a boolean indicating if given property is unique or not."""
+    """Returns a boolean indicating if given property is unique or not.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+      PropertyName (str): Name of event property
+
+    Returns:
+      bool. Property is unique (True) or not (False)
+    """
     return PropertyName in self.EventTypes[EventTypeName]['unique-properties']
 
   def GetUniqueProperties(self, EventTypeName):
-    """Returns a list of names of unique properties"""
+    """Returns a list of names of unique properties
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      list. List of unique properties
+    """
     return self.EventTypes[EventTypeName]['unique-properties']
 
   def GetMandatoryObjectProperties(self, EventTypeName):
-    """Returns a list of names of properties which must have an object"""
+    """Returns a list of names of properties which must have an object
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      list. List of mandatory properties
+    """
     return self.EventTypes[EventTypeName]['mandatory-properties']
 
   def GetSingletonObjectProperties(self, EventTypeName):
-    """Returns a list of names of properties which cannot have multiple objects"""
+    """Returns a list of names of properties which cannot have multiple objects
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      list. List of singleton properties
+    """
     return self.EventTypes[EventTypeName]['singleton-properties']
 
   def PropertyDefinesEntity(self, EventTypeName, PropertyName):
-    """Returns boolean indicating if property of given event type is an entity identifier."""
+    """Returns boolean indicating if property of given event type is an entity identifier.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+      PropertyName (str): Name of event property
+
+    Returns:
+      bool. Is entity identifier (True) or not (False)
+
+    """
     return PropertyName in self.EntityProperties[EventTypeName]
 
   def PropertyInRelation(self, EventTypeName, PropertyName):
     """Returns a boolean indicating if given
     property of specified event type is involved
-    in any defined property relation."""
+    in any defined property relation.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+      PropertyName (str): Name of event property
+
+    Returns:
+      bool. Is part of relation definition (True) or not (False)
+    """
     return PropertyName in self.EventTypes[EventTypeName]['related-properties']
 
   def GetSourceURLs(self):
     """Returns an ordered list of all parsed
     source URLs. The order as they
-    appeared in the EDXML stream is preserved."""
+    appeared in the EDXML stream is preserved.
+
+    Returns:
+      list. List of EDXML source URLs
+
+    """
     return self.SourceURLs.keys()
 
   def GetSourceIDs(self):
-    """Returns a list of all known source ID"""
+    """Returns a list of all known source ID
+
+    Returns:
+      list. List of EDXML source IDs
+    """
     return self.Sources
 
   def GetSourceId(self, Url):
-    """Returns the ID of event source having specified URL"""
+    """Returns the ID of event source having specified URL
+
+    Args:
+      Url (str): EDXML source URL
+
+    Returns:
+      str. EDXML source ID
+    """
     return self.SourceURLs[Url]['source-id']
 
   def GetEventTypeNames(self):
     """Returns a list of all known
     event type names. The order as they
-    appeared in the EDXML stream is preserved."""
+    appeared in the EDXML stream is preserved.
+
+    Returns:
+      list. List of event type names
+    """
     return self.EventTypeNames
 
   def GetEventTypeAttributes(self, EventTypeName):
     """Returns a dictionary containing all
-    attributes of requested event type."""
+    attributes of requested event type.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      dict. EDXML attributes
+    """
     return self.EventTypes[EventTypeName]['attributes']
 
   def GetEventTypeParent(self, EventTypeName):
     """Returns a dictionary containing all
     attributes of the parent of requested eventtype.
     Returns empty dictionary when event type has no
-    defined parent."""
+    defined parent.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      dict. EDXML attributes of parent
+    """
     if 'parent' in self.EventTypes[EventTypeName]:
       return self.EventTypes[EventTypeName]['parent']
     else:
@@ -273,25 +409,53 @@ class EDXMLDefinitions(EDXMLBase):
     The value of each key corresponds to the name of the
     parent property that the child property maps to.
     Returns empty dictionary when event type has no
-    defined parent."""
+    defined parent.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      dict. Child / Parent Property mapping
+    """
     if 'parent' in self.EventTypes[EventTypeName]:
       return self.EventTypes[EventTypeName]['parentmapping']
     else:
       return {}
 
   def GetEventTypesHavingObjectType(self, ObjectTypeName):
-    """Returns a list of event type names having specified object type."""
+    """Returns a list of event type names having specified object type.
+
+    Args:
+      ObjectTypeName (str): Name of an object type
+
+    Returns:
+      list. List of event type names
+    """
     if not ObjectTypeName in self.ObjectTypeEventTypes:
       return []
     else:
       return list(self.ObjectTypeEventTypes[ObjectTypeName])
 
   def GetEventTypeNamesInClass(self, ClassName):
-    """Returns a list of event type names that belong to specified class."""
+    """Returns a list of event type names that belong to specified class.
+
+    Args:
+      ClassName (str): Name of an EDXML event type class
+
+    Returns:
+      list. List of event type names
+    """
     return list(self.EventTypeClasses[ClassName])
 
   def GetEventTypeNamesInClasses(self, ClassNames):
-    """Returns a list of event type names that belong to specified list of classes."""
+    """Returns a list of event type names that belong to specified list of classes.
+
+    Args:
+      ClassNames (iterable): Iterable yielding names of EDXML event type classes
+
+    Returns:
+      list. List of event type names
+    """
     EventTypeNames = set()
     for ClassName in ClassNames:
       for EventTypeName in self.EventTypeClasses[ClassName]:
@@ -299,41 +463,101 @@ class EDXMLDefinitions(EDXMLBase):
     return list(EventTypeNames)
 
   def GetObjectTypeAttributes(self, ObjectTypeName):
-    """Returns a dictionary containing all attributes of specified object type."""
+    """Returns a dictionary containing all attributes of specified object type.
+
+    Args:
+      ObjectTypeName (str): Name of an object type
+
+    Returns:
+      dict. Dictionary of EDXML object type attributes
+    """
     return self.ObjectTypes[ObjectTypeName]
 
   def GetEventTypeProperties(self, EventTypeName):
     """Returns a list of all property names
     of given event type. The order as they
-    appeared in the EDXML stream is preserved."""
+    appeared in the EDXML stream is preserved.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      list. List of event type property names
+    """
     return self.PropertyNames[EventTypeName]
 
   def GetEventTypePropertyRelations(self, EventTypeName):
     """Returns a list of all IDs of property relations
     in given event type. The order as they
-    appeared in the EDXML stream is preserved."""
+    appeared in the EDXML stream is preserved.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Returns:
+      list. List of property relation identifiers
+    """
     return self.PropertyRelations[EventTypeName]
 
   def GetPropertyRelationAttributes(self, EventTypeName, RelationId):
-    """Returns a dictionary containing all attributes of requested object type."""
+    """Returns a dictionary containing all attributes of requested relation.
+
+    The returned attributes are the attributes of the EDXML <relation> tag
+    that corresponds to the specified relation identifier.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+      RelationId (str): Identifier of a property relation
+
+    Returns:
+      dict. Dictionary containing EDXML attributes of relation tag
+    """
     return self.EventTypes[EventTypeName]['relations'][RelationId]
 
   def GetObjectTypeNames(self):
     """Returns a list of all known object type names.
-    The order as they appeared in the EDXML stream is preserved."""
+    The order as they appeared in the EDXML stream is preserved.
+
+    Returns:
+      list. List of object type names
+    """
     return self.ObjectTypeNames
 
   def GetSourceURLProperties(self, Url):
-    """Returns dictionary containing source attributes of the source specified by given URL."""
+    """Returns dictionary containing attributes of the source specified by given URL.
+
+    The returned dictionay contains the attributes of the EDXML <source> tag
+
+    Args:
+      Url (str): EDXML source URL
+
+    Returns:
+      dict. Dictionary containing the attributes of the source tag.
+    """
     return self.SourceURLs[Url]
 
   def GetSourceIdProperties(self, SourceId):
-    """Returns dictionary containing source attributes of the source specified by given Source ID."""
+    """Returns dictionary containing attributes of the source specified by given Source ID.
+
+    Args:
+      SourceId (str): Source identifier
+
+    Returns:
+      dict. Dictionary containing the attributes of the source tag.
+    """
     return self.SourceURLs[self.SourceIDs[SourceId]]
 
   def ObjectTypeRequiresUnicode(self, ObjectTypeName):
     """Returns True when given string object type requires
-    unicode characters, return False otherwise."""
+    unicode characters, return False otherwise.
+
+    Args:
+      ObjectTypeName (str): Name of an object type
+
+    Returns:
+      bool. Objects require unicode encoding (True) or not (False)
+    """
     ObjectDataType = self.ObjectTypes[ObjectTypeName]['data-type'].split(':')
     if len(ObjectDataType) < 4 or 'u' not in ObjectDataType[3]:
       return False
@@ -341,7 +565,16 @@ class EDXMLDefinitions(EDXMLBase):
       return True
 
   def GetPropertyObjectType(self, EventTypeName, PropertyName):
-    """Return the name of the object type of specified event property."""
+    """Return the name of the object type of specified event property.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+      PropertyName (str): Name of event property
+
+    Returns:
+      str. Object type name
+    """
     if EventTypeName in self.EventTypes:
       if PropertyName in self.EventTypes[EventTypeName]['properties']:
         ObjectType = self.EventTypes[EventTypeName]['properties'][PropertyName]['object-type']
@@ -352,11 +585,27 @@ class EDXMLDefinitions(EDXMLBase):
       self.Error('Unknown event type %s' % str(EventTypeName) )
 
   def GetPropertyAttributes(self, EventTypeName, PropertyName):
-    """Return dictionary of attributes of specified event property."""
+    """Return dictionary of attributes of specified event property.
+
+    Args:
+      EventTypeName (str): Name of event type
+
+      PropertyName (str): Name of event property
+
+    Returns:
+      dict. Dictionary containing the EDXML attributes of the <property> tag
+    """
     return self.EventTypes[EventTypeName]['properties'][PropertyName]
 
   def GetObjectTypeDataType(self, ObjectTypeName):
-    """Return the data type of given object type."""
+    """Return the data type of given object type.
+
+    Args:
+      ObjectTypeName (str): Name of an object type
+
+    Returns:
+      str. EDXML data type
+    """
     return self.ObjectTypes[ObjectTypeName]['data-type']
 
   def AddEventType(self, EventTypeName, Attributes):
@@ -365,10 +614,10 @@ class EDXMLDefinitions(EDXMLBase):
     name exists, it will be checked for consistency with
     the existing definition.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of event type
 
-    EventTypeName -- Name of event type
-    Attributes    -- Dictionary holding the attributes of the 'eventtype' tag.
+      Attributes (dict): Dictionary holding the attributes of the <eventtype> tag
 
     """
     if EventTypeName in self.EventTypes:
@@ -381,10 +630,10 @@ class EDXMLDefinitions(EDXMLBase):
   def SetEventTypeParent(self, EventTypeName, Attributes):
     """Configure a parent of specified event type.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of event type
 
-    EventTypeName -- Name of event type
-    Attributes    -- Dictionary holding the attributes of the 'parent' tag.
+      Attributes (str): Dictionary holding the attributes of the <parent> tag.
 
     """
 
@@ -401,11 +650,12 @@ class EDXMLDefinitions(EDXMLBase):
     name exists, it will be checked for consistency with
     the existing definition.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of an event type
 
-    EventTypeName -- Name of event type
-    PropertyName  -- Name of property
-    Attributes    -- Dictionary holding the attributes of the 'property' tag.
+      PropertyName (str): Name of a property
+
+      Attributes (dict): Dictionary holding the attributes of the <property> tag.
 
     """
     if PropertyName in self.EventTypes[EventTypeName]['properties']:
@@ -421,12 +671,14 @@ class EDXMLDefinitions(EDXMLBase):
     properties exists, it will be checked for consistency with
     the existing definition.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of the event type
 
-    EventTypeName -- Name of event type
-    Property1Name -- Name of property 1
-    Property2Name -- Name of property 2
-    Attributes    -- Dictionary holding the attributes of the 'relation' tag.
+      Property1Name (str): Name of property 1
+
+      Property2Name (str): Name of property 2
+
+      Attributes (dict): Dictionary holding the attributes of the <relation> tag.
 
     """
     RelationId = Property1Name + ' -> ' + Property2Name
@@ -442,11 +694,12 @@ class EDXMLDefinitions(EDXMLBase):
     name exists, it will be checked for consistency with
     the existing definition.
 
-    Parameters:
+    Args:
+      ObjectTypeName (str): Name of event type
 
-    ObjectTypeName -- Name of event type
-    Attributes     -- Dictionary holding the attributes of the 'objecttype' tag.
-    WarnNotUsed    -- Generate a warning if no property uses the object type (optional, default is True)
+      Attributes (str): Dictionary holding the attributes of the <objecttype> tag.
+
+      WarnNotUsed (str, optional): Generate a warning if no property uses the object type
 
     """
     if WarnNotUsed:
@@ -465,10 +718,10 @@ class EDXMLDefinitions(EDXMLBase):
     URL exists, it will be checked for consistency with
     the existing definition.
 
-    Parameters:
+    Args:
+      SourceUrl (str): URL of event source
 
-    SourceUrl   -- URL of event source
-    Attributes  -- Dictionary holding the attributes of the 'source' tag.
+      Attributes (str): Dictionary holding the attributes of the <source> tag.
 
     """
     SourceId = Attributes['source-id']
@@ -603,7 +856,13 @@ class EDXMLDefinitions(EDXMLBase):
   def CheckEventTypePropertyConsistency(self, EventTypeName, PropertyNames):
     """Check if specified list of property names
     is correct for the specified event type.
-    Calls self.Error when a problem is detected."""
+    Calls self.Error when a problem is detected.
+
+    Args:
+      EventTypeName (str): Name of an event type
+
+      PropertyName (str): Name of an event property
+    """
     for PropertyName in PropertyNames:
       if not self.PropertyDefined(EventTypeName, PropertyName):
         self.Error("Property %s was previously defined as part of eventtype %s, but this definition does not define it." % (( PropertyName, EventTypeName )) )
@@ -644,9 +903,8 @@ class EDXMLDefinitions(EDXMLBase):
     """Checks if parent definition of given event type
     is valid, if there is any parent definition.
 
-    Parameters:
-
-    EventTypeName -- Name of event type
+    Args:
+      EventTypeName (str): Name of an event type
 
     """
 
@@ -678,12 +936,14 @@ class EDXMLDefinitions(EDXMLBase):
     """Checks if given event type reporter string makes sense. Optionally,
     it can also check if all given properties are present in the string.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of an event type
 
-    EventTypeName     -- Name of event type
-    String            -- The reporter string
-    PropertyNames     -- List of property names of event type
-    CheckCompleteness -- Check if all properties are present in string. (optional, defaults to False)
+      String (str): The reporter string
+
+      PropertyNames (list): List of property names belonging to the event type
+
+      CheckCompleteness (bool, optional): Check if all properties are present in string
 
     """
 
@@ -864,11 +1124,15 @@ class EDXMLDefinitions(EDXMLBase):
     within a single EDXML file. When multiple 
     EDXML files are parsed using the same EDXMLParser
     instance, it may happen that different sources have
-    the same ID. This function changes the Source IDs
+    the same ID. This method changes the Source IDs
     of all known sources to be unique.
 
     It returns a mapping that maps old Source ID into
-    new Source ID."""
+    new Source ID.
+
+    Returns:
+      dict. Source identifier mapping
+    """
 
     Counter = 1
     Mapping = {}
@@ -891,11 +1155,12 @@ class EDXMLDefinitions(EDXMLBase):
 
     Note that this method does NOT merge parent hashes, only the property objects.
 
-    Parameters:
+    Args:
+      EventTypeName (str): Name of event type of the events
 
-    EventTypeName -- Name of event type of the events
-    EventObjectsA -- Objects of event A
-    EventObjectsB -- Objects of event B
+      EventObjectsA (dict): Objects of event A
+
+      EventObjectsB (dict): Objects of event B
 
     """
 
@@ -1023,10 +1288,19 @@ class EDXMLDefinitions(EDXMLBase):
     dictionaries should contain the property name stored under the 'property'
     key and the value stored under the 'value' key.
 
-    Note that the supplied object values must be normalized using the
-    NormalizeObject method of the EDXMLBase class.
+    Args:
+      EventTypeName (str): The name of the event type
 
-    Returns a hexadecimal string representation of the hash.
+      EventObjects (list): List of event objects
+
+      EventContent (str): The content of the event
+
+    Note:
+      The supplied object values must be normalized using
+      :func:`edxml.EDXMLBase.EDXMLBase.NormalizeObject`.
+
+    Returns:
+      str. A hexadecimal string representation of the hash.
 
     """
 
@@ -1069,10 +1343,19 @@ class EDXMLDefinitions(EDXMLBase):
     dictionaries should contain the property name stored under the 'property'
     key and the value stored under the 'value' key.
 
-    Note that the supplied object values must be normalized using the
-    NormalizeObject method of the EDXMLBase class.
+    Args:
+      EventTypeName (str): The name of the event type
 
-    Returns a hexadecimal string representation of the hash.
+      EventObjects (list): List of event objects
+
+      EventContent (str): The content of the event
+
+    Note:
+      The supplied object values must be normalized using
+      :func:`edxml.EDXMLBase.EDXMLBase.NormalizeObject`.
+
+    Returns:
+      str. A hexadecimal string representation of the hash.
 
     """
 
@@ -1116,10 +1399,10 @@ class EDXMLDefinitions(EDXMLBase):
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
-    Arguments:
+    Args:
+      EventTypeName (str): Name of the event type
 
-    EventTypeName -- Name of the event type
-    XMLGenerator  -- XMLGenerator / XMLWriter instance
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
 
     """
 
@@ -1176,10 +1459,10 @@ class EDXMLDefinitions(EDXMLBase):
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
-    Arguments:
+    Args:
+      EventTypeName (str): Name of the event type
 
-    EventTypeName -- Name of the event type
-    XMLGenerator  -- XMLGenerator / XMLWriter instance
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
 
     """
 
@@ -1204,8 +1487,10 @@ class EDXMLDefinitions(EDXMLBase):
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
-    EventTypeName -- Name of the event type
-    XMLGenerator  -- XMLGenerator / XMLWriter instance
+    Args:
+      SourceUrl (str): EDXML source URL
+
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
 
     """
 
@@ -1229,10 +1514,10 @@ class EDXMLDefinitions(EDXMLBase):
     The XMLGenerator argument may be either a SAX XMLGenerator
     instance or a ElementTree SimpleXMLWriter instance.
 
-    Parameters:
+    Args:
+      XMLGenerator (XMLGenerator,XMLWriter):  XMLGenerator / XMLWriter instance
 
-    XMLGenerator   -- XMLGenerator / XMLWriter instance
-    IncludeSources -- Optional boolean, include source definitions yes or no (default is True)
+      IncludeSources (bool, optional): Boolean, include source definitions yes or no
 
     """
 
@@ -1301,12 +1586,12 @@ class EDXMLDefinitions(EDXMLBase):
     """Finalize generated XSD and return it as a string."""
     return etree.tostring(self.SchemaXSD, pretty_print = True, encoding='utf-8')
 
-  # Internal convenience function
+  # Internal convenience method
   def OpenElementXSD(self, ElementName):
     self.CurrentElementXSD = etree.SubElement(self.CurrentElementXSD, "{%s}%s" % (( self.XSD['xs'], ElementName )) )
     return self.CurrentElementXSD
 
-  # Internal convenience function
+  # Internal convenience method
   def CloseElementXSD(self):
     self.CurrentElementXSD = self.CurrentElementXSD.getparent()
 
@@ -1316,7 +1601,10 @@ class EDXMLDefinitions(EDXMLBase):
     generating modular XSD schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenXSD() first.
+    Make sure to call :func:`OpenXSD` first.
+
+    Args:
+      EventTypeName (str): Name of an event type
 
     """
 
@@ -1380,14 +1668,16 @@ class EDXMLDefinitions(EDXMLBase):
     self.CloseElementXSD()
     self.CloseElementXSD()
 
-  def GenerateObjectTypeXSD(self, ObjectTypeName):    
+  def GenerateObjectTypeXSD(self, ObjectTypeName):
     """Generates an XSD fragment related to the object type
     definition of specified object type. Can be useful for
     generating modular XSD schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenXSD() first.
+    Make sure to call :func:`OpenXSD` first.
 
+    Args:
+      ObjectTypeName (str): Name of an object type
     """
 
     self.OpenElementXSD('element').set('name', 'objecttype')
@@ -1408,7 +1698,7 @@ class EDXMLDefinitions(EDXMLBase):
     contain all known definitions of event types, object
     types and sources.
 
-    Make sure to call OpenXSD() first.
+    Make sure to call :func:`OpenXSD` first.
 
     """
 
@@ -1507,17 +1797,21 @@ class EDXMLDefinitions(EDXMLBase):
     self.SchemaRelaxNG = None
 
   def CloseRelaxNG(self):
-    """Finalize RelaxNG schema and return it as a string."""
+    """Finalize RelaxNG schema and return it as a string.
+
+    Returns:
+      str. The RelaxNG schema
+    """
     Schema = etree.tostring(self.SchemaRelaxNG, pretty_print = True, encoding='utf-8')
     self.SchemaRelaxNG = None
     return Schema
 
-  # Internal convenience function
+  # Internal convenience method
   def OpenElementRelaxNG(self, ElementName):
     self.CurrentElementRelaxNG = etree.SubElement(self.CurrentElementRelaxNG, ElementName )
     return self.CurrentElementRelaxNG
 
-  # Internal convenience function
+  # Internal convenience method
   def CloseElementRelaxNG(self):
     self.CurrentElementRelaxNG = self.CurrentElementRelaxNG.getparent()
 
@@ -1527,7 +1821,10 @@ class EDXMLDefinitions(EDXMLBase):
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenRelaxNG() first.
+    Args:
+      EventTypeName (str): Name of an event type
+
+    Make sure to call :func:`OpenRelaxNG` first.
 
     """
 
@@ -1621,14 +1918,16 @@ class EDXMLDefinitions(EDXMLBase):
     return    
 
 
-  def GenerateObjectTypeRelaxNG(self, ObjectTypeName):    
+  def GenerateObjectTypeRelaxNG(self, ObjectTypeName):
     """Generates a RelaxNG fragment related to the object type
     definition of specified object type. Can be useful for
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenRelaxNG() first.
+    Make sure to call :func:`OpenRelaxNG` first.
 
+    Args:
+      ObjectTypeName (str): Name of an object type
     """
 
     if self.SchemaRelaxNG == None:
@@ -1671,8 +1970,10 @@ class EDXMLDefinitions(EDXMLBase):
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenRelaxNG() first.
+    Make sure to call :func:`OpenRelaxNG` first.
 
+    Args:
+      EventTypeName (str): Name of an event type
     """
 
     if self.SchemaRelaxNG == None:
@@ -1736,7 +2037,7 @@ class EDXMLDefinitions(EDXMLBase):
     generating modular RelaxNG schemas or constructing full
     EDXML validation schemas.
 
-    Make sure to call OpenRelaxNG() first.
+    Make sure to call :func:`OpenRelaxNG` first.
 
     """
 
@@ -1777,13 +2078,14 @@ class EDXMLDefinitions(EDXMLBase):
     useful if you have a central storage for event type definitions or
     object type definitions.
 
-    Make sure to call OpenRelaxNG() first.
+    Make sure to call :func:`OpenRelaxNG` first.
 
-    Parameters:
+    Args:
+      EventRefs (dict, optional): Dictionary containing URI of event schema for every event type name
 
-    EventRefs      -- Optional dictionary containing URI of event schema for every event type name
-    EventTypeRefs  -- Optional dictionary containing URI of event type schema for every event type name
-    ObjectTypeRefs -- Optional dictionary containing URI of object type schema for every object type name
+      EventTypeRefs (dict, optional): Dictionary containing URI of event type schema for every event type name
+
+      ObjectTypeRefs (dict, optional): Dictionary containing URI of object type schema for every object type name
 
     """
 

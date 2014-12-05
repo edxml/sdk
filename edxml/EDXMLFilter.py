@@ -30,16 +30,9 @@
 """EDXMLFilter
 
 This module can be used to write EDXML filtering scripts, which can edit
-EDXML streams. All filtering classes are based on EDXMLParser, so you can
-conveniently use the EDXMLDefinitions instance of EDXMLParser to query
+EDXML streams. All filtering classes are based on :class:`edxml.EDXMLParser`,
+so you can conveniently use Definitions attribute of EDXMLParser to query
 details about all defined event types, object types, sources, and so on.
-
-Classes in this module:
-
-EDXMLStreamFilter:           A generic stream filter
-EDXMLValidatingStreamFilter: A validating, generic stream filter
-EDXMLObjectEditor:           Stream filter for editing individual objects in stream
-EDXMLEventEditor:            Stream filter for editing events in stream
 
 """
 
@@ -50,44 +43,42 @@ from EDXMLParser import *
 
 class EDXMLStreamFilter(EDXMLParser):
   """Base class for implementing EDXML filters
-  
+
   This class inherits from EDXMLParser and causes the
   EDXML data to be passed through to STDOUT.
-  
-  """
-  
-  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
-    """Constructor.
 
-    You can pass any file-like object using the Output parameter, which
-    will be used to send the filtered data stream to. It defaults to
-    sys.stdout (standard output).
-    
-    Parameters:
-    upstream   -- XML source (SaxParser instance in most cases)
-    SkipEvents -- Set to True to parse only the definitions section (default False)
-    Output     -- An optional file-like object, defaults to sys.stdout
-    
-    """
-    
+  You can pass any file-like object using the Output parameter, which
+  will be used to send the filtered data stream to. It defaults to
+  sys.stdout (standard output).
+
+  Args:
+    upstream: XML source (SaxParser instance in most cases)
+
+    SkipEvents (bool, optional): Set to True to parse only the definitions section
+
+    Output (bool, optional): An optional file-like object, defaults to sys.stdout
+
+  """
+
+  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
+
     self.OutputEnabled = True
     self.Passthrough = XMLGenerator(Output, 'utf-8')
     EDXMLParser.__init__(self, upstream, SkipEvents)
   
   def SetOutputEnabled(self, YesOrNo):
-    """This function implements a global switch
+    """This method implements a global switch
     to turn XML passthrough on or off. You can
     use it to allow certain parts of EDXML files
     to pass through to STDOUT while other parts
     are filtered out.
 
-    Note that the output of the filter is validated,
-    so be careful not to break the EDXML data while
-    filtering it.
+    Args:
+      YesOrNo (bool): Output enabled (True) or disabled (False)
 
     """
     self.OutputEnabled = YesOrNo
-  
+
   def startElement(self, name, attrs):
   
     if self.OutputEnabled:
@@ -116,28 +107,27 @@ class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
   This class is identical to the EDXMLStreamFilter class, except that
   it fully validates each event that is output by the filter.
 
+  You can pass any file-like object using the Output parameter, which
+  will be used to send the filtered data stream to. It defaults to
+  sys.stdout (standard output).
+
+  Parameters:
+    upstream: XML source (SaxParser instance in most cases)
+
+    SkipEvents (bool, optional): Set to True to parse only the definitions section
+
+    Output (bool, optional): An optional file-like object, defaults to sys.stdout
+
   """
 
   def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
-    """Constructor.
-
-    You can pass any file-like object using the Output parameter, which
-    will be used to send the filtered data stream to. It defaults to
-    sys.stdout (standard output).
-
-    Parameters:
-    upstream   -- XML source (SaxParser instance in most cases)
-    SkipEvents -- Set to True to parse only the definitions section (default False)
-    Output     -- An optional file-like object, defaults to sys.stdout
-
-    """
 
     self.OutputEnabled = True
     self.Passthrough = XMLGenerator(Output, 'utf-8')
     EDXMLValidatingParser.__init__(self, upstream, SkipEvents)
 
   def SetOutputEnabled(self, YesOrNo):
-    """This function implements a global switch
+    """This method implements a global switch
     to turn XML passthrough on or off. You can
     use it to allow certain parts of EDXML files
     to pass through to STDOUT while other parts
@@ -146,6 +136,9 @@ class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
     Note that the output of the filter is validated,
     so be careful not to break the EDXML data while
     filtering it.
+
+    Args:
+      YesOrNo (bool): Output enabled (True) or disabled (False)
 
     """
     self.OutputEnabled = YesOrNo
@@ -195,30 +188,36 @@ class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
 class EDXMLObjectEditor(EDXMLValidatingStreamFilter):
   """This class implements an EDXML filter which can
   be used to edit objects in an EDXML stream. It offers the
-  ProcessObject() function which can be overridden
+  ProcessObject() method which can be overridden
   to implement your own object editing EDXML processor.
-  
-   HINT: Use the AttributesImpl class from the xml.sax.xmlreader
-         module to replace the attributes of an object.
+
+  You can pass any file-like object using the Output parameter, which
+  will be used to send the filtered data stream to. It defaults to
+  sys.stdout (standard output).
+
+  Parameters:
+    upstream: XML source (SaxParser instance in most cases)
+
+    Output (optional): A file-like object, defaults to sys.stdout
   """
   
   def __init__ (self, upstream, Output = sys.stdout):
-    """ Constructor.
-
-    You can pass any file-like object using the Output parameter, which
-    will be used to send the filtered data stream to. It defaults to
-    sys.stdout (standard output).
-
-    Parameters:
-    upstream   -- XML source (SaxParser instance in most cases)
-    Output     -- An optional file-like object, defaults to sys.stdout
-    """
 
     EDXMLValidatingStreamFilter.__init__(self, upstream, False, Output)
   
   def InsertObject(self, PropertyName, Value):
+    """Insert a new object into the EDXML stream
+
+    This method can be called from implementations of
+    :func:`EditObject` to add objects to the current event.
+
+    Args:
+      PropertyName (str): Property of the new object
+
+      Value (str): Value of the new object
+    """
     self.InsertedObjects.append({'property': PropertyName, 'value': Value})
-  
+
   def startElement(self, name, attrs):
     if name == 'object':
       Property = attrs.get('property')
@@ -233,30 +232,43 @@ class EDXMLObjectEditor(EDXMLValidatingStreamFilter):
       
     EDXMLValidatingStreamFilter.startElement(self, name, attrs)
 
-  # This function can be overridden to process single
-  # objects. It should return the modified object attributes.
   def EditObject(self, SourceId, EventTypeName, ObjectTypeName, attrs):
+    """This method can be overridden to process single objects.
+
+    Implementations should return the new object attributes by means
+    of an :class:`xml.sax.xmlreader.AttributesImpl` object.
+
+    Args:
+      SourceId (str): EDXML Source Identifier
+
+      EventTypeName (str): Name of the event type of current event
+
+      ObjectTypeName (str): Object type of the object
+
+      attrs (AttributesImpl): XML attributes of the <object> tag
+
+    Returns:
+      AttributesImpl. Updated XML attributes of the <object> tag
+    """
     return attrs
-    
     
 class EDXMLEventEditor(EDXMLValidatingStreamFilter):
   """This class implements an EDXML filter which can
   use to edit events in an EDXML stream. It offers the
-  ProcessEvent() function which can be overridden
+  ProcessEvent() method which can be overridden
   to implement your own event editing EDXML processor.
+
+  You can pass any file-like object using the Output parameter, which
+  will be used to send the filtered data stream to. It defaults to
+  sys.stdout (standard output).
+
+  Args:
+    upstream: XML source (SaxParser instance in most cases)
+
+    Output (optional): A file-like object, defaults to sys.stdout
   """
   
   def __init__ (self, upstream, Output = sys.stdout):
-    """ Constructor.
-
-    You can pass any file-like object using the Output parameter, which
-    will be used to send the filtered data stream to. It defaults to
-    sys.stdout (standard output).
-
-    Parameters:
-    upstream   -- XML source (SaxParser instance in most cases)
-    Output     -- An optional file-like object, defaults to sys.stdout
-    """
 
     self.ReadingEvent = False
     self.CurrentEvent = []
@@ -321,27 +333,33 @@ class EDXMLEventEditor(EDXMLValidatingStreamFilter):
   def DeleteEvent(self):
     """Delete an event while editing
 
-    Call this function from EditEvent() to delete
-    an event in stead of just editing it.
+    Call this method from :func:`EditEvent` to delete
+    the event in stead of just editing it.
     """
     self.CurrentEventDeleted = True
-    
+
   def EditEvent(self, SourceId, EventTypeName, EventObjects, EventContent, EventAttributes):
     """Modifies an event
 
-    This function can be overridden to process single
-    events. It should modified copies of the EventObjects,
-    EventContent and EventAttributes parameters, in that order.
+    This method can be overridden to process single
+    events.
 
     The EventObjects parameter is a list of dictionaries. Each
     dictionary represents one object, containing a 'property'
     key and a 'value' key.
 
-    Parameters:
-    SourceId        -- EDXML source identifier
-    EventTypeName   -- Name of the event type
-    EventObjects    -- List of event objects
-    EventContent    -- Event content string
-    EventAttributes -- Sax AttributesImpl instance containing event tag attributes
+    Args:
+      SourceId (str): EDXML source identifier
+
+      EventTypeName (str): Name of the event type
+
+      EventObjects (list): List of event objects
+
+      EventContent (str): Event content string
+
+      EventAttributes (AttributesImpl): Sax AttributesImpl object containing <event> tag attributes
+
+    Returns:
+      tuple. Modified copies of the EventObjects, EventContent and EventAttributes parameters, in that order.
     """
     return EventObjects, EventContent, EventAttributes

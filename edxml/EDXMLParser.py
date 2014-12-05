@@ -58,20 +58,25 @@ from EDXMLDefinitions import EDXMLDefinitions
 
 class EDXMLParser(EDXMLBase, XMLFilterBase):
   """The EDXMLParser class can be used as a content
-  handler for Sax, and has several functions that
+  handler for Sax, and has several methods that
   can be overridden to implement custom EDXML processing
   scripts. It can optionally skip reading the event data
   itself if you are only interested in obtaining the 
   definitions. In that case, it will abort XML processing
-  by raising the EDXMLProcessingInterrupted exception, which
-  you can catch and handle."""
+  by raising the :class:`edxml.EDXMLBase.EDXMLProcessingInterrupted`
+  exception, which you can catch and handle.
 
+  Args:
+    upstream: XML source (SaxParser instance in most cases)
+    SkipEvents (bool, optional): Set to True to parse only the definitions section
+
+  Attributes:
+    Definitions (EDXMLDefinitions): :class:`edxml.EDXMLDefinitions.EDXMLDefinitions` instance
+  """
   def __init__ (self, upstream, SkipEvents = False):
     """Constructor.
 
     Parameters:
-    upstream   -- XML source (SaxParser instance in most cases)
-    SkipEvents -- Set to True to parse only the definitions section (default False)
 
     """
 
@@ -105,47 +110,73 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     EDXMLBase.__init__(self)
 
   def EndOfStream(self):
-    """This function can be overridden to finish
-    processing the event stream."""
+    """This method can be overridden to finish
+    processing the event stream.
+
+    The parser will call this method when the end of
+    the EDXML stream has been reached.
+    """
     return
 
   def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
-    """This function can be overridden to process events. The
+    """This method can be overridden to process events. The
     EventObjects parameter contains a list of dictionaries, one
     for each object. Each dictionary has two keys. The 'property'
     key contains the name of the property. The 'value' key contains
     the value.
 
-    Parameters:
-    EventTypeName -- The name of the event type
-    SourceId      -- Id of event source
-    EventObjects  -- List of objects
-    EventContent  -- String containing event content
-    Parents       -- List of hashes of explicit parent events
+    Args:
+      EventTypeName (str): The name of the event type
+
+      SourceId (str): Event source identifier
+
+      EventObjects (list): List of objects
+
+      EventContent (str): String containing event content
+
+      Parents (list): List of hashes of explicit parent events, as hexadecimal strings
 
     """
     return
 
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
-    """This function can be overridden to process objects.
+    """This method can be overridden to process objects.
 
-    Parameters:
-    EventTypeName  -- The name of the event type
-    ObjectProperty -- The name of the object property
-    ObjectValue    -- String containing object value
+    The method will be called by the parser after reading an object element.
+
+    Args:
+      EventTypeName (str): The name of the event type
+
+      ObjectProperty (str): The name of the object property
+
+      ObjectValue (str): String containing object value
 
     """
     return
 
   def DefinitionsLoaded(self):
-    """This function can be overridden to perform some
-    action as soon as the definitions are read and parsed."""
+    """This method can be overridden to perform some
+    action as soon as the definitions are read and parsed.
+
+    The parser will call it as soon as the <definitions> element
+    has been fully read and parsed. From that moment on, all
+    event type and object type definitions can be access through
+    the Definitions attribute of the parser instance.
+    """
     return
 
   def GetEventCount(self, EventTypeName = None):
-    """Returns the number of events parsed. When an
-    event type is passed, only the number of events
-    of this type is returned."""
+    """Returns the number of events parsed.
+
+    When an event type is passed, only the number of events
+    of this type is returned.
+
+    Args:
+      EventTypeName (str, optional): Name of an event type
+
+    Returns:
+      int. The number of events parsed.
+    """
     if EventTypeName:
       if EventTypeName in self.EventCounters:
         return self.EventCounters[EventTypeName]
@@ -155,11 +186,19 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       return self.TotalEventCount
 
   def GetWarningCount(self):
-    """Returns the number of warnings issued"""
+    """Returns the number of warnings issued
+
+    Returns:
+      int. The number of warnings issued.
+    """
     return self.WarningCount + self.Definitions.GetWarningCount()
 
   def GetErrorCount(self):
-    """Returns the number of errors issued"""
+    """Returns the number of errors issued
+
+    Returns:
+      int. The number of errors issued.
+    """
     return self.ErrorCount + self.Definitions.GetErrorCount()
 
   def startElement(self, name, attrs):
@@ -294,22 +333,31 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       self.CurrentEventContent += text
 
 class EDXMLValidatingParser(EDXMLParser):
-  """This class extends the functionality of EDXMLParser with thorough
-  checking of the EDXML data. You can use the EDXMLValidatingParser 
-  class to parse EDXML data that you don't trust. The class will raise
-  the EDXMLError exception when it finds problems in the data. Validation
-  is implemented by overriding the DefinitionsLoaded, ProcessObject and
-  ProcessEvent calls."""  
+  """This class extends the functionality of :class:`EDXMLParser` with thorough
+  checking of the EDXML data. You can use the EDXMLValidatingParser
+  class to parse EDXML data that you don't trust. The class will call
+  :func:`edxml.EDXMLBase.EDXMLError` when it finds problems in the data. Validation
+  is implemented by overriding :func:`EDXMLParser.DefinitionsLoaded`,
+  :func:`EDXMLParser.ProcessObject` and :func:`EDXMLParser.ProcessEvent`.
+
+  Like :class:`edxml.EDXMLParser.EDXMLParser`, it can optionally skip reading the
+  event data itself if you are only interested in obtaining and validating the
+  definitions. In that case, it will abort XML processing by raising the
+  :class:`edxml.EDXMLBase.EDXMLProcessingInterrupted` exception, which you can
+  catch and handle.
+
+  Args:
+    upstream: XML source (SaxParser instance in most cases)
+
+    SkipEvents (bool, optional): Set to True to parse only the definitions section
+
+    ValidateObjects (bool, optional): Set to False to skip automatic object value validation
+
+  Attributes:
+    Definitions (EDXMLDefinitions): :class:`edxml.EDXMLDefinitions.EDXMLDefinitions` instance
+  """  
 
   def __init__ (self, upstream, SkipEvents = False, ValidateObjects = True):
-    """Constructor.
-
-    Parameters:
-    upstream        -- XML source (SaxParser instance in most cases)
-    SkipEvents      -- Set to True to parse only the definitions section (default False)
-    ValidateObjects -- Set to False to skip automatic object value validation (default True)
-
-    """
 
     self.ValidateObjects = ValidateObjects
     EDXMLParser.__init__(self, upstream, SkipEvents)

@@ -40,7 +40,6 @@ import string, sys
 from cStringIO import StringIO
 from xml.sax import make_parser
 from xml.sax.saxutils import XMLGenerator
-import traceback
 
 try:
   # lxml is not a very common module.
@@ -53,32 +52,33 @@ from EDXMLBase import *
 from EDXMLParser import EDXMLValidatingParser
 
 class EDXMLWriter(EDXMLBase):
-  """Class for generating EDXML streams"""
+  """Class for generating EDXML streams
 
+  The Output parameter is a file-like object
+  that will be used to send the XML data to.
+  This file-like object can be pretty much 
+  anything, as long as it has a write() method.
+
+  The optional Validate parameter controls if
+  the generated EDXML stream should be autovalidated
+  or not. Automatic validation is
+  enabled by default. This parameter applies
+  to all aspects of EDXML validation, except
+  for object value validation, which is covered
+  by the ValidateObjects parameter.
+
+  Enabling object value validation always results
+  in full EDXML validation, regardless of the value
+  of the Validate parameter.
+
+  Args:
+    Output (file): File-like output object
+
+    Validate (bool, optional): Enable output validation (True) or not (False)
+
+    ValidateObjects (bool, optional): Enable object validation (True) or not (False)
+  """
   def __init__(self, Output, Validate = True, ValidateObjects = True):
-    """Constructor.
-    The Output parameter is a file-like object
-    that will be used to send the XML data to.
-    This file-like object can be pretty much 
-    anything, as long as it has a write() call.
-
-    The optional Validate parameter controls if
-    the generated EDXML stream should be auto-
-    validated or not. Automatic validation is
-    enabled by default. This parameter applies
-    to all aspects of EDXML validation, except
-    for object value validation, which is covered
-    by the ValidateObjects parameter.
-
-    Enabling object value validation always results
-    in full EDXML validation, regardless of the value
-    of the Validate parameter.
-
-    Parameters:
-    Output          -- File-like output object
-    Validate        -- Optional boolean for enabling validation
-    ValidateObjects -- Optional boolean for enabling object validation
-    """
 
     EDXMLBase.__init__(self)
 
@@ -138,7 +138,7 @@ class EDXMLWriter(EDXMLBase):
     self.ObjectTypes = {}
 
   # SaxParser instances can only be fed using the
-  # feed() function. On the other hand, etree.xmlfile
+  # feed() method. On the other hand, etree.xmlfile
   # instances can only write to file like objects.
   # This helper class acts like a file object, passing
   # through to a SaxParser instance.
@@ -241,11 +241,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a full <definitions> element.
+    Use this method to insert a full <definitions> element.
 
-    Parameters:
-
-    XmlString: String containing the <definitions> element
+    Args:
+      XmlString (str): String containing the <definitions> element
 
     """
     self.Bridge.write(XmlString)
@@ -256,11 +255,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a full <eventtype> element.
+    Use this method to insert a full <eventtype> element.
 
-    Parameters:
-
-    XmlString: String containing the <eventtype> element
+    Args:
+      XmlString (str): String containing the <eventtype> element
 
     """
     self.Bridge.write(XmlString)
@@ -271,11 +269,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert an <objecttype> tag.
+    Use this method to insert an <objecttype> tag.
 
-    Parameters:
-
-    XmlString: String containing the <objecttype> tag
+    Args:
+      XmlString (str): String containing the <objecttype> tag
 
     """
     self.Bridge.write(XmlString)
@@ -286,11 +283,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a <property> tag.
+    Use this method to insert a <property> tag.
 
-    Parameters:
-
-    XmlString: String containing the <property> tag
+    Args:
+      XmlString (str): String containing the <property> tag
 
     """
     self.Bridge.write(XmlString)
@@ -301,11 +297,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a <relation> tag.
+    Use this method to insert a <relation> tag.
 
-    Parameters:
-
-    XmlString: String containing the <relation> tag
+    Args:
+      XmlString (str): String containing the <relation> tag
 
     """
     self.Bridge.write(XmlString)
@@ -316,11 +311,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a <source> tag.
+    Use this method to insert a <source> tag.
 
-    Parameters:
-
-    XmlString: String containing the <source> tag
+    Args:
+      XmlString (str): String containing the <source> tag
 
     """
     self.Bridge.write(XmlString)
@@ -331,11 +325,10 @@ class EDXMLWriter(EDXMLBase):
     the stream. Both methods result in full automatic
     validation of the EDXML stream.
 
-    Use this function to insert a full <event> element.
+    Use this method to insert a full <event> element.
 
-    Parameters:
-
-    XmlString: String containing the <event> element
+    Args:
+      XmlString (str): String containing the <event> element
 
     """
     self.Bridge.write(XmlString)
@@ -351,14 +344,19 @@ class EDXMLWriter(EDXMLBase):
 
   def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = None):
     """Opens an event type definition.
-    Parameters:
 
-    Name          -- Name of the eventtype
-    Description   -- Description of the eventtype
-    ClassList     -- String containing a comma seperated list of class names
-    ReporterShort -- Short reporter string. Please refer to the specification for details.
-    LongReporter  -- Long reporter string. Please refer to the specification for details.
-    DisplayName   -- EDXML display-name attribute (optional, defaults to none)
+    Args:
+      Name (str): Name of the eventtype
+
+      Description (str): Description of the eventtype
+
+      ClassList (str): String containing a comma seperated list of class names
+
+      ReporterShort (str): Short reporter string. Please refer to the specification for details.
+
+      LongReporter (str): Long reporter string. Please refer to the specification for details.
+
+      DisplayName (str,optional): EDXML display-name attribute
 
     """
 
@@ -379,10 +377,11 @@ class EDXMLWriter(EDXMLBase):
 
   def AddEventTypeParent(self, EventTypeName, PropertyMapping):
     """Adds a parent to an event definition.
-    Parameters:
 
-    EventTypeName     -- Name of the parent eventtype
-    PropertyMapping   -- Value of the EDXML propertymap attribute
+    Args:
+      EventTypeName (str): Name of the parent eventtype
+
+      PropertyMapping (str): Value of the EDXML propertymap attribute
 
     """
     if self.ElementStack[-1].tag != 'eventtype': self.Error('A <parent> tag must be child of an <eventtype> tag. Did you forget to call OpenEventDefinition()?')
@@ -396,16 +395,23 @@ class EDXMLWriter(EDXMLBase):
 
   def AddEventProperty(self, Name, ObjectTypeName, Description, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge = 'drop', Similar = None):
     """Adds a property to an event definition.
-    Parameters:
 
-    Name              -- Name of the property
-    ObjectTypeName    -- Name of the object type
-    Description       -- Description of the property
-    DefinesEntity     -- Property is entity identifier or not (optional, default is False)
-    EntityConfideuce  -- Floating point confidence (optional, default is zero)
-    Unique            -- Property is unique or not (optional, default is False)
-    Merge             -- Merge strategy (only for unique properties)
-    Similar           -- Optional EDXML similar attribute value
+    Args:
+      Name (str): Name of the property
+
+      ObjectTypeName (str): Name of the object type
+
+      Description (str): Description of the property
+
+      DefinesEntity (bool,optional): Property is entity identifier or not
+
+      EntityConfidence (float,optional): Floating point confidence
+
+      Unique (bool,optional): Property is unique or not
+
+      Merge (str,optional): Merge strategy (only for unique properties)
+
+      Similar (str,optional): EDXML similar attribute value
 
     """
 
@@ -445,14 +451,19 @@ class EDXMLWriter(EDXMLBase):
 
   def AddRelation(self, PropertyName1, PropertyName2, Type, Description, Confidence, Directed = True):
     """Adds a property relation to an event definition.
-    Parameters:
 
-    PropertyName1     -- Name of first property
-    PropertyName2     -- Name of second property
-    Type              -- Relation type including predicate
-    Description       -- Relation description
-    Confidence        -- Floating point confidence value
-    Directed          -- Boolean indicating if relation is directed or not
+    Args:
+      PropertyName1 (str): Name of first property
+
+      PropertyName2 (str): Name of second property
+
+      Type (str): EDXML Relation type attribute
+
+      Description (str): Relation description
+
+      Confidence (float): Floating point confidence value
+
+      Directed (bool,optional): Boolean indicating if relation is directed (True) or not (False)
 
     """
 
@@ -491,16 +502,23 @@ class EDXMLWriter(EDXMLBase):
 
   def AddObjectType(self, Name, Description, ObjectDataType, FuzzyMatching = 'none', DisplayName = '/', Compress = False, ENP = 0, Regexp = '[\s\S]*'):
     """Adds a object type definition.
-    Parameters:
 
-    Name            -- Name of object type
-    Description     -- Description of object type
-    ObjectDataType  -- Data type
-    FuzzyMatching   -- Fuzzy matching technique (optional, defaults to 'none')
-    DisplayName     -- Display name (optional, defaults to '/')
-    Compress        -- Use data compression (True) or not (False) (optional, defaults to False)
-    ENP             -- Entity Naming Priority (optional, defaults to zero)
-    Regexp          -- Regular expression (optional, defaults to '[\s\S]*')
+    Args:
+      Name (str): Name of object type
+
+      Description (str): Description of object type
+
+      ObjectDataType (str): EDXML Data type
+
+      FuzzyMatching (str,optional): EDXML fuzzy-matching attribute
+
+      DisplayName (str): Display name
+
+      Compress (bool,optional): Use data compression (True) or not (False)
+
+      ENP (int,optional): EDXML enp attribute
+
+      Regexp (str,optional): EDXML regexp attribute
 
     """
 
@@ -545,12 +563,15 @@ class EDXMLWriter(EDXMLBase):
 
   def AddSource(self, SourceId, URL, DateAcquired, Description):
     """Adds a source definition.
-    Parameters:
 
-    SourceId       -- Source Id
-    URL            -- Source URL
-    DateAcquired   -- Acquisition date (yyyymmdd)
-    Description    -- Description of the source
+    Args:
+      SourceId (str): EDXML source ID
+
+      URL (str): Source URL
+
+      DateAcquired (str): Acquisition date (yyyymmdd)
+
+      Description (str): Description of the source
 
     """
 
@@ -601,10 +622,11 @@ class EDXMLWriter(EDXMLBase):
 
   def OpenEventGroup(self, EventTypeName, SourceId):
     """Opens an event group.
-    Parameters:
 
-    EventTypeName  -- Name of the eventtype
-    SourceId       -- Source Id
+    Args:
+      EventTypeName (str): Name of the eventtype
+
+      SourceId (str): Source Id
 
     """
 
@@ -640,12 +662,18 @@ class EDXMLWriter(EDXMLBase):
     a list of sticky hashes of explicit parent events,
     in hexadecimal string representation.
 
-    Parameters:
+    if IgnoreInvalidObjects is set to True, any errors thrown
+    by the validator as a result of invalid object values will
+    be ignored, and the object will not be included in the event.
 
-    PropertyObjects      -- Object dictionary
-    Content              -- Event content
-    ParentHashes         -- List of explicit parent events
-    IgnoreInvalidObjects -- Option to ignore invalid object values
+    Args:
+      PropertyObjects (dict): Object dictionary
+
+      Content (str,optional): Event content
+
+      ParentHashes (list,optional): List of explicit parent events
+
+      IgnoreInvalidObjects (bool,optional): Option to ignore invalid object values
 
     """
 
@@ -711,9 +739,8 @@ class EDXMLWriter(EDXMLBase):
     a list of sticky hashes of explicit parent events,
     in hexadecimal string representation.
 
-    Parameters:
-
-    ParentHashes -- List of explicit parent events
+    Args:
+      ParentHashes (list,optional): List of explicit parent events
 
     """
 
@@ -738,11 +765,17 @@ class EDXMLWriter(EDXMLBase):
 
   def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
     """Adds an object to previously opened event.
-    Parameters:
 
-    PropertyName       -- Name of object property
-    Value              -- Object value string
-    IgnoreInvalid      -- Generate a warning in stead of an error for invalid values (Optional, default is False)
+    if IgnoreInvalidObjects is set to True, any errors thrown
+    by the validator as a result of invalid object values will
+    be ignored, and the object will not be included in the event.
+
+    Args:
+      PropertyName (str): Name of object property
+
+      Value: Object value, can be any object that can be converted to unicode.
+
+      IgnoreInvalid (bool,optional): Generate a warning in stead of an error for invalid values
 
     """
 
@@ -785,9 +818,9 @@ class EDXMLWriter(EDXMLBase):
 
   def AddContent(self, ContentString):
     """Adds plain text content to previously opened event.
-    Parameters:
 
-    ContentString -- Object value
+    Args:
+      ContentString (str): Event content
 
     """
     if self.ElementStack[-1].tag != 'event': self.Error('A <content> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
@@ -797,11 +830,13 @@ class EDXMLWriter(EDXMLBase):
 
   def AddTranslation(self, Language, Interpreter, TranslationString):
     """Adds translated content to previously opened event.
-    Parameters:
 
-    Language           -- ISO 639-1 language code
-    Interpreter        -- Name of interpreter
-    TranslationString  -- The translation
+    Args:
+      Language (str): ISO 639-1 language code
+
+      Interpreter (str): Name of interpreter
+
+      TranslationString (str): The translation
 
     """
 
@@ -818,9 +853,6 @@ class EDXMLWriter(EDXMLBase):
     if self.ElementStack[-1].tag != 'event': self.Error('Attempt to close an <event> tag without a corresponding opening tag.')
 
     # This triggers event structure validation.
-    # CATCH: It looks like lxml eats the exceptions thrown by validator and spits
-    # out a general IO error... We need to handle and report parser exceptions
-    # in the Bridge..
     self.EventGroupXMLWriter.send(self.ElementStack.pop())
 
     if self.Validate:

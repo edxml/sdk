@@ -27,16 +27,7 @@
 #
 #  ===========================================================================
 
-"""EDXMLBase
-
-This module contains generic (base)classes used throughout the SDK. It contains
-the following classes:
-
-EDXMLError:                 Generic EDXML exception class
-EDXMLProcessingInterrupted: Exception class signaling EDXML stream processing interruption
-EDXMLBase:                  Base class for most SDK subclasses
-
-"""
+"""This module contains generic (base)classes used throughout the SDK."""
 
 from decimal import *
 import string
@@ -70,11 +61,10 @@ class EDXMLBase():
     self.PlaceHolderPattern = re.compile("\[\[([^\]]*)\]\]")
 
   def Error(self, Message):
-    """Raises EDXMLError.
-    Parameters:
+    """Raises :class:`EDXMLError`.
 
-    Message -- Error message
-
+    Args:
+      Message (str): Error message
     """
 
     self.ErrorCount += 1
@@ -82,9 +72,9 @@ class EDXMLBase():
 
   def Warning(self, Message):
     """Prints a warning to sys.stderr.
-    Parameters:
 
-    Message -- Warning message
+    Args:
+      Message (str): Warning message
 
     """
     self.WarningCount += 1
@@ -100,12 +90,13 @@ class EDXMLBase():
 
   def ValidateDataType(self, ObjectType, DataType):
     """Validate a data type.
-    Parameters:
 
-    ObjectType -- Object type having specified data type
-    DataType   -- The data type
+    Args:
+      ObjectType (str): Name of the object type having specified data type
 
-    calls self.Error when datatype is invalid.
+      DataType (str):   EDXML data type
+
+    calls :func:`Error` when datatype is invalid.
 
     """
 
@@ -180,14 +171,19 @@ class EDXMLBase():
 
   def ValidateObject(self, Value, ObjectTypeName, DataType, Regexp = None):
     """Validate an object value.
-    Parameters:
 
-    Value            -- Object value
-    ObjectTypeName   -- Object type
-    DataType         -- Data type of object
-    Regexp           -- Optional regular expression for checking Value
+    The Value argument can be a string, int, bool, Decimal, etc depending on the data type.
 
-    calls self.Error when value is invalid.
+    Args:
+      Value: Object value.
+
+      ObjectTypeName (str): Object type.
+
+      DataType (str): EDXML data type of object.
+
+      Regexp (str, optional): Regular expression for checking Value.
+
+    calls :func:`Error` when value is invalid.
 
     """
 
@@ -317,7 +313,23 @@ class EDXMLBase():
       self.Error("EDXMLBase::ValidateObject: Invalid data type: '%s'" % str(DataType) )
 
   def NormalizeObject(self, Value, DataType):
-    """Normalize an object value to a unicode string"""
+    """Normalize an object value to a unicode string
+
+    Prepares an object value for computing sticky hashes, by
+    applying the normalization rules as outlined in the EDXML
+    specification. It takes a string containing an object value
+    as input and returns a normalized unicode string.
+
+    Args:
+      Value (str, unicode): The input object value
+
+      DataType (str): EDXML data type
+
+    Returns:
+      unicode. The normalized object value
+
+    calls :func:`Error` when value is invalid.
+    """
     if DataType[0] == 'timestamp':
       return u'%.6f' % Decimal(Value)
     elif DataType[0] == 'number':
