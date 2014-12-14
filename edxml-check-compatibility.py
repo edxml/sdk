@@ -59,7 +59,7 @@ def PrintHelp():
 
    Example:
 
-     edxml-check-consistency.py -f input01.edxml -f input02.edxml
+     edxml-check-compatibility.py -f input01.edxml -f input02.edxml
 
 """
 
