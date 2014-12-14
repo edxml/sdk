@@ -43,6 +43,52 @@ from xml.sax.xmlreader import AttributesImpl
 from edxml.EDXMLParser import EDXMLParser
 from edxml.EDXMLBase import EDXMLProcessingInterrupted
 
+def PrintHelp():
+
+  print """
+
+   This utility will filter out the event data from EDXML streams and validate the
+   ontology in the <definitions> section in the process. The stripped version of
+   the input is printed on standard output.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-strip-events.py > output.edxml
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
 # This places the EDXMLParser instance in the
@@ -53,19 +99,12 @@ Parser    = EDXMLParser(SaxParser, True)
 
 SaxParser.setContentHandler(Parser)
 
-# Read commandline parameters
-
-if len(sys.argv) >= 2:
-  sys.stderr.write("\nProcessing %s" % sys.argv[1])
-  Input = open(sys.argv[1])
-else:
-  Input = sys.stdin
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
-  sys.stdout.flush()
-
 # Feed the input to the Sax parser. This
 # will parse the <definitions> section and
 # raise EDXMLProcessingInterrupted when done.
+
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
   SaxParser.parse(Input)

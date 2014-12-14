@@ -5,9 +5,9 @@
 #  ===========================================================================
 # 
 #                           EDXML to XSD Converter
-
+#
 #                            EXAMPLE APPLICATION
-##
+#
 #                  Copyright (c) 2010 - 2014 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
 #
@@ -33,16 +33,66 @@
 # 
 #  This utility reads EDXML from a file or from standard input, and prints
 #  an XSD schema to STDOUT. The XSD is constructed to match the definitions
-#  section of the input EDXML file *exactly*, due to the limitations of XSD
-#  schemas. Even the order of eventtype definitions must match. You can use
-#  it to check if two EDXML files have identical ontologies. The XSD does not
-#  do any validation on the event data in the EDXML, again due to limitions
-#  of XSD schemas.
+#  section of the input EDXML file *exactly*. Due to the limitations of XSD
+#  schemas, even the order of eventtype definitions must match. You can use
+#  it to check if two EDXML files have identical ontologies. Note that XSD
+#  schemas cannot be used to check if two EDXML files have different ontolo-
+#  gies.
 
 import sys
 from xml.sax import make_parser
 from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
+
+def PrintHelp():
+
+  print """
+
+   This utility reads EDXML from a file or from standard input, and prints
+   an XSD schema to STDOUT. The XSD is constructed to match the definitions
+   section of the input EDXML file *exactly*. Due to the limitations of XSD
+   schemas, even the order of eventtype definitions must match. You can use
+   it to check if two EDXML files have identical ontologies. Note that XSD
+   schemas cannot be used to check if two EDXML files have different ontolo-
+   gies.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-to-xsd.py > schema.xsd
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
 
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
@@ -57,19 +107,13 @@ SaxParser.setContentHandler(EDXMLParser)
 # Now we just push EDXML data into the Sax parser,
 # either from a file or from standard input.
 
-if len(sys.argv) < 2:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
-  sys.stdout.flush()
-  try:
-    SaxParser.parse(sys.stdin)
-  except EDXMLProcessingInterrupted:
-    pass
-else:
-  sys.stderr.write("\nProcessing file %s:" % sys.argv[1] );
-  try:
-    SaxParser.parse(open(sys.argv[1]))
-  except EDXMLProcessingInterrupted:
-    pass
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+
+try:
+  SaxParser.parse(Input)
+except EDXMLProcessingInterrupted:
+  pass
 
 # Finally, we use the XSD functions of the
 # EDXMLDefinitions instance of EDXMLParser

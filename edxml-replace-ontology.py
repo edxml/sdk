@@ -131,17 +131,64 @@ class EDXMLDefinitionSwapper(EDXMLStreamFilter):
 
     EDXMLStreamFilter.endElement(self, name)
 
+def PrintHelp():
 
+  print """
+
+   This utility replaces the eventtype definitions of one EDXML file with those
+   contained in another EDXML file. The resulting EDXML stream is validated
+   against the new ontology and written to standard output.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-replace-ontology.py -o ontology-source.edxml > output.edxml
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+OntologyFileName = None
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  elif sys.argv[CurrentArgument] == '-o':
+    CurrentArgument += 1
+    OntologyFileName = sys.argv[CurrentArgument]
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
 
 # Program starts here. Check commandline arguments.
 
-if len(sys.argv) < 2:
-  sys.stderr.write("\nPlease specify the path to a valid EDXML file that contains the new ontology.")
+if OntologyFileName == None:
+  sys.stderr.write("No ontology source was specified. Use the --help option to get help.\n")
   sys.exit()
 
-OntologySourceFileName = sys.argv[1]
-
-sys.stderr.write("\nUsing file '%s' as ontology source." % OntologySourceFileName );
+sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName );
 
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
@@ -156,12 +203,15 @@ SaxParser.setContentHandler(EDXMLParser)
 # Parse the definitions from the specified
 # EDXML file.
 
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+
 try:
-  SaxParser.parse(open(OntologySourceFileName))
+  SaxParser.parse(open(OntologyFileName))
 except EDXMLProcessingInterrupted:
   pass
 except EDXMLError as Error:
-  sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (( OntologySourceFileName, str(Error) )) )
+  sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (( OntologyFileName, str(Error) )) )
   sys.exit(1)
 except:
   raise
@@ -175,8 +225,5 @@ Swapper    = EDXMLDefinitionSwapper(SaxParser, EDXMLParser.Definitions)
 
 SaxParser.setContentHandler(Swapper)
 
-sys.stderr.write('waiting for EDXML data on STDIN...');
-
 # Go!
-
-SaxParser.parse(sys.stdin)
+SaxParser.parse(Input)

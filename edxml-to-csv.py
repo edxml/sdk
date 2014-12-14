@@ -148,6 +148,10 @@ def PrintHelp():
 
      -h, --help       Prints this help text
 
+     -f               This option must be followed by a filename, which will be
+                      used as input. If this option is not specified, EDXML data
+                      will be read from standard input.
+
      -c, --columns    Specifies which columns to produce, and in what order. By
                       default, all columns are printed. When this option is used,
                       only the specified columns are printed, in the order you
@@ -167,7 +171,7 @@ def PrintHelp():
 """
 
 OutputColumns = []
-InputFile = ''
+Input = sys.stdin
 ColumnSeparator = '\t'
 SuppressHeaderLine = False
 CurrOption = 1
@@ -178,9 +182,9 @@ while CurrOption < len(sys.argv):
     PrintHelp()
     sys.exit(0)
 
-  elif sys.argv[CurrOption] == '-i':
+  elif sys.argv[CurrOption] == '-f':
     CurrOption += 1
-    InputFile = sys.argv[CurrOption]
+    Input = open(sys.argv[CurrOption])
 
   elif sys.argv[CurrOption] in ('-c', '--columns'):
     CurrOption += 1
@@ -193,6 +197,10 @@ while CurrOption < len(sys.argv):
   elif sys.argv[CurrOption] == '--noheader':
     CurrOption += 1
     SuppressHeaderLine = True
+
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrOption])
+    sys.exit()
 
   CurrOption += 1
 
@@ -207,10 +215,7 @@ SaxParser.setContentHandler(EDXML2CSV(SaxParser, OutputColumns, ColumnSeparator,
 # Now we feed EDXML data into the Sax parser. This will trigger
 # calls to ProcessEvent in our EDXML2CSV, producing output.
 
-if len(InputFile) == 0:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN (use the -h switch for options).")
-  sys.stdout.flush()
-  SaxParser.parse(sys.stdin)
-else:
-  sys.stderr.write("\nProcessing file %s:" % InputFile );
-  SaxParser.parse(open(InputFile))
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+
+SaxParser.parse(Input)

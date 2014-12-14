@@ -41,7 +41,7 @@ from edxml.EDXMLParser import EDXMLValidatingParser
 # This class is based on EDXMLValidatingParser. All it
 # does is overriding the Error and Warning calls, to
 # count them and allow processing to continue when 
-# EDXMLValidatingParser generates an error. 
+# EDXMLValidatingParser generates an error.
 
 class EDXMLChecker(EDXMLValidatingParser):
 
@@ -74,6 +74,52 @@ class EDXMLChecker(EDXMLValidatingParser):
   def GetWarningCount(self):
     return self.WarningCount
 
+def PrintHelp():
+
+  print """
+
+   This utility checks EDXML data against the specification requirements. Its exit
+   status will be zero if the provided data is valid EDXML. The utility accepts both
+   regular files and EDXML data streams on standard input.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-test.py
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
 # Create a SAX parser, and provide it with
 # an MyChecker instance as content handler.
 # This places the EDXMLParser instance in the
@@ -83,25 +129,20 @@ SaxParser = make_parser()
 MyChecker = EDXMLChecker(SaxParser)
 SaxParser.setContentHandler(MyChecker)
 
-# Feed the EDXML data to the Sax parser.
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-if len(sys.argv) < 2:
-  sys.stdout.write("\nNo filename was given, waiting for EDXML data on STDIN...")
-  sys.stdout.flush()
-  SaxParser.parse(sys.stdin)
-else:
-  sys.stdout.write("\nProcessing file %s:" % sys.argv[1] );
-  SaxParser.parse(open(sys.argv[1]))
+# Feed the EDXML data to the Sax parser.
+SaxParser.parse(Input)
 
 # Fetch the error and warning counts
-
 ErrorCount   = MyChecker.GetErrorCount()
 WarningCount = MyChecker.GetWarningCount()
 
 # Print results.
 
 if ErrorCount == 0:
-  sys.stdout.write("OK")
+  sys.stdout.write("Input data is valid.\n")
   sys.exit(0)
 else:
   sys.stdout.write("\nInput data is invalid: %d errors were found ( and %d warnings ).\n" % (( ErrorCount, WarningCount )) )

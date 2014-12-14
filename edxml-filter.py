@@ -118,10 +118,38 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
       # Turn filter output back on
       self.SetOutputEnabled(True)
 
+def PrintHelp():
+
+  print """
+
+   This utility reads an EDXML stream from standard input and filters it according
+   to the user supplied parameters. The result is sent to standard output.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+     -s                When specified, this option must be followed by a regular
+                       expression. Only events that have a source URL that matches
+                       this expression will be copied to the output stream.
+
+   Examples:
+
+     cat test.edxml | edxml-filter.py -s "/offices/stuttgart/.*"
+     cat test.edxml | edxml-filter.py -s ".*clientrecords.*" -e "client-supportticket"
+     cat test.edxml | edxml-filter.py -e "client-order"
+
+"""
+
 # Program starts here. 
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
+Input = sys.stdin
 SourceFilter = re.compile('.*')
 EventTypeFilter = None
 
@@ -129,7 +157,12 @@ EventTypeFilter = None
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] == '-s':
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-s':
     CurrentArgument += 1
     SourceFilter = re.compile(sys.argv[CurrentArgument])
 
@@ -137,20 +170,22 @@ while CurrentArgument < ArgumentCount:
     CurrentArgument += 1
     EventTypeFilter = sys.argv[CurrentArgument]
 
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
   else:
     sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
     sys.exit()
 
   CurrentArgument += 1
 
-# Instantiate EDXMLEventGroupFilter
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
+# Instantiate EDXMLEventGroupFilter
 EventGroupFilter = EDXMLEventGroupFilter(SourceFilter, EventTypeFilter)
 
-sys.stderr.write("\nWaiting for EDXML data on stdin..." );
-sys.stderr.flush()
-
-# Push input from sys.stdin into the Sax parser.
-
-EventGroupFilter.SaxParser.parse(sys.stdin)
+# Push input into the Sax parser.
+EventGroupFilter.SaxParser.parse(Input)
 

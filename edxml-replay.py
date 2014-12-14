@@ -152,7 +152,7 @@ def PrintHelp():
 
      -h, --help       Prints this help text
 
-     -i               Used to specify an input EDXML file. If omitted, EDXML data
+     -f               Used to specify an input EDXML file. If omitted, EDXML data
                       is expected on standard input.
 
      -s               Optional speed multiplier. A value greater than 1.0 will make
@@ -170,7 +170,7 @@ def PrintHelp():
 
 """
 
-InputFile = ''
+Input = sys.stdin
 SpeedMultiplier = 1.0
 CurrOption = 1
 BufferStufferEnabled = False
@@ -181,9 +181,9 @@ while CurrOption < len(sys.argv):
     PrintHelp()
     sys.exit(0)
 
-  elif sys.argv[CurrOption] == '-i':
+  elif sys.argv[CurrOption] == '-f':
     CurrOption += 1
-    InputFile = sys.argv[CurrOption]
+    Input = open(sys.argv[CurrOption])
 
   elif sys.argv[CurrOption] == '-s':
     CurrOption += 1
@@ -199,10 +199,7 @@ ReplayFilter = EDXMLReplay(SpeedMultiplier, BufferStufferEnabled)
 # Now we feed EDXML data into the Sax parser from EDXMLReplay. This
 # will trigger calls to ProcessEvent in our EDXMLReplay class, producing output.
 
-if len(InputFile) == 0:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN (use the -h switch for help).")
-  sys.stdout.flush()
-  ReplayFilter.SaxParser.parse(sys.stdin)
-else:
-  sys.stderr.write("\nProcessing file %s:" % InputFile )
-  ReplayFilter.SaxParser.parse(open(InputFile))
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+
+ReplayFilter.SaxParser.parse(Input)

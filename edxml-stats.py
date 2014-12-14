@@ -41,6 +41,54 @@ from xml.sax import make_parser
 from edxml.EDXMLBase import EDXMLError
 from edxml.EDXMLParser import EDXMLParser
 
+def PrintHelp():
+
+  print """
+
+   This utility outputs various statistics for a set of EDXML files. It 
+   prints event counts, lists defined event types, object types, source
+   URLs, and so on.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. It can be specified multiple
+                       times to get aggregated statistics for multiple
+                       input files. If the argument is not used, input
+                       data is read from standard input.
+
+   Example:
+
+     edxml-stats.py -f input01.edxml -f input02.edxml
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+InputFileNames = []
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    InputFileNames.append(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
 # This places the EDXMLParser instance in the
@@ -51,11 +99,10 @@ Parser    = EDXMLParser(SaxParser, False)
 
 SaxParser.setContentHandler(Parser)
 
-if len(sys.argv) <= 1:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
-  sys.stdout.flush()
+if len(InputFileNames) == 0:
 
   # Feed the parser from standard input.
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
   SaxParser.parse(sys.stdin)
 
 else:
@@ -65,13 +112,13 @@ else:
   # succession. This will raise EDXMLError as
   # soon as inconsistencies are detected.
 
-  for arg in sys.argv[1:]:
-    sys.stderr.write("Processing %s..." % arg)
+  for FileName in InputFileNames:
+    sys.stderr.write("Processing %s..." % FileName)
 
     try:
-      SaxParser.parse(open(arg))
+      SaxParser.parse(open(FileName))
     except EDXMLError as Error:
-      print("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( arg, str(Error) )) )
+      print("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( FileName, str(Error) )) )
       sys.exit(1)
     except:
       raise

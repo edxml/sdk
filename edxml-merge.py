@@ -146,10 +146,46 @@ class EDXMLMerger(EDXMLStreamFilter):
     # Call parent implementation
     EDXMLStreamFilter.endElement(self, name)
 
+def PrintHelp():
+
+  print """
+
+   This utility reads multiple compatible EDXML files and merges them into
+   one new EDXML file, which is then printed on standard output.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input.
+
+   Example:
+
+     edxml-merge.py -f input1.edxml -f input2.edxml > output.edxml
+
+"""
+
 # Program starts here. Check commandline arguments.
 
-if len(sys.argv) < 2:
-  sys.stderr.write("\nPlease specify at least two EDXML files for merging.")
+CurrOption = 1
+InputFileNames = []
+
+while CurrOption < len(sys.argv):
+
+  if sys.argv[CurrOption] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrOption] == '-f':
+    CurrOption += 1
+    InputFileNames.append(sys.argv[CurrOption])
+
+  CurrOption += 1
+
+
+if len(InputFileNames) < 2:
+  sys.stderr.write("Please specify at least two EDXML files for merging.\n")
   sys.exit()
 
 # Create a SAX parser, and provide it with
@@ -167,7 +203,7 @@ SaxParser.setContentHandler(EDXMLParser)
 # and merge all event type, object type
 # and source definitions in the EDXML files.
 
-for FileName in sys.argv[1:]:
+for FileName in InputFileNames:
   sys.stderr.write("\nParsing file %s:" % FileName );
 
   try:
@@ -196,7 +232,7 @@ SaxParser.setContentHandler(Merger)
 # Merger, which will output the merged
 # definitions and translate event source IDs.
 
-for FileName in sys.argv[1:]:
+for FileName in InputFileNames:
   sys.stderr.write("\nMerging file %s:" % FileName );
 
   try:
@@ -204,7 +240,7 @@ for FileName in sys.argv[1:]:
   except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
-    sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( FileName, str(Error) )) )
+    sys.stderr.write("\n\nEDXML file %s is incompatible with previous files:\n\n%s" % (( FileName, str(Error) )) )
     sys.exit(1)
   except:
     raise

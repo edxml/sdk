@@ -40,6 +40,57 @@ from xml.sax import make_parser
 from edxml.EDXMLParser import EDXMLParser
 from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
 
+def PrintHelp():
+
+  print """
+
+   This utility checks if the ontologies in de <definitions>
+   sections in all specified EDXML files are compatible or not.
+   Only compatible EDXML files can be merged. If all files prove
+   compatible, the exit status is zero.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. It must be specified at
+                       least twice.
+
+   Example:
+
+     edxml-check-consistency.py -f input01.edxml -f input02.edxml
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+InputFileNames = []
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    InputFileNames.append(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
+if len(InputFileNames) < 2:
+  sys.stderr.write("Please specify at least two EDXML files. Use the --help argument to get help.\n")
+  sys.exit()
+
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
 # This places the EDXMLParser instance in the
@@ -50,12 +101,6 @@ Parser    = EDXMLParser(SaxParser, True)
 
 SaxParser.setContentHandler(Parser)
 
-# Check commandline parameters
-
-if len(sys.argv) <= 1:
-  sys.stderr.write("Please specify one or more filenames to check.");
-  sys.exit(0)
-
 # Now we feed each of the input files
 # to the Sax parser. This will effectively
 # cause the EDXMLParser instance to try and
@@ -63,20 +108,22 @@ if len(sys.argv) <= 1:
 # input files, raising EDXMLError when it
 # detects a problem.
 
-for arg in sys.argv[1:]:
-  print("Checking %s" % arg)
+for FileName in InputFileNames:
+  print("Checking %s" % FileName)
   
   try:
-    SaxParser.parse(open(arg))
+    SaxParser.parse(open(FileName))
   except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
-    print("EDXML file %s is inconsistent with previous files:\n%s" % (( arg, str(Error) )) )
+    print("EDXML file %s is incompatible with previous files:\n%s" % (( FileName, str(Error) )) )
   except:
     raise
 
-# Print results.
+if Parser.GetErrorCount() == 0:
+  print("Files are compatible.")
 
+# Print results.
 print("\n\nTotal Warnings: %d\nTotal Errors:   %d\n\n" % (( Parser.GetWarningCount(), Parser.GetErrorCount() )) )    
 
 if Parser.GetErrorCount() == 0:

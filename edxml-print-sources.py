@@ -65,16 +65,63 @@ class EDXMLParser(XMLFilterBase):
         # event data, so we should abort parsing now.
         raise EDXMLProcessingInterrupted('')
 
+def PrintHelp():
+
+  print """
+
+   Python script that outputs a list of source URLs that is found in 
+   specified EDXML file.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-print-sources.py > urls.txt
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
 
 SaxParser = make_parser()
 
 Parser = EDXMLParser(SaxParser, True)
 
 SaxParser.setContentHandler(Parser)
-sys.stderr.write("Waiting for XML data on stdin...")
+
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  SaxParser.parse(open("/dev/stdin"))
+  SaxParser.parse(Input)
 except EDXMLProcessingInterrupted:
   pass
 

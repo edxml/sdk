@@ -55,6 +55,51 @@ class EDXMLEventHasher(EDXMLParser):
     # EDXMLParser class to compute the sticky hash
     print self.Definitions.ComputeStickyHash(EventTypeName, EventObjects, EventContent)
 
+def PrintHelp():
+
+  print """
+
+   This utility outputs sticky hashes for every event in a given 
+   EDXML file or input stream. The hashes are printed to standard output.
+
+   Options:
+
+     -h, --help        Prints this help text
+
+     -f                This option must be followed by a filename, which
+                       will be used as input. If this option is not specified,
+                       input will be read from standard input.
+
+   Example:
+
+     cat input.edxml | edxml-hash-calculator.py > hashes.txt
+
+"""
+
+# Program starts here. 
+
+ArgumentCount = len(sys.argv)
+CurrentArgument = 1
+Input = sys.stdin
+
+# Parse commandline arguments
+
+while CurrentArgument < ArgumentCount:
+
+  if sys.argv[CurrentArgument] in ('-h', '--help'):
+    PrintHelp()
+    sys.exit(0)
+
+  elif sys.argv[CurrentArgument] == '-f':
+    CurrentArgument += 1
+    Input = open(sys.argv[CurrentArgument])
+
+  else:
+    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.exit()
+
+  CurrentArgument += 1
+
 # Create a SAX parser, and provide it with
 # an EDXMLEventHasher instance as content handler.
 # This places the EDXMLEventHasher instance in the
@@ -63,13 +108,10 @@ class EDXMLEventHasher(EDXMLParser):
 SaxParser = make_parser()
 SaxParser.setContentHandler(EDXMLEventHasher(SaxParser))
 
+if Input == sys.stdin:
+  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+
 # Now we feed EDXML data into the Sax parser. This will trigger
 # calls to ProcessEvent in our EDXMLEventHasher, producing output.
 
-if len(sys.argv) < 2:
-  sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...")
-  sys.stdout.flush()
-  SaxParser.parse(sys.stdin)
-else:
-  sys.stderr.write("\nProcessing file %s:" % sys.argv[1] );
-  SaxParser.parse(open(sys.argv[1]))
+SaxParser.parse(Input)
