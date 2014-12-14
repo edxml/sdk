@@ -112,7 +112,7 @@ class EDXMLDefinitionSwapper(EDXMLStreamFilter):
       # loops, we keep track of the fact that we are currently
       # feeding back XML data to ourselves.
       self.Feedback = True
-      self.NewDefinitions.GenerateEventTypeXML(self.CurrentEventTypeName, self, Indent = 6)
+      self.NewDefinitions.GenerateEventTypeXML(self.CurrentEventTypeName, self)
       self.Feedback = False
       return
 
@@ -126,7 +126,7 @@ class EDXMLDefinitionSwapper(EDXMLStreamFilter):
       # feeding back XML data to ourselves.
       self.Feedback = True
       for ObjectTypeName in self.NewDefinitions.GetObjectTypeNames():
-        self.NewDefinitions.GenerateObjectTypeXML(ObjectTypeName, self, Indent = 6)
+        self.NewDefinitions.GenerateObjectTypeXML(ObjectTypeName, self)
       self.Feedback = False
 
     EDXMLStreamFilter.endElement(self, name)
