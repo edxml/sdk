@@ -105,7 +105,7 @@ while CurrentArgument < ArgumentCount:
     Input = open(sys.argv[CurrentArgument])
 
   else:
-    sys.stderr.write("\nUnknown commandline argument: %s" % sys.argv[CurrentArgument])
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
     sys.exit()
 
   CurrentArgument += 1

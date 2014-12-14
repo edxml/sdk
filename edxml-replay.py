@@ -192,6 +192,10 @@ while CurrOption < len(sys.argv):
   elif sys.argv[CurrOption] == '-b':
     BufferStufferEnabled = True
 
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrOption])
+    sys.exit()
+
   CurrOption += 1
 
 ReplayFilter = EDXMLReplay(SpeedMultiplier, BufferStufferEnabled)

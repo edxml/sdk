@@ -181,6 +181,10 @@ while CurrOption < len(sys.argv):
     CurrOption += 1
     InputFileNames.append(sys.argv[CurrOption])
 
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrOption])
+    sys.exit()
+
   CurrOption += 1
 
 

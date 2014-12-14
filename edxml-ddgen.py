@@ -322,6 +322,10 @@ while CurrOption < len(sys.argv):
   elif sys.argv[CurrOption] == '--random-content':
     RandomizeEventContent = True
 
+  else:
+    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrOption])
+    sys.exit()
+
   CurrOption += 1
 
 Generator = EDXMLDummyDataGenerator(EventRate, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize)
