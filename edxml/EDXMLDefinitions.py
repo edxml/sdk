@@ -1260,7 +1260,6 @@ class EDXMLDefinitions(EDXMLBase):
         Target[PropertyName] = set()
 
     # Determine if anything changed
-
     EventUpdated = False
     for PropertyName in self.GetEventTypeProperties(EventTypeName):
       if not PropertyName in Original and len(Target[PropertyName]) > 0:
@@ -1271,13 +1270,9 @@ class EDXMLDefinitions(EDXMLBase):
         break
 
     # Modify EventObjectsA if needed
-
     if EventUpdated:
-      EventObjectsA.clear()
       for PropertyName in Target:
-        EventObjectsA[PropertyName] = []
-        for Value in Target[PropertyName]:
-          EventObjectsA[PropertyName].append(Value)
+        EventObjectsA[PropertyName] = Target[PropertyName]
       return True
     else:
       return False
