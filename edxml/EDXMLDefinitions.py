@@ -1605,8 +1605,22 @@ class EDXMLDefinitions(EDXMLBase):
 
     self.OpenElementXSD('element').set('name', 'eventtype')
     self.OpenElementXSD('complexType')
-
     self.OpenElementXSD('sequence')
+
+    if self.GetEventTypeParent(EventTypeName) != {}:
+      self.OpenElementXSD('element').set('name', 'parent')
+      self.OpenElementXSD('complexType')
+      for Attribute, Value in self.GetEventTypeParent(EventTypeName).items():
+        self.OpenElementXSD('attribute').set('name', 'name')
+        self.CurrentElementXSD.set('name', Attribute)
+        self.CurrentElementXSD.set('type', 'xs:string')
+        self.CurrentElementXSD.set('fixed', Value)
+        if self.EDXMLEntityAttributes['parent'][Attribute]['mandatory'] or Value != self.EDXMLEntityAttributes['parent'][Attribute]['default']:
+          self.CurrentElementXSD.set('use', 'required')
+        self.CloseElementXSD()
+      self.CloseElementXSD()
+      self.CloseElementXSD()
+
     self.OpenElementXSD('element').set('name', 'properties')
     self.OpenElementXSD('complexType')
     self.OpenElementXSD('sequence')
@@ -1853,6 +1867,23 @@ class EDXMLDefinitions(EDXMLBase):
       if OptionalAttribute:
         self.CloseElementRelaxNG()
 
+    if self.GetEventTypeParent(EventTypeName) != {}:
+      self.OpenElementRelaxNG('element').set('name', 'parent')
+      for Attribute, Value in self.GetEventTypeParent(EventTypeName).items():
+        OptionalAttribute = False
+        if self.EDXMLEntityAttributes['parent'][Attribute]['mandatory'] == False and Value == self.EDXMLEntityAttributes['parent'][Attribute]['default']:
+          OptionalAttribute = True
+          self.OpenElementRelaxNG('optional')
+
+        self.OpenElementRelaxNG('attribute').set('name', Attribute)
+        self.OpenElementRelaxNG('value').set('type', 'string')
+        self.CurrentElementRelaxNG.text = Value
+        self.CloseElementRelaxNG()
+        self.CloseElementRelaxNG()
+        if OptionalAttribute:
+          self.CloseElementRelaxNG()
+      self.CloseElementRelaxNG()
+
     self.OpenElementRelaxNG('element').set('name', 'properties')
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
@@ -1956,8 +1987,10 @@ class EDXMLDefinitions(EDXMLBase):
         self.CloseElementRelaxNG()
 
     self.CloseElementRelaxNG()
-    return
+    self.CloseElementRelaxNG()
 
+    if self.SchemaRelaxNG != None:
+      self.CloseElementRelaxNG()
 
   def GenerateEventRelaxNG(self, EventTypeName):
     """Generates a RelaxNG fragment related to the object type
