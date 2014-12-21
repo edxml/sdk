@@ -110,6 +110,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
     self.DecimalPattern       = re.compile("^[0-9.]+$")
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
+    self.PropertyMapPattern   = re.compile("[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*")
     self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(increment)|(sum)|(multiply)|(match)$")
     self.RelationTypePattern  = re.compile("^(intra|inter|parent|child|other):.+")
     self.FuzzyMatchingPattern = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
@@ -138,6 +139,12 @@ class EDXMLDefinitions(EDXMLBase):
         'classlist':      {'mandatory': True,  'length': None, 'pattern': None},
         'reporter-short': {'mandatory': True,  'length': None, 'pattern': None},
         'reporter-long':  {'mandatory': True,  'length': None, 'pattern': None}
+      },
+      'parent': {
+        'eventtype':            {'mandatory': True,  'length': 40,   'pattern': self.SimpleNamePattern},
+        'propertymap':          {'mandatory': True,  'length': None, 'pattern': self.PropertyMapPattern},
+        'parent-description':   {'mandatory': True,  'length': 128, 'pattern': None},
+        'siblings-description': {'mandatory': True,  'length': 128, 'pattern': None}
       },
       'property': {
         'name':              {'mandatory': True,  'length': 64,   'pattern': self.SimpleNamePattern},
@@ -762,6 +769,8 @@ class EDXMLDefinitions(EDXMLBase):
   # Internal use only.
   def SetNewEventTypeParent(self, EventTypeName, Attributes):
     self.EventTypes[EventTypeName]['parent'] = Attributes
+
+    self.ValidateEdxmlEntityAttributes('parent', Attributes)
 
     try:
 
