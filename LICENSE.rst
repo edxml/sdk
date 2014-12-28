@@ -1,4 +1,4 @@
-The EDXML SDK is free software: you can redistribute it and/or modify
+The **EDXML SDK** is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -11,12 +11,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with the EDXML SDK.  If not, see <http://www.gnu.org/licenses/>.
 
-The RelaxNG schema, which you can find in file "edxml-schema.xml", is distributed
-along with the EDXML SDK, but is not part of the SDK and not licenced under the
-GNU Lesser General Public License. The RelaxNG schema is part of the EDXML
-specification and licensed under the Creative Commons Attribution-NoDerivs 3.0
-Unported License.
-
-To view a copy of the Creative Commons Attribution-NoDerivs 3.0 Unported
+The find "edxml/edxml-schema.xml" is an unmodified copy of the original RelaxNG
+schema from edxml.org and is licensed under the Creative Commons Attribution-NoDerivs 3.0
+Unported License. To view a copy of the Creative Commons Attribution-NoDerivs 3.0 Unported
 License license, visit http://creativecommons.org/licenses/by-nd/3.0/legalcode
-
