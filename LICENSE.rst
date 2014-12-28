@@ -11,7 +11,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with the EDXML SDK.  If not, see <http://www.gnu.org/licenses/>.
 
-The find "edxml/edxml-schema.xml" is an unmodified copy of the original RelaxNG
+The find "edxml/schema/edxml-schema.rng" is an unmodified copy of the original RelaxNG
 schema from edxml.org and is licensed under the Creative Commons Attribution-NoDerivs 3.0
 Unported License. To view a copy of the Creative Commons Attribution-NoDerivs 3.0 Unported
 License license, visit http://creativecommons.org/licenses/by-nd/3.0/legalcode

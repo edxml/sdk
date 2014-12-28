@@ -15,6 +15,10 @@ Python library path of your development system. Symlinking the edxml subdirector
 to the location of your Python script will also work. You can then use the appropriate
 import statements to import the package components that your script will need.
 
+* `Documentation <http://edxml.readthedocs.org/>`_ (Read the Docs)
+* `Downloads <http://pypi.python.org/pypi/edxml/>`_ (PyPI)
+* `Source code <https://github.com/dtakken/edxml>`_ (Github)
+
 .. _Python: http://python.org/
 .. _EDXML: http://edxml.org/
 

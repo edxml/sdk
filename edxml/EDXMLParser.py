@@ -405,7 +405,7 @@ class EDXMLValidatingParser(EDXMLParser):
     # XML validators generate rather cryptic errors. If the above code catches
     # a problem, the generated error message will be far more helpful. The RelaxNG
     # validation is really a double check that complements the above code.
-    SchemaString = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/edxml-schema.xml')
+    SchemaString = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema.rng')
     Schema = etree.RelaxNG(SchemaString)
     try:
       Schema.assertValid(etree.fromstring(self.DefinitionsXMLStringIO.getvalue()))
