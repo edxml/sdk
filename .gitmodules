@@ -1,0 +1,3 @@
+[submodule "edxml/schema"]
+	path = edxml/schema
+	url = https://github.com/dtakken/edxml-schema
