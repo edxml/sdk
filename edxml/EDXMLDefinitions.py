@@ -110,6 +110,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.TrueFalsePattern     = re.compile("^(true)|(false)$")
     self.DecimalPattern       = re.compile("^[0-9.]+$")
     self.SourceDatePattern    = re.compile("^[0-9]{8}$")
+    self.SourceUrlPattern     = re.compile("^(/[a-z0-9-]+)*/$")
     self.PropertyMapPattern   = re.compile("[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*")
     self.MergeOptions         = re.compile("^(drop)|(add)|(replace)|(min)|(max)|(increment)|(sum)|(multiply)|(match)$")
     self.RelationTypePattern  = re.compile("^(intra|inter|parent|child|other):.+")
@@ -176,7 +177,7 @@ class EDXMLDefinitions(EDXMLBase):
       },
       'source': {
         'source-id':        {'mandatory': True,  'length': None,  'pattern': None},
-        'url':              {'mandatory': True,  'length': None,  'pattern': None},
+        'url':              {'mandatory': True,  'length': None,  'pattern': self.SourceUrlPattern},
         'date-acquired':    {'mandatory': True,  'length': None,  'pattern': self.SourceDatePattern},
         'description':      {'mandatory': True,  'length': 128,   'pattern': None},
       },
