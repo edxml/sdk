@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'EDXML SDK'
-copyright = u'2014, D.H.J. Takken'
+copyright = u'2015, D.H.J. Takken'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
