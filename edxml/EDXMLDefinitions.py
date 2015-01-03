@@ -855,6 +855,18 @@ class EDXMLDefinitions(EDXMLBase):
     self.ValidateEdxmlEntityAttributes('source', Attributes)
     self.SourceURLs[SourceUrl] = Attributes
 
+  def RemoveSource(self, SourceId):
+    """Remove a source from the collection of event source
+    definitions.
+
+    Args:
+      SourceId (str): EDXML source ID
+
+    """
+    SourceURL = self.SourceIDs[SourceId]
+    del self.SourceIDs[SourceId]
+    del self.SourceURLs[SourceURL]
+
   def CheckPropertyObjectTypes(self):
     """Checks if all object types that properties
     refer to are defined. Calls self.Error when
