@@ -772,7 +772,9 @@ class EDXMLWriter(EDXMLBase):
 
       # Now we can throw an exception, which the
       # application can catch and recover from.
-      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % self.Bridge.ParseError)
+      InvalidEventException = self.Bridge.ParseError
+      self.Bridge.ParseError = None
+      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % InvalidEventException)
 
     if self.Validate:
       # At this point, the event has been validated. We disable
@@ -910,7 +912,9 @@ class EDXMLWriter(EDXMLBase):
 
         # Now we can throw an exception, which the
         # application can catch and recover from.
-        self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % self.Bridge.ParseError)
+        InvalidEventException = self.Bridge.ParseError
+        self.Bridge.ParseError = None
+        self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % InvalidEventException)
 
       # At this point, the event has been validated. We disable
       # buffering, which pushes it to the output.
