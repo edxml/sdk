@@ -342,7 +342,7 @@ class EDXMLWriter(EDXMLBase):
     if self.ElementStack[-1].tag != 'definitions': self.Error('A <eventtypes> tag must be child of an <definitions> tag. Did you forget to call OpenDefinitions()?')
     self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'eventtypes'))
 
-  def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = None):
+  def OpenEventDefinition(self, Name, Description, ClassList, ReporterShort, ReporterLong, DisplayName = '/'):
     """Opens an event type definition.
 
     Args:
@@ -364,14 +364,12 @@ class EDXMLWriter(EDXMLBase):
 
     Attributes = {
       'name': Name,
+      'display-name': DisplayName,
       'description': Description,
       'classlist': ClassList,
       'reporter-short': ReporterShort,
       'reporter-long': ReporterLong
       }
-
-    if DisplayName:
-      Attributes['display-name'] = DisplayName
 
     self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'eventtype', **Attributes))
 
