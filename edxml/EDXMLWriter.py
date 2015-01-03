@@ -128,11 +128,6 @@ class EDXMLWriter(EDXMLBase):
     self.XMLWriter = self.__OuterXMLSerialiserCoRoutine()
     self.XMLWriter.next()
 
-    # We still need a SAX XMLGenerator instance in order to
-    # extract a backup copy of the definitions element.
-    self.Definitions = StringIO()
-    self.SaxGenerator = XMLGenerator(self.Definitions, 'utf-8')
-
     self.CurrentElementType = ""
     self.EventTypes = {}
     self.ObjectTypes = {}
@@ -643,11 +638,6 @@ class EDXMLWriter(EDXMLBase):
     # element will raise an exception here.
     self.XMLWriter.send(self.ElementStack.pop())
 
-    if self.EDXMLParser:
-      # We survived validation. Create a backup copy of the definitions element,
-      # which we can use to recover from generating invalid events.
-      self.EDXMLParser.Definitions.GenerateXMLDefinitions(self.SaxGenerator)
-
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
     if len(self.ElementStack) > 0: self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
@@ -929,6 +919,8 @@ class EDXMLWriter(EDXMLBase):
     # EDXMLParser instance and XML Generator to the point
     # where it can output events again.
 
+    DefinitionsBackup = self.EDXMLParser.GetDefinitionsElementAsString()
+
     # Create new SAX parser and validating EDXML parser
     self.SaxParser = make_parser()
     self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = False)
@@ -946,7 +938,7 @@ class EDXMLWriter(EDXMLBase):
 
     # Push the EDXML definitions header into the bridge, which
     # will restore the state of the EDXMLParser instance.
-    self.Bridge.write('<events>\n%s\n  <eventgroups>\n' % self.Definitions.getvalue())
+    self.Bridge.write('<events>\n%s\n  <eventgroups>\n' % DefinitionsBackup)
 
     # Close the XML generator that is generating the
     # current event group. We do not want the resulting
