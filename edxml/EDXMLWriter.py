@@ -249,6 +249,12 @@ class EDXMLWriter(EDXMLBase):
     """
     self.Bridge.write(XmlString)
 
+    # Adding a definitions element triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
+
   def AddXmlEventTypeElement(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
@@ -262,6 +268,12 @@ class EDXMLWriter(EDXMLBase):
 
     """
     self.Bridge.write(XmlString)
+
+    # Adding an event type triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
 
   def AddXmlObjectTypeTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -277,6 +289,12 @@ class EDXMLWriter(EDXMLBase):
     """
     self.Bridge.write(XmlString)
 
+    # Adding an object type triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
+
   def AddXmlPropertyTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
@@ -290,6 +308,12 @@ class EDXMLWriter(EDXMLBase):
 
     """
     self.Bridge.write(XmlString)
+
+    # Adding a property triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
 
   def AddXmlRelationTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -305,6 +329,12 @@ class EDXMLWriter(EDXMLBase):
     """
     self.Bridge.write(XmlString)
 
+    # Adding a relation triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
+
   def AddXmlSourceTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
@@ -319,6 +349,12 @@ class EDXMLWriter(EDXMLBase):
     """
     self.Bridge.write(XmlString)
 
+    # Adding a source tag triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
+
   def AddXmlEventTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
     stream, it is also possible to insert plain XML into
@@ -332,6 +368,12 @@ class EDXMLWriter(EDXMLBase):
 
     """
     self.Bridge.write(XmlString)
+
+    # Adding an event triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
 
   def OpenDefinitions(self):
     """Opens the <definitions> element"""
@@ -641,6 +683,13 @@ class EDXMLWriter(EDXMLBase):
 
     self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, str(self.CurrentElementSourceId))
     self.EventGroupXMLWriter.next()
+
+    # Opening an event group triggers validation,
+    # which may raise exceptions.
+    if self.Validate:
+      if self.Bridge.ParseError != None:
+        raise self.Bridge.ParseError
+
 
   def CloseEventGroup(self):
     """Closes a previously opened event group"""
