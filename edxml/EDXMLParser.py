@@ -86,7 +86,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     self.NewEventType = True
     self.AccumulatingEventContent = False
     self.CurrentEventContent = ''
-    self.StreamCopyEnabled = True
+    self.StreamCopyEnabled = False
 
     # This buffer will be used to compile a copy of the incoming EDXML
     # stream that has all event data filtered out. We use this stripped
@@ -201,10 +201,18 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     """
     return self.ErrorCount + self.Definitions.GetErrorCount()
 
-  def startElement(self, name, attrs):
+  def GetDefinitionsElementAsString(self):
+    """Returns string representation of the <definitions> element
 
-    if self.StreamCopyEnabled:
-      self.DefinitionsXMLGenerator.startElement(name, attrs)
+    Should not be called until the definitions tag has been fully
+    fed to the parser.
+
+    Returns:
+      str. The XML string
+    """
+    return self.DefinitionsXMLStringIO.getvalue()
+
+  def startElement(self, name, attrs):
 
     if name == 'eventgroup':
       SourceId = attrs.get('source-id')
@@ -219,7 +227,8 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       if not self.Definitions.EventTypeDefined(EventType):
         self.Error("An eventgroup refers to eventtype %s, which is not defined." % EventType )
 
-      self.StreamCopyEnabled = False
+    elif name == 'definitions':
+      self.StreamCopyEnabled = True
 
     elif name == 'source':
       Url = attrs.get('url')
@@ -278,7 +287,14 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
       ObjectTypeName = attrs.get('name')
       self.Definitions.AddObjectType(ObjectTypeName, dict(attrs.items()))
 
+    if self.StreamCopyEnabled:
+      self.DefinitionsXMLGenerator.startElement(name, attrs)
+
   def endElement(self, name):
+
+    if self.StreamCopyEnabled:
+      self.DefinitionsXMLGenerator.endElement(name)
+      self.DefinitionsXMLGenerator.ignorableWhitespace("\n")
 
     if name == 'event':
       self.TotalEventCount += 1
@@ -290,16 +306,7 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     elif name == 'definitions':
 
-      # Definitions section is complete, which means we can
-      # finish the stream copy by adding the <eventgroups> tag
-      # and closing the <events> tag. It is then ready for
-      # RelaxNG validation.
-
-      self.StreamCopyEnabled = True
-      self.DefinitionsXMLGenerator.endElement(name)
-      self.DefinitionsXMLGenerator.startElement('eventgroups', AttributesImpl({}))
-      self.DefinitionsXMLGenerator.endElement('eventgroups')
-      self.DefinitionsXMLGenerator.endElement('events')
+      self.StreamCopyEnabled = False
 
       # Invoke callback
       self.DefinitionsLoaded()
@@ -322,10 +329,6 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
 
     elif name == 'events':
       self.EndOfStream()
-
-    if self.StreamCopyEnabled:
-      self.DefinitionsXMLGenerator.endElement(name)
-      self.DefinitionsXMLGenerator.ignorableWhitespace("\n")
 
   def characters(self, text):
 
@@ -408,7 +411,7 @@ class EDXMLValidatingParser(EDXMLParser):
     SchemaString = etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-2.1.0.rng')
     Schema = etree.RelaxNG(SchemaString)
     try:
-      Schema.assertValid(etree.fromstring(self.DefinitionsXMLStringIO.getvalue()))
+      Schema.assertValid(etree.fromstring('<events>' + self.DefinitionsXMLStringIO.getvalue() + '<eventgroups/></events>'))
     except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
       self.Error("Invalid EDXML detected in the generated <definitions> section: %s\nThe RelaxNG validator generated the following error: %s" % (( self.DefinitionsXMLStringIO.getvalue(), ValidationError )) )
 
