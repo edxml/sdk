@@ -1,23 +1,22 @@
 EDXML SDK
 =========
 
-**EDXML_** is a versatile, simple and semantic data representation that facilitates
+EDXML_ is a versatile, simple and semantic data representation that facilitates
 complex data integration projects.
 
 This repository contains the **EDXML Software Development Kit (SDK)**. The
-SDK contains a number of example Python_ applications, which demonstrate inspecting and
-validating EDXML data. The applications are based the Python classes in the 
-edxml Python package, which is also part of this SDK.
+SDK features the edxml Python_ package as well as a number of example Python
+applications, which demonstrate inspecting and validating EDXML data.
 
 For developing EDXML processing scripts based on the Python classes offered by
 the edxml package, all you need to do is install the edxml package into the
 Python library path of your development system. Symlinking the edxml subdirectory
-to the location of your Python script will also work. You can then use the appropriate
-import statements to import the package components that your script will need.
+to the location of your Python script will also work. Or just use 
+`Pip <http://pypi.python.org/pypi/edxml/>`_.
 
-* `Documentation <http://edxml.readthedocs.org/>`_ (Read the Docs)
-* `Downloads <http://pypi.python.org/pypi/edxml/>`_ (PyPI)
-* `Source code <https://github.com/dtakken/edxml>`_ (Github)
+* `Documentation <http://edxml-sdk.readthedocs.org/>`_ (Read the Docs)
+* `Installer <http://pypi.python.org/pypi/edxml/>`_ (PyPI)
+* `Source code <https://github.com/dtakken/edxml-sdk>`_ (Github)
 
 .. _Python: http://python.org/
 .. _EDXML: http://edxml.org/
@@ -29,3 +28,5 @@ import statements to import the package components that your script will need.
 The SDK is distributed under the terms of the GNU Lesser General Public License,
 which means that both Open Source and commercial software can be based on it, as
 long as you meet the conditions outlined in the license document.
+
+Please visit `edxml.org <http://edxml.org/>`_ to learn more about EDXML.
