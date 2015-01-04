@@ -74,11 +74,6 @@ class EDXMLParser(EDXMLBase, XMLFilterBase):
     Definitions (EDXMLDefinitions): :class:`edxml.EDXMLDefinitions.EDXMLDefinitions` instance
   """
   def __init__ (self, upstream, SkipEvents = False):
-    """Constructor.
-
-    Parameters:
-
-    """
 
     self.EventCounters = {}
     self.TotalEventCount = 0
