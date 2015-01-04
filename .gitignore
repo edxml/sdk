@@ -1,1 +1,5 @@
 *.pyc
+build/
+dist/
+doc/
+edxml.egg-info/
