@@ -155,8 +155,11 @@ class EDXMLBase():
             else:
               if HexLength % DigitGroupLength != 0:
                 self.Error("Length of hex datatype is not a multiple of separator distance: " + DataType)
-              if len(SplitDataType[4]) == 0 and len(SplitDataType) == 6:
-                # This happens if the colon ':' is used as separator
+              if len(SplitDataType[4]) == 0:
+                if len(SplitDataType) == 6:
+                  # This happens if the colon ':' is used as separator
+                  return
+              else:
                 return
           else:
             return
@@ -202,10 +205,10 @@ class EDXMLBase():
             self.Error("Unsigned decimal value '%s' of object type %s is negative." % (( str(Value), ObjectTypeName )))
       elif ObjectDataType[1] == 'hex':
         if len(ObjectDataType) > 3:
-          HexSeparator = ObjectDataType[5]
-          if len(HexSeparator) == 0:
+          HexSeparator = ObjectDataType[4]
+          if len(HexSeparator) == 0 and len(ObjectDataType) == 6:
             HexSeparator = ':'
-            Value = ''.join(c for c in Value if c != HexSeparator)
+          Value = ''.join(c for c in Value if c != HexSeparator)
         try:
           Value.decode("hex")
         except:
@@ -338,11 +341,14 @@ class EDXMLBase():
         return unicode('%.' + DecimalPrecision + 'f') % Decimal(Value)
       elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
         return u'%d' % int(Value)
-      else:
+      elif DataType[1] in ['float', 'double']:
         try:
           return u'%f' % float(Value)
         except Exception as Except:
           self.Error("NormalizeObject: Invalid non-integer: '%s': %s" % (( Value, Except )))
+      else:
+        # Must be hexadecimal
+        return unicode(Value.lower())
     elif DataType[0] == 'ip':
       try:
         Octets = Value.split('.')
