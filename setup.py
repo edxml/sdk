@@ -7,9 +7,11 @@ here = path.abspath(path.dirname(__file__))
 #with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 #  long_description = f.read()
 
+exec(open('edxml/version.py').read())
+
 setup(
   name = 'edxml',
-  version = '2.1.0rc1',
+  version = __version__,
 
   # A description of your project
   description = 'The EDXML Software Developers Kit',
