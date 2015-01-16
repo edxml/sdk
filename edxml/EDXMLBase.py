@@ -355,7 +355,10 @@ class EDXMLBase():
           self.Error("NormalizeObject: Invalid IP: '%s'" % Value)
     elif DataType[0] == 'geo':
       if DataType[1] == 'point':
-        return u'%.6f,%.6f' % Value.split(',')
+        try:
+          return u'%.6f,%.6f' % tuple(float(Coordinate) for Coordinate in Value.split(','))
+        except Exception as Except:
+          self.Error("NormalizeObject: Invalid geo:point: '%s': %s" % (( Value, Except )))
 
     elif DataType[0] == 'string':
 
