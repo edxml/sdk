@@ -201,6 +201,7 @@ class EDXMLObjectEditor(EDXMLValidatingStreamFilter):
 
   def __init__ (self, upstream, Output = sys.stdout):
 
+    self.InsertedObjects = []
     EDXMLValidatingStreamFilter.__init__(self, upstream, False, Output)
 
   def InsertObject(self, PropertyName, Value):
@@ -268,6 +269,7 @@ class EDXMLEventEditor(EDXMLValidatingStreamFilter):
   def __init__ (self, upstream, Output = sys.stdout):
 
     self.ReadingEvent = False
+    self.CurrentEventDeleted = False
     self.CurrentEvent = []
     self.CurrentEventAttributes = AttributesImpl({})
     self.ReceivingEventContent = False
