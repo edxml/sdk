@@ -30,10 +30,8 @@
 """This module contains generic (base)classes used throughout the SDK."""
 
 from decimal import *
-import string
 import sys
 import re
-import os
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""

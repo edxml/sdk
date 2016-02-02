@@ -36,8 +36,6 @@ details about all defined event types, object types, sources, and so on.
 
 """
 
-import sys
-from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesImpl
 from EDXMLParser import *
 

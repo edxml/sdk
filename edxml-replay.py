@@ -38,7 +38,6 @@
 
 import sys, time
 from xml.sax import make_parser
-from xml.sax.xmlreader import AttributesImpl
 from edxml.EDXMLFilter import EDXMLEventEditor
 
 # This is a wrapper to create an unbuffered

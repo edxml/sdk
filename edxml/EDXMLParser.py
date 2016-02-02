@@ -45,16 +45,11 @@ EDXMLValidatingParser
 
 """
 
-import sys
-import re
 from cStringIO import StringIO
-from lxml import etree
-from xml.sax import make_parser
 from xml.sax.saxutils import XMLFilterBase, XMLGenerator
-from xml.sax.xmlreader import AttributesImpl
+from lxml import etree
 from EDXMLBase import *
 from EDXMLDefinitions import EDXMLDefinitions
-
 
 class EDXMLParser(EDXMLBase, XMLFilterBase):
   """The EDXMLParser class can be used as a content

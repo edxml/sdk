@@ -35,11 +35,9 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
-
-import string, sys
-from cStringIO import StringIO
+import sre_constants
+import sys
 from xml.sax import make_parser
-from xml.sax.saxutils import XMLGenerator
 
 try:
   # lxml is not a very common module.

@@ -36,11 +36,10 @@ information from EDXML <definitions> sections.
 """
 
 import hashlib
-from decimal import *
-from EDXMLBase import *
-from lxml import etree
-from xml.sax.saxutils import XMLGenerator
+import sre_constants
 from xml.sax.xmlreader import AttributesImpl
+from lxml import etree
+from EDXMLBase import *
 
 try:
   # SimpleXMLWriter is not a very common module. If available,

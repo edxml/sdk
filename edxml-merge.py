@@ -44,7 +44,6 @@
 import sys
 from xml.sax import make_parser
 from xml.sax.xmlreader import AttributesImpl
-from xml.sax.saxutils import XMLGenerator
 from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
 from edxml.EDXMLFilter import EDXMLStreamFilter

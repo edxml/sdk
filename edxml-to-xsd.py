@@ -41,7 +41,7 @@
 
 import sys
 from xml.sax import make_parser
-from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
+from edxml.EDXMLBase import EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
 
 def PrintHelp():

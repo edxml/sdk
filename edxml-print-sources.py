@@ -36,10 +36,10 @@
 
 import sys
 from xml.sax import make_parser
-from xml.sax.saxutils import XMLGenerator, XMLFilterBase
-from xml.sax.handler import ContentHandler
-from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
+from xml.sax.saxutils import XMLFilterBase
+from edxml.EDXMLBase import EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
+
 
 class EDXMLParser(XMLFilterBase):
 

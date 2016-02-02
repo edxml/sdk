@@ -49,7 +49,6 @@
 
 import sys, re
 from xml.sax import make_parser
-from xml.sax.xmlreader import AttributesImpl
 from edxml.EDXMLFilter import EDXMLStreamFilter
 
 # This class is based on the EDXMLStreamFilter class,
