@@ -43,11 +43,12 @@ from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesImpl
 
 try:
-  # SimpleXMLWriter is not a very common module.
+  # SimpleXMLWriter is not a very common module. If available,
+  # it can be used for generating EDXML definitions in stead
+  # of SAX XMLGenerator.
   from elementtree.SimpleXMLWriter import XMLWriter
 except ImportError:
-  sys.stderr.write('Failed to import the elementtree Python package. Please install it.\n')
-  sys.exit(1)
+  pass
 
 class EDXMLDefinitions(EDXMLBase):
   """Class for managing information from EDXML <definitions> sections.
