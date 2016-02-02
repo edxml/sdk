@@ -300,18 +300,18 @@ class EDXMLEventEditor(EDXMLValidatingStreamFilter):
       self.SetOutputEnabled(True)
 
       # Allow event to be edited
-      self.CurrentEvent, self.CurrentEventContent, self.CurrentEventAttributes = self.EditEvent(self.CurrentSourceId, self.CurrentEventTypeName, self.CurrentEvent, self.CurrentEventContent, self.CurrentEventAttributes)
+      CurrentEvent, CurrentEventContent, CurrentEventAttributes = self.EditEvent(self.CurrentSourceId, self.CurrentEventTypeName, self.CurrentEvent, self.CurrentEventContent, self.CurrentEventAttributes)
 
       # Output buffered event
-      if self.CurrentEventDeleted == False and len(self.CurrentEvent) > 0:
-        EDXMLValidatingStreamFilter.startElement(self, 'event', AttributesImpl({}))
+      if self.CurrentEventDeleted == False and len(CurrentEvent) > 0:
+        EDXMLValidatingStreamFilter.startElement(self, 'event', AttributesImpl(CurrentEventAttributes))
         EDXMLValidatingStreamFilter.ignorableWhitespace(self, '\n      ')
-        for Object in self.CurrentEvent:
+        for Object in CurrentEvent:
           EDXMLValidatingStreamFilter.ignorableWhitespace(self, '  ')
           EDXMLValidatingStreamFilter.startElement(self, 'object', AttributesImpl({'property': Object['property'], 'value': Object['value']}))
           EDXMLValidatingStreamFilter.endElement(self, 'object')
           EDXMLValidatingStreamFilter.ignorableWhitespace(self, '\n      ')
-        if len(self.CurrentEventContent) > 0:
+        if len(CurrentEventContent) > 0:
           EDXMLValidatingStreamFilter.startElement(self, 'content', AttributesImpl({}))
           EDXMLValidatingStreamFilter.characters(self.CurrentEventContent)
           EDXMLValidatingStreamFilter.endElement(self, 'content')
