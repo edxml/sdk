@@ -535,7 +535,7 @@ class EDXMLDefinitions(EDXMLBase):
   def GetSourceURLProperties(self, Url):
     """Returns dictionary containing attributes of the source specified by given URL.
 
-    The returned dictionay contains the attributes of the EDXML <source> tag
+    The returned dictionary contains the attributes of the EDXML <source> tag
 
     Args:
       Url (str): EDXML source URL
@@ -824,14 +824,14 @@ class EDXMLDefinitions(EDXMLBase):
         # Note that XML schema regular expressions match the entire object
         # value. We wrap the expression in anchors to mimic this behavior
         self.CompiledObjectTypePatterns[ObjectTypeName] = re.compile('^%s$' % Attributes['regexp'])
-      except sre_constants.error as Except:
+      except sre_constants.error:
         self.Error('Definition of object type %s has an invalid regular expression in its regexp attribute: "%s"' % (( ObjectTypeName, Attributes['regexp'] )) )
 
     if 'fuzzy-matching' in Attributes and Attributes['fuzzy-matching'][:10] == 'substring:':
       try:
         re.compile('%s' % Attributes['fuzzy-matching'][10:])
-      except sre_constants.error as Except:
-        self.Error('Definition of object type %s has an invalid regular expresion in its fuzzy-matching attribute: "%s"' % (( ObjectTypeName, Attributes['fuzzy-matching'] )) )
+      except sre_constants.error:
+        self.Error('Definition of object type %s has an invalid regular expression in its fuzzy-matching attribute: "%s"' % (( ObjectTypeName, Attributes['fuzzy-matching'] )) )
 
     self.ObjectTypes[ObjectTypeName] = Attributes
     self.ObjectTypeNames.append(ObjectTypeName)
@@ -1079,7 +1079,7 @@ class EDXMLDefinitions(EDXMLBase):
     AttribsRemoved  = Current - Update
 
     # First we check if the attributes that are retained in the
-    # update are consistent with the exiting atribute values.
+    # update are consistent with the exiting attribute values.
 
     for Attribute in AttribsRetained:
       if CurrentAttributes[Attribute] != UpdatedAttributes[Attribute]:

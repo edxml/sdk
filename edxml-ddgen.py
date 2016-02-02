@@ -76,7 +76,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     self.CloseEventGroups()
 
     TimeElapsed = time.time() - self.TimeStart + 1e-9
-    sys.stderr.write("Wrote %d events in % seconds, %d events per second.\n" % (( self.EventCounter, TimeElapsed, (self.EventCounter / TimeElapsed) )))
+    sys.stderr.write("Wrote %d events in %d seconds, %d events per second.\n" % (( self.EventCounter, TimeElapsed, (self.EventCounter / TimeElapsed) )))
 
   def WriteEvents(self):
 

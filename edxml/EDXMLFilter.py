@@ -66,7 +66,7 @@ class EDXMLStreamFilter(EDXMLParser):
 
   def SetOutputEnabled(self, YesOrNo):
     """This method implements a global switch
-    to turn XML passthrough on or off. You can
+    to turn XML pass through on or off. You can
     use it to allow certain parts of EDXML files
     to pass through to STDOUT while other parts
     are filtered out.
@@ -126,7 +126,7 @@ class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
 
   def SetOutputEnabled(self, YesOrNo):
     """This method implements a global switch
-    to turn XML passthrough on or off. You can
+    to turn XML pass through on or off. You can
     use it to allow certain parts of EDXML files
     to pass through to STDOUT while other parts
     are filtered out.
