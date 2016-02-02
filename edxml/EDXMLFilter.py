@@ -5,7 +5,7 @@
 # 
 #                   Python classes for filtering EDXML data
 #
-#                  Copyright (c) 2010 - 2015 by D.H.J. Takken
+#                  Copyright (c) 2010 - 2016 by D.H.J. Takken
 #                          (d.h.j.takken@xs4all.nl)
 #
 #          This file is part of the EDXML Software Development Kit (SDK).
