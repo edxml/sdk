@@ -44,9 +44,10 @@ from edxml.EDXMLWriter import EDXMLWriter
 
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
-  def __init__ (self, EventRate, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize):
+  def __init__ (self, EventRate, MaxEvents, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize):
 
     self.EventCounter = 0
+    self.MaxEvents = MaxEvents
     self.EventGroupCounter = 0
     self.CurrentEventGroupSize = 0
     self.GenerateCollisions = GenerateCollisions
@@ -102,7 +103,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       RequestedTimeInterval = 1.0 / self.EventRate
 
     try:
-      while True:
+      while self.EventCounter < self.MaxEvents or self.MaxEvents == 0:
 
         # Generate random content
         if self.RandomizeEventContent:
@@ -261,6 +262,9 @@ def PrintHelp():
                        useful when running multiple instances in parallel. The option expects the
                        desired name as its argument.
 
+     --limit           By default, data will be generated until interrupted. This option allows
+                       you to limit the number of output events to the specified amount. A limit
+                       of zero is interpreted as no limit.
 
    Example:
 
@@ -272,6 +276,7 @@ CurrOption = 1
 EventGroupSize = 0
 EventContentSize = 0
 PropertySize = 16
+MaxEventCount = 0
 RandomizeProperties = False
 RandomizeEventContent = False
 GenerateCollisions = False
@@ -304,6 +309,10 @@ while CurrOption < len(sys.argv):
     CurrOption += 1
     EventContentSize = int(sys.argv[CurrOption])
 
+  elif sys.argv[CurrOption] == '--limit':
+    CurrOption += 1
+    MaxEventCount = int(sys.argv[CurrOption])
+
   elif sys.argv[CurrOption] == '--eventtype-name':
     CurrOption += 1
     EventTypeName = sys.argv[CurrOption]
@@ -328,4 +337,4 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-Generator = EDXMLDummyDataGenerator(EventRate, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize)
+Generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize)
