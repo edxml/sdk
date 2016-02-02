@@ -1859,7 +1859,7 @@ class EDXMLDefinitions(EDXMLBase):
 
     """
 
-    if self.SchemaRelaxNG == None:
+    if self.SchemaRelaxNG is None:
       # Apparently, we are generating an eventtyoe
       # definition that is not part of a bigger schema.
       self.CurrentElementRelaxNG = etree.Element('grammar')
@@ -1978,7 +1978,7 @@ class EDXMLDefinitions(EDXMLBase):
       ObjectTypeName (str): Name of an object type
     """
 
-    if self.SchemaRelaxNG == None:
+    if self.SchemaRelaxNG is None:
       # Apparently, we are generating an objecttype
       # definition that is not part of a bigger schema.
       self.CurrentElementRelaxNG = etree.Element('grammar')
@@ -2011,7 +2011,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.CloseElementRelaxNG()
     self.CloseElementRelaxNG()
 
-    if self.SchemaRelaxNG != None:
+    if self.SchemaRelaxNG is not None:
       self.CloseElementRelaxNG()
 
   def GenerateEventRelaxNG(self, EventTypeName):
@@ -2026,7 +2026,7 @@ class EDXMLDefinitions(EDXMLBase):
       EventTypeName (str): Name of an event type
     """
 
-    if self.SchemaRelaxNG == None:
+    if self.SchemaRelaxNG is None:
       # Apparently, we are generating an objecttype
       # definition that is not part of a bigger schema.
       self.CurrentElementRelaxNG = etree.Element('grammar')
@@ -2151,7 +2151,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
 
-    if EventTypeRefs == None:
+    if EventTypeRefs is None:
       for EventTypeName in self.GetEventTypeNames():
         self.GenerateEventTypeRelaxNG(EventTypeName)
     else:
@@ -2168,7 +2168,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('oneOrMore')
     self.OpenElementRelaxNG('choice')
 
-    if ObjectTypeRefs == None:
+    if ObjectTypeRefs is None:
       for ObjectTypeName in self.GetObjectTypeNames():
         self.GenerateObjectTypeRelaxNG(ObjectTypeName)
     else:
@@ -2205,7 +2205,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.OpenElementRelaxNG('zeroOrMore')
     self.OpenElementRelaxNG('choice')
 
-    if EventRefs == None:
+    if EventRefs is None:
       for EventTypeName in self.GetEventTypeNames():
         self.GenerateEventRelaxNG(EventTypeName)
     else:

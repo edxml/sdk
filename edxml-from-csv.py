@@ -134,15 +134,15 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-if OntologyInputFile == None:
+if OntologyInputFile is None:
   sys.stderr.write('No ontology source was specified. (use --help option to get help)\n')
   sys.exit(1)
 
-if OutputSourceUrl == None:
+if OutputSourceUrl is None:
   sys.stderr.write('No source URL was specified. (use --help option to get help)\n')
   sys.exit(1)
 
-if EventTypeColumn == None and OutputEventType == None:
+if EventTypeColumn is None and OutputEventType is None:
   sys.stderr.write('I cannot determine the event type of the input data. Either specify an event type or a column that contains event type names. (use --help option to get help)\n')
   sys.exit(1)
 
@@ -191,11 +191,11 @@ PreviousSplitLine = None
 PreviousLineProperties = None
 
 for Line in Input:
-  if ColumnPropertyMapping == None:
+  if ColumnPropertyMapping is None:
     # Read header line.
     ColumnPropertyMapping = Line.rstrip('\n').split(ColumnSeparator)
 
-    if EventTypeColumn != None:
+    if EventTypeColumn is not None:
       # We have a column containing the event type name.
       del ColumnPropertyMapping[EventTypeColumn]
 
@@ -209,7 +209,7 @@ for Line in Input:
 
   SplitLine = Line.rstrip('\n').split(ColumnSeparator)
 
-  if EventTypeColumn != None:
+  if EventTypeColumn is not None:
     # We have a column containing the event type name.
     OutputEventType = SplitLine[EventTypeColumn]
     del SplitLine[EventTypeColumn]
@@ -217,7 +217,7 @@ for Line in Input:
   # Create dictionary of properties and their objects
   LineProperties = {Property: [SplitLine[PropertyColumnMapping[Property]]] for Property in MyEDXMLParser.Definitions.GetEventTypeProperties(OutputEventType) if SplitLine[PropertyColumnMapping[Property]] != '' }
 
-  if PreviousSplitLine != None:
+  if PreviousSplitLine is not None:
 
     # Compare with previous line, maybe
     # the lines form a single event having
@@ -241,8 +241,8 @@ for Line in Input:
         continue
 
     if OutputEventType != CurrentOutputEventType:
-      if CurrentOutputEventType != None:
-        if PreviousLineProperties != None:
+      if CurrentOutputEventType is not None:
+        if PreviousLineProperties is not None:
           try:
             MyWriter.AddEvent(PreviousLineProperties)
           except EDXMLError as Error:
@@ -252,7 +252,7 @@ for Line in Input:
         MyWriter.OpenEventGroup(OutputEventType, 'csv')
       else:
         MyWriter.OpenEventGroup(OutputEventType, 'csv')
-        if PreviousLineProperties != None:
+        if PreviousLineProperties is not None:
           try:
             MyWriter.AddEvent(PreviousLineProperties)
           except EDXMLError as Error:
@@ -269,9 +269,9 @@ for Line in Input:
   PreviousSplitLine = SplitLine
   PreviousLineProperties = LineProperties
 
-if PreviousSplitLine != None:
+if PreviousSplitLine is not None:
   if OutputEventType != CurrentOutputEventType:
-    if CurrentOutputEventType != None:
+    if CurrentOutputEventType is not None:
       MyWriter.CloseEventGroup()
     MyWriter.OpenEventGroup(OutputEventType, 'csv')
     CurrentOutputEventType = OutputEventType
@@ -281,7 +281,7 @@ if PreviousSplitLine != None:
     # Invalid event, just skip it.
     sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
 
-if CurrentOutputEventType != None:
+if CurrentOutputEventType is not None:
   MyWriter.CloseEventGroup()
 
 MyWriter.CloseEventGroups()

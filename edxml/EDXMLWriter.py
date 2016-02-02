@@ -200,7 +200,7 @@ class EDXMLWriter(EDXMLBase):
         try:
           while True:
             Element = (yield)
-            if Element == None:
+            if Element is None:
               # Sending None signals the end of the generation of
               # the definitions element, and the beginning of the
               # eventgroups element.
@@ -245,7 +245,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding a definitions element triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlEventTypeElement(self, XmlString):
@@ -265,7 +265,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding an event type triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlObjectTypeTag(self, XmlString):
@@ -285,7 +285,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding an object type triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlPropertyTag(self, XmlString):
@@ -305,7 +305,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding a property triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlRelationTag(self, XmlString):
@@ -325,7 +325,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding a relation triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlSourceTag(self, XmlString):
@@ -345,7 +345,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding a source tag triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def AddXmlEventTag(self, XmlString):
@@ -365,7 +365,7 @@ class EDXMLWriter(EDXMLBase):
     # Adding an event triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
   def OpenDefinitions(self):
@@ -675,7 +675,7 @@ class EDXMLWriter(EDXMLBase):
     # Opening an event group triggers validation,
     # which may raise exceptions.
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
         raise self.Bridge.ParseError
 
 
@@ -753,7 +753,7 @@ class EDXMLWriter(EDXMLBase):
     # to write the event.
     self.EventGroupXMLWriter.send(Event)
 
-    if self.Validate and self.Bridge.ParseError != None:
+    if self.Validate and self.Bridge.ParseError is not None:
 
       self.RecoverInvalidEvent()
       self.InvalidEvents += 1
@@ -893,7 +893,7 @@ class EDXMLWriter(EDXMLBase):
     self.EventGroupXMLWriter.send(self.ElementStack.pop())
 
     if self.Validate:
-      if self.Bridge.ParseError != None:
+      if self.Bridge.ParseError is not None:
 
         self.RecoverInvalidEvent()
         self.InvalidEvents += 1

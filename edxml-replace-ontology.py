@@ -184,7 +184,7 @@ while CurrentArgument < ArgumentCount:
 
 # Program starts here. Check commandline arguments.
 
-if OntologyFileName == None:
+if OntologyFileName is None:
   sys.stderr.write("No ontology source was specified. Use the --help option to get help.\n")
   sys.exit()
 

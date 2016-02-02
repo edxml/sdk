@@ -74,7 +74,7 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
     if name == 'eventgroup':
 
       SourceUrl = self.SourceUrlMapping[attrs.get('source-id')]
-      if re.match(self.SourceUrlPattern, SourceUrl) == None:
+      if re.match(self.SourceUrlPattern, SourceUrl) is None:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
 
@@ -86,7 +86,7 @@ class EDXMLEventGroupFilter(EDXMLStreamFilter):
       # Remember which Source ID belongs to which URL
       self.SourceUrlMapping[attrs.get('source-id')] = attrs.get('url')
 
-      if re.match(self.SourceUrlPattern, attrs.get('url')) == None:
+      if re.match(self.SourceUrlPattern, attrs.get('url')) is None:
         # No match, turn filter output off.
         self.SetOutputEnabled(False)
       else:

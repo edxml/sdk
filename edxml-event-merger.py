@@ -135,7 +135,7 @@ SaxParser.setContentHandler(EDXMLEventMerger(SaxParser))
 # Now we feed EDXML data into the Sax parser. This will trigger
 # calls to ProcessEvent in our EDXMLEventMerger, producing output.
 
-if InputFileName == None:
+if InputFileName is not None:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...(use --help to get help)")
   sys.stdout.flush()
   SaxParser.parse(sys.stdin)
