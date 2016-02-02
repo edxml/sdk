@@ -219,7 +219,6 @@ class EDXMLObjectEditor(EDXMLValidatingStreamFilter):
   def startElement(self, name, attrs):
     if name == 'object':
       Property = attrs.get('property')
-      Value = attrs.get('value')
       ObjectTypeName = self.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, Property)
       self.InsertedObjects = []
       attrs = self.EditObject(self.CurrentSourceId, self.CurrentEventTypeName, ObjectTypeName, attrs)

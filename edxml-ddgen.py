@@ -80,7 +80,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
   def WriteEvents(self):
 
-    DelayFactor = 1.0
     IntervalCorrection = 0
     Content = '*' * self.EventContentSize
     RandomContentCharacters = self.RandomContentCharacters * (int(self.EventContentSize / self.RandomContentCharactersLength) + 1)
