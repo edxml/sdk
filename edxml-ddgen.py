@@ -197,7 +197,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     self.CloseEventDefinition()
     self.CloseEventDefinitions()
     self.OpenObjectTypes()
-    self.AddObjectType(self.ObjectTypeName, 'a', 'string:%d' % self.PropertyStringLength)
+    self.AddObjectType(self.ObjectTypeName, 'a', 'string:%d:cs' % self.PropertyStringLength)
     self.CloseObjectTypes()
     self.OpenSourceDefinitions()
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
