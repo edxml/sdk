@@ -183,7 +183,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     self.OpenDefinitions()
     self.OpenEventDefinitions()
-    self.OpenEventDefinition(self.EventTypeName, 'a', '', '[[a]]', '[[a]]')
+    self.OpenEventDefinition(self.EventTypeName, 'a', '', 'a', 'a')
     self.OpenEventDefinitionProperties()
     self.AddEventProperty('property-a', self.ObjectTypeName, 'a', Merge = DropOrMatch, Unique = self.GenerateCollisions)
     self.AddEventProperty('property-b', self.ObjectTypeName, 'b', Merge = DropOrReplace)
