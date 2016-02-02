@@ -612,7 +612,7 @@ class EDXMLWriter(EDXMLBase):
 
     Attributes = {
       'source-id':     str(SourceId),
-      'url':           string.lower(URL),
+      'url':           URL.lower(),
       'date-acquired': DateAcquired,
       'description':   Description
       }
