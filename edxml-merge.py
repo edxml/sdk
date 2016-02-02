@@ -214,7 +214,7 @@ for FileName in InputFileNames:
   except EDXMLProcessingInterrupted:
     pass
   except EDXMLError as Error:
-    sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( arg, str(Error) )) )
+    sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (FileName, str(Error)) )
     sys.exit(1)
   except:
     raise
