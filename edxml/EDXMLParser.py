@@ -45,6 +45,7 @@ EDXMLValidatingParser
 
 """
 
+import os
 from cStringIO import StringIO
 from xml.sax.saxutils import XMLFilterBase, XMLGenerator
 from lxml import etree
