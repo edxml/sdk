@@ -633,8 +633,12 @@ class EDXMLWriter(EDXMLBase):
     # to the coroutine, which will write it into
     # the Output or into the Bridge. If an EDXMLParser
     # has been created, any problems in the definitions
-    # element will raise an exception here.
+    # element will either raise an exception here or
+    # populate the ParseError property of the bridge.
     self.XMLWriter.send(self.ElementStack.pop())
+
+    if self.Bridge.ParseError:
+      raise self.Bridge.ParseError
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
