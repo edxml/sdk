@@ -28,14 +28,21 @@
 #  ===========================================================================
 
 """This module contains generic (base)classes used throughout the SDK."""
-
+import traceback
 from decimal import *
 import sys
 import re
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
-  pass
+
+  def __init__(self, message):
+    self.Trace = ''.join(traceback.format_stack())
+    super(Exception, self).__init__(message)
+
+  def GetStackTrace(self):
+    return self.Trace
+
 
 class EDXMLProcessingInterrupted(Exception):
   """Exception for signaling that EDXML processing was aborted"""

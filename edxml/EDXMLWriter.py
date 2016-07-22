@@ -172,14 +172,25 @@ class EDXMLWriter(EDXMLBase):
       if self.Parse:
         try:
           self.Parser.feed(String)
-        except EDXMLError as Except:
+        except Exception as Except:
           # We catch parsing exceptions here, because lxml does
-          # not handle them correctly: It transforms any exception
-          # in its output object into a general IO error, which means
-          # that the information about the validation exception is lost.
-          # So, we store the original exception here to allow EDXMLWriter
-          # to check for it and raise a proper exception.
-          self.ParseError = Except
+          # not handle them correctly: When the file-like object
+          # that it writes into raises an exception, it will initially
+          # ignore it. On the next write attempt, a generic IO error
+          # is raised, which means that the information about the
+          # original exception is lost. So, we store the original
+          # exception here to allow EDXMLWriter to check for it and
+          # raise a proper, informative exception.
+          Message = '%s: %s' % (Except.__class__.__name__, str(Except))
+          if isinstance(Except, EDXMLError):
+            Message = '%s\n\nStack trace:\n\n%s\n\n' % (Message, Except.GetStackTrace())
+
+          if self.ParseError:
+            # Another exception occurred, combine into
+            # a new exception.
+            self.ParseError = Exception('%s\n\nwhich was followed by:\n\n%s' % (self.ParseError, Message))
+          else:
+            self.ParseError = Exception('%s: %s' % (Except.__class__.__name__, Message))
       if self.Passthrough:
         if self.BufferOutput:
           # Add to buffer
@@ -633,12 +644,19 @@ class EDXMLWriter(EDXMLBase):
     # to the coroutine, which will write it into
     # the Output or into the Bridge. If an EDXMLParser
     # has been created, any problems in the definitions
-    # element will either raise an exception here or
+    # element will possibly raise an exception here or
     # populate the ParseError property of the bridge.
-    self.XMLWriter.send(self.ElementStack.pop())
+    Error = None
+    try:
+      self.XMLWriter.send(self.ElementStack.pop())
+    except Exception as Except:
+      Error = Except
 
-    if self.Bridge.ParseError:
-      raise self.Bridge.ParseError
+    if isinstance(self.Bridge, EDXMLWriter.XMLParserBridge) and self.Bridge.ParseError:
+      raise EDXMLError, str(self.Bridge.ParseError), sys.exc_info()[2]
+    else:
+      if Error:
+        raise EDXMLError, str(Error), sys.exc_info()[2]
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
@@ -732,12 +750,12 @@ class EDXMLWriter(EDXMLBase):
             ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentElementTypeName, PropertyName)
             ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
             self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
-          except EDXMLError:
+          except EDXMLError as Error:
             if IgnoreInvalidObjects:
               self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( ObjectValue, PropertyName )) )
               continue
             else:
-              raise
+              raise EDXMLError, 'Error adding property %s: %s' % (PropertyName, str(Error)), sys.exc_info()[2]
 
         etree.SubElement(Event, 'object', property = PropertyName, value = unicode(ObjectValue))
 
