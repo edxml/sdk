@@ -404,7 +404,7 @@ class EDXMLValidatingParser(EDXMLParser):
     try:
       Schema.assertValid(etree.fromstring('<events>' + self.DefinitionsXMLStringIO.getvalue() + '<eventgroups/></events>'))
     except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
-      self.Error("Invalid EDXML detected in the generated <definitions> section: %s\nThe RelaxNG validator generated the following error: %s" % (( self.DefinitionsXMLStringIO.getvalue(), ValidationError )) )
+      self.Error("Invalid EDXML detected in the generated <definitions> section: %s\nThe RelaxNG validator generated the following error: %s" % (( self.DefinitionsXMLStringIO.getvalue(), str(ValidationError) )) )
 
   # Overridden from EDXMLParser
   def ProcessObject(self, EventTypeName, ObjectProperty, ObjectValue):
