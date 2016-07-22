@@ -136,6 +136,10 @@ def PrintHelp():
                        expression. Only events that have a source URL that matches
                        this expression will be copied to the output stream.
 
+     -e                When specified, this option must be followed by an EDXML
+                       event type name. Only events of specified type will be
+                       copied to the output stream.
+
    Examples:
 
      cat test.edxml | edxml-filter.py -s "/offices/stuttgart/.*"
