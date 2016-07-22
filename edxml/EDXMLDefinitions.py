@@ -779,7 +779,7 @@ class EDXMLDefinitions(EDXMLBase):
         ChildProperty, ParentProperty = PropertyMapping.split(':')
         self.EventTypes[EventTypeName]['parentmapping'][ChildProperty] = ParentProperty
 
-    except KeyError, ValueError:
+    except (KeyError, ValueError):
 
       self.Error("Event type %s contains a parent definition which has an invalid or missing property map." % EventTypeName)
 
