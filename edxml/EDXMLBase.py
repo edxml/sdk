@@ -199,7 +199,7 @@ class EDXMLBase():
       if ObjectDataType[1] == 'decimal':
         if len(ObjectDataType) < 5:
           # Decimal is unsigned.
-          if Value < 0:
+          if Decimal(Value) < 0:
             self.Error("Unsigned decimal value '%s' of object type %s is negative." % (( str(Value), ObjectTypeName )))
       elif ObjectDataType[1] == 'hex':
         if len(ObjectDataType) > 3:
