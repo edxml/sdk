@@ -206,7 +206,7 @@ class EDXMLBase():
           HexSeparator = ObjectDataType[4]
           if len(HexSeparator) == 0 and len(ObjectDataType) == 6:
             HexSeparator = ':'
-          Value = ''.join(c for c in Value if c != HexSeparator)
+          Value = ''.join(c for c in str(Value) if c != HexSeparator)
         try:
           Value.decode("hex")
         except:
