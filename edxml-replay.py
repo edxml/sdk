@@ -142,10 +142,10 @@ def PrintHelp():
 
   print """
 
-   This utility accepts EDXML data as input and writes the events to standard
-   output, formatted in rows and columns. For every event property, a output
-   column is generated. If one property has multiple objects, multiple  output
-   lines are generated.
+   This script accepts EDXML data as input and writes time shifted events to standard
+   output. Timestamps of input events are shifted to the current time. This is useful
+   for simulating live EDXML data sources using previously recorded data. Note that
+   the script assumes that the events in the input stream are time ordered.
 
    Options:
 
