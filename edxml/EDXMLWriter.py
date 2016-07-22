@@ -419,18 +419,26 @@ class EDXMLWriter(EDXMLBase):
 
     self.ElementStack.append(etree.SubElement(self.ElementStack[-1], 'eventtype', **Attributes))
 
-  def AddEventTypeParent(self, EventTypeName, PropertyMapping):
+  def AddEventTypeParent(self, EventTypeName, PropertyMapping, ParentDescription, SiblingsDescription):
     """Adds a parent to an event definition.
 
     Args:
       EventTypeName (str): Name of the parent eventtype
-
       PropertyMapping (str): Value of the EDXML propertymap attribute
+      ParentDescription (str): Value of the EDXML parent-description attribute
+      SiblingsDescription (str): Value of the EDXML siblings-description attribute
 
     """
     if self.ElementStack[-1].tag != 'eventtype': self.Error('A <parent> tag must be child of an <eventtype> tag. Did you forget to call OpenEventDefinition()?')
 
-    etree.SubElement(self.ElementStack[-1], 'parent', eventtype = EventTypeName, propertymap = PropertyMapping)
+    Attributes = {
+      'eventtype': EventTypeName,
+      'propertymap': PropertyMapping,
+      'parent-description': ParentDescription,
+      'siblings-description': SiblingsDescription
+    }
+
+    etree.SubElement(self.ElementStack[-1], 'parent', **Attributes)
 
   def OpenEventDefinitionProperties(self):
     """Opens a <properties> element for defining eventtype properties."""
