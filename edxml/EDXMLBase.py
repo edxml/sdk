@@ -123,7 +123,7 @@ class EDXMLBase():
       if len(SplitDataType) >= 2:
         if SplitDataType[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double']:
           if len(SplitDataType) == 3:
-            if SplitDataType[1] == 'unsigned':
+            if SplitDataType[2] == 'signed':
               return
           else:
             return
