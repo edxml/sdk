@@ -32,25 +32,23 @@
 #
 # 
 #  This script generates dummy EDXML data streams, which may be useful for stress
-#  testing EDXML processing systems and storage backends.
+#  testing EDXML processing systems and storage back ends.
 
 import sys, time, random
 from edxml.EDXMLWriter import EDXMLWriter
 
-# We create a class based on EDXMLEventEditor,
-# overriding the EditEvent callback to inspect
-# the event timestamps, wait a little and
-# output the event.
-
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
-  def __init__ (self, EventRate, MaxEvents, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize):
+  def __init__ (self, EventRate, MaxEvents, PropertySize, RandomizeProperties, EventContentSize,
+                RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName,
+                ObjectTypeNamePrefix, EventGroupSize, Diversity, Ordered):
 
     self.EventCounter = 0
     self.MaxEvents = MaxEvents
     self.EventGroupCounter = 0
     self.CurrentEventGroupSize = 0
-    self.GenerateCollisions = GenerateCollisions
+    self.Ordered = Ordered
+    self.GenerateCollisions = GenerateCollisions and CollisionPercentage > 0
     self.CollisionPercentage = CollisionPercentage
     self.RandomizeEventContent = RandomizeEventContent
     self.EventRate = EventRate
@@ -58,7 +56,8 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     self.PropertyStringLength = PropertySize
     self.RandomizeProperties = RandomizeProperties
     self.EventTypeName = EventTypeName
-    self.ObjectTypeName = ObjectTypeName
+    self.ObjectTypeNamePrefix = ObjectTypeNamePrefix
+    self.Diversity = Diversity
     self.EventGroupSize = EventGroupSize
     self.EventSourceIdDict = {'0': '/source-a/', '1': '/source-b/'}
     self.RandomContentCharacters = 'abcdefghijklmnop  '
@@ -81,22 +80,40 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
   def WriteEvents(self):
 
     IntervalCorrection = 0
-    Content = '*' * self.EventContentSize
     RandomContentCharacters = self.RandomContentCharacters * (int(self.EventContentSize / self.RandomContentCharactersLength) + 1)
     RandomPropertyCharacters = self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1)
 
+    # By default, event content is just a
+    # string of asterisks.
+    Content = '*' * self.EventContentSize
+
+    # Set the default object values
     PropertyObjects = {
       'property-a': ['value'],
-      'property-b': ['value'],
       'property-c': ['value'],
-      'property-d': ['value'],
-      'property-e': ['value'],
-      'property-f': ['value']
+      'property-d': ['10'],
+      'property-e': ['1'],
+      'property-f': ['1.000'],
+      'property-g': ['10.000'],
+      'property-h': ['100.000']
     }
 
+    if self.Ordered:
+      # This property requires ordering to be
+      # preserved.
+      PropertyObjects['property-b'] = ['value']
+
+    # To prevent colliding events from accumulating arbitrary
+    # numbers of property 'property-c' (which has merge
+    # strategy 'add'), we generate a small collection of random
+    # strings for assigning to this property.
+    AddPropertyValues = [''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(10)]
+
     if self.GenerateCollisions:
-      UniquePropertyValues = [''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(100)]
-      RandomUniquePropertyValues = random.sample(range(99), 100 - self.CollisionPercentage)
+      UniquePropertyValues = [''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(self.Diversity)]
+      RandomUniquePropertyValues = random.sample(range(self.Diversity), int(self.Diversity * (1.0 - (self.CollisionPercentage/100.0))))
+    else:
+      RandomUniquePropertyValues = []
 
     if self.EventRate > 0:
       RequestedTimeInterval = 1.0 / self.EventRate
@@ -117,8 +134,30 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         # Generate random property values
         if self.RandomizeProperties:
-          for Property in ['a', 'b', 'c', 'd', 'e', 'f']:
-            PropertyObjects['property-' + Property] = [''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
+
+          # The unique property is a completely random string
+          PropertyObjects['property-a'] = [''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
+
+          if self.Ordered and random.random() < 0.9:
+            # We add the 'property-b' only if the output requires
+            # the ordering of the events to be preserved. And even
+            # then, we omit the property once in a while, removing
+            # it in case of a collision.
+            PropertyObjects['property-b'] = [''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
+
+          # A random string from a fixed set
+          PropertyObjects['property-c'] = [random.choice(AddPropertyValues)]
+
+          # Random values in range [-10,10]
+          PropertyObjects['property-d'] = [random.randint(-100, 100)]
+
+          # Random values near 1.0
+          PropertyObjects['property-f'] = [1 + (random.random() - 0.5)/1000]
+
+          for Property in ['g', 'h']:
+            # Random values in range [-0.5,0.5]
+            PropertyObjects['property-' + Property] = [random.random() - 0.5]
+
         if self.GenerateCollisions:
           # For property-a, which is the unique property, we
           # need to pick values from our random value table,
@@ -152,6 +191,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
           CurrentTime = time.time()
           TimeDelay = RequestedTimeInterval - ( CurrentTime - TimeStart )
           if TimeDelay + IntervalCorrection > 0:
+            sys.stdout.flush()
             time.sleep(TimeDelay + IntervalCorrection)
 
           # Check if our output rate is significantly lower than requested,
@@ -174,36 +214,61 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
   def WriteDefinitions(self):
 
+    # In case event collisions will be generated, we will adjust
+    # the merge strategies of all properties to cause collisions
+    # requiring all possible merge strategies to be applied in
+    # order to merge them. The event merges effectively compute
+    # the sum, product, minimum value, maximum value etc from
+    # the individual objects in all input events.
+
     if self.GenerateCollisions:
-      DropOrMatch = 'match'
-      DropOrReplace = 'replace'
+      DropOrMatch    = 'match'
+      DropOrReplace  = 'replace'
+      DropOrAdd      = 'add'
+      DropOrSum      = 'sum'
+      DropOrMultiply = 'multiply'
+      DropOrMin      = 'min'
+      DropOrMax      = 'max'
+      DropOrInc      = 'increment'
     else:
-      DropOrMatch = 'drop'
-      DropOrReplace = 'drop'
+      DropOrMatch    = 'drop'
+      DropOrReplace  = 'drop'
+      DropOrAdd      = 'drop'
+      DropOrSum      = 'drop'
+      DropOrMultiply = 'drop'
+      DropOrMin      = 'drop'
+      DropOrMax      = 'drop'
+      DropOrInc      = 'drop'
 
     self.OpenDefinitions()
     self.OpenEventDefinitions()
     self.OpenEventDefinition(self.EventTypeName, 'a', '', 'a', 'a')
     self.OpenEventDefinitionProperties()
-    self.AddEventProperty('property-a', self.ObjectTypeName, 'a', Merge = DropOrMatch, Unique = self.GenerateCollisions)
-    self.AddEventProperty('property-b', self.ObjectTypeName, 'b', Merge = DropOrReplace)
-    self.AddEventProperty('property-c', self.ObjectTypeName, 'c', Merge = 'drop')
-    self.AddEventProperty('property-d', self.ObjectTypeName, 'd', Merge = 'drop')
-    self.AddEventProperty('property-e', self.ObjectTypeName, 'e', Merge = 'drop')
-    self.AddEventProperty('property-f', self.ObjectTypeName, 'f', Merge = 'drop')
+    self.AddEventProperty('property-a', self.ObjectTypeNamePrefix + '-a', 'a', Merge = DropOrMatch, Unique = self.GenerateCollisions)
+    if self.Ordered:
+      self.AddEventProperty('property-b', self.ObjectTypeNamePrefix + '-a', 'b', Merge = DropOrReplace)
+    self.AddEventProperty('property-c', self.ObjectTypeNamePrefix + '-a', 'c', Merge = DropOrAdd)
+    self.AddEventProperty('property-d', self.ObjectTypeNamePrefix + '-b', 'd', Merge = DropOrSum)
+    self.AddEventProperty('property-e', self.ObjectTypeNamePrefix + '-b', 'e', Merge = DropOrInc)
+    self.AddEventProperty('property-f', self.ObjectTypeNamePrefix + '-c', 'f', Merge = DropOrMultiply)
+    self.AddEventProperty('property-g', self.ObjectTypeNamePrefix + '-c', 'g', Merge = DropOrMin)
+    self.AddEventProperty('property-h', self.ObjectTypeNamePrefix + '-c', 'h', Merge = DropOrMax)
     self.CloseEventDefinitionProperties()
     self.OpenEventDefinitionRelations()
     self.CloseEventDefinitionRelations()
     self.CloseEventDefinition()
     self.CloseEventDefinitions()
     self.OpenObjectTypes()
-    self.AddObjectType(self.ObjectTypeName, 'a', 'string:%d:cs' % self.PropertyStringLength)
+    self.AddObjectType(self.ObjectTypeNamePrefix + '-a', 'a', 'string:%d:cs' % self.PropertyStringLength)
+    self.AddObjectType(self.ObjectTypeNamePrefix + '-b', 'b', 'number:bigint:signed')
+    self.AddObjectType(self.ObjectTypeNamePrefix + '-c', 'c', 'number:decimal:10:9:signed')
     self.CloseObjectTypes()
     self.OpenSourceDefinitions()
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
       self.AddSource(SourceId, SourceUrl, '00000000', 'dummy source')
     self.CloseSourceDefinitions()
     self.CloseDefinitions()
+    sys.stdout.flush()
 
 
 def PrintHelp():
@@ -227,6 +292,13 @@ def PrintHelp():
                        with a previously generated event. A value of 100 makes all events collide,
                        while a value of zero effectively disables collision generation. By default,
                        no event collisions will be generated. Note: This has a performance impact.
+
+     -d                This option controls the number of different colliding events that will
+                       be generated. It has no effect, unless -c is used as well. For example,
+                       using a collision percentage of 100% and a diversity of 1, the output
+                       stream will represent a stream of updates for a single event. A collision
+                       percentage of 50% and a diversity of 10 generates a stream of which half
+                       of the output events are updates of just 10 distinct events.
 
      --with-content    Used to indicate that event content should be generated. This option
                        requires the desired content size (in bytes) as argument. If this
@@ -256,10 +328,17 @@ def PrintHelp():
                        useful when running multiple instances in parallel. The option expects the
                        desired name as its argument.
 
-     --objecttype-name By default, all generated objects are of object type 'objecttype-a'. This
-                       option allows the default object type name to be overridden, which may be
+     --objecttype-name By default, all generated objects are of object types that have names
+                       prefixed with 'objecttype' (for instance 'objecttype-a'). This option allows
+                       the default object type name prefix to be overridden, which may be
                        useful when running multiple instances in parallel. The option expects the
-                       desired name as its argument.
+                       desired object type name prefix as its argument.
+
+     --unordered       By default, output events will feature an implicit ordering in case event
+                       collisions are generated. When this switch is added, no event properties
+                       with merge strategy 'replace' will be generated, which means that colliding
+                       events will not change when they are merged in a different order. This may be
+                       useful for testing parallel EDXML stream processing.
 
      --limit           By default, data will be generated until interrupted. This option allows
                        you to limit the number of output events to the specified amount. A limit
@@ -281,7 +360,9 @@ RandomizeEventContent = False
 GenerateCollisions = False
 CollisionPercentage = 0
 EventTypeName = 'eventtype-a'
-ObjectTypeName = 'objecttype-a'
+ObjectTypeNamePrefix = 'objecttype'
+OutputDiversity = 100
+OrderedOutput = True
 
 EventRate = 0
 
@@ -299,6 +380,10 @@ while CurrOption < len(sys.argv):
     CurrOption += 1
     GenerateCollisions = True
     CollisionPercentage = int(sys.argv[CurrOption])
+
+  elif sys.argv[CurrOption] == '-d':
+    CurrOption += 1
+    OutputDiversity = int(sys.argv[CurrOption])
 
   elif sys.argv[CurrOption] == '--object-size':
     CurrOption += 1
@@ -318,7 +403,10 @@ while CurrOption < len(sys.argv):
 
   elif sys.argv[CurrOption] == '--objecttype-name':
     CurrOption += 1
-    ObjectTypeName = sys.argv[CurrOption]
+    ObjectTypeNamePrefix = sys.argv[CurrOption]
+
+  elif sys.argv[CurrOption] == '--unordered':
+    OrderedOutput = False
 
   elif sys.argv[CurrOption] == '--eventgroup-size':
     CurrOption += 1
@@ -336,4 +424,7 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-Generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties, EventContentSize, RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName, ObjectTypeName, EventGroupSize)
+Generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties,
+                                    EventContentSize, RandomizeEventContent, GenerateCollisions,
+                                    CollisionPercentage, EventTypeName, ObjectTypeNamePrefix,
+                                    EventGroupSize, OutputDiversity, OrderedOutput)
