@@ -1468,6 +1468,104 @@ class EDXMLDefinitions(EDXMLBase):
       XMLGenerator.end('relations')
       XMLGenerator.end('eventtype')
 
+  def GenerateEventPropertyXML(self, EventTypeName, PropertyName, XMLGenerator):
+    """Generates an EDXML fragment which defines specified
+    eventtype property. Can be useful for constructing new EDXML
+    files based on existing event type definitions.
+
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+
+    Args:
+      EventTypeName (str): Name of the event type
+      PropertyName (str): Name of the property
+
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
+
+    """
+
+    if not 'start' in dir(XMLGenerator):
+
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('property', AttributesImpl(self.GetPropertyAttributes(EventTypeName, PropertyName)))
+      XMLGenerator.endElement('property')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      for PropertyName in self.GetEventTypeProperties(EventTypeName):
+        XMLGenerator.element('property', '', self.GetPropertyAttributes(EventTypeName, PropertyName))
+
+  def GeneratePropertyRelationsXML(self, EventTypeName, XMLGenerator):
+    """Generates an EDXML fragment which defines all property
+    relation of specified eventtype. Can be useful for constructing new EDXML
+    files based on existing event type definitions.
+
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+
+    Args:
+      EventTypeName (str): Name of the event type
+
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
+
+    """
+
+    if not 'start' in dir(XMLGenerator):
+
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('relations', AttributesImpl({}))
+
+      for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
+
+        XMLGenerator.startElement('relation', AttributesImpl(self.GetPropertyRelationAttributes(EventTypeName, RelationId)))
+        XMLGenerator.endElement('relation')
+
+      XMLGenerator.endElement('relations')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.start('relations')
+
+      for RelationId in self.GetEventTypePropertyRelations(EventTypeName):
+        XMLGenerator.element('relation', '', self.GetPropertyRelationAttributes(EventTypeName, RelationId))
+
+      XMLGenerator.end('relations')
+
+  def GeneratePropertyRelationXML(self, EventTypeName, RelationId, XMLGenerator):
+    """Generates an EDXML fragment which defines specified property
+    relation of specified eventtype. Can be useful for constructing new EDXML
+    files based on existing event type definitions.
+
+    The XMLGenerator argument may be either a SAX XMLGenerator
+    instance or a ElementTree SimpleXMLWriter instance.
+
+    Args:
+      EventTypeName (str): Name of the event type
+      RelationId (str): Identifier of a property relation
+
+      XMLGenerator (XMLGenerator,XMLWriter): XMLGenerator / XMLWriter instance
+
+    """
+
+    if not 'start' in dir(XMLGenerator):
+
+      # Using SAX XML Generator:
+
+      XMLGenerator.startElement('relation', AttributesImpl(self.GetPropertyRelationAttributes(EventTypeName, RelationId)))
+      XMLGenerator.endElement('relation')
+
+    else:
+
+      # Using ElementTree SimpleXMLWriter:
+
+      XMLGenerator.element('relation', '', self.GetPropertyRelationAttributes(EventTypeName, RelationId))
+
   def GenerateObjectTypeXML(self, ObjectTypeName, XMLGenerator):
     """Generates an EDXML fragment which defines specified
     object type. Can be useful for constructing new EDXML
