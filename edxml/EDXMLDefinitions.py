@@ -641,7 +641,7 @@ class EDXMLDefinitions(EDXMLBase):
     Args:
       EventTypeName (str): Name of event type
 
-      Attributes (str): Dictionary holding the attributes of the <parent> tag.
+      Attributes (dict): Dictionary holding the attributes of the <parent> tag.
 
     """
 
