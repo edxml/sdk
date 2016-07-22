@@ -221,6 +221,10 @@ class EDXMLBase():
           if Value < 0:
             self.Error("Unsigned float or double value '%s' of object type %s is negative." % (( str(Value), ObjectTypeName )))
       else:
+        try:
+          int(Value)
+        except:
+          self.Error("Invalid number '%s' of object type %s." % (( str(Value), ObjectTypeName )))
         if len(ObjectDataType) < 3:
           # number is unsigned.
           if Value < 0:
@@ -304,9 +308,13 @@ class EDXMLBase():
         except:
             self.Error("EDXMLBase::ValidateObject: Invalid IP address: '%s'" % str(Value) )
     elif ObjectDataType[0] == 'boolean':
-      ObjectString = Value.lower()
-      if ObjectString != 'true' and ObjectString != 'false':
-        self.Error("EDXMLBase::ValidateObject: Invalid boolean: '%s'" % str(Value) )
+      try:
+        ObjectString = Value.lower()
+        if ObjectString in ['true', 'false']:
+          return
+      except AttributeError:
+        pass
+      self.Error("EDXMLBase::ValidateObject: Invalid boolean: '%s'" % str(Value))
     elif ObjectDataType[0] == 'enum':
       if not Value in ObjectDataType[1:]:
         self.Error("EDXMLBase::ValidateObject: Invalid value for enum data type: '%s'" % str(Value) )
