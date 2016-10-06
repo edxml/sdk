@@ -73,6 +73,7 @@ class EDXMLDefinitions(EDXMLBase):
     self.SourceIDs = {}
     self.SourceURLs = {}
     self.EventTypes = {}
+    self.Properties = {}
     self.ObjectTypes = {}
     self.ObjectTypeEventTypes = {}
     self.EventTypeClasses = {}
