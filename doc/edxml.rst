@@ -63,3 +63,19 @@ edxml.ontology module
     :special-members: __init__
     :members:
     :show-inheritance:
+
+edxml.transcode module
+----------------------
+
+.. automodule:: edxml.transcode
+    :special-members: __init__
+    :members:
+    :show-inheritance:
+
+edxml.transcode.json module
+---------------------------
+
+.. automodule:: edxml.transcode.json
+    :special-members: __init__
+    :members:
+    :show-inheritance:
