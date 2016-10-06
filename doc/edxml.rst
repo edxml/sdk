@@ -8,6 +8,14 @@ edxml.EDXMLBase module
     :members:
     :show-inheritance:
 
+edxml.EDXMLEvent module
+-----------------------
+
+.. automodule:: edxml.EDXMLEvent
+    :special-members: __init__
+    :members:
+    :show-inheritance:
+
 edxml.EDXMLDefinitions module
 -----------------------------
 
