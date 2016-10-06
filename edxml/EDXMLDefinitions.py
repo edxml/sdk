@@ -963,7 +963,7 @@ class EDXMLDefinitions(EDXMLBase):
         self.Error("Event type %s contains a parent definition which refers to child property '%s'. This property has merge strategy %s, which is not allowed for properties that are used in parent definitions." % (( EventTypeName, ChildProperty, ChildMergeStrategy )) )
 
       if not ParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
-        self.Error("Event type %s contains a parent definition which refers to parent property '%s', but this property is not unique, or is does not exist." % (( EventTypeName, ParentProperty )) )
+        self.Error("Event type %s contains a parent definition which refers to parent property '%s' of event type %s, but this property is not unique, or it does not exist.\n%s" % ( EventTypeName, ParentProperty, ParentAttribs['eventtype'], repr(self.EventTypes[ParentAttribs['eventtype']]) ) )
 
 
   def CheckReporterString(self, EventTypeName, String, PropertyNames, CheckCompleteness = False):
