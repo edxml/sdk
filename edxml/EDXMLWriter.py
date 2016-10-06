@@ -85,8 +85,32 @@ class EDXMLWriter(EDXMLBase):
     self.Output = Output
     self.ElementStack = []
 
-    # Expression used for replacing invalid XML unicode characters
-    self.XMLReplaceRegexp = re.compile(u'[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]')
+    # The lxml package does not filter out illegal XML
+    # characters. So, below we compile a regular expression
+    # matching all ranges of illegal characters. We will
+    # use that to do our own filtering.
+
+    IllegalRanges = [
+      (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F),
+      (0x7F, 0x84), (0x86, 0x9F),
+      (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF)
+    ]
+
+    if sys.maxunicode >= 0x10000:  # not narrow build
+      IllegalRanges.extend([
+        (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF),
+        (0x3FFFE, 0x3FFFF), (0x4FFFE, 0x4FFFF),
+        (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
+        (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF),
+        (0x9FFFE, 0x9FFFF), (0xAFFFE, 0xAFFFF),
+        (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
+        (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF),
+        (0xFFFFE, 0xFFFFF), (0x10FFFE, 0x10FFFF)
+      ])
+
+    RegExpRanges = ["%s-%s" % (unichr(Low), unichr(High)) for (Low, High) in IllegalRanges]
+
+    self.XMLReplaceRegexp = re.compile(u'[%s]' % u''.join(RegExpRanges))
 
     if self.Validate:
 
@@ -765,10 +789,20 @@ class EDXMLWriter(EDXMLBase):
             else:
               raise EDXMLError, 'Error adding property %s: %s' % (PropertyName, str(Error)), sys.exc_info()[2]
 
-        etree.SubElement(Event, 'object', property = PropertyName, value = unicode(ObjectValue))
+        try:
+          etree.SubElement(Event, 'object', property = PropertyName, value = unicode(ObjectValue))
+        except ValueError:
+          # Object string contains weird characters that are illegal
+          # in XML, like control characters and null bytes. Strip them.
+          etree.SubElement(Event, 'object', property=PropertyName, value=unicode(re.sub(self.XMLReplaceRegexp, '', ObjectValue)))
 
     if Content:
-      etree.SubElement(Event, 'content').text = Content
+      try:
+        etree.SubElement(Event, 'content').text = Content
+      except ValueError:
+        # Content string contains weird characters that are illegal
+        # in XML, like control characters and null bytes. Strip them.
+        Event[-1].text = re.sub(self.XMLReplaceRegexp, '', Content)
 
     if self.Validate:
 
