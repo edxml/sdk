@@ -47,3 +47,11 @@ edxml.EDXMLWriter module
     :special-members: __init__
     :members:
     :show-inheritance:
+
+edxml.ontology module
+---------------------
+
+.. automodule:: edxml.ontology
+    :special-members: __init__
+    :members:
+    :show-inheritance:
