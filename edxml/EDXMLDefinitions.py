@@ -1017,6 +1017,11 @@ class EDXMLDefinitions(EDXMLBase):
             ReferredProperties.append(DurationProperties[1])
 
             # Check that both properties are timestamps
+            if DurationProperties[0] == '':
+              self.Error('Invalid property name in %s formatter: "%s"' % (DurationProperties[0], StringComponents[0]))
+            if DurationProperties[1] == '':
+              self.Error('Invalid property name in %s formatter: "%s"' % (DurationProperties[1], StringComponents[0]))
+
             if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, DurationProperties[0])) != 'timestamp':
               self.Error("Event type %s contains a reporter string which uses a time related formatter, but the used property (%s) is not a timestamp." % (( EventTypeName, DurationProperties[0] )) )
             if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, DurationProperties[1])) != 'timestamp':
@@ -1032,6 +1037,8 @@ class EDXMLDefinitions(EDXMLBase):
             if len(StringComponents[1].split(',')) > 1:
               self.Error("Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. Multiple properties were specified: %s" % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
             # Check that property is a timestamp
+            if StringComponents[1] == '':
+              self.Error('Invalid property name in %s formatter: "%s"' % (StringComponents[1], StringComponents[0]))
             if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, StringComponents[1])) != 'timestamp':
               self.Error("Event type %s contains a reporter string which uses the %s formatter. The used property (%s) is not a timestamp, though." % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
 
@@ -1044,6 +1051,8 @@ class EDXMLDefinitions(EDXMLBase):
               self.Error("Event type %s contains a reporter string which uses the %s formatter. This formatter accepts just one property. Multiple properties were given though: %s" % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
             if StringComponents[0] in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
               # Check that property is a boolean
+              if StringComponents[1] == '':
+                self.Error('Invalid property name in %s formatter: "%s"' % (StringComponents[1], StringComponents[0]))
               if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, StringComponents[1])) != 'boolean':
                 self.Error("Event type %s contains a reporter string which uses the %s formatter. The used property (%s) is not a boolean, though." % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
 
@@ -1059,6 +1068,8 @@ class EDXMLDefinitions(EDXMLBase):
             if len(StringComponents) != 4:
               self.Error("Event type %s contains a reporter string which uses a malformed %s formatter: %s" % (( EventTypeName, StringComponents[0], String )) )
             # Check that property is a boolean
+            if StringComponents[1] == '':
+              self.Error('Invalid property name in %s formatter: "%s"' % (StringComponents[1], StringComponents[0]))
             if self.GetObjectTypeDataType(self.GetPropertyObjectType(EventTypeName, StringComponents[1])) != 'boolean':
               self.Error("Event type %s contains a reporter string which uses the %s formatter. The used property (%s) is not a boolean, though." % (( EventTypeName, StringComponents[0], StringComponents[1] )) )
 
