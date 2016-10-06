@@ -267,7 +267,8 @@ class EDXMLBase(object):
           # String is not proper UTF8. Lets try to decode it as Latin1
           try:
             Value = Value.decode('latin-1').encode('utf-8')
-          except:
+          except ValueError:
+            Value = unicode(Value, errors='replace')
             self.Warning("EDXMLBase::ValidateObject: Failed to convert value to unicode: '%s'. Some characters were replaced by the Unicode replacement character." % repr(Value) )
 
       # Check if data type matches regexp pattern
