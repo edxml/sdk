@@ -48,7 +48,7 @@ class EDXMLProcessingInterrupted(Exception):
   """Exception for signaling that EDXML processing was aborted"""
   pass
 
-class EDXMLBase():
+class EDXMLBase(object):
   """Base class for most SDK subclasses"""
 
   def __init__(self):
