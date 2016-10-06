@@ -670,6 +670,14 @@ class EDXMLDefinitions(EDXMLBase):
     if PropertyName in self.EventTypes[EventTypeName]['properties']:
       # Property definition was encountered before.
       self.CheckEdxmlEntityConsistency('property', PropertyName, self.EventTypes[EventTypeName]['properties'][PropertyName], Attributes)
+    elif PropertyName in self.Properties:
+      # Property definition was encountered before. Here,
+      # we enforce that properties having the same name must have
+      # the same definition, even if they are used in different
+      # event types.
+      # TODO: Remove this limitation in EDXML 3
+      self.CheckEdxmlEntityConsistency('property', PropertyName, self.Properties[PropertyName], Attributes)
+      self.AddNewProperty(EventTypeName, PropertyName, Attributes)
     else:
       # New property
       self.AddNewProperty(EventTypeName, PropertyName, Attributes)
@@ -813,6 +821,9 @@ class EDXMLDefinitions(EDXMLBase):
 
     self.EventTypes[EventTypeName]['properties'][PropertyName] = {'unique': 'false', 'defines-entity': 'false'}
     self.EventTypes[EventTypeName]['properties'][PropertyName].update(Attributes)
+
+    self.Properties[PropertyName] = {'unique': 'false', 'defines-entity': 'false'}
+    self.Properties[PropertyName].update(Attributes)
 
   # Internal use only.
   def AddNewObjectType(self, ObjectTypeName, Attributes):
