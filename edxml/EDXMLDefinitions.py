@@ -38,6 +38,11 @@ information from EDXML <definitions> sections.
 import hashlib
 import sre_constants
 from xml.sax.xmlreader import AttributesImpl
+import datetime
+import dateutil.relativedelta
+import pytz
+from iso3166 import countries
+from termcolor import colored
 from lxml import etree
 from EDXMLBase import *
 
@@ -965,6 +970,363 @@ class EDXMLDefinitions(EDXMLBase):
       if not ParentProperty in self.EventTypes[ParentAttribs['eventtype']]['unique-properties']:
         self.Error("Event type %s contains a parent definition which refers to parent property '%s' of event type %s, but this property is not unique, or it does not exist.\n%s" % ( EventTypeName, ParentProperty, ParentAttribs['eventtype'], repr(self.EventTypes[ParentAttribs['eventtype']]) ) )
 
+
+  def EvaluateReporterString(self, EventTypeName, EventProperties, Short = False, Capitalize = True, Colorize = False):
+    """
+
+    Evaluates the short or long reporter string of an event type using
+    specified property values, returning the result. The EventProperties
+    argument is an associative array containing property names as keys
+    and lists of object value strings as values.
+
+    By default, the long reporter string is evaluated, unless Short is
+    set to True.
+
+    By default, we will try to capitalize the first letter of the resulting
+    string, unless Capitalize is set to False.
+
+    Optionally, the output can be colorized. At his time this means that,
+    when printed on the terminal, the objects in the evaluated string will
+    be displayed using bold white characters.
+
+    Args:
+      EventTypeName (str): Name of the event type
+      EventProperties (dict): Property values
+      Short (bool): use short or long reporter string
+      Capitalize (bool): Capitalize output or not
+      Colorize (bool): Colorize output or not
+
+    Returns:
+      str:
+    """
+
+    # Recursively split a placeholder string at '{' and '}'
+    def SplitPlaceholderString(String, Offset = 0):
+
+      Elements = []
+      Length = len(String)
+
+      while Offset < Length:
+        Pos1 = String.find('{', Offset)
+        Pos2 = String.find('}', Offset)
+        if Pos1 == -1:
+          # There are no more sub-strings, Find closing bracket.
+          if Pos2 == -1:
+            # No closing bracket either, which means that the
+            # remaining part of the string is one element.
+            # lacks brackets.
+            Substring = String[Offset:Length]
+            Offset = Length
+            Elements.append(Substring)
+          else:
+            # Found closing bracket. Add substring and return
+            # to caller.
+            Substring = String[Offset:Pos2]
+            Offset = Pos2 + 1
+            Elements.append(Substring)
+            break
+        else:
+          # We found an opening bracket.
+
+          if Pos2 == -1:
+            # No closing bracket
+            # Give up.
+            Offset = Length
+          else:
+            # We also found a closing bracket.
+
+            if Pos1 < Pos2:
+              # Opening bracket comes first, which means we should
+              # iterate.
+              Substring = String[Offset:Pos1]
+              Offset = Pos1 + 1
+
+              Elements.append(Substring)
+              Offset, Parsed = SplitPlaceholderString(String, Offset)
+              Elements.append(Parsed)
+            else:
+              # closing bracket comes first, which means we found
+              # an innermost substring. Add substring and return
+              # to caller.
+              Substring = String[Offset:Pos2]
+              Offset = Pos2 + 1
+              Elements.append(Substring)
+              break
+
+      return Offset, Elements
+
+    def FormatTimeDuration(Min, Max):
+      DateTimeA = datetime.datetime.fromtimestamp(Min)
+      DateTimeB = datetime.datetime.fromtimestamp(Max)
+      Delta = dateutil.relativedelta.relativedelta (DateTimeB, DateTimeA)
+
+      if Delta.minutes > 0:
+        if Delta.hours > 0:
+          if Delta.days > 0:
+            if Delta.months > 0:
+              if Delta.years > 0:
+                return "%d years, %d months, %d days, %d hours, %d minutes and %d seconds" % (Delta.years, Delta.months, Delta.days, Delta.hours, Delta.minutes, Delta.seconds)
+              else:
+                return "%d months, %d days, %d hours, %d minutes and %d seconds" % (Delta.months, Delta.days, Delta.hours, Delta.minutes, Delta.seconds)
+            else:
+              return "%d days, %d hours, %d minutes and %d seconds" % (Delta.days, Delta.hours, Delta.minutes, Delta.seconds)
+          else:
+            return "%d hours, %d minutes and %d seconds" % (Delta.hours, Delta.minutes, Delta.seconds)
+        else:
+          return "%d minutes and %d seconds" % (Delta.minutes, Delta.seconds)
+      else:
+        return "%d.%d seconds" % (Delta.seconds, Delta.microseconds)
+
+    def FormatByteCount(ByteCount):
+      Suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+      if ByteCount == 0: return '0 B'
+      i = 0
+      while ByteCount >= 1024 and i < len(Suffixes) - 1:
+        ByteCount /= 1024.
+        i += 1
+      f = ('%.2f' % ByteCount).rstrip('0').rstrip('.')
+      return '%s %s' % (f, Suffixes[i])
+
+    def ProcessSimplePlaceholderString(String, EventObjectValues, Capitalize):
+
+      Replacements = {}
+
+      if Capitalize and String != '':
+        if String[0] == '{':
+          if String[1:2] != '[[':
+            # Sting does not start with a placeholder,
+            # so we can safely capitalize.
+            String = String[0] + String[1].upper() + String[2:]
+        else:
+          if String[0:1] != '[[':
+            # Sting does not start with a placeholder,
+            # so we can safely capitalize.
+            String = String[0].upper() + String[1:]
+
+      # Match on placeholders like "[[FULLDATETIME:timestamp]]", creating
+      # groups of the strings in between the placeholders and the
+      # placeholders themselves, with and without brackets included.
+      Placeholders = re.findall(r'(\[\[([^]]*)\]\])', String)
+
+      for Placeholder in Placeholders:
+
+        ObjectStrings = []
+        Exploded = Placeholder[1].split(':')
+
+        if len(Exploded) >= 2:
+          Formatter = Exploded.pop(0)
+          PropertyList = Exploded.pop(0)
+        else:
+          Formatter = ''
+          PropertyList = Exploded[0]
+
+        if len(PropertyList) > 0:
+          Properties = PropertyList.split(',')
+
+          for PropertyName in Properties:
+            if not PropertyName in EventObjectValues or len(EventObjectValues[PropertyName]) == 0:
+              if Formatter == 'EMPTY':
+                # Use the first formatter argument
+                # in stead of the object value itself.
+                ObjectStrings.append(Exploded[0])
+              else:
+                # One of the place holders has no associated
+                # value, so we return an empty string.
+                return ''
+
+          Properties = [PropertyName for PropertyName in Properties if PropertyName in EventObjectValues]
+
+          if Formatter == 'TIMESPAN':
+
+            Timestamps = []
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                Timestamps.append(float(ObjectValue))
+
+            if len(Timestamps) > 0:
+              DateTimeA = datetime.datetime.fromtimestamp(min(Timestamps))
+              DateTimeB = datetime.datetime.fromtimestamp(max(Timestamps))
+              ObjectStrings.append("between %s and %s" % (DateTimeA.isoformat(' '), DateTimeB.isoformat(' ')))
+
+          elif Formatter == 'DURATION':
+
+            Timestamps = []
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                Timestamps.append(float(ObjectValue))
+
+            if len(Timestamps) > 0:
+              ObjectStrings.append(FormatTimeDuration(min(Timestamps), max(Timestamps)))
+
+          elif Formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
+
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                Timestamp = float(ObjectValue)
+                TimeZone = pytz.timezone("UTC")
+
+                try:
+                  if Formatter == 'FULLDATETIME':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('%A, %B %d %Y at %H:%M:%Sh UTC'))
+                  elif Formatter == 'DATETIME':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('B %d %Y at %H:%M:%Sh UTC'))
+                  elif Formatter == 'DATE':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('%a, %B %d %Y'))
+                  elif Formatter == 'YEAR':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('%Y'))
+                  elif Formatter == 'MONTH':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('%B %Y'))
+                  elif Formatter == 'WEEK':
+                    ObjectStrings.append(datetime.datetime.fromtimestamp(Timestamp, TimeZone).strftime('week %W of %Y'))
+                except ValueError:
+                  # This may happen for some time stamps before year 1900, which
+                  # is not supported by strftime.
+                  ObjectStrings.append('some date, a long, long time ago')
+
+          elif Formatter == 'BYTECOUNT':
+
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                ObjectStrings.append(FormatByteCount(int(ObjectValue)))
+
+          elif Formatter == 'LATITUDE':
+            Degrees = int(ObjectValue)
+            Minutes = int((ObjectValue - Degrees) * 60.0)
+            Seconds = int((ObjectValue - Degrees - (Minutes / 60.0)) * 3600.0)
+
+            ObjectStrings.append('%d°%d′%d %s″' % (Degrees, Minutes, Seconds, 'N' if Degrees > 0 else 'S'))
+
+          elif Formatter == 'LONGITUDE':
+            Degrees = int(ObjectValue)
+            Minutes = int((ObjectValue - Degrees) * 60.0)
+            Seconds = int((ObjectValue - Degrees - (Minutes / 60.0)) * 3600.0)
+
+            ObjectStrings.append('%d°%d′%d %s″' % (Degrees, Minutes, Seconds, 'E' if Degrees > 0 else 'W'))
+
+          elif Formatter == 'CURRENCY':
+
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                ObjectStrings.append('%.2f%s' % (int(ObjectValue), Exploded[0]))
+
+          elif Formatter == 'COUNTRYCODE':
+
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                Country = countries.get(ObjectValue)
+                if Country:
+                  # We found the name of the country, print it.
+                  ObjectStrings.append(Country.name)
+                else:
+                  ObjectStrings.append(ObjectValue + ' (unknown country code)')
+
+          elif Formatter == 'BOOLEAN_STRINGCHOICE':
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                if ObjectValue == 'true':
+                  # Print first string
+                  ObjectStrings.append(Exploded[0])
+                else:
+                  # Print second string
+                  ObjectStrings.append(Exploded[1])
+
+          elif Formatter == 'BOOLEAN_ON_OFF':
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                if ObjectValue == 'true':
+                  # Print 'on'
+                  ObjectStrings.append('on')
+                else:
+                  # Print 'off'
+                  ObjectStrings.append('off')
+
+          elif Formatter == 'BOOLEAN_IS_ISNOT':
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                if ObjectValue == 'true':
+                  # Print 'is'
+                  ObjectStrings.append('is')
+                else:
+                  # Print 'is not'
+                  ObjectStrings.append('is not')
+
+          elif Formatter == 'EMPTY':
+            pass
+
+          else:
+            for PropertyName in Properties:
+              for ObjectValue in EventObjectValues[PropertyName]:
+                ObjectStrings.append(ObjectValue)
+
+        if len(ObjectStrings) > 0:
+          if len(ObjectStrings) > 1:
+            # If one property has multiple objects,
+            # list them all.
+            LastObjectValue = ObjectStrings.pop()
+            if Colorize:
+              ObjectString = ', '.join(colored(ObjectString, 'white', attrs=['bold']) for ObjectString in ObjectStrings) + ' and ' + LastObjectValue
+            else:
+              ObjectString = ', '.join(ObjectStrings) + ' and ' + LastObjectValue
+          else:
+            if Colorize:
+              ObjectString = colored(ObjectStrings[0], 'white', attrs=['bold'])
+            else:
+              ObjectString = ObjectStrings[0]
+        else:
+          ObjectString = ''
+
+        Replacements[Placeholder[0]] = ObjectString
+
+      # Return ReporterString where all placeholders are replaced
+      # by the actual (formatted) object values
+
+      for Placeholder, Replacement in Replacements.items():
+        String = String.replace(Placeholder, Replacement)
+
+      return String
+
+    def ProcessSplitPlaceholderString(Elements, Event, Capitalize, IterationLevel = 0):
+      Result = ''
+      ContainsSubStrings = False
+      NonEmptySubstringCounter = 0
+
+      for Element in Elements:
+        if type(Element) == list:
+          Processed = ProcessSplitPlaceholderString(Element, Event, Capitalize, IterationLevel + 1)
+          ContainsSubStrings = True
+          Capitalize = False
+          if len(Processed) > 0: NonEmptySubstringCounter += 1
+        else:
+          if Element != '':
+            Processed = ProcessSimplePlaceholderString(Element, Event, Capitalize)
+            if Processed == '':
+              # A non-empty component of the string evaluated into
+              # an empty string, which means that it must have contained
+              # a placeholder that resulted in an empty string, which
+              # implies that we should return an empty string as well.
+              return ''
+            Capitalize = False
+          else:
+            Processed = ''
+        Result += Processed
+
+      if ContainsSubStrings:
+        # Return empty string when all substrings are empty,
+        # unless IterationLevel is zero. This has the effect that
+        # the 'root' level processing never results in an empty string.
+        if NonEmptySubstringCounter == 0 and IterationLevel > 0:
+          return ''
+        else:
+          return Result
+      else:
+        return Result
+
+    if Short:
+      ReporterString = self.GetEventTypeAttributes(EventTypeName)['reporter-short']
+    else:
+      ReporterString = self.GetEventTypeAttributes(EventTypeName)['reporter-long']
+
+    return ProcessSplitPlaceholderString(SplitPlaceholderString(ReporterString)[1], EventProperties, Capitalize)
 
   def CheckReporterString(self, EventTypeName, String, PropertyNames, CheckCompleteness = False):
     """Checks if given event type reporter string makes sense. Optionally,
