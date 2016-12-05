@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import functools
+import operator
 from collections import MutableMapping
 from lxml import etree
+from decimal import Decimal
+
+import re
 
 
 class EDXMLEvent(MutableMapping):
@@ -363,4 +368,193 @@ class EDXMLEvent(MutableMapping):
     """
     self.Parents = set(ParentHashes)
     return self
+
+  def MergeWith(self, collidingEvents, edxmlOntology):
+    """
+    Merges the event with event data from a number of colliding
+    events. It returns True when the event was updated
+    as a result of the merge, returns False otherwise.
+
+    Args:
+      collidingEvents (List[EDXMLEvent]): Iterable yielding events
+      edxmlOntology (edxml.ontology.Ontology): The EDXML ontology
+
+    Returns:
+      bool: Event was changed or not
+
+    """
+
+    eventType = edxmlOntology.GetEventType(self.EventTypeName)
+    properties = eventType.GetProperties()
+    propertyNames = properties.keys()
+    uniqueProperties = eventType.GetUniqueProperties()
+
+    if len(uniqueProperties) == 0:
+      raise TypeError("MergeEvent was called for event type %s, which is not a unique event type." % self.EventTypeName)
+
+    EventObjectsA = self.GetProperties()
+
+    # Below, we initialize three dictionaries containing
+    # event object sets. All objects are complete, in the
+    # sense that they contain a list of objects for each
+    # of the defined properties of the event type, even
+    # if the event has no objects for the property.
+    #
+    # The Original dict holds the original event, before
+    # the merge.
+    # The Target dict is what will eventually become the
+    # new, merged event.
+    # The source event holds all object values from all
+    # source events.
+
+    Original = {}
+    Source = {}
+    Target = {}
+
+    for PropertyName in propertyNames:
+      if PropertyName in EventObjectsA:
+        Original[PropertyName] = set(EventObjectsA[PropertyName])
+        Target[PropertyName] = set(EventObjectsA[PropertyName])
+      else:
+        Original[PropertyName] = set()
+        Target[PropertyName] = set()
+      Source[PropertyName] = set()
+
+    for event in collidingEvents:
+      EventObjectsB = event.GetProperties()
+      for PropertyName in propertyNames:
+        if PropertyName in EventObjectsB:
+          Source[PropertyName].update(EventObjectsB[PropertyName])
+
+    # Now we update the objects in Target
+    # using the values in Source
+    for PropertyName in Source:
+
+      if PropertyName in uniqueProperties:
+        # Unique property, does not need to be merged.
+        continue
+
+      MergeStrategy = properties[PropertyName].GetMergeStrategy()
+
+      if MergeStrategy in ('min', 'max', 'increment', 'sum', 'multiply'):
+        # We have a merge strategy that requires us to cast
+        # the object values into numbers.
+        SplitDataType = properties[PropertyName].GetDataType(edxmlOntology).split(':')
+        if SplitDataType[0] in ('number', 'timestamp'):
+          if MergeStrategy in ('min', 'max'):
+            Values = set()
+            if SplitDataType[0] == 'timestamp':
+              Values.update(Decimal(Value) for Value in Source[PropertyName])
+              Values.update(Decimal(Value) for Value in Target[PropertyName])
+            else:
+              if SplitDataType[1] in ('float', 'double'):
+                Values.update(float(Value) for Value in Source[PropertyName])
+                Values.update(float(Value) for Value in Target[PropertyName])
+              elif SplitDataType[1] == 'decimal':
+                Values.update(Decimal(Value) for Value in Source[PropertyName])
+                Values.update(Decimal(Value) for Value in Target[PropertyName])
+              elif SplitDataType[1] != 'hex':
+                Values.update(int(Value) for Value in Source[PropertyName])
+                Values.update(int(Value) for Value in Target[PropertyName])
+
+            if MergeStrategy == 'min':
+              Target[PropertyName] = {str(min(Values))}
+            else:
+              Target[PropertyName] = {str(max(Values))}
+
+          elif MergeStrategy == 'increment':
+            if SplitDataType[0] == 'timestamp':
+              Target[PropertyName] = {'%.6f' % Decimal(next(iter(Target[PropertyName]))) + Decimal(len(Source[PropertyName]))}
+            else:
+              if SplitDataType[1] in ('float', 'double'):
+                Target[PropertyName] = {str(float(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+              elif SplitDataType[1] == 'decimal':
+                Target[PropertyName] = {str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+              elif SplitDataType[1] != 'hex':
+                Target[PropertyName] = {str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+
+          elif MergeStrategy == 'sum':
+            if SplitDataType[0] == 'timestamp':
+              Target[PropertyName] = {
+                '%.6f' % Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName])
+              }
+            # When hex is not in number family anymore, replace the below line with elif SplitDataType[0] == 'number':
+            else:
+              if SplitDataType[1] in ['float', 'double']:
+                Target[PropertyName] = {
+                  str(float(next(iter(Target[PropertyName]))) + sum(float(Value) for Value in Source[PropertyName]))
+                }
+              elif SplitDataType[1] == 'decimal':
+                Target[PropertyName] = {
+                  str(Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName]))
+                }
+              elif SplitDataType[1] != 'hex':
+                Target[PropertyName] = {
+                  str(int(next(iter(Target[PropertyName]))) + sum(int(Value) for Value in Source[PropertyName]))
+                }
+
+          elif MergeStrategy == 'multiply':
+            if SplitDataType[0] == 'timestamp':
+              Target[PropertyName] = {
+                '%.6f' % functools.reduce(
+                  operator.mul, [Decimal(Value) for Value in Target[PropertyName]], Decimal(next(iter(Source[PropertyName])))
+                )
+              }
+            else:
+              if SplitDataType[1] in ('float', 'double'):
+                Target[PropertyName] = {
+                  str(functools.reduce(
+                    operator.mul, [float(Value) for Value in Target[PropertyName]], float(next(iter(Source[PropertyName]))))
+                  )
+                }
+              elif SplitDataType[1] == 'decimal':
+                sourceValue = Decimal(next(iter(Source[PropertyName])))
+                Target[PropertyName] = {
+                  str(functools.reduce(
+                    operator.mul, [Decimal(Value) for Value in Target[PropertyName]], sourceValue
+                  ).quantize(sourceValue))
+                }
+              elif SplitDataType[1] != 'hex':
+                Target[PropertyName] = {
+                  str(functools.reduce(
+                    operator.mul, [int(Value) for Value in Target[PropertyName]], int(next(iter(Source[PropertyName]))))
+                  )
+                }
+
+      elif MergeStrategy == 'add':
+        Target[PropertyName].update(Source[PropertyName])
+
+      elif MergeStrategy == 'replace':
+        Target[PropertyName] = set(collidingEvents[-1].get(PropertyName, []))
+
+    SourceParents = set(parent for sourceEvent in collidingEvents for parent in sourceEvent.GetExplicitParents())
+
+    # Merge the explicit event parents
+    if len(SourceParents) > 0:
+      OriginalParents = self.GetExplicitParents()
+      self.SetParents(self.GetExplicitParents() + list(SourceParents))
+    else:
+      OriginalParents = set()
+
+    # Determine if anything changed
+    EventUpdated = False
+    for PropertyName in propertyNames:
+      if PropertyName not in Original and len(Target[PropertyName]) > 0:
+        EventUpdated = True
+        break
+      if Target[PropertyName] != Original[PropertyName]:
+        EventUpdated = True
+        break
+
+    if not EventUpdated:
+      if len(SourceParents) > 0:
+        if OriginalParents != SourceParents:
+          EventUpdated = True
+
+    # Modify event if needed
+    if EventUpdated:
+      self.SetProperties(Target)
+      return True
+    else:
+      return False
 
