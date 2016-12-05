@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
+import re
 
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml.EDXMLBase import EDXMLValidationError
+import edxml.ontology
+
 
 class EventProperty(object):
   """
   Class representing an EDXML event property
   """
+
+  EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z0-9-]{1,64}$')
 
   MERGE_MATCH = 'match'
   """Merge strategy 'match'"""
@@ -300,6 +305,38 @@ class EventProperty(object):
       EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'multiply'
+    return self
+
+  def Validate(self):
+    """
+
+    Checks if the property definition is valid. It only looks
+    at the attributes of the property itself. Since it does
+    not have access to the full ontology, the context of
+    the property is not considered. For example, it does not
+    check if the object type in the property actually exist.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventProperty: The EventProperty instance
+
+    """
+    if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self._attr['name']):
+      raise EDXMLValidationError('Invalid property name in property definition: "%s"' % self._attr['name'])
+
+    if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self._attr['object-type']):
+      raise EDXMLValidationError('Invalid object type name in property definition: "%s"' % self._attr['object-type'])
+
+    if not len(self._attr['description']) <= 128:
+      raise EDXMLValidationError('Property description is too long: "%s"' % self._attr['description'])
+
+    if not len(self._attr['similar']) <= 64:
+      raise EDXMLValidationError('Property attribute is too long: similar="%s"' % self._attr['similar'])
+
+    if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'increment', 'sum', 'multiply', 'match'):
+      raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self._attr['merge'])
+
     return self
 
   def Write(self, Writer):
