@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import re
+
+import edxml
+from edxml.EDXMLBase import EDXMLValidationError
 
 from edxml.EDXMLWriter import EDXMLWriter
 
@@ -6,6 +10,8 @@ class EventTypeParent(object):
   """
   Class representing an EDXML event type parent
   """
+
+  PROPERTY_MAP_PATTERN = re.compile("^[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*$")
 
   def __init__(self, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
 
@@ -116,6 +122,52 @@ class EventTypeParent(object):
       str:
     """
     return self._attr['eventtype']
+
+  def Validate(self):
+    """
+
+    Checks if the event type parent is valid. It only looks
+    at the attributes of the definition itself. Since it does
+    not have access to the full ontology, the context of
+    the parent is not considered. For example, it does not
+    check if the parent definition refers to an event type that
+    actually exists.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventTypeParent: The EventTypeParent instance
+
+    """
+    if not len(self._attr['eventtype']) <= 40:
+      raise EDXMLValidationError(
+        'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
+        self._attr['eventtype']
+      )
+    if not re.match(edxml.ontology.EventType.NAME_PATTERN, self._attr['eventtype']):
+      raise EDXMLValidationError(
+        'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
+        self._attr['eventtype']
+      )
+
+    if not re.match(self.PROPERTY_MAP_PATTERN, self._attr['propertymap']):
+      raise EDXMLValidationError(
+        'An implicit parent definition contains an invalid property map: "%s"' % self._attr['propertymap']
+      )
+
+    if not 1 <= len(self._attr['parent-description']) <= 128:
+      raise EDXMLValidationError(
+        'An implicit parent definition contains an parent-description attribute that is either empty or too long: "%s"'
+        % self._attr['parent-description']
+      )
+
+    if not 1 <= len(self._attr['siblings-description']) <= 128:
+      raise EDXMLValidationError(
+        'An implicit parent definition contains an siblings-description attribute that is either empty or too long: "%s"'
+        % self._attr['siblings-description']
+      )
+
+    return self
 
   def Write(self, Writer):
     """
