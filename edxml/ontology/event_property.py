@@ -339,6 +339,19 @@ class EventProperty(object):
 
     return self
 
+  @classmethod
+  def Read(cls, propertyElement):
+    return cls(
+      propertyElement.attrib['name'],
+      propertyElement.attrib['object-type'],
+      propertyElement.attrib['description'],
+      propertyElement.get('defines-entity', 'false') == 'true',
+      propertyElement.get('entity-confidence', 0),
+      propertyElement.get('unique', 'false') == 'true',
+      propertyElement.get('merge', 'drop'),
+      propertyElement.get('similar', '')
+    )
+
   def Write(self, Writer):
     """
 

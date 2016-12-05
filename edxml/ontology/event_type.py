@@ -354,6 +354,25 @@ class EventType(object):
 
     return self
 
+  @classmethod
+  def Read(cls, typeElement):
+    eventType = cls(typeElement.attrib['name'], typeElement.attrib['display-name'],
+                    typeElement.attrib['description'], typeElement.attrib['classlist'],
+                    typeElement.attrib['reporter-short'], typeElement.attrib['reporter-long'])
+
+    for element in typeElement:
+      if element.tag == 'parent':
+        eventType.SetParent(edxml.ontology.EventTypeParent.Read(element))
+      elif element.tag == 'properties':
+        for propertyElement in element:
+          eventType.AddProperty(edxml.ontology.EventProperty.Read(propertyElement))
+
+      elif element.tag == 'relations':
+        for relationElement in element:
+          eventType.AddRelation(edxml.ontology.PropertyRelation.Read(relationElement))
+
+    return eventType
+
   def Write(self, Writer):
     """
 

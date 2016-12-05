@@ -377,6 +377,19 @@ class ObjectType(object):
 
     return self
 
+  @classmethod
+  def Read(cls, typeElement):
+    return cls(
+      typeElement.attrib['name'],
+      typeElement.get('display-name', '/'),
+      typeElement.attrib['description'],
+      typeElement.attrib['data-type'],
+      int(typeElement.get('enp', 0)),
+      typeElement.get('compress', 'false') == 'true',
+      typeElement.get('fuzzy-matching', 'none'),
+      typeElement.get('regexp', '[\s\S]*')
+    )
+
   def Write(self, Writer):
     """
 

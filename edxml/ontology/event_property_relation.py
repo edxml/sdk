@@ -210,6 +210,18 @@ class PropertyRelation(object):
 
     return self
 
+  @classmethod
+  def Read(cls, relationElement):
+    return cls(
+      relationElement.attrib['property1'],
+      relationElement.attrib['property2'],
+      relationElement.attrib['description'],
+      relationElement.attrib['type'].split(':')[0],
+      relationElement.attrib['type'].split(':')[1],
+      float(relationElement.attrib.get('confidence', '1')),
+      relationElement.get('directed', 'true') == 'true'
+    )
+
   def Write(self, Writer):
     """
 

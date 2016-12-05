@@ -169,6 +169,15 @@ class EventTypeParent(object):
 
     return self
 
+  @classmethod
+  def Read(cls, parentElement):
+    return cls(
+      parentElement.attrib['eventtype'],
+      parentElement.attrib['propertymap'],
+      parentElement.attrib['parent-description'],
+      parentElement.attrib['siblings-description']
+    )
+
   def Write(self, Writer):
     """
 

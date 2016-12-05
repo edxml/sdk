@@ -126,6 +126,15 @@ class EventSource(object):
 
     return self
 
+  @classmethod
+  def Read(cls, sourceElement):
+    return cls(
+      sourceElement.attrib['source-id'],
+      sourceElement.attrib['url'],
+      sourceElement.attrib['description'],
+      sourceElement.attrib['date-acquired']
+    )
+
   def Write(self, Writer):
     """
 
