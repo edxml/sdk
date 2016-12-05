@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import re
 
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import EventProperty
+import edxml.ontology
+
 
 class PropertyRelation(object):
   """
@@ -154,6 +158,56 @@ class PropertyRelation(object):
       PropertyRelation: The PropertyRelation instance
     """
     self._attr['directed'] = False
+    return self
+
+  def Validate(self):
+    """
+
+    Checks if the property relation is valid. It only looks
+    at the attributes of the relation itself. Since it does
+    not have access to the full ontology, the context of
+    the relation is not considered. For example, it does not
+    check if the properties in the relation actually exist.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      PropertyRelation: The PropertyRelation instance
+
+    """
+    if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property1']):
+      raise EDXMLValidationError('Invalid property name in property relation: "%s"' % self._attr['property1'])
+
+    if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property2']):
+      raise EDXMLValidationError('Invalid property name in property relation: "%s"' % self._attr['property2'])
+
+    if not len(self._attr['description']) <= 255:
+      raise EDXMLValidationError('Property relation description is too long: "%s"' % self._attr['description'])
+
+    if not re.match('^(intra|inter|parent|child|other):.+', self._attr['type']):
+      raise EDXMLValidationError('Invalid property relation type: "%s"' % self._attr['type'])
+
+    placeholders = re.findall(edxml.ontology.EventType.REPORTER_PLACEHOLDER_PATTERN, self._attr['description'])
+
+    if not self._attr['property1'] in placeholders:
+      raise EDXMLValidationError(
+        'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
+        (self._attr['property1'], self._attr['property2'], self._attr['property1'], self._attr['description'])
+      )
+
+    if not self._attr['property2'] in placeholders:
+      raise EDXMLValidationError(
+        'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
+        (self._attr['property1'], self._attr['property2'], self._attr['property2'], self._attr['description'])
+      )
+
+    for propertyName in placeholders:
+      if propertyName not in (self._attr['property1'], self._attr['property2']):
+        raise EDXMLValidationError(
+          'Relation between properties %s and %s has a description that refers to other properties: "%s"' %
+          (self._attr['property1'], self._attr['property2'], self._attr['description'])
+        )
+
     return self
 
   def Write(self, Writer):
