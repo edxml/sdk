@@ -124,6 +124,12 @@ class EventProperty(object):
     """
     return self._attr['similar']
 
+  def GetDataType(self, ontology):
+    # TODO: As soon as object types are read BEFORE event
+    # types, we should keep references to the ObjectType instances
+    # inside the EventProperty instances.
+    return ontology.GetObjectType(self._attr['object-type']).GetDataType()
+
   def SetMergeStrategy(self, MergeStrategy):
     """
 
