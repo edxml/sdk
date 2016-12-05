@@ -21,19 +21,20 @@ class EDXMLEvent(MutableMapping):
 
     Creates a new EDXML event. The Properties argument must be a
     dictionary mapping property names to object values. Object values
-    may be single values or a list of multiple object values.
+    must be lists of one or multiple object values. Explicit parent
+    hashes must be specified as hex encoded strings.
 
     Args:
-      Properties (dict(str, list)): Dictionary of properties
-      EventTypeName (str, optional): Name of the event type
-      SourceUrl (str, optional): Event source URL
-      Parents (list, optional): List of parent hashes
-      Content (unicode, optional): Event content
+      Properties (Dict[str,List[unicode]]): Dictionary of properties
+      EventTypeName (Optional[str]): Name of the event type
+      SourceUrl (Optional[str]): Event source URL
+      Parents (Optional[List[str]]): List of explicit parent hashes
+      Content (Optional[unicode]): Event content
 
     Returns:
       EDXMLEvent
     """
-    self.Properties = {Property: Value if type(Value) == list else [Value] for Property, Value in Properties.items()}
+    self.Properties = Properties
     self.EventTypeName = EventTypeName
     self.SourceUrl = SourceUrl
     self.Parents = set(Parents) if Parents is not None else set()
@@ -88,19 +89,33 @@ class EDXMLEvent(MutableMapping):
   def Create(cls, Properties, EventTypeName = None, SourceUrl = None, Parents = None, Content = None):
     """
 
-    Creates a new EDXML event.
+    Creates a new EDXML event. The Properties argument must be a
+    dictionary mapping property names to object values. Object values
+    may be single values or a list of multiple object values. Explicit parent
+    hashes must be specified as hex encoded strings.
+
+    Note:
+      For a slight performance gain, use the EDXMLEvent constructor
+      directly to create new events.
 
     Args:
-      Properties (dict(str,list)): Dictionary of properties
-      EventTypeName (str, optional): Name of the event type
-      SourceUrl (str, optional): Event source URL
-      Parents (list, optional): List of parent hashes
-      Content (unicode, optional): Event content
+      Properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
+      EventTypeName (Optional[str]): Name of the event type
+      SourceUrl (Optional[str]): Event source URL
+      Parents (Optional[List[str]]): List of explicit parent hashes
+      Content (Optional[unicode]): Event content
 
     Returns:
       EDXMLEvent:
     """
-    return cls(Properties, EventTypeName, SourceUrl, Parents, Content)
+    return cls(
+      {Property: Value if type(Value) == list else [Value] for Property, Value in Properties.items()},
+      EventTypeName,
+      SourceUrl,
+      Parents,
+      Content
+    )
+
 
   def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
     """
