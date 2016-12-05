@@ -65,6 +65,17 @@ class ObjectType(object):
 
     return self._attr['name']
 
+  def GetDisplayName(self):
+    """
+
+    Returns the display-name attribute of the object type.
+
+    Returns:
+      str:
+    """
+
+    return self._attr['display-name']
+
   def GetDisplayNameSingular(self):
     """
 

@@ -70,6 +70,16 @@ class EventType(object):
     """
     return self._attr['name']
 
+  def GetDescription(self):
+    """
+
+    Returns the event type description
+
+    Returns:
+      str:
+    """
+    return self._attr['description']
+
   def GetDisplayNameSingular(self):
     """
 
@@ -125,6 +135,30 @@ class EventType(object):
     """
     return self._properties
 
+  def GetUniqueProperties(self):
+    """
+
+    Returns a dictionary containing all unique properties
+    of the event type. The keys in the dictionary
+    are the property names, the values are the
+    EDXMLProperty instances.
+
+    Returns:
+       Dict[str, edxml.ontology.EventProperty]: Properties
+    """
+    return {n: p for n, p in self._properties.items() if p.IsUnique()}
+
+  def GetPropertyRelations(self):
+    """
+
+    Returns the list of property relations that
+    are defined in the event type.
+
+    Returns:
+      List[edxml.ontology.PropertyRelation]:
+    """
+    return self._relations
+
   def HasClass(self, ClassName):
     """
 
@@ -139,6 +173,21 @@ class EventType(object):
       bool:
     """
     return ClassName in self._attr['classlist'].split(',')
+
+  def IsUnique(self):
+    """
+
+    Returns True if the event type is a unique
+    event type, returns False otherwise.
+
+    Returns:
+      bool:
+    """
+    for eventProperty in self._properties.values():
+      if eventProperty.IsUnique():
+        return True
+
+    return False
 
   def GetReporterShort(self):
     """
@@ -159,6 +208,17 @@ class EventType(object):
       str:
     """
     return self._attr['reporter-long']
+
+  def GetParent(self):
+    """
+
+    Returns the parent event type, or None
+    if no parent has been defined.
+
+    Returns:
+      EventTypeParent: The parent event type
+    """
+    return self._parent
 
   def AddProperty(self, Property):
     """
