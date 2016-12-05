@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from collections import MutableMapping
+from lxml import etree
+
 
 class EDXMLEvent(MutableMapping):
   """Class representing an EDXML event.
@@ -172,6 +174,35 @@ class EDXMLEvent(MutableMapping):
 
     """
     return self.Content
+
+  @classmethod
+  def Read(cls, EventTypeName, SourceUrl, EventElement):
+    """
+
+    Creates and returns a new EDXMLEvent instance by reading it from
+    specified lxml Element instance.
+
+    Args:
+      EventTypeName (str): The name of the event type
+      SourceUrl (str): The URL of the EDXML event source
+      EventElement (etree.Element): The XML element containing the event
+
+    Returns:
+      EDXMLEvent:
+    """
+    Content = ''
+    PropertyObjects = {}
+    for element in EventElement:
+      if element.tag == 'properties':
+        for propertyElement in element:
+          PropertyName = propertyElement.tag
+          if PropertyName not in PropertyObjects:
+            PropertyObjects[PropertyName] = []
+          PropertyObjects[PropertyName].append(propertyElement.text)
+      elif element.tag == 'content':
+        Content = element.text
+
+    return cls(PropertyObjects, EventTypeName, SourceUrl, EventElement.attrib.get('parents'), Content)
 
   def SetProperties(self, properties):
     """
