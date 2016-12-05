@@ -222,6 +222,29 @@ class PropertyRelation(object):
       relationElement.get('directed', 'true') == 'true'
     )
 
+  def Update(self, propertyRelation):
+    """
+
+    Updates the property relation to match the PropertyRelation
+    instance passed to this method, returning the
+    updated instance.
+
+    Args:
+      propertyRelation (PropertyRelation): The new PropertyRelation instance
+
+    Returns:
+      PropertyRelation: The updated PropertyRelation instance
+
+    """
+    if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetDest():
+      raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.',
+                      (self._attr['property1'], self._attr['property2'],
+                       propertyRelation.GetSource(), propertyRelation.GetDest()))
+
+    self.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 

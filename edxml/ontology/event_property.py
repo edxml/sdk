@@ -352,6 +352,32 @@ class EventProperty(object):
       propertyElement.get('similar', '')
     )
 
+  def Update(self, eventProperty):
+    """
+
+    Updates the event property to match the EventProperty
+    instance passed to this method, returning the
+    updated instance.
+
+    Args:
+      eventProperty (EventProperty): The new EventProperty instance
+
+    Returns:
+      EventProperty: The updated EventProperty instance
+
+    """
+    if self._attr['name'] != eventProperty.GetName():
+      raise Exception('Attempt to update event property "%s" with event property "%s".',
+                      (self._attr['name'], eventProperty.GetName()))
+
+    if self._attr['description'] != eventProperty.GetDescription():
+      raise Exception('Attempt to update event property "%s", but descriptions do not match.',
+                      (self._attr['name'], eventProperty.GetName()))
+
+    self.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 

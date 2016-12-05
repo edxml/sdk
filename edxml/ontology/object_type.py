@@ -401,6 +401,52 @@ class ObjectType(object):
       typeElement.get('regexp', '[\s\S]*')
     )
 
+  def Update(self, objectType):
+    """
+
+    Args:
+      objectType (ObjectType): The new ObjectType instance
+
+    Returns:
+      ObjectType: The updated ObjectType instance
+
+    """
+    if self._attr['name'] != objectType.GetName():
+      raise Exception('Attempt to update object type "%s" with object type "%s".',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['display-name'] != objectType.GetDisplayName():
+      raise Exception('Attempt to update object type "%s", but display names do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['description'] != objectType.GetDescription():
+      raise Exception('Attempt to update object type "%s", but descriptions do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['data-type'] != objectType.GetDataType():
+      raise Exception('Attempt to update object type "%s", but data types do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if int(self._attr['enp']) != objectType.GetEntityNamingPriority():
+      raise Exception('Attempt to update object type "%s", but Entity Naming Priorities do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['compress'] != objectType.IsCompressible():
+      raise Exception('Attempt to update object type "%s", but compress flags do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['fuzzy-matching'] != objectType.GetFuzzyMatching():
+      raise Exception('Attempt to update object type "%s", but fuzzy matching attributes do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    if self._attr['regexp'] != objectType.GetRegexp():
+      raise Exception('Attempt to update object type "%s", but their regular expressions do not match.',
+                      (self._attr['name'], objectType.GetName()))
+
+    self.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 

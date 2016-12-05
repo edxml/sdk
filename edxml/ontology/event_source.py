@@ -135,6 +135,28 @@ class EventSource(object):
       sourceElement.attrib['date-acquired']
     )
 
+  def Update(self, source):
+    """
+
+    Updates the event source to match the EventSource
+    instance passed to this method, returning the
+    updated instance.
+
+    Args:
+      source (EventSource): The new EventSource instance
+
+    Returns:
+      EventSource: The updated EventSource instance
+
+    """
+    if self._attr['url'] != source.GetUrl():
+      raise Exception('Attempt to update event source "%s" with source "%s".',
+                      (self._attr['url'], source.GetUrl()))
+
+    self.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 

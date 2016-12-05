@@ -178,6 +178,28 @@ class EventTypeParent(object):
       parentElement.attrib['siblings-description']
     )
 
+  def Update(self, parent):
+    """
+
+    Updates the event type parent to match the EventTypeParent
+    instance passed to this method, returning the
+    updated instance.
+
+    Args:
+      parent (EventTypeParent): The new EventTypeParent instance
+
+    Returns:
+      EventTypeParent: The updated EventTypeParent instance
+
+    """
+    if self._attr['eventtype'] != parent.GetEventType():
+      raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".',
+                      (self._attr['name'], parent.GetEventType()))
+
+    self.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 
