@@ -17,7 +17,7 @@ class EventTypeParent(object):
 
     self._attr = {
       'eventtype':          ParentEventTypeName,
-      'propertymap':        ','.join(['%s:%s' % (Child, Parent) for Child, Parent in PropertyMap.items()]),
+      'propertymap':        PropertyMap,
       'parent-description':   ParentDescription or 'belonging to',
       'siblings-description': SiblingsDescription or 'sharing'
     }
@@ -50,7 +50,12 @@ class EventTypeParent(object):
     Returns:
       EventTypeParent: The EventTypeParent instance
     """
-    return cls(ParentEventTypeName, PropertyMap, ParentDescription, SiblingsDescription)
+    return cls(
+      ParentEventTypeName,
+      ','.join(['%s:%s' % (Child, Parent) for Child, Parent in PropertyMap.items()]),
+      ParentDescription,
+      SiblingsDescription
+    )
 
   def SetParentDescription(self, Description):
     """
@@ -101,7 +106,7 @@ class EventTypeParent(object):
     Returns:
       dict[str,str]:
     """
-    return {(Child, Parent) for Mapping in self._attr['propertymap'].split(',') for Child, Parent in Mapping.split(':')}
+    return dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
 
   def GetParentDescription(self):
     """
