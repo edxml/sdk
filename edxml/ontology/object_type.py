@@ -322,6 +322,10 @@ class ObjectType(object):
 
     return self
 
+  def GenerateRelaxNG(self):
+
+    return DataType(self._attr['data-type']).GenerateRelaxNG(self._attr['regexp'])
+
   def Validate(self):
     """
 

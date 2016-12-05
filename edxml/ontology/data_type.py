@@ -290,6 +290,178 @@ class DataType(object):
 
     return False
 
+  def GenerateRelaxNG(self, RegExp):
+
+    e = ElementMaker()
+    splitDataType = self.type.split(':')
+
+    if splitDataType[0] == 'timestamp':
+      element = e.data(
+          e.param('20', name='totalDigits'),
+          e.param('6', name='fractionDigits'),
+          type='decimal'
+        )
+
+    elif splitDataType[0] == 'number':
+      if splitDataType[1] == 'tinyint':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='byte')
+        else:
+          element = e.data(type='unsignedByte')
+
+      elif splitDataType[1] == 'smallint':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='short')
+        else:
+          element = e.data(type='unsignedShort')
+
+      elif splitDataType[1] == 'mediumint':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='short')
+        else:
+          element = e.data(type='unsignedShort')
+
+      elif splitDataType[1] == 'int':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='int')
+        else:
+          element = e.data(type='unsignedInt')
+
+      elif splitDataType[1] == 'bigint':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='long')
+        else:
+          element = e.data(type='unsignedLong')
+
+      elif splitDataType[1] == 'float':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='float')
+        else:
+          element = e.data(e.param(str(0), name='minInclusive'), type='float')
+
+      elif splitDataType[1] == 'double':
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          element = e.data(type='double')
+        else:
+          element = e.data(e.param(str(0), name='minInclusive'), type='double')
+
+      elif splitDataType[1] == 'decimal':
+        digits, fractional = splitDataType[2:4]
+        element = e.data(
+          e.param(digits, name='totalDigits'),
+          e.param(fractional, name='fractionDigits'),
+          type='decimal'
+        )
+        if len(splitDataType) < 4:
+          etree.SubElement(element, 'param', name='minInclusive').text = str(0)
+
+      elif splitDataType[1] == 'hex':
+        digits = int(splitDataType[2])
+        if len(splitDataType) > 3:
+          # We have separated digit groups.
+          groupLength = int(splitDataType[3])
+          groupSeparator = splitDataType[4]
+          numGroups = digits / groupLength
+          if len(groupSeparator) == 0:
+            if len(splitDataType) == 6:
+              # This happens if the colon ':' is used as separator
+              groupSeparator = ':'
+          if numGroups > 0:
+            if numGroups > 1:
+              element = e.data(
+                e.param(
+                  '[A-Fa-f\d]{%d}(%s[A-Fa-f\d]{%d}){%d}' % (groupLength, groupSeparator, groupLength, numGroups - 1),
+                  name='pattern'
+                ), type='string'
+              )
+            else:
+              element = e.data(
+                e.param(
+                  '[A-Fa-f\d]{%d}' % groupLength,
+                  name='pattern'
+                ), type='string'
+              )
+          else:
+            # zero groups means empty string.
+            element = e.value(type='string')
+        else:
+          # Simple hexadecimal value. Note that the length of
+          # the RelaxNG datatype is given in bytes.
+          element = e.data(e.param(str(int(digits) / 2), name='length'), type='hexBinary')
+      else:
+        raise TypeError
+
+    elif splitDataType[0] == 'string':
+      length = int(splitDataType[1])
+      isUnicode = len(splitDataType) > 3 and 'u' in splitDataType[3]
+      element = e.data(type='string')
+      if length > 0:
+        etree.SubElement(element, 'param', name='maxLength').text = str(length)
+      if not isUnicode:
+        etree.SubElement(element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+      if RegExp != '[\s\S]*':
+        etree.SubElement(element, 'param', name='pattern').text = RegExp
+
+    elif splitDataType[0] == 'binstring':
+      length = int(splitDataType[1])
+      element = e.data(type='string')
+      if length > 0:
+        etree.SubElement(element, 'param', name='maxLength').text = str(length)
+      if RegExp != '[\s\S]*':
+        etree.SubElement(element, 'param', name='pattern').text = RegExp
+
+    elif splitDataType[0] == 'boolean':
+      # Because we do not allow the value strings '0' and '1'
+      # while the RelaxNG data type does, we need to add
+      # these two values as exceptions.
+      element = e.data(
+        e('except',
+          e.choice(
+            e.value('0', type='string'),
+            e.value('1', type='string'),
+            )
+          ), type='boolean'
+      )
+
+    elif splitDataType[0] == 'enum':
+      element = e.choice()
+      for allowedValue in splitDataType[1:]:
+        element.append(e.value(allowedValue))
+
+    elif splitDataType[0] == 'ip':
+      # There is no data type in RelaxNG for IP addresses,
+      # so we use a pattern restriction. The regular expression
+      # checks for four octets containing a integer number in
+      # range [0,255].
+      element = e.data(
+        e.param(
+          '((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]).){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])',
+          name='pattern'
+        ), type='string'
+      )
+
+    elif splitDataType[0] == 'hashlink':
+      # Hashlink is a hex encoded 20-byte SHA1
+      element = e.data(e.param('20', name='length'), type='hexBinary')
+
+    elif splitDataType[0] == 'geo' and splitDataType[1] == 'point':
+      # Comma separated latitude and longitude. We check for
+      # these components to be in their valid ranges. For latitude
+      # this is [-90, +90]. For longitude [-180, +180].
+      element = e.data(
+        e.param(
+          (
+            '-?((([1-8][0-9]|[0-9])(\.\d+)?)|(90(\.0{0,6})?)),'
+            '-?((([1-9][0-9]|1[0-7]\d|[0-9])(\.\d{0,6})?)|(180(\.0{0,6})?))'
+          ),
+          name='pattern'), type='string'
+      )
+
+    else:
+      raise TypeError('Unknown EDXML data type: "%s"' % self.type)
+
+    return element
+
   def NormalizeObject(self, value):
     """Normalize an object value to a unicode string
 

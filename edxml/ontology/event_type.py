@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from StringIO import StringIO
 
 import pytz
 import re
@@ -7,6 +8,8 @@ from typing import Dict
 from typing import List
 from dateutil import relativedelta
 from iso3166 import countries
+from lxml import etree
+from lxml.builder import ElementMaker
 from termcolor import colored
 
 import edxml
@@ -42,6 +45,7 @@ class EventType(object):
     self._properties = {}   # type: Dict[str, edxml.ontology.EventProperty]
     self._relations = []    # type: List[edxml.ontology.PropertyRelation]
     self._parent = Parent   # type: edxml.ontology.EventTypeParent
+    self._relaxNG = None    # type: etree.RelaxNG
 
   @classmethod
   def Create(cls, Name, DisplayNameSingular = None, DisplayNamePlural = None, Description = None):
@@ -1140,3 +1144,60 @@ class EventType(object):
             (self._attr['name'], PropertyName)
           )
 
+  def generateRelaxNG(self, Ontology):
+    """
+
+    Returns an ElementTree containing a RelaxNG schema for validating
+    events of this event type. It requires an Ontology instance for
+    obtaining the definitions of objects types referred to by the
+    properties of the event type.
+
+    Args:
+      Ontology: Ontology containing the event type
+
+    Returns:
+      ElementTree: The schema
+    """
+    e = ElementMaker()
+
+    properties = []
+
+    for PropertyName, Property in self._properties.items():
+      objectType = Ontology.GetObjectType(Property.GetObjectTypeName())
+      if PropertyName in self.GetMandatoryPropertyNames():
+        # Exactly one object must be present, no need
+        # to wrap it into an element to indicate this.
+        properties.append(e.element(objectType.GenerateRelaxNG(), name=PropertyName))
+      else:
+        if PropertyName in self.GetSingularPropertyNames():
+          # Property is not mandatory, but if present there
+          # cannot be multiple values.
+          properties.append(e.optional(e.element(objectType.GenerateRelaxNG(), name=PropertyName)))
+        else:
+          # Property is not mandatory and can have any
+          # number of objects.
+          properties.append(e.zeroOrMore(e.element(objectType.GenerateRelaxNG(), name=PropertyName)))
+
+    schema = e.element(
+      e.optional(
+        e.attribute(
+          e.data(
+            e.param('([0-9a-f]{40})(,[0-9a-f]{40})*', name='pattern'),
+            type='normalizedString'),
+          name='parents'
+        )
+      ),
+      e.element(
+        e.interleave(*properties),
+        name='properties'
+      ),
+      e.optional(e.element(e.text(), name='content')),
+      name='event',
+      xmlns='http://relaxng.org/ns/structure/1.0',
+      datatypeLibrary='http://www.w3.org/2001/XMLSchema-datatypes'
+    )
+
+    # Note that, for some reason, using a programmatically built ElementTree
+    # to instantiate a RelaxNG object fails with 'schema is empty'. If we
+    # convert the schema to a string and parse it back gain, all is good.
+    return etree.parse(StringIO(etree.tostring(etree.ElementTree(schema))))
