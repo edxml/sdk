@@ -1,11 +1,23 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from edxml.EDXMLBase import EDXMLValidationError
+
 from edxml.EDXMLWriter import EDXMLWriter
 
 class EventType(object):
   """
   Class representing an EDXML event type
   """
+
+  NAME_PATTERN = re.compile("^[a-z0-9-]*$")
+  DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
+  CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
+  REPORTER_PLACEHOLDER_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
+  KNOWN_FORMATTERS = ('TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
+                      'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER',
+                      'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY')
 
   def __init__(self, Name, DisplayName = None, Description = None, ClassList ='',
                ReporterShort ='no description available', ReporterLong ='no description available', Parent = None):
@@ -293,6 +305,55 @@ class EventType(object):
       self._attr['reporter-long'] = Reporter
     return self
 
+  def Validate(self):
+    """
+
+    Checks if the event type definition is valid. Since it does
+    not have access to the full ontology, the context of
+    the event type is not considered. For example, it does not
+    check if the event type definition refers to a parent event
+    type that actually exists. Also, reporter strings are not
+    validated.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventType: The EventType instance
+
+    """
+    if not len(self._attr['name']) <= 40:
+      raise EDXMLValidationError('The name of event type "%s" is too long.' % self._attr['name'])
+    if not re.match(self.NAME_PATTERN, self._attr['name']):
+      raise EDXMLValidationError('Event type "%s" has an invalid name.' % self._attr['name'])
+
+    if not len(self._attr['display-name']) <= 64:
+      raise EDXMLValidationError(
+        'The display name of object type "%s" is too long: "%s"' % (self._attr['name'], self._attr['display-name'])
+      )
+    if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+      raise EDXMLValidationError(
+        'Object type "%s" has an invalid display-name attribute: "%s"' % (self._attr['name'], self._attr['display-name'])
+      )
+
+    if not len(self._attr['description']) <= 128:
+      raise EDXMLValidationError(
+        'The description of object type "%s" is too long: "%s"' % (self._attr['name'], self._attr['description'])
+      )
+
+    if not re.match(self.CLASS_LIST_PATTERN, self._attr['classlist']):
+      raise EDXMLValidationError(
+        'Event type "%s" has an invalid class list: "%s"' %
+        (self._attr['name'], self._attr['classlist'])
+      )
+
+    for propertyName, eventProperty in self.GetProperties().items():
+      eventProperty.Validate()
+
+    for relation in self._relations:
+      relation.Validate()
+
+    return self
+
   def Write(self, Writer):
     """
 
@@ -319,3 +380,96 @@ class EventType(object):
     Writer.CloseEventDefinitionRelations()
     Writer.CloseEventDefinition()
     return self
+
+  def GetSingularPropertyNames(self):
+    """
+
+    Returns a list of properties that cannot have multiple values.
+
+    Returns:
+       list(str): List of property names
+    """
+    Singular = {}
+    for PropertyName, Property in self._properties.items():
+      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'increment', 'sum', 'multiply', 'replace'):
+        Singular[PropertyName] = True
+
+    if self._parent:
+      Singular.update(self._parent.GetPropertyMap())
+    return Singular.keys()
+
+  def GetMandatoryPropertyNames(self):
+    """
+
+    Returns a list of properties that must have a value
+
+    Returns:
+       list(str): List of property names
+    """
+    Singular = {}
+    for PropertyName, Property in self._properties.items():
+      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'increment', 'sum', 'multiply'):
+        Singular[PropertyName] = True
+
+    return Singular.keys()
+
+  def validateEventStructure(self, edxmlEvent):
+    """
+
+    Validates the structure of the event by comparing its
+    properties and their object count to the requirements
+    of the event type. Generates exceptions that are much
+    more readable than standard XML validation exceptions.
+
+    Args:
+      edxmlEvent (edxml.EDXMLEvent):
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventType: The EventType instance
+    """
+
+    if self.GetParent() is not None:
+      ParentPropertyMapping = self.GetParent().GetPropertyMap()
+    else:
+      ParentPropertyMapping = {}
+
+    for propertyName, objects in edxmlEvent.items():
+
+      if propertyName in ParentPropertyMapping and len(objects) > 0:
+          raise EDXMLValidationError(
+            ('An event of type %s contains multiple objects of property %s, '
+             'but this property can only have one object due to it being used '
+             'in an implicit parent definition.') % (self._attr['name'], propertyName)
+          )
+
+      # Check if the property is actually
+      # supposed to be in this event.
+      if propertyName not in self.GetProperties():
+        raise EDXMLValidationError(
+          ('An event of type %s contains an object of property %s, '
+           'but this property does not belong to the event type.') %
+          (self._attr['name'], propertyName)
+        )
+
+    # Verify that match, min and max properties have an object.
+    for PropertyName in self.GetMandatoryPropertyNames():
+      if PropertyName not in edxmlEvent:
+        raise EDXMLValidationError(
+          ('An event of type %s is missing an object for property %s, '
+           'while it must have an object due to its configured merge strategy.')
+          % (self._attr['name'], PropertyName)
+        )
+
+    # Verify that properties that cannot have multiple
+    # objects actually have at most one object
+    for PropertyName in self.GetSingularPropertyNames():
+      if PropertyName in edxmlEvent:
+        if len(edxmlEvent[PropertyName]) > 1:
+          raise EDXMLValidationError(
+            ('An event of type %s has multiple objects of property %s, '
+             'while it cannot have more than one due to its configured merge strategy '
+             'or due to a implicit parent definition.') %
+            (self._attr['name'], PropertyName)
+          )
+
