@@ -334,19 +334,19 @@ class EDXMLEvent(MutableMapping):
     self.SourceUrl = SourceUrl
     return self
 
-  def AddParent(self, ParentHash):
+  def AddParents(self, ParentHashes):
     """
 
-    Add the specified sticky hash to the list
+    Add the specified sticky hashes to the list
     of explicit event parents.
 
     Args:
-      ParentHash (str): Sticky hash, as hexadecimal string
+      ParentHashes (List[str]): list of sticky hash, as hexadecimal strings
 
     Returns:
       EDXMLEvent:
     """
-    self.Parents.add(ParentHash)
+    self.Parents.update(ParentHashes)
     return self
 
   def SetParents(self, ParentHashes):
@@ -356,7 +356,7 @@ class EDXMLEvent(MutableMapping):
     list of sticky hashes.
 
     Args:
-      ParentHashes (list of str): list of sticky hash, as hexadecimal strings
+      ParentHashes (List[str]): list of sticky hash, as hexadecimal strings
 
     Returns:
       EDXMLEvent:
