@@ -83,7 +83,7 @@ class EDXMLEvent(MutableMapping):
     Returns:
        EDXMLEvent
     """
-    return EDXMLEvent(self.Properties.copy(), self.EventTypeName, self.SourceUrl, self.Parents.copy(), self.Content)
+    return EDXMLEvent(self.Properties.copy(), self.EventTypeName, self.SourceUrl, list(self.Parents), self.Content)
 
   @classmethod
   def Create(cls, Properties, EventTypeName = None, SourceUrl = None, Parents = None, Content = None):
