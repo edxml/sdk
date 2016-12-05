@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+import datetime
 
+import pytz
 import re
 from typing import Dict
 from typing import List
+from dateutil import relativedelta
+from iso3166 import countries
+from termcolor import colored
 
+import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 
 from edxml.EDXMLWriter import EDXMLWriter
@@ -365,6 +371,537 @@ class EventType(object):
 
     if Reporter:
       self._attr['reporter-long'] = Reporter
+    return self
+
+  def EvaluateReporterString(self, edxmlEvent, short=False, capitalize=True, colorize=False):
+    """
+
+    Evaluates the short or long reporter string of an event type using
+    specified event, returning the result.
+
+    By default, the long reporter string is evaluated, unless short is
+    set to True.
+
+    By default, we will try to capitalize the first letter of the resulting
+    string, unless capitalize is set to False.
+
+    Optionally, the output can be colorized. At his time this means that,
+    when printed on the terminal, the objects in the evaluated string will
+    be displayed using bold white characters.
+
+    Args:
+      edxmlEvent (edxml.EDXMLEvent): the EDXML event to use
+      short (bool): use short or long reporter string
+      capitalize (bool): Capitalize output or not
+      colorize (bool): Colorize output or not
+
+    Returns:
+      unicode:
+    """
+
+    # Recursively split a placeholder string at '{' and '}'
+    def __splitPlaceholderString(String, offset=0):
+
+      elements = []
+      length = len(String)
+
+      while offset < length:
+        pos1 = String.find('{', offset)
+        pos2 = String.find('}', offset)
+        if pos1 == -1:
+          # There are no more sub-strings, Find closing bracket.
+          if pos2 == -1:
+            # No closing bracket either, which means that the
+            # remaining part of the string is one element.
+            # lacks brackets.
+            substring = String[offset:length]
+            offset = length
+            elements.append(substring)
+          else:
+            # Found closing bracket. Add substring and return
+            # to caller.
+            substring = String[offset:pos2]
+            offset = pos2 + 1
+            elements.append(substring)
+            break
+        else:
+          # We found an opening bracket.
+
+          if pos2 == -1:
+            # No closing bracket
+            # Give up.
+            offset = length
+          else:
+            # We also found a closing bracket.
+
+            if pos1 < pos2:
+              # Opening bracket comes first, which means we should
+              # iterate.
+              substring = String[offset:pos1]
+              offset = pos1 + 1
+
+              elements.append(substring)
+              offset, Parsed = __splitPlaceholderString(String, offset)
+              elements.append(Parsed)
+            else:
+              # closing bracket comes first, which means we found
+              # an innermost substring. Add substring and return
+              # to caller.
+              substring = String[offset:pos2]
+              offset = pos2 + 1
+              elements.append(substring)
+              break
+
+      return offset, elements
+
+    def __formatTimeDuration(Min, Max):
+      dateTimeA = datetime.datetime.fromtimestamp(Min)
+      dateTimeB = datetime.datetime.fromtimestamp(Max)
+      delta = relativedelta.relativedelta(dateTimeB, dateTimeA)
+
+      if delta.minutes > 0:
+        if delta.hours > 0:
+          if delta.days > 0:
+            if delta.months > 0:
+              if delta.years > 0:
+                return u'%d years, %d months, %d days, %d hours, %d minutes and %d seconds' % \
+                       (delta.years, delta.months, delta.days, delta.hours, delta.minutes, delta.seconds)
+              else:
+                return u'%d months, %d days, %d hours, %d minutes and %d seconds' % \
+                       (delta.months, delta.days, delta.hours, delta.minutes, delta.seconds)
+            else:
+              return u'%d days, %d hours, %d minutes and %d seconds' % \
+                     (delta.days, delta.hours, delta.minutes, delta.seconds)
+          else:
+            return u'%d hours, %d minutes and %d seconds' % \
+                   (delta.hours, delta.minutes, delta.seconds)
+        else:
+          return u'%d minutes and %d seconds' % \
+                 (delta.minutes, delta.seconds)
+      else:
+        return u'%d.%d seconds' % \
+               (delta.seconds, delta.microseconds)
+
+    def __formatByteCount(byteCount):
+      suffixes = [u'B', u'KB', u'MB', u'GB', u'TB', u'PB']
+      if byteCount == 0:
+        return u'0 B'
+      i = 0
+      while byteCount >= 1024 and i < len(suffixes) - 1:
+        byteCount /= 1024.
+        i += 1
+      f = (u'%.2f' % byteCount).rstrip('0').rstrip('.')
+      return u'%s %s' % (f, suffixes[i])
+
+    def __processSimplePlaceholderString(string, eventObjectValues, capitalizeString):
+
+      replacements = {}
+
+      if capitalizeString and string != '':
+        if string[0] == '{':
+          if string[1:2] != '[[':
+            # Sting does not start with a placeholder,
+            # so we can safely capitalize.
+            string = string[0] + string[1].upper() + string[2:]
+        else:
+          if string[0:1] != '[[':
+            # Sting does not start with a placeholder,
+            # so we can safely capitalize.
+            string = string[0].upper() + string[1:]
+
+      # Match on placeholders like "[[FULLDATETIME:timestamp]]", creating
+      # groups of the strings in between the placeholders and the
+      # placeholders themselves, with and without brackets included.
+      placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
+
+      for placeholder in placeholders:
+
+        objectStrings = []
+        exploded = placeholder[1].split(':')
+
+        if len(exploded) >= 2:
+          formatter = exploded.pop(0)
+          propertyList = exploded.pop(0)
+        else:
+          formatter = ''
+          propertyList = exploded[0]
+
+        if len(propertyList) > 0:
+          properties = propertyList.split(',')
+
+          for propertyName in properties:
+            if propertyName not in eventObjectValues or len(eventObjectValues[propertyName]) == 0:
+              if formatter == 'EMPTY':
+                # Use the first formatter argument
+                # in stead of the object value itself.
+                objectStrings.append(exploded[0])
+              else:
+                # One of the place holders has no associated
+                # value, so we return an empty string.
+                return ''
+
+          properties = [propertyName for propertyName in properties if propertyName in eventObjectValues]
+
+          if formatter == 'TIMESPAN':
+
+            timestamps = []
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                timestamps.append(float(objectValue))
+
+            if len(timestamps) > 0:
+              dateTimeA = datetime.datetime.fromtimestamp(min(timestamps))
+              dateTimeB = datetime.datetime.fromtimestamp(max(timestamps))
+              objectStrings.append(u'between %s and %s' % (dateTimeA.isoformat(' '), dateTimeB.isoformat(' ')))
+
+          elif formatter == 'DURATION':
+
+            timestamps = []
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                timestamps.append(float(objectValue))
+
+            if len(timestamps) > 0:
+              objectStrings.append(__formatTimeDuration(min(timestamps), max(timestamps)))
+
+          elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
+
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                timestamp = float(objectValue)
+                timeZone = pytz.timezone("UTC")
+
+                try:
+                  if formatter == 'FULLDATETIME':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
+                  elif formatter == 'DATETIME':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'B %d %Y at %H:%M:%Sh UTC'))
+                  elif formatter == 'DATE':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'%a, %B %d %Y'))
+                  elif formatter == 'YEAR':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'%Y'))
+                  elif formatter == 'MONTH':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'%B %Y'))
+                  elif formatter == 'WEEK':
+                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                         .strftime(u'week %W of %Y'))
+                except ValueError:
+                  # This may happen for some time stamps before year 1900, which
+                  # is not supported by strftime.
+                  objectStrings.append(u'some date, a long, long time ago')
+
+          elif formatter == 'BYTECOUNT':
+
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                objectStrings.append(__formatByteCount(int(objectValue)))
+
+          elif formatter == 'LATITUDE':
+            degrees = int(objectValue)
+            minutes = int((objectValue - degrees) * 60.0)
+            seconds = int((objectValue - degrees - (minutes / 60.0)) * 3600.0)
+
+            objectStrings.append(u'%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S'))
+
+          elif formatter == 'LONGITUDE':
+            degrees = int(objectValue)
+            minutes = int((objectValue - degrees) * 60.0)
+            seconds = int((objectValue - degrees - (minutes / 60.0)) * 3600.0)
+
+            objectStrings.append(u'%d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
+
+          elif formatter == 'CURRENCY':
+
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                objectStrings.append(u'%.2f%s' % (int(objectValue), exploded[0]))
+
+          elif formatter == 'COUNTRYCODE':
+
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                try:
+                  objectStrings.append(countries.get(objectValue).name)
+                except KeyError:
+                  objectStrings.append(objectValue + u' (unknown country code)')
+
+          elif formatter == 'BOOLEAN_STRINGCHOICE':
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                if objectValue == 'true':
+                  # Print first string
+                  objectStrings.append(exploded[0])
+                else:
+                  # Print second string
+                  objectStrings.append(exploded[1])
+
+          elif formatter == 'BOOLEAN_ON_OFF':
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                if objectValue == 'true':
+                  # Print 'on'
+                  objectStrings.append(u'on')
+                else:
+                  # Print 'off'
+                  objectStrings.append(u'off')
+
+          elif formatter == 'BOOLEAN_IS_ISNOT':
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                if objectValue == 'true':
+                  # Print 'is'
+                  objectStrings.append(u'is')
+                else:
+                  # Print 'is not'
+                  objectStrings.append(u'is not')
+
+          elif formatter == 'EMPTY':
+            pass
+
+          else:
+            for propertyName in properties:
+              for objectValue in eventObjectValues[propertyName]:
+                objectStrings.append(objectValue)
+
+        if len(objectStrings) > 0:
+          if len(objectStrings) > 1:
+            # If one property has multiple objects,
+            # list them all.
+            LastObjectValue = objectStrings.pop()
+            if colorize:
+              ObjectString = ', '.join(colored(ObjectString, 'white', attrs=['bold']) for ObjectString in objectStrings)\
+                             + u' and ' + LastObjectValue
+            else:
+              ObjectString = ', '.join(objectStrings)\
+                             + u' and ' + LastObjectValue
+          else:
+            if colorize:
+              ObjectString = colored(objectStrings[0], 'white', attrs=['bold'])
+            else:
+              ObjectString = objectStrings[0]
+        else:
+          ObjectString = ''
+
+        replacements[placeholder[0]] = ObjectString
+
+      # Return ReporterString where all placeholders are replaced
+      # by the actual (formatted) object values
+
+      for placeholder, replacement in replacements.items():
+        string = string.replace(placeholder, replacement)
+
+      return string
+
+    def __processSplitPlaceholderString(Elements, Event, Capitalize, IterationLevel=0):
+      Result = ''
+      ContainsSubStrings = False
+      NonEmptySubstringCounter = 0
+
+      for Element in Elements:
+        if type(Element) == list:
+          Processed = __processSplitPlaceholderString(Element, Event, Capitalize, IterationLevel + 1)
+          ContainsSubStrings = True
+          Capitalize = False
+          if len(Processed) > 0:
+            NonEmptySubstringCounter += 1
+        else:
+          if Element != '':
+            Processed = __processSimplePlaceholderString(Element, Event, Capitalize)
+            if Processed == '':
+              # A non-empty component of the string evaluated into
+              # an empty string, which means that it must have contained
+              # a placeholder that resulted in an empty string, which
+              # implies that we should return an empty string as well.
+              return ''
+            Capitalize = False
+          else:
+            Processed = ''
+        Result += Processed
+
+      if ContainsSubStrings:
+        # Return empty string when all substrings are empty,
+        # unless IterationLevel is zero. This has the effect that
+        # the 'root' level processing never results in an empty string.
+        if NonEmptySubstringCounter == 0 and IterationLevel > 0:
+          return ''
+        else:
+          return Result
+      else:
+        return Result
+
+    if short:
+      ReporterString = unicode(self._attr['reporter-short'])
+    else:
+      ReporterString = unicode(self._attr['reporter-long'])
+
+    return __processSplitPlaceholderString(
+      __splitPlaceholderString(ReporterString)[1], edxmlEvent.GetProperties(), capitalize
+    )
+
+  def ValidateReporterString(self, string, ontology):
+    """Checks if given reporter string makes sense.
+
+    Args:
+      string (unicode): The reporter string
+      ontology (edxml.ontology.Ontology): The corresponding ontology
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventType: The EventType instance
+
+    """
+
+    # Test if reporter string grammar is correct, by
+    # checking that curly brackets are balanced.
+    curlyNestings = {u'{': 1, u'}': -1}
+    nesting = 0
+    for curly in [c for c in string if c in [u'{', u'}']]:
+      nesting += curlyNestings[curly]
+      if nesting < 0:
+        raise EDXMLValidationError('The following reporter string contains unbalanced curly brackets:\n%s\n' % string)
+    if nesting != 0:
+      raise EDXMLValidationError('The following reporter string contains unbalanced curly brackets:\n%s\n' % string)
+
+    placeholderStrings = re.findall(self.REPORTER_PLACEHOLDER_PATTERN, string)
+
+    for string in placeholderStrings:
+      stringComponents = str(string).split(':')
+      if len(stringComponents) == 1:
+        # Placeholder does not contain a formatter.
+        if stringComponents[0] in self._properties.keys():
+          continue
+      else:
+        # Some kind of string formatter was used.
+        # Figure out which one, and check if it
+        # is used correctly.
+        if stringComponents[0] in ['DURATION', 'TIMESPAN']:
+          durationProperties = stringComponents[1].split(',')
+
+          if len(durationProperties) != 2:
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string containing a string formatter (%s) '
+               'which requires two properties, but %d properties were specified.') %
+              (self._attr['name'], stringComponents[0], len(durationProperties))
+            )
+
+          if durationProperties[0] in self._properties.keys() and \
+             durationProperties[1] in self._properties.keys():
+
+            # Check that both properties are timestamps
+            for propertyName in durationProperties:
+              if propertyName == '':
+                raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, stringComponents[0]))
+              if ontology.GetObjectType(self._properties[propertyName].GetObjectTypeName()).GetDataType() != 'timestamp':
+                raise EDXMLValidationError(
+                  ('Event type %s contains a reporter string which uses a time related formatter, '
+                   'but the used property (%s) is not a timestamp.') % (self._attr['name'], propertyName)
+                )
+
+            continue
+        else:
+          if not stringComponents[0] in self.KNOWN_FORMATTERS:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which refers to an unknown formatter: %s' %
+              (self._attr['name'], stringComponents[0])
+            )
+
+          if stringComponents[0] in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
+            # Check that only one property is specified after the formatter
+            if len(stringComponents[1].split(',')) > 1:
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. '
+                 'Multiple properties were specified: %s') % (self._attr['name'], stringComponents[0], stringComponents[1])
+              )
+            # Check that property is a timestamp
+            if stringComponents[1] == '':
+              raise EDXMLValidationError(
+                'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
+              )
+            if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'timestamp':
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter. '
+                 'The used property (%s) is not a timestamp, though.') % (self._attr['name'], stringComponents[0], stringComponents[1])
+              )
+
+          elif stringComponents[0] in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+            # Check that no additional options are present
+            if len(stringComponents) > 2:
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter. '
+                 'This formatter accepts no options, but they were specified: %s') %
+                (self._attr['name'], stringComponents[0], string)
+              )
+            # Check that only one property is specified after the formatter
+            if len(stringComponents[1].split(',')) > 1:
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter. '
+                 'This formatter accepts just one property. Multiple properties were given though: %s')
+                % (self._attr['name'], stringComponents[0], stringComponents[1])
+              )
+            if stringComponents[0] in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+              # Check that property is a boolean
+              if stringComponents[1] == '':
+                raise EDXMLValidationError(
+                  'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
+                )
+              if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'boolean':
+                raise EDXMLValidationError(
+                  ('Event type %s contains a reporter string which uses the %s formatter. '
+                   'The used property (%s) is not a boolean, though.') %
+                  (self._attr['name'], stringComponents[0], stringComponents[1])
+                )
+
+          elif stringComponents[0] == 'CURRENCY':
+            if len(stringComponents) != 3:
+              raise EDXMLValidationError(
+                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+                (self._attr['name'], stringComponents[0], string)
+              )
+
+          elif stringComponents[0] == 'EMPTY':
+            if len(stringComponents) != 3:
+              raise EDXMLValidationError(
+                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+                (self._attr['name'], stringComponents[0], string)
+              )
+
+          elif stringComponents[0] == 'BOOLEAN_STRINGCHOICE':
+            if len(stringComponents) != 4:
+              raise EDXMLValidationError(
+                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+                (self._attr['name'], stringComponents[0], string)
+              )
+            # Check that property is a boolean
+            if stringComponents[1] == '':
+              raise EDXMLValidationError(
+                'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
+              )
+            if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'boolean':
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter. '
+                 'The used property (%s) is not a boolean, though.') %
+                (self._attr['name'], stringComponents[0], stringComponents[1])
+              )
+
+          else:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses an unknown formatter: %s' %
+              (self._attr['name'], stringComponents[0])
+            )
+
+          if stringComponents[1] in self._properties.keys():
+            continue
+
+          raise EDXMLValidationError(
+            'Event type %s contains a reporter string which refers to one or more nonexistent properties: %s' %
+            (self._attr['name'], string)
+          )
+
     return self
 
   def Validate(self):
