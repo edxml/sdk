@@ -116,6 +116,80 @@ class EDXMLEvent(MutableMapping):
       Content
     )
 
+  def GetTypeName(self):
+    """
+
+    Returns the name of the event type.
+
+    Returns:
+      str: The event type name
+
+    """
+    return self.EventTypeName
+
+  def GetSourceUrl(self):
+    """
+
+    Returns the URL of the event source.
+
+    Returns:
+      str: The source URL
+
+    """
+    return self.SourceUrl
+
+  def GetProperties(self):
+    """
+
+    Returns a dictionary containing property names
+    as keys. The values are lists of object values.
+
+    Returns:
+      Dict[str, List[unicode]]: Event properties
+
+    """
+    return self.Properties
+
+  def GetExplicitParents(self):
+    """
+
+    Returns a list of sticky hashes of parent
+    events. The hashes are hex encoded strings.
+
+    Returns:
+      List[str]: List of parent hashes
+
+    """
+    return list(self.Parents)
+
+  def GetContent(self):
+    """
+
+    Returns the content of the event.
+
+    Returns:
+      unicode: Event content
+
+    """
+    return self.Content
+
+  def SetProperties(self, properties):
+    """
+
+    Replaces the event properties with the properties
+    from specified dictionary. The dictionary must
+    contain property names as keys. The values must be
+    lists of unicode strings.
+
+    Args:
+      properties: Dict(str, List(unicode)): Event properties
+
+    Returns:
+      EDXMLEvent:
+
+    """
+    self.Properties = properties
+    return self
 
   def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
     """
@@ -243,3 +317,19 @@ class EDXMLEvent(MutableMapping):
     """
     self.Parents.add(ParentHash)
     return self
+
+  def SetParents(self, ParentHashes):
+    """
+
+    Replace the set of explicit event parents with the specified
+    list of sticky hashes.
+
+    Args:
+      ParentHashes (list of str): list of sticky hash, as hexadecimal strings
+
+    Returns:
+      EDXMLEvent:
+    """
+    self.Parents = set(ParentHashes)
+    return self
+
