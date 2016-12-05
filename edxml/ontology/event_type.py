@@ -233,7 +233,7 @@ class EventType(object):
     Returns:
       EventType: The EventType instance
     """
-    self._properties[Property.GetName()] = Property
+    self._properties[Property.GetName()] = Property.Validate()
 
     return self
 
@@ -248,7 +248,7 @@ class EventType(object):
     Returns:
       EventType: The EventType instance
     """
-    self._relations.append(Relation)
+    self._relations.append(Relation.Validate())
 
     return self
 
