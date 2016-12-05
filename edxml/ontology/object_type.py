@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
+import re
+import sre_constants
+
+from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import DataType
+
 
 class ObjectType(object):
   """
   Class representing an EDXML object type
   """
+
+  NAME_PATTERN = re.compile('^[a-z0-9-]{1,40}$')
+  DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
+  FUZZY_MATCHING_PATTERN = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
   def __init__(self, Name, DisplayName, Description = None, DataType ='string:0:cs:u', Enp = 0, Compress = False, FuzzyMatching ='none', Regexp ='[\s\S]*'):
 
@@ -298,6 +308,72 @@ class ObjectType(object):
       ObjectType: The ObjectType instance
     """
     self._attr['compress'] = True
+
+    return self
+
+  def Validate(self):
+    """
+
+    Checks if the object type is valid. It only looks
+    at the attributes of the definition itself. Since it does
+    not have access to the full ontology, the context of
+    the event type is not considered. For example, it does not
+    check if other, conflicting object type definitions exist.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      ObjectType: The ObjectType instance
+
+    """
+    if not len(self._attr['name']) <= 40:
+      raise EDXMLValidationError('The name of object type "%s" is too long.' % self._attr['name'])
+    if not re.match(self.NAME_PATTERN, self._attr['name']):
+      raise EDXMLValidationError('Object type "%s" has an invalid name.' % self._attr['name'])
+
+    if not len(self._attr['display-name']) <= 64:
+      raise EDXMLValidationError(
+        'The display name of object type "%s" is too long: "%s".' % (self._attr['name'], self._attr['display-name'])
+      )
+    if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+      raise EDXMLValidationError(
+        'Object type "%s" has an invalid display name: "%s"' % (self._attr['name'], self._attr['display-name'])
+      )
+
+    if not len(self._attr['description']) <= 128:
+      raise EDXMLValidationError(
+        'The description of object type "%s" is too long: "%s"' % (self._attr['name'], self._attr['description'])
+      )
+
+    if not re.match(self.FUZZY_MATCHING_PATTERN, self._attr['fuzzy-matching']):
+      raise EDXMLValidationError(
+        'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' % (self._attr['name'], self._attr['fuzzy-matching'])
+      )
+    if self._attr['fuzzy-matching'][:10] == 'substring:':
+      try:
+        re.compile('%s' % self._attr['fuzzy-matching'][10:])
+      except sre_constants.error:
+        raise EDXMLValidationError(
+          'Definition of object type %s has an invalid regular expression in its fuzzy-matching attribute: "%s"' % (
+            (self._attr['name'], self._attr['fuzzy-matching'])))
+
+    if type(self._attr['compress']) != bool:
+      raise EDXMLValidationError(
+        'Object type "%s" has an invalid compress attribute: "%s"' % (self._attr['name'], repr(self._attr['compress']))
+      )
+
+    if not 0 <= int(self._attr['enp']) < 256:
+      raise EDXMLValidationError(
+        'Object type "%s" has an invalid entity naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
+      )
+
+    try:
+      re.compile(self._attr['regexp'])
+    except sre_constants.error:
+      raise EDXMLValidationError('Object type "%s" contains invalid regular expression: "%s"' %
+                                 (self._attr['name'], self._attr['regexp']))
+
+    DataType(self._attr['data-type']).Validate()
 
     return self
 
