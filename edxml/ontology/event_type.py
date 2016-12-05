@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import re
+from typing import Dict
+from typing import List
 
 from edxml.EDXMLBase import EDXMLValidationError
 
@@ -31,9 +33,9 @@ class EventType(object):
       'reporter-long'  : ReporterLong
     }
 
-    self._properties = {} # :type Dict[EventProperty]
-    self._relations = []  # :type List[PropertyRelation]
-    self._parent = Parent # :type EventTypeParent
+    self._properties = {}   # type: Dict[str, edxml.ontology.EventProperty]
+    self._relations = []    # type: List[edxml.ontology.PropertyRelation]
+    self._parent = Parent   # type: edxml.ontology.EventTypeParent
 
   @classmethod
   def Create(cls, Name, DisplayNameSingular = None, DisplayNamePlural = None, Description = None):
@@ -118,7 +120,7 @@ class EventType(object):
     property having specified name.
 
     Returns:
-       EventProperty: The EventProperty instance
+       edxml.ontology.EventProperty: The EventProperty instance
     """
     return self._properties[PropertyName]
 
