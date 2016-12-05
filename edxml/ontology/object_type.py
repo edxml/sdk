@@ -22,7 +22,7 @@ class ObjectType(object):
       'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('-')),
       'description'    : Description or Name,
       'data-type'      : DataType,
-      'enp'            : Enp,
+      'enp'            : int(Enp),
       'compress'       : Compress,
       'fuzzy-matching' : FuzzyMatching,
       'regexp'         : Regexp
