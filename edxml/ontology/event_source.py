@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
+import re
 import uuid
 from time import strftime, gmtime
 
 from edxml.EDXMLWriter import EDXMLWriter
+from edxml.EDXMLBase import EDXMLValidationError
+
 
 class EventSource(object):
   """
   Class representing an EDXML event source
   """
+
+  SOURCE_URL_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
+  ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
   def __init__(self, Id, Url, Description = None, AcquisitionDate = None):
 
@@ -89,6 +95,35 @@ class EventSource(object):
     """
 
     self._attr['description'] = str(Description)
+    return self
+
+  def Validate(self):
+    """
+
+    Checks if the event source definition is valid.
+
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventSource: The EventSource instance
+
+    """
+    if len(self._attr['source-id']) == 0:
+      raise EDXMLValidationError('Event source has an empty source-id attribute.')
+
+    if not re.match(self.SOURCE_URL_PATTERN, self._attr['url']):
+      raise EDXMLValidationError(
+        'Event source has an invalid URL: "%s"' % self._attr['url']
+      )
+
+    if not 1 <= len(self._attr['description']) <= 128:
+      raise EDXMLValidationError('Event source has a description that is either empty or too long.')
+
+    if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
+      raise EDXMLValidationError(
+        'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
+      )
+
     return self
 
   def Write(self, Writer):
