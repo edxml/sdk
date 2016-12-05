@@ -180,18 +180,18 @@ class ObjectType(object):
     self._attr['description'] = str(Description)
     return self
 
-  def SetDataType(self, DataType):
+  def SetDataType(self, dataType):
     """
 
     Configure the data type.
     
     Args:
-      DataType (DataType): DataType instance
+      dataType (DataType): DataType instance
 
     Returns:
       ObjectType: The ObjectType instance
     """
-    self._attr['data-type'] = str(DataType)
+    self._attr['data-type'] = str(dataType)
 
     return self
 
