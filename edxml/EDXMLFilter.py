@@ -29,336 +29,134 @@
 
 """EDXMLFilter
 
-This module can be used to write EDXML filtering scripts, which can edit
-EDXML streams. All filtering classes are based on :class:`edxml.EDXMLParser`,
-so you can conveniently use Definitions attribute of EDXMLParser to query
-details about all defined event types, object types, sources, and so on.
+This module offers classes that combine EDXMLWriter and EDXMLParser to edit
+EDXML data streams. By default, the input data is parsed and written into
+the output. By overriding various callbacks, the data can be modified before
+it is written, using an :class:`edxml.ontology.Ontology` instance to interpret it.
 
 """
 
-from xml.sax.xmlreader import AttributesImpl
 from EDXMLParser import *
+from edxml.EDXMLWriter import EDXMLWriter
 
-class EDXMLStreamFilter(EDXMLParser):
-  """Base class for implementing EDXML filters
 
-  This class inherits from EDXMLParser and causes the
-  EDXML data to be passed through to STDOUT.
-
-  You can pass any file-like object using the Output parameter, which
-  will be used to send the filtered data stream to. It defaults to
-  sys.stdout (standard output).
-
-  Args:
-    upstream: XML source (SaxParser instance in most cases)
-
-    SkipEvents (bool, optional): Set to True to parse only the definitions section
-
-    Output (bool, optional): An optional file-like object, defaults to sys.stdout
-
+class EDXMLFilter(EDXMLParserBase):
+  """
+  Extension of the push parser that copies its input
+  to the specified output. By overriding the various
+  callbacks provided by this class, the EDXML data can
+  be manipulated before the data is output.
   """
 
-  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
+  def __init__(self):
+    super(EDXMLFilter, self).__init__()
+    self._writer = None  # type: EDXMLWriter
+    self.__groupOpen = False
 
-    self.OutputEnabled = True
-    self.Passthrough = XMLGenerator(Output, 'utf-8')
-    EDXMLParser.__init__(self, upstream, SkipEvents)
+  def __enter__(self):
+    return self
 
-  def SetOutputEnabled(self, YesOrNo):
-    """This method implements a global switch
-    to turn XML pass through on or off. You can
-    use it to allow certain parts of EDXML files
-    to pass through to STDOUT while other parts
-    are filtered out.
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    self._close()
+
+  def _close(self):
+    self._writer.Close()
+
+  def _parsedOntology(self, parsedOntology):
+    """
+
+    Callback that writes the parsed ontology into
+    the output. By overriding this method and calling
+    the parent method after changing the ontology, the
+    ontology in the output stream can be modified.
 
     Args:
-      YesOrNo (bool): Output enabled (True) or disabled (False)
+      parsedOntology (edxml.ontology.Ontology): The ontology
 
     """
-    self.OutputEnabled = YesOrNo
+    super(EDXMLFilter, self)._parsedOntology(parsedOntology)
+    parsedOntology.Write(self._writer)
+    self._writer.OpenEventGroups()
 
-  def startElement(self, name, attrs):
+  def _openEventGroup(self, eventTypeName, eventSourceId):
+    """
 
-    if self.OutputEnabled:
-      EDXMLParser.startElement(self, name, attrs)
-      self.Passthrough.startElement(name, attrs)
+    Callback that writes a new <eventgroup> opening tag
+    into the output. By overriding this method and calling
+    the parent method after changing the method arguments,
+    the event type name or source identifier of the events
+    in the event group can be modified.
 
-  def endElement(self, name):
+    Args:
+      eventTypeName (str): The name of the event type
+      eventSourceId: The source identifier
 
-    if self.OutputEnabled:
-      EDXMLParser.endElement(self, name)
-      self.Passthrough.endElement(name)
+    """
+    super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceId)
+    self._writer.OpenEventGroup(eventTypeName, eventSourceId)
+    self.__groupOpen = True
 
-  def characters(self, text):
+  def _closeEventGroup(self, eventTypeName, eventSourceId):
+    """
 
-    if self.OutputEnabled:
-      self.Passthrough.characters(text)
+    Callback that writes a closing <eventgroup> tag into
+    the output. By overriding this method, the _openEventGroup
+    method and the _parsedEvent method, entire event groups can
+    be omitted in the output.
 
-  def ignorableWhitespace(self, ws):
+    Args:
+      eventTypeName (str): The name of the event type
+      eventSourceId: The source identifier
 
-    if self.OutputEnabled:
-      self.Passthrough.ignorableWhitespace(ws)
+    """
+    super(EDXMLFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
+    self._writer.CloseEventGroup()
+    self.__groupOpen = False
 
-class EDXMLValidatingStreamFilter(EDXMLValidatingParser):
-  """Base class for implementing EDXML filters
+  def _parsedEvent(self, edxmlEvent):
+    """
 
-  This class is identical to the EDXMLStreamFilter class, except that
-  it fully validates each event that is output by the filter.
+    Callback that writes the parsed event into
+    the output. By overriding this method and calling
+    the parent method after changing the event, the
+    events in the output stream can be modified. If the
+    parent method is not called, the event will be omitted
+    in the output.
 
-  You can pass any file-like object using the Output parameter, which
-  will be used to send the filtered data stream to. It defaults to
-  sys.stdout (standard output).
+    Args:
+      edxmlEvent (edxml.EDXMLEvent.ParsedEvent): The event
 
-  Parameters:
-    upstream: XML source (SaxParser instance in most cases)
+    """
+    super(EDXMLFilter, self)._parsedEvent(edxmlEvent)
+    self._writer.AddEvent(edxmlEvent)
 
-    SkipEvents (bool, optional): Set to True to parse only the definitions section
 
-    Output (bool, optional): An optional file-like object, defaults to sys.stdout
-
+class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
+  """
+  Extension of the pull parser that copies its input
+  to the specified output. By overriding the various
+  callbacks provided by this class (or rather, the
+  EDXMLFilter class), the EDXML data can be manipulated
+  before the data is output.
   """
 
-  def __init__ (self, upstream, SkipEvents = False, Output = sys.stdout):
+  def __init__(self, Output, Validate=True):
+    super(EDXMLPullFilter, self).__init__()
+    self._writer = EDXMLWriter(Output, Validate)
 
-    self.OutputEnabled = True
-    self.Passthrough = XMLGenerator(Output, 'utf-8')
-    EDXMLValidatingParser.__init__(self, upstream, SkipEvents)
+  def _parsedEvent(self, edxmlEvent):
+    EDXMLFilter._parsedEvent(self, edxmlEvent)
 
-  def SetOutputEnabled(self, YesOrNo):
-    """This method implements a global switch
-    to turn XML pass through on or off. You can
-    use it to allow certain parts of EDXML files
-    to pass through to STDOUT while other parts
-    are filtered out.
 
-    Note that the output of the filter is validated,
-    so be careful not to break the EDXML data while
-    filtering it.
-
-    Args:
-      YesOrNo (bool): Output enabled (True) or disabled (False)
-
-    """
-    self.OutputEnabled = YesOrNo
-
-  def startElement(self, name, attrs):
-
-    if self.OutputEnabled:
-      EDXMLValidatingParser.startElement(self, name, attrs)
-      self.Passthrough.startElement(name, attrs)
-
-  def startElementNS(self, name, qname, attrs):
-
-    if self.OutputEnabled:
-      self.Passthrough.startElementNS(name, qname, attrs)
-
-  def endElement(self, name):
-
-    if self.OutputEnabled:
-      EDXMLValidatingParser.endElement(self, name)
-      self.Passthrough.endElement(name)
-
-  def endElementNS(self, name, qname):
-
-    if self.OutputEnabled:
-      self.Passthrough.endElementNS(name, qname)
-
-  def processingInstruction(self, target, body):
-
-    if self.OutputEnabled:
-      self.Passthrough.processingInstruction(target, body)
-
-  def comment(self, body):
-
-    if self.OutputEnabled:
-      self.Passthrough.comment(body)
-
-  def characters(self, text):
-
-    if self.OutputEnabled:
-      self.Passthrough.characters(text)
-
-  def ignorableWhitespace(self, ws):
-
-    if self.OutputEnabled:
-      self.Passthrough.ignorableWhitespace(ws)
-
-class EDXMLObjectEditor(EDXMLValidatingStreamFilter):
-  """This class implements an EDXML filter which can
-  be used to edit objects in an EDXML stream. It offers the
-  ProcessObject() method which can be overridden
-  to implement your own object editing EDXML processor.
-
-  You can pass any file-like object using the Output parameter, which
-  will be used to send the filtered data stream to. It defaults to
-  sys.stdout (standard output).
-
-  Parameters:
-    upstream: XML source (SaxParser instance in most cases)
-
-    Output (optional): A file-like object, defaults to sys.stdout
+class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
+  """
+  Extension of the push parser that copies its input
+  to the specified output. By overriding the various
+  callbacks provided by this class (or rather, the
+  EDXMLFilter class), the EDXML data can be manipulated
+  before the data is output.
   """
 
-  def __init__ (self, upstream, Output = sys.stdout):
-
-    self.InsertedObjects = []
-    EDXMLValidatingStreamFilter.__init__(self, upstream, False, Output)
-
-  def InsertObject(self, PropertyName, Value):
-    """Insert a new object into the EDXML stream
-
-    This method can be called from implementations of
-    :func:`EditObject` to add objects to the current event.
-
-    Args:
-      PropertyName (str): Property of the new object
-
-      Value (str): Value of the new object
-    """
-    self.InsertedObjects.append({'property': PropertyName, 'value': Value})
-
-  def startElement(self, name, attrs):
-    if name == 'object':
-      Property = attrs.get('property')
-      ObjectTypeName = self.Definitions.GetPropertyObjectType(self.CurrentEventTypeName, Property)
-      self.InsertedObjects = []
-      attrs = self.EditObject(self.CurrentSourceId, self.CurrentEventTypeName, ObjectTypeName, attrs)
-
-      for Item in self.InsertedObjects:
-        EDXMLValidatingStreamFilter.startElement(self, 'object', AttributesImpl({'property': Item['property'], 'value': Item['value']}))
-        EDXMLValidatingStreamFilter.endElement(self, 'object')
-
-    EDXMLValidatingStreamFilter.startElement(self, name, attrs)
-
-  def EditObject(self, SourceId, EventTypeName, ObjectTypeName, attrs):
-    """This method can be overridden to process single objects.
-
-    Implementations should return the new object attributes by means
-    of an :class:`xml.sax.xmlreader.AttributesImpl` object.
-
-    Args:
-      SourceId (str): EDXML Source Identifier
-
-      EventTypeName (str): Name of the event type of current event
-
-      ObjectTypeName (str): Object type of the object
-
-      attrs (AttributesImpl): XML attributes of the <object> tag
-
-    Returns:
-      AttributesImpl. Updated XML attributes of the <object> tag
-    """
-    return attrs
-
-class EDXMLEventEditor(EDXMLValidatingStreamFilter):
-  """This class implements an EDXML filter which can
-  use to edit events in an EDXML stream. It offers the
-  ProcessEvent() method which can be overridden
-  to implement your own event editing EDXML processor.
-
-  You can pass any file-like object using the Output parameter, which
-  will be used to send the filtered data stream to. It defaults to
-  sys.stdout (standard output).
-
-  Args:
-    upstream: XML source (SaxParser instance in most cases)
-
-    Output (optional): A file-like object, defaults to sys.stdout
-  """
-
-  def __init__ (self, upstream, Output = sys.stdout):
-
-    self.ReadingEvent = False
-    self.CurrentEventDeleted = False
-    self.CurrentEvent = []
-    self.CurrentEventAttributes = AttributesImpl({})
-    self.ReceivingEventContent = False
-
-    EDXMLValidatingStreamFilter.__init__(self, upstream, False, Output)
-
-  def startElement(self, name, attrs):
-
-    if name == 'event':
-      self.CurrentEventAttributes = attrs
-      self.SetOutputEnabled(False)
-      self.CurrentEventDeleted = False
-      self.CurrentEvent = []
-
-    elif name == 'object':
-      PropertyName = attrs.get('property')
-      Value = attrs.get('value')
-      self.CurrentEvent.append({'property': PropertyName, 'value': Value})
-
-    elif name == 'content':
-      self.ReceivingEventContent = True
-
-    EDXMLValidatingStreamFilter.startElement(self, name, attrs)
-
-  def endElement(self, name):
-    if name == 'event':
-
-      self.SetOutputEnabled(True)
-
-      # Allow event to be edited
-      CurrentEvent, CurrentEventContent, CurrentEventAttributes = self.EditEvent(self.CurrentSourceId, self.CurrentEventTypeName, self.CurrentEvent, self.CurrentEventContent, self.CurrentEventAttributes)
-
-      # Output buffered event
-      if self.CurrentEventDeleted == False and len(CurrentEvent) > 0:
-        EDXMLValidatingStreamFilter.startElement(self, 'event', AttributesImpl(CurrentEventAttributes))
-        EDXMLValidatingStreamFilter.ignorableWhitespace(self, '\n      ')
-        for Object in CurrentEvent:
-          EDXMLValidatingStreamFilter.ignorableWhitespace(self, '  ')
-          EDXMLValidatingStreamFilter.startElement(self, 'object', AttributesImpl({'property': Object['property'], 'value': Object['value']}))
-          EDXMLValidatingStreamFilter.endElement(self, 'object')
-          EDXMLValidatingStreamFilter.ignorableWhitespace(self, '\n      ')
-        if len(CurrentEventContent) > 0:
-          EDXMLValidatingStreamFilter.startElement(self, 'content', AttributesImpl({}))
-          EDXMLValidatingStreamFilter.characters(self.CurrentEventContent)
-          EDXMLValidatingStreamFilter.endElement(self, 'content')
-          EDXMLValidatingStreamFilter.ignorableWhitespace(self, '\n      ')
-
-        EDXMLValidatingStreamFilter.endElement(self, 'event')
-
-      return
-
-    EDXMLValidatingStreamFilter.endElement(self, name)
-
-  def characters(self, text):
-
-    if self.ReceivingEventContent:
-      self.CurrentEventContent += text
-    EDXMLValidatingStreamFilter.characters(self, text)
-
-  def DeleteEvent(self):
-    """Delete an event while editing
-
-    Call this method from :func:`EditEvent` to delete
-    the event in stead of just editing it.
-    """
-    self.CurrentEventDeleted = True
-
-  def EditEvent(self, SourceId, EventTypeName, EventObjects, EventContent, EventAttributes):
-    """Modifies an event
-
-    This method can be overridden to process single
-    events.
-
-    The EventObjects parameter is a list of dictionaries. Each
-    dictionary represents one object, containing a 'property'
-    key and a 'value' key.
-
-    Args:
-      SourceId (str): EDXML source identifier
-
-      EventTypeName (str): Name of the event type
-
-      EventObjects (list): List of event objects
-
-      EventContent (str): Event content string
-
-      EventAttributes (AttributesImpl): Sax AttributesImpl object containing <event> tag attributes
-
-    Returns:
-      tuple. Modified copies of the EventObjects, EventContent and EventAttributes parameters, in that order.
-    """
-    return EventObjects, EventContent, EventAttributes
+  def __init__(self, Output, Validate=True):
+    super(EDXMLPushFilter, self).__init__()
+    self._writer = EDXMLWriter(Output, Validate)
