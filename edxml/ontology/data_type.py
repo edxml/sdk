@@ -270,6 +270,18 @@ class DataType(object):
     """
     return self.type.split(':')[0]
 
+  def GetSplit(self):
+    """
+
+    Returns the EDXML data type attribute, split on
+    the colon (':'), yielding a list containing the
+    individual parts of the data type.
+
+    Returns:
+      List[str]:
+    """
+    return self.type.split(':')[0]
+
   def IsNumerical(self):
     """
 
