@@ -115,10 +115,10 @@ class ObjectType(object):
     Returns the data type of the object type.
 
     Returns:
-      str:
+      DataType: The data type
     """
 
-    return self._attr['data-type']
+    return DataType(self._attr['data-type'])
 
   def GetEntityNamingPriority(self):
     """
@@ -427,7 +427,7 @@ class ObjectType(object):
       raise Exception('Attempt to update object type "%s", but descriptions do not match.',
                       (self._attr['name'], objectType.GetName()))
 
-    if self._attr['data-type'] != objectType.GetDataType():
+    if self._attr['data-type'] != str(objectType.GetDataType()):
       raise Exception('Attempt to update object type "%s", but data types do not match.',
                       (self._attr['name'], objectType.GetName()))
 

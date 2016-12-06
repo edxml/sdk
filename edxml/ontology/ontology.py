@@ -250,7 +250,7 @@ class Ontology(object):
       for propertyName, eventProperty in eventType.GetProperties().items():
         if eventProperty.GetMergeStrategy() in ('min', 'max', 'increment', 'sum', 'multiply'):
           dataType = self.GetObjectType(eventProperty.GetObjectTypeName()).GetDataType()
-          if not DataType(dataType).IsNumerical():
+          if not dataType.IsNumerical():
             raise EDXMLValidationError(
               ('Property "%s" of event type "%s" with merge strategy min, max, increment, sum or multiply '
                'must be a number or timestamp.') % (propertyName, eventTypeName)

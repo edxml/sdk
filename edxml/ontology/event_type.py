@@ -800,7 +800,7 @@ class EventType(object):
             for propertyName in durationProperties:
               if propertyName == '':
                 raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, stringComponents[0]))
-              if ontology.GetObjectType(self._properties[propertyName].GetObjectTypeName()).GetDataType() != 'timestamp':
+              if str(ontology.GetObjectType(self._properties[propertyName].GetObjectTypeName()).GetDataType()) != 'timestamp':
                 raise EDXMLValidationError(
                   ('Event type %s contains a reporter string which uses a time related formatter, '
                    'but the used property (%s) is not a timestamp.') % (self._attr['name'], propertyName)
@@ -826,7 +826,7 @@ class EventType(object):
               raise EDXMLValidationError(
                 'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
               )
-            if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'timestamp':
+            if str(ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType()) != 'timestamp':
               raise EDXMLValidationError(
                 ('Event type %s contains a reporter string which uses the %s formatter. '
                  'The used property (%s) is not a timestamp, though.') % (self._attr['name'], stringComponents[0], stringComponents[1])
@@ -853,7 +853,7 @@ class EventType(object):
                 raise EDXMLValidationError(
                   'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
                 )
-              if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'boolean':
+              if str(ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType()) != 'boolean':
                 raise EDXMLValidationError(
                   ('Event type %s contains a reporter string which uses the %s formatter. '
                    'The used property (%s) is not a boolean, though.') %
@@ -885,7 +885,7 @@ class EventType(object):
               raise EDXMLValidationError(
                 'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
               )
-            if ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType() != 'boolean':
+            if str(ontology.GetObjectType(self._properties[stringComponents[1]].GetObjectTypeName()).GetDataType()) != 'boolean':
               raise EDXMLValidationError(
                 ('Event type %s contains a reporter string which uses the %s formatter. '
                  'The used property (%s) is not a boolean, though.') %
