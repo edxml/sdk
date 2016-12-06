@@ -34,7 +34,6 @@ class JsonTranscoderMediator(EDXMLBase):
 
   _debug = False
   _validate_events = True
-  _validate_objects = True
   _ignore_invalid_objects = False
   _ignore_invalid_events = False
   _auto_merge_eventtypes = []
@@ -95,22 +94,6 @@ class JsonTranscoderMediator(EDXMLBase):
       JsonTranscoderMediator:
     """
     self._validate_events = False
-    return self
-
-  def DisableObjectValidation(self):
-    """
-    Instructs the EDXML writer not to validate the
-    objects in the events. The global data stream
-    structure and event structure will still be validated.
-    This may be used to boost performance in case
-    case you know that the data will be validated at
-    the receiving end, or in case you have other means
-    to guarantee that your objects are valid.
-
-    Returns:
-      JsonTranscoderMediator:
-    """
-    self._validate_objects = False
     return self
 
   def IgnoreInvalidObjects(self):
@@ -222,7 +205,7 @@ class JsonTranscoderMediator(EDXMLBase):
       self._writer.AddEventSource(Source)
 
   def _create_writer(self):
-    self._writer = SimpleEDXMLWriter(self._output, self._validate_events, self._validate_objects)
+    self._writer = SimpleEDXMLWriter(self._output, self._validate_events)
     if self._debug:
       self._writer.SetBufferSize(1)
     if self._ignore_invalid_objects:
