@@ -4,10 +4,13 @@ import functools
 import hashlib
 import operator
 from collections import MutableMapping
+from collections import defaultdict
 from lxml import etree
+from copy import deepcopy
 from decimal import Decimal
 
 import re
+from edxml.EDXMLBase import EvilCharacterFilter
 
 
 class EDXMLEvent(MutableMapping):
@@ -638,3 +641,336 @@ class EDXMLEvent(MutableMapping):
       ).hexdigest()
 
 
+class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
+  """
+  This class extends both EDXMLEvent and etree.ElementBase to
+  provide an EDXML event representation that can be generated directly
+  by the lxml parser and can be treated much like it was a normal
+  lxml Element representing an 'event' element
+
+  Note:
+    The list and dictionary interfaces of etree.ElementBase are
+    overridden by EDXMLEvent, so accessing keys will yield event properties
+    rather than the XML attributes of the event element.
+
+  Note:
+    This class can only be instantiated by parsers.
+
+  """
+
+  def __str__(self):
+    return etree.tostring(self)
+
+  def __delitem__(self, key):
+    self.find('properties').find(key).remove()
+    try:
+      del self.__properties
+    except AttributeError:
+      pass
+
+  def __setitem__(self, key, value):
+    if type(value) == list:
+      props = self.find('properties')
+      try:
+        props.remove(props.find(key))
+      except TypeError:
+        pass
+      for v in value:
+        try:
+          etree.SubElement(props, key).text = v
+        except TypeError:
+          # Value contains an illegal character,
+          # strip it.
+          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+    else:
+      props = self.find('properties')
+      try:
+        props.remove(props.find(key))
+      except TypeError:
+        pass
+      try:
+        etree.SubElement(props, key).text = value
+      except TypeError:
+        # Value contains an illegal character,
+        # strip it.
+        props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', value))
+    try:
+      del self.__properties
+    except AttributeError:
+      pass
+
+  def __len__(self):
+    try:
+      return len(self.__properties)
+    except AttributeError:
+      self.__properties = defaultdict(list)
+      for element in self.find('properties'):
+        self.__properties[element.tag].append(element.text)
+      return len(self.__properties)
+
+  def __getitem__(self, key):
+    try:
+      return self.__properties[key]
+    except AttributeError:
+      self.__properties = defaultdict(list)
+      for element in self.find('properties'):
+        self.__properties[element.tag].append(element.text)
+      return self.__properties[key]
+
+  def __contains__(self, key):
+    try:
+      return key in self.__properties
+    except AttributeError:
+      self.__properties = defaultdict(list)
+      for element in self.find('properties'):
+        self.__properties[element.tag].append(element.text)
+      return key in self.__properties
+
+  def __iter__(self):
+    try:
+      for p in self.__properties.keys():
+        yield p
+    except AttributeError:
+      self.__properties = defaultdict(list)
+      for element in self.find('properties'):
+        self.__properties[element.tag].append(element.text)
+      for p in self.__properties.keys():
+        yield p
+
+  def flush(self):
+    """
+
+    This class caches an alternative representation of
+    the lxml Element, for internal use. Whenever the
+    lxml Element is modified without using the dictionary
+    interface, the flush() method must be called in order
+    to refresh the internal state.
+
+    Returns:
+      ParsedEvent:
+    """
+    try:
+      del self.__properties
+    except AttributeError:
+      pass
+
+    return self
+
+  def copy(self):
+    """
+
+    Returns a copy of the event.
+
+    Returns:
+       ParsedEvent:
+    """
+    return deepcopy(self)
+
+  @classmethod
+  def Create(cls, Properties, EventTypeName=None, SourceUrl=None, Parents=None, Content=None):
+    """
+
+    This override of the Create() method of the EDXMLEvent class
+    only raises exceptions, because ParsedEvent objects can only
+    be created by parsers.
+
+    Raises:
+      NotImplementedError
+
+    """
+    raise NotImplementedError('ParsedEvent objects can only be created by parsers')
+
+  @classmethod
+  def Read(cls, EventTypeName, SourceUrl, EventElement):
+    """
+
+    Creates and returns a new EDXMLEvent instance by reading it from
+    specified lxml Element instance.
+
+    Args:
+      EventTypeName (str): The name of the event type
+      SourceUrl (str): The URL of the EDXML event source
+      EventElement (etree.Element): The XML element containing the event
+
+    Returns:
+      EDXMLEvent:
+    """
+    Content = ''
+    PropertyObjects = {}
+    for element in EventElement:
+      if element.tag == 'properties':
+        for propertyElement in element:
+          PropertyName = propertyElement.tag
+          if PropertyName not in PropertyObjects:
+            PropertyObjects[PropertyName] = []
+          PropertyObjects[PropertyName].append(propertyElement.text)
+      elif element.tag == 'content':
+        Content = element.text
+
+    return cls(PropertyObjects, EventTypeName, SourceUrl, EventElement.attrib.get('parents'), Content)
+
+  def GetProperties(self):
+    try:
+      return self.__properties
+    except AttributeError:
+      self.__properties = defaultdict(list)
+      for element in self.find('properties'):
+        self.__properties[element.tag].append(element.text)
+      return self.__properties
+
+  def GetContent(self):
+    return self.text
+
+  def GetExplicitParents(self):
+    try:
+      return self.attrib['parents'].split(',')
+    except KeyError:
+      return []
+
+  def SetProperties(self, properties):
+    """
+
+    Replaces the event properties with the properties
+    from specified dictionary. The dictionary must
+    contain property names as keys. The values must be
+    lists of unicode strings.
+
+    Args:
+      properties: Dict(str, List(unicode)): Event properties
+
+    Returns:
+      EDXMLEvent:
+
+    """
+    propertiesElement = self.find('properties')
+    propertiesElement.clear()
+
+    for propertyName, values in properties.items():
+      for value in values:
+        etree.SubElement(propertiesElement, propertyName).text = value
+
+    try:
+      del self.__properties
+    except AttributeError:
+      pass
+
+    return self
+
+  def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
+    """
+
+    Copies properties from another event, mapping property names
+    according to specified mapping. The PropertyMap argument is
+    a dictionary mapping property names from the source event
+    to property names in the target event, which is the event that
+    is used to call this method.
+
+    If multiple source properties map to the same target property,
+    the objects of both properties will be combined in the target
+    property.
+
+    Args:
+     SourceEvent (EDXMLEvent): Source event
+     PropertyMap (Dict[str,str]): Property mapping
+
+    Returns:
+      EDXMLEvent:
+    """
+
+    for Source, Targets in PropertyMap.iteritems():
+      try:
+        SourceProperties = SourceEvent.Properties[Source]
+      except KeyError:
+        # Source property does not exist.
+        continue
+      if len(SourceProperties) > 0:
+        for Target in (Targets if isinstance(Targets, list) else [Targets]):
+          if Target not in self:
+            self[Target] = []
+          self[Target].extend(SourceProperties)
+
+    return self
+
+  def MovePropertiesFrom(self, SourceEvent, PropertyMap):
+    """
+
+    Moves properties from another event, mapping property names
+    according to specified mapping. The PropertyMap argument is
+    a dictionary mapping property names from the source event
+    to property names in the target event, which is the event that
+    is used to call this method.
+
+    If multiple source properties map to the same target property,
+    the objects of both properties will be combined in the target
+    property.
+
+    Args:
+     SourceEvent (EDXMLEvent): Source event
+     PropertyMap (Dict[str,str]): Property mapping
+
+    Returns:
+      EDXMLEvent:
+    """
+
+    for Source, Targets in PropertyMap.iteritems():
+      try:
+        for Target in (Targets if isinstance(Targets, list) else [Targets]):
+          if Target not in self.Properties:
+            self[Target] = []
+          self[Target].extend(SourceEvent.Properties[Source])
+      except KeyError:
+        # Source property does not exist.
+        pass
+      else:
+        del SourceEvent[Source]
+
+    return self
+
+  def SetContent(self, Content):
+    """
+
+    Set the event content.
+
+    Args:
+      Content (unicode): Content string
+
+    Returns:
+      ParsedEvent:
+    """
+    try:
+      self.find('content').text = Content
+    except ValueError:
+      # Content contains illegal character,
+      # strip it.
+      self.find('content').text = unicode(re.sub(self.evilXmlCharsRegExp, '', Content))
+    return self
+
+  def AddParents(self, ParentHashes):
+    """
+
+    Add the specified sticky hashes to the list
+    of explicit event parents.
+
+    Args:
+      ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+
+    Returns:
+      ParsedEvent:
+    """
+    self.attrib.set('parents', ','.join(self.attrib.get('parents').split(',').append(ParentHashes)))
+    return self
+
+  def SetParents(self, ParentHashes):
+    """
+
+    Replace the set of explicit event parents with the specified
+    list of sticky hashes.
+
+    Args:
+      ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+
+    Returns:
+      ParsedEvent:
+    """
+    self.attrib.set('parents', ','.join(ParentHashes))
+    return self
