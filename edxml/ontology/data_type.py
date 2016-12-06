@@ -10,7 +10,8 @@ from edxml.EDXMLBase import EDXMLValidationError
 
 class DataType(object):
   """
-  Class representing an EDXML data type
+  Class representing an EDXML data type. Instances of this class
+  can be cast to strings, which yields the EDXML data-type attribute.
   """
 
   # Expression used for matching SHA1 hashlinks
@@ -251,7 +252,8 @@ class DataType(object):
   def Get(self):
     """
 
-    Returns the EDXML data-type attribute.
+    Returns the EDXML data-type attribute. Calling this
+    method is equivalent to casting to a string.
 
     Returns:
       str:
