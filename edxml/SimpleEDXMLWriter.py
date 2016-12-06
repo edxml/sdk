@@ -166,6 +166,25 @@ class SimpleEDXMLWriter(object):
 
     return self
 
+  def AddOntology(self, edxmlOntology):
+    """
+
+    Add all definitions in specified ontology to the ontology that
+    is written into the output EDXML stream.
+
+    Args:
+      edxmlOntology (edxml.ontology.Ontology): The EDXML ontology
+
+    Returns:
+      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+
+    """
+    if self._writing_events:
+      raise EDXMLError('You cannot add ontology information after writing the first event.')
+
+    self._ontology.Update(edxmlOntology)
+    return self
+
   def AddEventType(self, Type):
     """
 
