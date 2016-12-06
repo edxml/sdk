@@ -35,21 +35,17 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
+from StringIO import StringIO
+
 import sre_constants
-import sys
-from xml.sax import make_parser
+from lxml import etree
+from lxml.etree import SerialisationError
 
-try:
-  # lxml is not a very common module.
-  from lxml import etree
-except ImportError:
-  sys.stderr.write('Failed to import the lxml Python package. Please install it.\n')
-  sys.exit(1)
-
+import EDXMLParser
 from EDXMLBase import *
-from EDXMLParser import EDXMLValidatingParser
 
-class EDXMLWriter(EDXMLBase):
+
+class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
   """Class for generating EDXML streams
 
   The Output parameter is a file-like object
@@ -58,66 +54,28 @@ class EDXMLWriter(EDXMLBase):
   anything, as long as it has a write() method.
 
   The optional Validate parameter controls if
-  the generated EDXML stream should be autovalidated
-  or not. Automatic validation is
-  enabled by default. This parameter applies
-  to all aspects of EDXML validation, except
-  for object value validation, which is covered
-  by the ValidateObjects parameter.
-
-  Enabling object value validation always results
-  in full EDXML validation, regardless of the value
-  of the Validate parameter.
+  the generated EDXML stream should be auto-validated
+  or not. Automatic validation is enabled by default.
 
   Args:
     Output (file): File-like output object
-
     Validate (bool, optional): Enable output validation (True) or not (False)
-
-    ValidateObjects (bool, optional): Enable object validation (True) or not (False)
   """
-  def __init__(self, Output, Validate = True, ValidateObjects = True):
+  def __init__(self, Output, Validate=True):
 
-    EDXMLBase.__init__(self)
+    super(EDXMLWriter, self).__init__()
 
     self.InvalidEvents = 0
     self.Validate = Validate
     self.Output = Output
     self.ElementStack = []
-
-    # The lxml package does not filter out illegal XML
-    # characters. So, below we compile a regular expression
-    # matching all ranges of illegal characters. We will
-    # use that to do our own filtering.
-
-    IllegalRanges = [
-      (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F),
-      (0x7F, 0x84), (0x86, 0x9F),
-      (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF)
-    ]
-
-    if sys.maxunicode >= 0x10000:  # not narrow build
-      IllegalRanges.extend([
-        (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF),
-        (0x3FFFE, 0x3FFFF), (0x4FFFE, 0x4FFFF),
-        (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
-        (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF),
-        (0x9FFFE, 0x9FFFF), (0xAFFFE, 0xAFFFF),
-        (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
-        (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF),
-        (0xFFFFE, 0xFFFFF), (0x10FFFE, 0x10FFFF)
-      ])
-
-    RegExpRanges = ["%s-%s" % (unichr(Low), unichr(High)) for (Low, High) in IllegalRanges]
-
-    self.XMLReplaceRegexp = re.compile(u'[%s]' % u''.join(RegExpRanges))
+    self.EDXMLParser = None  # type: EDXMLParser.EDXMLPushParser
+    self.Bridge = None       # type: EDXMLWriter.XMLParserBridge
 
     if self.Validate:
 
       # Construct validating EDXML parser
-      self.SaxParser = make_parser()
-      self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = ValidateObjects)
-      self.SaxParser.setContentHandler(self.EDXMLParser)
+      self.EDXMLParser = EDXMLParser.EDXMLPushParser(Validate)
 
       # Construct a bridge that will be used to connect the
       # output of the XML Generator to the parser / validator.
@@ -125,16 +83,15 @@ class EDXMLWriter(EDXMLBase):
       # a chain that automatically validates the EDXML stream while
       # it is being generated. The full chain looks like this:
       #
-      # lxml.etree generator => EDXMLValidatingParser => Output
+      # lxml.etree generator => EDXMLParser => Output
 
-      self.Bridge = EDXMLWriter.XMLParserBridge(self.SaxParser, Output)
+      self.Bridge = EDXMLWriter.XMLParserBridge(self.EDXMLParser, Output)  # type: EDXMLWriter.XMLParserBridge
 
     else:
 
       # Validation is disabled. 
-      self.Bridge = Output
+      self.Bridge = Output       # type: EDXMLWriter.XMLParserBridge
       self.EDXMLParser = None
-      self.SaxParser = None
 
     # Initialize lxml.etree based XML generators. This
     # will write the XML declaration and open the
@@ -154,13 +111,12 @@ class EDXMLWriter(EDXMLBase):
     self.EventTypes = {}
     self.ObjectTypes = {}
 
-  # SaxParser instances can only be fed using the
-  # feed() method. On the other hand, etree.xmlfile
-  # instances can only write to file like objects.
-  # This helper class acts like a file object, passing
-  # through to a SaxParser instance.
+  # The XML parser bridge connects the XML generator to
+  # the XML parser for validating the output. Also, it buffers
+  # output until the output is known to be valid. This helper
+  # class acts like a file object, passing through to a validator.
 
-  class XMLParserBridge():
+  class XMLParserBridge(object):
 
     def __init__(self, Parser, Passthrough = None):
       self.BufferOutput = False
@@ -196,7 +152,7 @@ class EDXMLWriter(EDXMLBase):
       if self.Parse:
         try:
           self.Parser.feed(String)
-        except Exception as Except:
+        except Exception:
           # We catch parsing exceptions here, because lxml does
           # not handle them correctly: When the file-like object
           # that it writes into raises an exception, it will initially
@@ -205,16 +161,7 @@ class EDXMLWriter(EDXMLBase):
           # original exception is lost. So, we store the original
           # exception here to allow EDXMLWriter to check for it and
           # raise a proper, informative exception.
-          Message = '%s: %s' % (Except.__class__.__name__, str(Except))
-          if isinstance(Except, EDXMLError):
-            Message = '%s\n\nStack trace:\n\n%s\n\n' % (Message, Except.GetStackTrace())
-
-          if self.ParseError:
-            # Another exception occurred, combine into
-            # a new exception.
-            self.ParseError = Exception('%s\n\nwhich was followed by:\n\n%s' % (self.ParseError, Message))
-          else:
-            self.ParseError = Exception('%s: %s' % (Except.__class__.__name__, Message))
+          self.ParseError = sys.exc_info()
       if self.Passthrough:
         if self.BufferOutput:
           # Add to buffer
@@ -281,7 +228,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlEventTypeElement(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -301,7 +248,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlObjectTypeTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -321,7 +268,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlPropertyTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -341,7 +288,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlRelationTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -361,7 +308,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlSourceTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -381,7 +328,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def AddXmlEventTag(self, XmlString):
     """Apart from programmatically adding to an EDXML
@@ -401,7 +348,7 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
   def OpenDefinitions(self):
     """Opens the <definitions> element"""
@@ -674,21 +621,8 @@ class EDXMLWriter(EDXMLBase):
 
     # The definitions element is complete. Send it
     # to the coroutine, which will write it into
-    # the Output or into the Bridge. If an EDXMLParser
-    # has been created, any problems in the definitions
-    # element will possibly raise an exception here or
-    # populate the ParseError property of the bridge.
-    Error = None
-    try:
-      self.XMLWriter.send(self.ElementStack.pop())
-    except Exception as Except:
-      Error = Except
-
-    if isinstance(self.Bridge, EDXMLWriter.XMLParserBridge) and self.Bridge.ParseError:
-      raise EDXMLError, str(self.Bridge.ParseError), sys.exc_info()[2]
-    else:
-      if Error:
-        raise EDXMLError, str(Error), sys.exc_info()[2]
+    # the Output or into the Bridge.
+    self.XMLWriter.send(self.ElementStack.pop())
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
@@ -730,8 +664,13 @@ class EDXMLWriter(EDXMLBase):
     # which may raise exceptions.
     if self.Validate:
       if self.Bridge.ParseError is not None:
-        raise self.Bridge.ParseError
+        raise self.Bridge.ParseError[0], self.Bridge.ParseError[1], self.Bridge.ParseError[2]
 
+  def Close(self):
+    if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroup':
+      self.CloseEventGroup()
+    if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroups':
+      self.CloseEventGroups()
 
   def CloseEventGroup(self):
     """Closes a previously opened event group"""
@@ -741,7 +680,94 @@ class EDXMLWriter(EDXMLBase):
     # This closes the generator, writing the closing eventgroup tag.
     self.EventGroupXMLWriter.close()
 
-  def AddEvent(self, PropertyObjects, Content = '', ParentHashes = [], IgnoreInvalidObjects = False):
+  def AddEvent(self, event):
+    """
+
+    Args:
+      event (edxml.EDXMLEvent.EDXMLEvent): The event
+
+    Returns:
+      EDXMLWriter:
+
+    """
+    if self.ElementStack[-1] != 'eventgroup':
+      self.Error('A <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
+
+    Parents = event.GetExplicitParents()
+    Content = event.GetContent()
+    EventAttributes = {}
+
+    if len(Parents) > 0:
+      EventAttributes['parents'] = ','.join(Parents)
+
+    Event = etree.Element('event', **EventAttributes)
+    Properties = etree.SubElement(Event, 'properties')
+
+    for PropertyName, Objects in event.GetProperties().items():
+      for ObjectValue in Objects:
+
+        try:
+          etree.SubElement(Properties, PropertyName).text = unicode(ObjectValue)
+        except ValueError:
+          # Object string contains weird characters that are illegal
+          # in XML, like control characters and null bytes. Strip them.
+          Properties[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', ObjectValue))
+
+    if len(Content) > 0:
+      try:
+        etree.SubElement(Event, 'content').text = Content
+      except ValueError:
+        # Content string contains weird characters that are illegal
+        # in XML, like control characters and null bytes. Strip them.
+        Event[-1].text = re.sub(self.evilXmlCharsRegExp, '', Content)
+
+    if self.Validate:
+      # We enable buffering at this point, until we know
+      # for certain that the event is valid. If the event
+      # turns out to be invalid, the application can continue
+      # generating the EDXML stream, skipping the invalid event.
+      self.Bridge.ParseError = None
+      self.Bridge.EnableBuffering()
+
+    # Send element to co-routine, which will use lxml.etree
+    # to write the event.
+    try:
+      self.EventGroupXMLWriter.send(Event)
+    except SerialisationError:
+      if self.Bridge.ParseError:
+        # We will handle this below.
+        pass
+      else:
+        # TODO: Occasionally, it still happens that for instance a
+        # keyboard interrupt yields a SerialisationError here, without
+        # saving the original exception in self.Bridge.ParseError.
+        # Figure out why these exceptions are not caught.
+        raise
+
+    if self.Validate and self.Bridge.ParseError is not None:
+      self.RecoverInvalidEvent()
+      self.InvalidEvents += 1
+
+      InvalidEventException = self.Bridge.ParseError
+      self.Bridge.ParseError = None
+      if InvalidEventException[0] == EDXMLValidationError:
+        Message = (
+          'An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. '
+          'You can recover by catching the EDXMLValidationError and begin writing a new event.'
+        ) % InvalidEventException[1]
+      else:
+        Message = InvalidEventException[1]
+
+      raise InvalidEventException[0], Message, InvalidEventException[2]
+
+    if self.Validate:
+      # At this point, the event has been validated. We disable
+      # buffering, which pushes it to the output.
+      self.Bridge.DisableBuffering()
+
+    return self
+
+  def DEPRECATED_AddEvent(self, PropertyObjects, Content='', ParentHashes=[]):
     """Alternative method for adding an event
 
     This method expects a dictionary containing a list of
@@ -762,7 +788,6 @@ class EDXMLWriter(EDXMLBase):
 
       ParentHashes (list,optional): List of explicit parent events
 
-      IgnoreInvalidObjects (bool,optional): Option to ignore invalid object values
 
     """
 
@@ -774,27 +799,17 @@ class EDXMLWriter(EDXMLBase):
       EventAttributes['parents'] = ','.join(ParentHashes)
 
     Event = etree.Element('event', **EventAttributes)
+    Properties = etree.SubElement(Event, 'properties')
 
     for PropertyName, Objects in PropertyObjects.items():
       for ObjectValue in Objects:
-        if self.EDXMLParser:
-          try:
-            ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentElementTypeName, PropertyName)
-            ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
-            self.ValidateObject(ObjectValue, ObjectTypeName, ObjectTypeAttributes['data-type'])
-          except EDXMLError as Error:
-            if IgnoreInvalidObjects:
-              self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( ObjectValue, PropertyName )) )
-              continue
-            else:
-              raise EDXMLError, 'Error adding property %s: %s' % (PropertyName, str(Error)), sys.exc_info()[2]
 
         try:
-          etree.SubElement(Event, 'object', property = PropertyName, value = unicode(ObjectValue))
+          etree.SubElement(Properties, PropertyName).text = unicode(ObjectValue)
         except ValueError:
           # Object string contains weird characters that are illegal
           # in XML, like control characters and null bytes. Strip them.
-          etree.SubElement(Event, 'object', property=PropertyName, value=unicode(re.sub(self.XMLReplaceRegexp, '', ObjectValue)))
+          Properties[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', ObjectValue))
 
     if Content:
       try:
@@ -802,7 +817,7 @@ class EDXMLWriter(EDXMLBase):
       except ValueError:
         # Content string contains weird characters that are illegal
         # in XML, like control characters and null bytes. Strip them.
-        Event[-1].text = re.sub(self.XMLReplaceRegexp, '', Content)
+        Event[-1].text = re.sub(self.evilXmlCharsRegExp, '', Content)
 
     if self.Validate:
 
@@ -826,7 +841,15 @@ class EDXMLWriter(EDXMLBase):
       # application can catch and recover from.
       InvalidEventException = self.Bridge.ParseError
       self.Bridge.ParseError = None
-      self.Error('An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. You can recover by catching it and begin writing a new event.' % InvalidEventException)
+      if InvalidEventException[0] == EDXMLValidationError:
+        Message = (
+          'An invalid event was produced. The EDXML validator said: %s.\nNote that this exception is not fatal. '
+          'You can recover by catching the EDXMLValidationError and begin writing a new event.'
+        ) % InvalidEventException[1]
+      else:
+        Message = InvalidEventException[1]
+
+      raise InvalidEventException[0], Message, InvalidEventException[2]
 
     if self.Validate:
       # At this point, the event has been validated. We disable
@@ -864,7 +887,7 @@ class EDXMLWriter(EDXMLBase):
 
     self.ElementStack.append(etree.Element('event', **Attributes))
 
-  def AddObject(self, PropertyName, Value, IgnoreInvalid = False):
+  def AddObject(self, PropertyName, Value):
     """Adds an object to previously opened event.
 
     if IgnoreInvalidObjects is set to True, any errors thrown
@@ -876,8 +899,6 @@ class EDXMLWriter(EDXMLBase):
 
       Value: Object value, can be any object that can be converted to unicode.
 
-      IgnoreInvalid (bool,optional): Generate a warning in stead of an error for invalid values
-
     """
 
     if self.ElementStack[-1].tag != 'event': self.Error('An <object> tag must be child of an <event> tag. Did you forget to call OpenEvent()?')
@@ -886,35 +907,7 @@ class EDXMLWriter(EDXMLBase):
       self.Warning("EDXMLWriter::AddObject: Object of property %s is empty. Object will be ignored.\n" % PropertyName)
       return
 
-    try:
-
-      if self.EDXMLParser:
-
-        # We disabled the automatic object validation in the
-        # EDXMLValidatingParser instance, because we want to
-        # validate the object values before writing them into
-        # the Bridge. So, we manually invoke object validation
-        # here and handle any exceptions if they occur, optionally
-        # skipping any invalid objects. This allows users of
-        # the EDXMLWriter class to be sloppy about generating
-        # object values.
-
-        ObjectTypeName = self.EDXMLParser.Definitions.GetPropertyObjectType(self.CurrentElementTypeName, PropertyName)
-        ObjectTypeAttributes = self.EDXMLParser.Definitions.GetObjectTypeAttributes(ObjectTypeName)
-        self.ValidateObject(Value, ObjectTypeName, ObjectTypeAttributes['data-type'])
-
-    except EDXMLError:
-
-      if IgnoreInvalid:
-        self.Warning("EDXMLWriter::AddObject: Object '%s' of property %s is invalid. Object will be ignored.\n" % (( Value, PropertyName )) )
-      else:
-        raise
-
     else:
-      # We survived object validation, which means that we
-      # can safely add the object to the 
-      # This statement will generate the actual XML and
-      # trigger EDXMLValidatingParser.
       etree.SubElement(self.ElementStack[-1], 'object', property = PropertyName, value = unicode(Value))
 
   def AddContent(self, ContentString):
@@ -981,17 +974,14 @@ class EDXMLWriter(EDXMLBase):
     # EDXMLParser instance and XML Generator to the point
     # where it can output events again.
 
-    DefinitionsBackup = self.EDXMLParser.GetDefinitionsElementAsString()
+    DefinitionsBackup = StringIO()
+    self.EDXMLParser.getOntology().Write(EDXMLWriter(DefinitionsBackup, False))
 
     # Create new SAX parser and validating EDXML parser
-    self.SaxParser = make_parser()
-    self.EDXMLParser = EDXMLValidatingParser(self.SaxParser, ValidateObjects = False)
-
-    # Install the new EDXMLParser as content handler.
-    self.SaxParser.setContentHandler(self.EDXMLParser)
+    self.EDXMLParser = EDXMLParser.EDXMLPushParser()
 
     # Replace the parser in the bridge
-    self.Bridge.ReplaceParser(self.SaxParser)
+    self.Bridge.ReplaceParser(self.EDXMLParser)
 
     # We need to push some XML into the XMLGenerator and into
     # the bridge, but we do not want that to end up in the
@@ -1000,7 +990,7 @@ class EDXMLWriter(EDXMLBase):
 
     # Push the EDXML definitions header into the bridge, which
     # will restore the state of the EDXMLParser instance.
-    self.Bridge.write('<events>\n%s\n  <eventgroups>\n' % DefinitionsBackup)
+    self.Bridge.write('%s<eventgroups>' % DefinitionsBackup.getvalue())
 
     # Close the XML generator that is generating the
     # current event group. We do not want the resulting
@@ -1026,8 +1016,8 @@ class EDXMLWriter(EDXMLBase):
 
     self.XMLWriter.close()
 
-    if self.SaxParser:
+    if self.EDXMLParser:
       # This triggers well-formedness validation
       # if validation is enabled.
-      self.SaxParser.close()
+      self.EDXMLParser._close()
 
