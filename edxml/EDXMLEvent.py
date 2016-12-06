@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import functools
+import hashlib
 import operator
 from collections import MutableMapping
 from lxml import etree
@@ -557,4 +558,83 @@ class EDXMLEvent(MutableMapping):
       return True
     else:
       return False
+
+  def Normalize(self, edxmlOntology):
+    """
+
+    Normalizes all event properties that require normalization
+    for computing the sticky hash.
+
+    Args:
+      edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
+
+    Returns:
+      EDXMLEvent:
+
+    """
+    eventType = edxmlOntology.GetEventType(self.EventTypeName)
+    if eventType.IsUnique():
+      properties = eventType.GetUniqueProperties()
+    else:
+      properties = eventType.GetProperties()
+    eventProperties = self.GetProperties()
+    for PropertyName in properties.keys():
+      if PropertyName in eventProperties:
+        eventProperties[PropertyName] = properties[PropertyName]\
+          .GetDataType(edxmlOntology)\
+          .NormalizeObjects(eventProperties[PropertyName])
+
+    self.SetProperties(eventProperties)
+    return self
+
+  def ComputeStickyHash(self, edxmlOntology):
+    """Computes the sticky hash of the event.
+
+    Args:
+      edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
+
+    Note:
+      The object values of the event must have been normalized using
+      :func:`Normalize`.
+
+    Returns:
+      str: A hexadecimal string representation of the hash.
+
+    """
+
+    ObjectStrings = set()
+    eventType = edxmlOntology.GetEventType(self.EventTypeName)
+    unique = eventType.IsUnique()
+    propertyObjects = self.GetProperties()
+
+    if unique:
+      properties = eventType.GetUniqueProperties()
+    else:
+      properties = eventType.GetProperties()
+
+    for PropertyName in properties:
+      if PropertyName not in propertyObjects:
+        # Event has no objects for this property.
+        continue
+
+      dataType = properties[PropertyName].GetDataType(edxmlOntology).GetSplit()
+
+      if dataType[0] == 'number' and dataType[1] in ['float', 'double']:
+        # Floating point objects are ignored.
+        continue
+
+      ObjectStrings.update([u'%s:%s' % (PropertyName, value) for value in propertyObjects[PropertyName]])
+
+    # Now we compute the SHA1 hash value of the unicode
+    # string representation of the event, and output in hex
+
+    if unique:
+      return hashlib.sha1(
+        (u'%s\n%s\n%s' % (self.SourceUrl, self.EventTypeName, '\n'.join(sorted(ObjectStrings)))).encode('utf-8')
+      ).hexdigest()
+    else:
+      return hashlib.sha1(
+        (u'%s\n%s\n%s\n%s' % (self.SourceUrl, self.EventTypeName, '\n'.join(sorted(ObjectStrings)), self.Content)).encode('utf-8')
+      ).hexdigest()
+
 
