@@ -476,66 +476,109 @@ class DataType(object):
 
     return element
 
-  def NormalizeObject(self, value):
-    """Normalize an object value to a unicode string
+  def NormalizeObjects(self, values):
+    """Normalize object values to unicode strings
 
-    Prepares an object value for computing sticky hashes, by
+    Prepares object values for computing sticky hashes, by
     applying the normalization rules as outlined in the EDXML
-    specification. It takes a string containing an object value
-    as input and returns a normalized unicode string.
+    specification. It takes a list of object values as input
+    and returns a list of normalized unicode strings.
+
+    The object values must be appropriate for the data type.
+    For example, numerical data types require values that
+    can be cast into a number, string data types require
+    string values. When inappropriate values are encountered,
+    an EDXMLValidationError will be raised.
 
     Args:
-      value (str, unicode): The input object value
+      values (List[Any]): The input object values
+
+    Raises:
+      EDXMLValidationError
 
     Returns:
-      unicode. The normalized object value
-
-    calls :func:`Error` when value is invalid.
+      List[unicode]. The normalized object values
     """
 
     splitDataType = self.type.split(':')
 
     if splitDataType[0] == 'timestamp':
-      return u'%.6f' % Decimal(value)
+      try:
+        return [u'%.6f' % Decimal(value) for value in values]
+      except TypeError:
+        raise EDXMLValidationError(
+          'Invalid timestamp in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
     elif splitDataType[0] == 'number':
       if splitDataType[1] == 'decimal':
         DecimalPrecision = splitDataType[3]
-        return unicode('%.' + DecimalPrecision + 'f') % Decimal(value)
+        try:
+          return [unicode('%.' + DecimalPrecision + 'f') % Decimal(value) for value in values]
+        except TypeError:
+          raise EDXMLValidationError(
+            'Invalid decimal value in list: "%s"' % '","'.join([repr(value) for value in values])
+          )
       elif splitDataType[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
-        return u'%d' % int(value)
+        try:
+          return [u'%d' % int(value) for value in values]
+        except TypeError:
+          raise EDXMLValidationError(
+            'Invalid integer value in list: "%s"' % '","'.join([repr(value) for value in values])
+          )
       elif splitDataType[1] in ['float', 'double']:
         try:
-          return u'%f' % float(value)
-        except Exception as Except:
-          raise EDXMLValidationError("Invalid non-integer: '%s': %s" % (value, Except))
+          return [u'%f' % float(value) for value in values]
+        except TypeError:
+          raise EDXMLValidationError(
+            'Invalid floating point value in list: "%s"' % '","'.join([repr(value) for value in values])
+          )
       else:
         # Must be hexadecimal
-        return unicode(value.lower())
+        try:
+          return [unicode(value.lower()) for value in values]
+        except AttributeError:
+          raise EDXMLValidationError(
+            'Invalid hexadecimal value in list: "%s"' % '","'.join([repr(value) for value in values])
+          )
     elif splitDataType[0] == 'ip':
       try:
-        octets = value.split('.')
-      except Exception as Except:
-        raise EDXMLValidationError("Invalid IP: '%s': %s" % (value, Except))
-      else:
-        try:
-          return unicode('%d.%d.%d.%d' % tuple(int(octet) for octet in octets))
-        except ValueError:
-          raise EDXMLValidationError("Invalid IP: '%s'" % value)
+        return [unicode('%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.'))) for value in values]
+      except (ValueError, TypeError):
+        raise EDXMLValidationError(
+          'Invalid IPv4 address in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
     elif splitDataType[0] == 'geo':
       if splitDataType[1] == 'point':
         try:
-          return u'%.6f,%.6f' % tuple(float(Coordinate) for Coordinate in value.split(','))
-        except Exception as Except:
-          raise EDXMLValidationError("Invalid geo:point: '%s': %s" % (value, Except))
-
+          return [u'%.6f,%.6f' % tuple(float(Coordinate) for Coordinate in value.split(',')) for value in values]
+        except (ValueError, TypeError):
+          raise EDXMLValidationError(
+            'Invalid geo:point value in list: "%s"' % '","'.join([repr(value) for value in values])
+          )
     elif splitDataType[0] == 'string':
-      if splitDataType[2] == 'ci':
-        value = value.lower()
-      return unicode(value)
+      try:
+        if splitDataType[2] == 'ci':
+          return [unicode(value.lower()) for value in values]
+        else:
+          return [unicode(value) for value in values]
+      except AttributeError:
+        raise EDXMLValidationError(
+          'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
     elif splitDataType[0] == 'boolean':
-      return unicode(value.lower())
+      try:
+        return [unicode(value.lower() for value in values)]
+      except AttributeError:
+        raise EDXMLValidationError(
+          'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
     else:
-      return unicode(value)
+      try:
+        return [unicode(value) for value in values]
+      except AttributeError:
+        raise EDXMLValidationError(
+          'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
 
   def Validate(self):
     """
