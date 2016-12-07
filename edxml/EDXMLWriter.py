@@ -42,6 +42,7 @@ from lxml import etree
 from lxml.etree import SerialisationError
 
 import EDXMLParser
+import edxml
 from EDXMLBase import *
 
 
@@ -693,33 +694,12 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     if self.ElementStack[-1] != 'eventgroup':
       self.Error('A <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
 
-    Parents = event.GetExplicitParents()
-    Content = event.GetContent()
-    EventAttributes = {}
-
-    if len(Parents) > 0:
-      EventAttributes['parents'] = ','.join(Parents)
-
-    Event = etree.Element('event', **EventAttributes)
-    Properties = etree.SubElement(Event, 'properties')
-
-    for PropertyName, Objects in event.GetProperties().items():
-      for ObjectValue in Objects:
-
-        try:
-          etree.SubElement(Properties, PropertyName).text = unicode(ObjectValue)
-        except ValueError:
-          # Object string contains weird characters that are illegal
-          # in XML, like control characters and null bytes. Strip them.
-          Properties[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', ObjectValue))
-
-    if len(Content) > 0:
-      try:
-        etree.SubElement(Event, 'content').text = Content
-      except ValueError:
-        # Content string contains weird characters that are illegal
-        # in XML, like control characters and null bytes. Strip them.
-        Event[-1].text = re.sub(self.evilXmlCharsRegExp, '', Content)
+    if isinstance(event, edxml.EventElement):
+      event = event.element
+    if not isinstance(event, etree._Element):
+      event = edxml.EventElement(
+        event.GetProperties(), Parents=event.GetExplicitParents(), Content=event.GetContent()
+      ).element
 
     if self.Validate:
       # We enable buffering at this point, until we know
@@ -732,7 +712,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # Send element to co-routine, which will use lxml.etree
     # to write the event.
     try:
-      self.EventGroupXMLWriter.send(Event)
+      self.EventGroupXMLWriter.send(event)
     except SerialisationError:
       if self.Bridge.ParseError:
         # We will handle this below.
