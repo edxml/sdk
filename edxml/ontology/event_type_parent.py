@@ -205,19 +205,15 @@ class EventTypeParent(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the parent into the provided
-    EDXMLWriter instance.
-
-    Args:
-      Writer (EDXMLWriter): An EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <parent> tag for this event type parent.
 
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      etree.Element: The element
+
     """
 
-    Writer.AddEventTypeParent(self._attr['eventtype'], self._attr['propertymap'], self._attr['parent-description'], self._attr['siblings-description'])
-
-    return self
+    return etree.Element('parent', self._attr)

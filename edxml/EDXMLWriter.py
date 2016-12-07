@@ -211,6 +211,27 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         except GeneratorExit:
           pass
 
+  def AddOntology(self, edxmlOntology):
+    """
+
+    Writes an EDXML ontology element into the output.
+
+    Args:
+      edxmlOntology (edxml.ontology.Ontology): The ontology
+
+    Returns:
+      EDXMLWriter: The writer
+
+    """
+    if len(self.ElementStack) > 0:
+      raise EDXMLValidationError(
+        'A <definitions> tag must be child of the <events> tag. Did you forget to call CloseEventGroups()?'
+      )
+
+    self.XMLWriter.send(edxmlOntology.GenerateXml())
+
+    return self
+
   def OpenDefinitions(self):
     """Opens the <definitions> element"""
     self.ElementStack.append(etree.Element('definitions'))
@@ -617,7 +638,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # where it can output events again.
 
     DefinitionsBackup = StringIO()
-    self.EDXMLParser.getOntology().Write(EDXMLWriter(DefinitionsBackup, False))
+    EDXMLWriter(DefinitionsBackup, False).AddOntology(self.EDXMLParser.getOntology())
 
     # Create new SAX parser and validating EDXML parser
     self.EDXMLParser = EDXMLParser.EDXMLPushParser()

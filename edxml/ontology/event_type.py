@@ -1025,32 +1025,31 @@ class EventType(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the event type into the provided
-    EDXMLWriter instance
-
-    Args:
-      Writer (EDXMLWriter): EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <eventtype> tag for this event type.
 
     Returns:
-      EventType: The EventType instance
+      etree.Element: The element
+
     """
 
-    Writer.OpenEventDefinition(self._attr['name'], self._attr['description'],self._attr['classlist'],self._attr['reporter-short'], self._attr['reporter-long'],self._attr['display-name'])
+    element = etree.Element('eventtype', self._attr)
     if self._parent:
-      self._parent.Write(Writer)
-    Writer.OpenEventDefinitionProperties()
+      element.append(self._parent.GenerateXml())
+    properties = etree.Element('properties')
     for Property in self._properties.values():
-      Property.Write(Writer)
-    Writer.CloseEventDefinitionProperties()
-    Writer.OpenEventDefinitionRelations()
+      properties.append(Property.GenerateXml())
+    relations = etree.Element('relations')
     for Relation in self._relations:
-      Relation.Write(Writer)
-    Writer.CloseEventDefinitionRelations()
-    Writer.CloseEventDefinition()
-    return self
+      relations.append(Relation.GenerateXml())
+
+    element.append(properties)
+    element.append(relations)
+
+    return element
 
   def GetSingularPropertyNames(self):
     """

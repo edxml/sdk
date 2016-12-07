@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 import re
 
 from edxml.EDXMLBase import EDXMLValidationError
@@ -384,18 +386,21 @@ class EventProperty(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the property into the provided
-    EDXMLWriter instance.
-
-    Args:
-      Writer (EDXMLWriter): EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <property> tag for this event property.
 
     Returns:
-      EventProperty: The EventProperty instance
-    """
-    Writer.AddEventProperty(self._attr['name'], self._attr['object-type'],self._attr['description'],self._attr['defines-entity'],self._attr['entity-confidence'],self._attr['unique'],self._attr['merge'], self._attr['similar'])
+      etree.Element: The element
 
-    return self
+    """
+
+    attribs = dict(self._attr)
+
+    attribs['defines-entity'] = 'true' if self._attr['defines-entity'] else 'false'
+    attribs['entity-confidence'] = '%1.2f' % self._attr['entity-confidence']
+    attribs['unique'] = 'true' if self._attr['unique'] else 'false'
+
+    return etree.Element('property', attribs)

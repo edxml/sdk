@@ -339,7 +339,7 @@ class SimpleEDXMLWriter(object):
       self._event_buffers[EventGroup] = {True: {}, False: []}
 
     if not self._writing_events:
-      self._ontology.Write(self._writer)
+      self._writer.AddOntology(self._ontology)
       self._writer.OpenEventGroups()
       self._writing_events = True
 
@@ -402,7 +402,7 @@ class SimpleEDXMLWriter(object):
   def _flush_buffer(self, EventTypeName, EventSourceId, EventGroupId, Merge):
 
     if not self._writing_events:
-      self._ontology.Write(self._writer)
+      self._writer.AddOntology(self._ontology)
       self._writer.OpenEventGroups()
       self._writing_events = True
 
@@ -446,7 +446,7 @@ class SimpleEDXMLWriter(object):
     """
 
     if not self._writing_events:
-      self._ontology.Write(self._writer)
+      self._writer.AddOntology(self._ontology)
       self._writer.OpenEventGroups()
       self._writing_events = True
 

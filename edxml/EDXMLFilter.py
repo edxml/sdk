@@ -75,7 +75,7 @@ class EDXMLFilter(EDXMLParserBase):
 
     """
     super(EDXMLFilter, self)._parsedOntology(parsedOntology)
-    parsedOntology.Write(self._writer)
+    self._writer.AddOntology(parsedOntology)
     self._writer.OpenEventGroups()
 
   def _openEventGroup(self, eventTypeName, eventSourceId):

@@ -408,37 +408,30 @@ class Ontology(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the ontology into the provided
-    EDXMLWriter instance
-
-    Args:
-      Writer (EDXMLWriter): EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <definitions> tag for this ontology.
 
     Returns:
-      Ontology: The ontology
+      etree.Element: The element
+
     """
+    ontologyElement = etree.Element('definitions')
+    eventTypes = etree.SubElement(ontologyElement, 'eventtypes')
 
-    RequiredObjectTypes = []
-    Writer.OpenDefinitions()
+    for eventTypeName, eventType in self._event_types.iteritems():
+      eventTypes.append(eventType.GenerateXml())
 
-    Writer.OpenEventDefinitions()
-    for eventType in self._event_types.values():
-      eventType.Write(Writer)
-      for Property in eventType.GetProperties().values():
-        RequiredObjectTypes.append(Property.GetObjectTypeName())
-    Writer.CloseEventDefinitions()
-    Writer.OpenObjectTypes()
-    for objectType in self._object_types.values():
-      if objectType.GetName() in RequiredObjectTypes:
-        objectType.Write(Writer)
-    Writer.CloseObjectTypes()
-    Writer.OpenSourceDefinitions()
-    for eventSource in self._sources.values():
-      eventSource.Write(Writer)
-    Writer.CloseSourceDefinitions()
-    Writer.CloseDefinitions()
+    objectTypes = etree.SubElement(ontologyElement, 'objecttypes')
 
-    return self
+    for objectTypeName, objectType in self._object_types.iteritems():
+      objectTypes.append(objectType.GenerateXml())
+
+    eventSources = etree.SubElement(ontologyElement, 'sources')
+
+    for sourceUrl, source in self._sources.iteritems():
+      eventSources.append(source.GenerateXml())
+
+    return ontologyElement

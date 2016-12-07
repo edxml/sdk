@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 import re
 
 from edxml.EDXMLBase import EDXMLValidationError
@@ -245,19 +247,20 @@ class PropertyRelation(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the property relation into the provided
-    EDXMLWriter instance
-
-    Args:
-      Writer (EDXMLWriter): EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <relation> tag for this event property.
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      etree.Element: The element
+
     """
 
-    Writer.AddRelation(self._attr['property1'], self._attr['property2'], self._attr['type'], self._attr['description'], self._attr['confidence'], self._attr['directed'])
+    attribs = dict(self._attr)
 
-    return self
+    attribs['confidence'] = '%1.2f' % self._attr['confidence']
+    attribs['directed'] = 'true' if self._attr['directed'] else 'false'
+
+    return etree.Element('relation', attribs)

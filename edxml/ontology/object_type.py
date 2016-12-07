@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 import re
 import sre_constants
 
@@ -451,18 +453,20 @@ class ObjectType(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Write the object type definition into the
-    provided EDXMLWriter instance.
+    Generates an lxml etree Element representing
+    the EDXML <objecttype> tag for this object type.
 
-    Args:
-      Writer (EDXMLWriter): An EDXMLWriter instance
     Returns:
-      ObjectType: The ObjectType instance
+      etree.Element: The element
+
     """
 
-    Writer.AddObjectType(self._attr['name'], self._attr['description'],self._attr['data-type'],self._attr['fuzzy-matching'],self._attr['display-name'],self._attr['compress'],self._attr['enp'], self._attr['regexp'])
+    attribs = dict(self._attr)
 
-    return self
+    attribs['compress'] = 'true' if self._attr['compress'] else 'false'
+    attribs['enp'] = '%d' % attribs['enp']
+
+    return etree.Element('objecttype', attribs)

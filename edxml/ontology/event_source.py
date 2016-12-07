@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from lxml import etree
+
 import re
 import uuid
 from time import strftime, gmtime
@@ -157,18 +159,15 @@ class EventSource(object):
 
     return self
 
-  def Write(self, Writer):
+  def GenerateXml(self):
     """
 
-    Writes the event source into the provided
-    EDXMLWriter instance
-
-    Args:
-      Writer (EDXMLWriter): EDXMLWriter instance
+    Generates an lxml etree Element representing
+    the EDXML <source> tag for this event source.
 
     Returns:
-      EventSource: The EventSource instance
+      etree.Element: The element
+
     """
 
-    Writer.AddSource(self._attr['source-id'], self._attr['url'], self._attr['date-acquired'], self._attr['description'])
-    return self
+    return etree.Element('source', self._attr)
