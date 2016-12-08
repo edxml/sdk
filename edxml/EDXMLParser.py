@@ -32,8 +32,11 @@
 This module offers various classes for incremental parsing of EDXML data streams.
 """
 import os
+from collections import defaultdict
 from lxml import etree
+from typing import Any
 from typing import Dict
+from typing import List
 
 import edxml
 from EDXMLBase import *
@@ -59,7 +62,6 @@ class EDXMLParserBase(object):
     self._elementIterator = None         # type: etree.Element
     self._eventClass = None
 
-    self.__hasEventParseHandler = None   # type: bool
     self.__currentEventType = None       # type: str
     self.__currentEventSourceId = None   # type: str
     self.__currentEventSourceUrl = None  # type: str
@@ -71,6 +73,10 @@ class EDXMLParserBase(object):
     self.__previousRootLength = None
     self.__numParsedEvents = 0           # type: int
     self.__numParsedEventTypes = {}      # type: Dict[str, int]
+    self.__eventTypeHandlers = {}        # type: Dict[str, callable]
+    self.__eventSourceHandlers = {}      # type: Dict[str, callable]
+    self.__currentEventHandlers = []     # type: List[callable]
+    self.__sourceUrlPatternMap = {}      # type: Dict[Any, List[str]]
 
     self.__schema = None                 # type: etree.RelaxNG
     self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
@@ -94,6 +100,61 @@ class EDXMLParserBase(object):
       EDXMLParserBase: The EDXML parser
 
     """
+    return self
+
+  def setEventTypeHandler(self, eventTypes, handler):
+    """
+
+    Register a handler for specified event types. Whenever
+    an event is parsed of any of the specified types, the
+    supplied handler will be called with the event (which
+    will be a ParsedEvent instance) as its only argument.
+
+    Multiple handlers can be installed for a given type of
+    event, they will be invoked in the order of registration.
+    Event type handlers are invoked before event source handlers.
+
+    Args:
+      eventTypes (List[str]): List of event type names
+      handler (callable): Handler
+
+    Returns:
+      EDXMLParserBase: The EDXML parser
+
+    """
+    for eventType in eventTypes:
+      if eventType not in self.__eventTypeHandlers:
+        self.__eventTypeHandlers[eventType] = []
+      self.__eventTypeHandlers[eventType].append(handler)
+
+    return self
+
+  def setEventSourceHandler(self, eventSourcePatterns, handler):
+    """
+
+    Register a handler for specified event sources. Whenever
+    an event is parsed that has an event source URL patching
+    any of the specified regular expressions, the supplied
+    handler will be called with the event (which will be a
+    ParsedEvent instance) as its only argument.
+
+    Multiple handlers can be installed for a given event source,
+    they will be invoked in the order of registration. Event source
+    handlers are invoked after event type handlers.
+
+    Args:
+      eventSourcePatterns (List[str]): List of regular expressions
+      handler (callable): Handler
+
+    Returns:
+      EDXMLParserBase: The EDXML parser
+
+    """
+    for pattern in eventSourcePatterns:
+      if pattern not in self.__eventSourceHandlers:
+        self.__eventSourceHandlers[pattern] = []
+      self.__eventSourceHandlers[pattern].append(handler)
+
     return self
 
   def setCustomEventClass(self, eventClass):
@@ -240,6 +301,14 @@ class EDXMLParserBase(object):
     # new ontology.
     self._parsedOntology(self._ontology)
 
+    # Use the ontology to build a mapping of event
+    # handler source patterns to source URLs
+    self.__sourceUrlPatternMap = defaultdict(list)
+    for pattern in self.__eventSourceHandlers.keys():
+      for sourceUrl, source in self._ontology.GenerateEventSources():
+        if re.match(pattern, sourceUrl):
+          self.__sourceUrlPatternMap[pattern].append(sourceUrl)
+
   def _parsedOntology(self, edxmlOntology):
     """
     Callback that is invoked when the ontology has
@@ -362,6 +431,29 @@ class EDXMLParserBase(object):
     self.__currentEventType = eventTypeName
     self.__currentEventSourceId = eventSourceId
 
+    self.__currentEventHandlers = []
+
+    if self.__currentEventType and self.__currentEventSourceId:
+
+      # Add handlers for the event type
+      self.__currentEventHandlers.extend(self.__eventTypeHandlers.get(self.__currentEventType, ()))
+
+      # Add handlers for the event source
+      currentUrl = self._ontology.GetEventSourceById(self.__currentEventSourceId).GetUrl()
+      for pattern, handlers in self.__eventSourceHandlers.iteritems():
+        if currentUrl in self.__sourceUrlPatternMap[pattern]:
+          self.__currentEventHandlers.extend(handlers)
+
+    if len(self.__currentEventHandlers) == 0:
+      # No handlers found, check if the empty
+      # _parsedEvent() method has been overridden
+      # by a class extension, so we can use that
+      # for handling events.
+      thisMethod = getattr(self, '_parsedEvent')
+      baseMethod = getattr(EDXMLParserBase, '_parsedEvent')
+      if thisMethod.__func__ is not baseMethod.__func__:
+        self.__currentEventHandlers.append(self._parsedEvent)
+
   def __parseEvent(self, event):
     if self.__validate and self.__eventTypeSchema is not None:
       if not self.__eventTypeSchema.validate(event):
@@ -381,16 +473,9 @@ class EDXMLParserBase(object):
             etree.tostring(event, pretty_print=True).encode('utf-8'), exception,
             etree.tostring(schema, pretty_print=True)), sys.exc_info()[2]
 
-    if self.__hasEventParseHandler is None:
-      # Check if the empty _parsedEvent() method
-      # has been overridden by a class extension
-      thisMethod = getattr(self, '_parsedEvent')
-      baseMethod = getattr(EDXMLParserBase, '_parsedEvent')
-      self.__hasEventParseHandler = thisMethod.__func__ is not baseMethod.__func__
-
-    # Call _parsedEvent() in case it is overridden.
-    if self.__hasEventParseHandler:
-      self._parsedEvent(event)
+    # Call all event handlers in order
+    for handler in self.__currentEventHandlers:
+      handler(event)
 
     self.__numParsedEvents += 1
     if self.__currentEventType:
