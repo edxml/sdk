@@ -145,6 +145,10 @@ class EventProperty(object):
       EventProperty: The EventProperty instance
     """
     self._attr['merge'] = MergeStrategy
+
+    if MergeStrategy == 'match':
+      self._attr['unique'] = True
+
     return self
 
   def SetDescription(self, Description):
