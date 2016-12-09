@@ -35,44 +35,9 @@
 #  regular files and EDXML data streams on standard input.
 
 import sys
-from xml.sax import make_parser
-from edxml.EDXMLParser import EDXMLValidatingParser
 
-# This class is based on EDXMLValidatingParser. All it
-# does is overriding the Error and Warning calls, to
-# count them and allow processing to continue when 
-# EDXMLValidatingParser generates an error.
+from edxml.EDXMLParser import EDXMLPullParser
 
-class EDXMLChecker(EDXMLValidatingParser):
-
-  def __init__ (self, upstream, SkipEvents = False):
-
-    EDXMLValidatingParser.__init__(self, upstream, SkipEvents)
-
-    self.ErrorCount = 0
-    self.WarningCount = 0
-
-  # Override of EDXMLParser implementation
-  def Error(self, Message):
-    if self.ErrorCount == 0:
-      print ""
-
-    print(unicode("ERROR: %s" % Message).encode('utf-8'))
-    self.ErrorCount += 1
-
-  # Override of EDXMLParser implementation
-  def Warning(self, Message):
-    if self.WarningCount == 0:
-      print ""
-
-    print(unicode("WARNING: " + Message).encode('utf-8'))
-    self.WarningCount += 1
-
-  def GetErrorCount(self):
-    return self.ErrorCount
-
-  def GetWarningCount(self):
-    return self.WarningCount
 
 def PrintHelp():
 
@@ -120,31 +85,12 @@ while CurrentArgument < ArgumentCount:
 
   CurrentArgument += 1
 
-# Create a SAX parser, and provide it with
-# an MyChecker instance as content handler.
-# This places the EDXMLParser instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser = make_parser()
-MyChecker = EDXMLChecker(SaxParser)
-SaxParser.setContentHandler(MyChecker)
-
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-# Feed the EDXML data to the Sax parser.
-SaxParser.parse(Input)
+try:
+  EDXMLPullParser().parse(Input)
+except KeyboardInterrupt:
+  sys.exit()
 
-# Fetch the error and warning counts
-ErrorCount   = MyChecker.GetErrorCount()
-WarningCount = MyChecker.GetWarningCount()
-
-# Print results.
-
-if ErrorCount == 0:
-  sys.stdout.write("Input data is valid.\n")
-  sys.exit(0)
-else:
-  sys.stdout.write("\nInput data is invalid: %d errors were found ( and %d warnings ).\n" % (( ErrorCount, WarningCount )) )
-  sys.exit(255)
-
+sys.stdout.write("Input data is valid.\n")
