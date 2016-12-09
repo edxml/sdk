@@ -36,9 +36,10 @@
 #  sections in all specified EDXML files are compatible.
 
 import sys
-from xml.sax import make_parser
-from edxml.EDXMLParser import EDXMLParser
-from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
+
+from edxml.EDXMLBase import EDXMLError
+from edxml.EDXMLParser import EDXMLOntologyPullParser
+
 
 def PrintHelp():
 
@@ -62,8 +63,6 @@ def PrintHelp():
      edxml-check-compatibility.py -f input01.edxml -f input02.edxml
 
 """
-
-# Program starts here. 
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -91,42 +90,25 @@ if len(InputFileNames) < 2:
   sys.stderr.write("Please specify at least two EDXML files. Use the --help argument to get help.\n")
   sys.exit()
 
-# Create a SAX parser, and provide it with
-# an EDXMLParser instance as content handler.
-# This places the EDXMLParser instance in the
-# XML processing chain, just after SaxParser.
+AllCompatible = True
 
-SaxParser = make_parser()
-Parser    = EDXMLParser(SaxParser, True)
+with EDXMLOntologyPullParser() as parser:
+  for FileName in InputFileNames:
+    print("Checking %s" % FileName)
 
-SaxParser.setContentHandler(Parser)
+    try:
+      parser.parse(open(FileName))
+    except EDXMLOntologyPullParser.ProcessingInterrupted:
+      pass
+    except KeyboardInterrupt:
+      sys.exit()
+    except EDXMLError as Error:
+      AllCompatible = False
+      print("EDXML file %s is incompatible with previous files:\n%s" % (FileName, unicode(Error)))
+    except:
+      raise
 
-# Now we feed each of the input files
-# to the Sax parser. This will effectively
-# cause the EDXMLParser instance to try and
-# merge the <definitions> sections of all
-# input files, raising EDXMLError when it
-# detects a problem.
-
-for FileName in InputFileNames:
-  print("Checking %s" % FileName)
-  
-  try:
-    SaxParser.parse(open(FileName))
-  except EDXMLProcessingInterrupted:
-    pass
-  except EDXMLError as Error:
-    print("EDXML file %s is incompatible with previous files:\n%s" % (( FileName, str(Error) )) )
-  except:
-    raise
-
-if Parser.GetErrorCount() == 0:
+if AllCompatible:
   print("Files are compatible.")
-
-# Print results.
-print("\n\nTotal Warnings: %d\nTotal Errors:   %d\n\n" % (( Parser.GetWarningCount(), Parser.GetErrorCount() )) )    
-
-if Parser.GetErrorCount() == 0:
-  sys.exit(0)
 else:
   sys.exit(255)
