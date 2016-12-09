@@ -36,69 +36,68 @@
 #  for simulating live EDXML data sources using previously recorded data. Note that
 #  the script assumes that the events in the input stream are time ordered.
 
-import sys, time
-from xml.sax import make_parser
-from edxml.EDXMLFilter import EDXMLEventEditor
+import sys
+import time
 
-# This is a wrapper to create an unbuffered
-# version of sys.stdout.
+from edxml.EDXMLFilter import EDXMLPullFilter
 
-class UnbufferedStdout(object):
-   def __init__(self, Stream):
-       self.Stream = Stream
-   def write(self, Data):
-       self.Stream.write(Data)
-       self.Stream.flush()
-   def __getattr__(self, Attr):
-       return getattr(self.Stream, Attr)
 
-# We create a class based on EDXMLEventEditor,
-# overriding the EditEvent callback to inspect
-# the event timestamps, wait a little and
-# output the event.
+class EDXMLReplay(EDXMLPullFilter):
 
-class EDXMLReplay(EDXMLEventEditor):
-  def __init__ (self, SpeedMultiplier, BufferStufferEnabled):
+  class UnbufferedStdout(object):
+    # This is a wrapper to create an unbuffered
+    # version of sys.stdout.
+    def __init__(self, Stream):
+      self.Stream = Stream
+
+    def write(self, Data):
+      self.Stream.write(Data)
+      self.Stream.flush()
+
+    def __getattr__(self, Attr):
+      return getattr(self.Stream, Attr)
+
+  def __init__(self, SpeedMultiplier, BufferStufferEnabled):
 
     self.TimeShift = None
     self.SpeedMultiplier = SpeedMultiplier
     self.BufferStufferEnabled = BufferStufferEnabled
     self.TimestampProperties = []
     self.KnownProperties = []
+    self.CurrentEventTypeName = None
 
-    # Create Sax parser
-    self.SaxParser = make_parser()
     # Call parent class constructor
-    EDXMLEventEditor.__init__(self, self.SaxParser, UnbufferedStdout(sys.stdout))
-    # Set self as content handler
-    self.SaxParser.setContentHandler(self)
+    super(EDXMLReplay, self).__init__(EDXMLReplay.UnbufferedStdout(sys.stdout))
 
-  def EditEvent(self, SourceId, EventTypeName, EventObjects, EventContent, EventAttributes):
+  def _openEventGroup(self, eventTypeName, eventSourceId):
+    self.CurrentEventTypeName = eventTypeName
+    EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceId)
+
+  def _parsedEvent(self, edxmlEvent):
 
     Timestamps = []
     TimestampObjects = []
     NewEventObjects = []
-    CurrentEventTimestamp = 0
 
     if self.BufferStufferEnabled:
       # Generate a 4K comment.
-      print('<!-- ' + 'x' * 4096 +' -->')
+      print('<!-- ' + 'x' * 4096 + ' -->')
 
     # Find all timestamps in event
-    for Object in EventObjects:
-      if not Object['property'] in self.KnownProperties:
-        ObjectTypeName = self.Definitions.GetPropertyObjectType(EventTypeName, Object['property'])
-        if self.Definitions.GetObjectTypeDataType(ObjectTypeName) == 'timestamp':
-          self.TimestampProperties.append(Object['property'])
-        self.KnownProperties.append(Object['property'])
+    for PropertyName, Objects in edxmlEvent.GetProperties().items():
+      if PropertyName not in self.KnownProperties:
+        ObjectTypeName = self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetObjectTypeName()
+        if str(self._ontology.GetObjectType(ObjectTypeName).GetDataType()) == 'timestamp':
+          self.TimestampProperties.append(PropertyName)
+        self.KnownProperties.append(PropertyName)
 
-      if Object['property'] in self.TimestampProperties:
-        TimestampObjects.append(Object)
-        Timestamps.append(float(Object['value']))
+      if PropertyName in self.TimestampProperties:
+        TimestampObjects.append((PropertyName, Objects))
+        Timestamps.extend([float(Object) for Object in Objects])
       else:
         # We copy all event objects, except
         # for the timestamps
-        NewEventObjects.append(Object)
+        NewEventObjects.extend(Objects)
 
     if len(Timestamps) > 0:
       # We will use the smallest timestamp
@@ -128,15 +127,10 @@ class EDXMLReplay(EDXMLEventEditor):
 
       # Now we add the timestamp objects, replacing
       # their values with the current time.
-      for Object in TimestampObjects:
-        NewEventObjects.append(
-          {
-            'property': Object['property'],
-            'value': u'%.6f' % time.time()
-          }
-        )
+      for PropertyName, Objects in TimestampObjects:
+        edxmlEvent[PropertyName] = [u'%.6f' % time.time() for Object in Objects]
 
-    return NewEventObjects, EventContent, EventAttributes
+    EDXMLPullFilter._parsedEvent(self, edxmlEvent)
 
 def PrintHelp():
 
@@ -197,12 +191,11 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-ReplayFilter = EDXMLReplay(SpeedMultiplier, BufferStufferEnabled)
-
-# Now we feed EDXML data into the Sax parser from EDXMLReplay. This
-# will trigger calls to ProcessEvent in our EDXMLReplay class, producing output.
-
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-ReplayFilter.SaxParser.parse(Input)
+with EDXMLReplay(SpeedMultiplier, BufferStufferEnabled) as Replay:
+  try:
+    Replay.parse(Input)
+  except KeyboardInterrupt:
+    sys.exit()
