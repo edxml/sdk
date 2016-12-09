@@ -36,100 +36,21 @@
 #  against the new ontology and written to standard output.
 
 import sys
-from xml.sax import make_parser
-from xml.sax.xmlreader import AttributesImpl
-from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
-from edxml.EDXMLParser import EDXMLParser
-from edxml.EDXMLFilter import EDXMLStreamFilter
 
-class EDXMLDefinitionSwapper(EDXMLStreamFilter):
-  """This class implements an EDXML filter which will
-  replace eventtype definitions using the definitions in
-  a EDXMLDefinitions instance."""
+from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.EDXMLParser import EDXMLOntologyPullParser, EDXMLValidationError
 
-  def __init__ (self, upstream, Definitions, Output = sys.stdout):
-    """ Constructor.
 
-    You can pass any file-like object using the Output parameter, which
-    will be used to send the filtered data stream to. It defaults to
-    sys.stdout (standard output).
+class EDXMLDefinitionSwapper(EDXMLPullFilter):
 
-    Parameters:
-    upstream    -- XML source (SaxParser instance in most cases)
-    Definitions -- An EDXMLDefinitions instance containing the new definitions
-    Output      -- An optional file-like object, defaults to sys.stdout
-    """
+  def __init__(self, otherOntology, Output=sys.stdout):
 
-    EDXMLStreamFilter.__init__(self, upstream, False, Output)
+    super(EDXMLDefinitionSwapper, self).__init__(Output)
+    self.otherOntology = otherOntology
 
-    self.NewDefinitions = Definitions
-    self.Feedback = False
+  def _parsedOntology(self, parsedOntology):
+    EDXMLPullFilter._parsedOntology(self, self.otherOntology)
 
-  def startElement(self, name, attrs):
-
-    if self.Feedback:
-      # We are feeding outselves with new
-      # XML data. Just pass it through.
-      EDXMLStreamFilter.startElement(self, name, attrs)
-      return
-
-    if name == 'eventtype':
-
-      # Replace the attributes of the eventtype tag
-      self.CurrentEventTypeName = attrs.get('name')
-      if not self.CurrentEventTypeName in self.NewDefinitions.GetEventTypeNames():
-        raise Exception("No new definition available for eventtype %s." % self.CurrentEventTypeName)
-      attrs = AttributesImpl(self.NewDefinitions.GetEventTypeAttributes(self.CurrentEventTypeName))
-
-      # Disable output. We will output the replacement
-      # definition as soon as the closing tag has been read.
-      self.SetOutputEnabled(False)
-      return
-
-    if name == 'objecttypes':
-
-      # Disable output. We will output the replacement
-      # definitions as soon as the closing tag has been read.
-      EDXMLStreamFilter.startElement(self, 'objecttypes', AttributesImpl({}))
-      self.SetOutputEnabled(False)
-
-    EDXMLStreamFilter.startElement(self, name, attrs)
-
-  def endElement(self, name):
-
-    if self.Feedback:
-      # We are feeding outselves with new
-      # XML data. Just pass it through.
-      EDXMLStreamFilter.endElement(self, name)
-      return
-
-    if name == 'eventtype':
-      # Switch output back on.
-      self.SetOutputEnabled(True)
-
-      # Generate replacement eventtype definition, and feed the
-      # resulting XML to ourselves. To prevent infinite feedback
-      # loops, we keep track of the fact that we are currently
-      # feeding back XML data to ourselves.
-      self.Feedback = True
-      self.NewDefinitions.GenerateEventTypeXML(self.CurrentEventTypeName, self)
-      self.Feedback = False
-      return
-
-    if name == 'objecttypes':
-      # Switch output back on.
-      self.SetOutputEnabled(True)
-
-      # Generate new objecttype definitions, and feed those
-      # definitions to ourselves. To prevent infinite feedback
-      # loops, we keep track of the fact that we are currently
-      # feeding back XML data to ourselves.
-      self.Feedback = True
-      for ObjectTypeName in self.NewDefinitions.GetObjectTypeNames():
-        self.NewDefinitions.GenerateObjectTypeXML(ObjectTypeName, self)
-      self.Feedback = False
-
-    EDXMLStreamFilter.endElement(self, name)
 
 def PrintHelp():
 
@@ -188,17 +109,9 @@ if OntologyFileName is None:
   sys.stderr.write("No ontology source was specified. Use the --help option to get help.\n")
   sys.exit()
 
-sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName );
+sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName)
 
-# Create a SAX parser, and provide it with
-# an EDXMLParser instance as content handler.
-# This places the EDXMLParser instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser   = make_parser()
-EDXMLParser = EDXMLParser(SaxParser, True)
-
-SaxParser.setContentHandler(EDXMLParser)
+Parser = EDXMLOntologyPullParser()
 
 # Parse the definitions from the specified
 # EDXML file.
@@ -207,23 +120,18 @@ if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  SaxParser.parse(open(OntologyFileName))
-except EDXMLProcessingInterrupted:
+  Parser.parse(open(OntologyFileName))
+except EDXMLOntologyPullParser.ProcessingInterrupted:
   pass
-except EDXMLError as Error:
-  sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (( OntologyFileName, str(Error) )) )
+except EDXMLValidationError as Error:
+  sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (OntologyFileName, str(Error)))
   sys.exit(1)
 except:
   raise
 
-
-# Create a new SaxParser instance, and use that
-# to instantiate EDXMLDefinitionSwapper. Pass the
-# parsed definitions to the swapper.
-SaxParser  = make_parser()
-Swapper    = EDXMLDefinitionSwapper(SaxParser, EDXMLParser.Definitions)
-
-SaxParser.setContentHandler(Swapper)
-
-# Go!
-SaxParser.parse(Input)
+# Now parse the input while swapping the ontology.
+with EDXMLDefinitionSwapper(Parser.getOntology()) as swapper:
+  try:
+    swapper.parse(Input)
+  except KeyboardInterrupt:
+    pass
