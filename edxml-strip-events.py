@@ -34,14 +34,13 @@
 # 
 #  Python script that will filter out the event data from EDXML and validate the
 #  ontology in the <definitions> section in the process. The stripped version of
-#  the input.
+#  the input is printed on standard output.
 
 import sys
-from xml.sax import make_parser
-from xml.sax.saxutils import XMLGenerator
-from xml.sax.xmlreader import AttributesImpl
-from edxml.EDXMLParser import EDXMLParser
-from edxml.EDXMLBase import EDXMLProcessingInterrupted
+
+from edxml.EDXMLParser import EDXMLOntologyPullParser
+from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
+
 
 def PrintHelp():
 
@@ -89,41 +88,16 @@ while CurrentArgument < ArgumentCount:
 
   CurrentArgument += 1
 
-# Create a SAX parser, and provide it with
-# an EDXMLParser instance as content handler.
-# This places the EDXMLParser instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser = make_parser()
-Parser    = EDXMLParser(SaxParser, True)
-
-SaxParser.setContentHandler(Parser)
-
-# Feed the input to the Sax parser. This
-# will parse the <definitions> section and
-# raise EDXMLProcessingInterrupted when done.
+Parser = EDXMLOntologyPullParser()
 
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  SaxParser.parse(Input)
-except EDXMLProcessingInterrupted:
+  Parser.parse(Input)
+except EDXMLOntologyPullParser.ProcessingInterrupted:
   pass
-except:
-  raise
 
-# Instantiate an XMLGenerator and generate opening
-# <events> tag.
-Generator = XMLGenerator(sys.stdout, 'utf-8')
-Generator.startElement('events', AttributesImpl({}))
-
-# Use the EDXMLDefinitions instance of the parser to
-# generate a <definitions> section.
-Parser.Definitions.GenerateXMLDefinitions(Generator, False)
-
-# Generate some more XML tags to complete the output, generating
-# valid stripped EDXML output.
-Generator.startElement('eventgroups', AttributesImpl({}))
-Generator.endElement('eventgroups')
-Generator.endElement('events')
+SimpleEDXMLWriter(sys.stdout)\
+  .AddOntology(Parser.getOntology())\
+  .Close()
