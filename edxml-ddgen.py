@@ -35,7 +35,15 @@
 #  testing EDXML processing systems and storage back ends.
 
 import sys, time, random
+
+import edxml.ontology
+from edxml import EDXMLEvent
 from edxml.EDXMLWriter import EDXMLWriter
+from edxml.ontology import EventProperty
+from edxml.ontology import EventSource
+from edxml.ontology import EventType
+from edxml.ontology import ObjectType
+
 
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
@@ -60,13 +68,14 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     self.Diversity = Diversity
     self.EventGroupSize = EventGroupSize
     self.EventSourceIdDict = {'0': '/source-a/', '1': '/source-b/'}
-    self.RandomContentCharacters = 'abcdefghijklmnop  '
+    self.RandomContentCharacters = u'abcdefghijklmnop  '
     self.RandomContentCharactersLength = len(self.RandomContentCharacters)
+    self.TimeStart = time.time()
 
     # Call parent class constructor
-    EDXMLWriter.__init__(self, sys.stdout, False)
+    EDXMLWriter.__init__(self, sys.stdout, Validate=False)
 
-    self.TimeStart = time.time()
+  def Start(self):
     self.WriteDefinitions()
     self.OpenEventGroups()
     self.OpenEventGroup(self.EventTypeName, str(self.EventGroupCounter % 2))
@@ -89,28 +98,28 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     # Set the default object values
     PropertyObjects = {
-      'property-a': ['value'],
-      'property-c': ['value'],
-      'property-d': ['10'],
-      'property-e': ['1'],
-      'property-f': ['1.000'],
-      'property-g': ['10.000'],
-      'property-h': ['100.000']
+      'property-a': [u'value'],
+      'property-c': [u'value'],
+      'property-d': [u'10'],
+      'property-e': [u'1'],
+      'property-f': [u'1.000'],
+      'property-g': [u'10.000'],
+      'property-h': [u'100.000']
     }
 
     if self.Ordered:
       # This property requires ordering to be
       # preserved.
-      PropertyObjects['property-b'] = ['value']
+      PropertyObjects['property-b'] = [u'value']
 
     # To prevent colliding events from accumulating arbitrary
     # numbers of property 'property-c' (which has merge
     # strategy 'add'), we generate a small collection of random
     # strings for assigning to this property.
-    AddPropertyValues = [''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(10)]
+    AddPropertyValues = [u''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(10)]
 
     if self.GenerateCollisions:
-      UniquePropertyValues = [''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(self.Diversity)]
+      UniquePropertyValues = [u''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(self.Diversity)]
       RandomUniquePropertyValues = random.sample(range(self.Diversity), int(self.Diversity * (1.0 - (self.CollisionPercentage/100.0))))
     else:
       RandomUniquePropertyValues = []
@@ -130,33 +139,33 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # as being random.
         if self.GenerateCollisions:
           for ValueIndex in RandomUniquePropertyValues:
-            UniquePropertyValues[ValueIndex] = ''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength))
+            UniquePropertyValues[ValueIndex] = u''.join(random.sample(RandomPropertyCharacters, self.PropertyStringLength))
 
         # Generate random property values
         if self.RandomizeProperties:
 
           # The unique property is a completely random string
-          PropertyObjects['property-a'] = [''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
+          PropertyObjects['property-a'] = [u''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
 
           if self.Ordered and random.random() < 0.9:
             # We add the 'property-b' only if the output requires
             # the ordering of the events to be preserved. And even
             # then, we omit the property once in a while, removing
             # it in case of a collision.
-            PropertyObjects['property-b'] = [''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
+            PropertyObjects['property-b'] = [u''.join(random.sample(self.RandomContentCharacters * (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1), self.PropertyStringLength))]
 
           # A random string from a fixed set
           PropertyObjects['property-c'] = [random.choice(AddPropertyValues)]
 
           # Random values in range [-10,10]
-          PropertyObjects['property-d'] = [random.randint(-100, 100)]
+          PropertyObjects['property-d'] = [unicode(random.randint(-100, 100))]
 
           # Random values near 1.0
-          PropertyObjects['property-f'] = [1 + (random.random() - 0.5)/1000]
+          PropertyObjects['property-f'] = [u'%1.9f' % (1 + (random.random() - 0.5)/1000)]
 
           for Property in ['g', 'h']:
             # Random values in range [-0.5,0.5]
-            PropertyObjects['property-' + Property] = [random.random() - 0.5]
+            PropertyObjects['property-' + Property] = [u'%1.9f' % (random.random() - 0.5)]
 
         if self.GenerateCollisions:
           # For property-a, which is the unique property, we
@@ -164,13 +173,14 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
           # which has been prepared to generate collisions
           # at the requested rate.
           PropertyObjects['property-a'] = [random.choice(UniquePropertyValues)]
+          pass
 
         # Take time measurement for rate control
         if self.EventRate > 0:
           TimeStart = time.time()
 
         # Output one event
-        self.AddEvent(PropertyObjects, Content, ParentHashes = [], IgnoreInvalidObjects = False)
+        self.AddEvent(EDXMLEvent(PropertyObjects, Content=Content))
         self.EventCounter += 1
         self.CurrentEventGroupSize += 1
 
@@ -240,35 +250,43 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrMax      = 'drop'
       DropOrInc      = 'drop'
 
-    self.OpenDefinitions()
-    self.OpenEventDefinitions()
-    self.OpenEventDefinition(self.EventTypeName, 'a', '', 'a', 'a')
-    self.OpenEventDefinitionProperties()
-    self.AddEventProperty('property-a', self.ObjectTypeNamePrefix + '-a', 'a', Merge = DropOrMatch, Unique = self.GenerateCollisions)
+    ontology = edxml.ontology.Ontology()
+    eventType = EventType.Create(self.EventTypeName)\
+        .AddProperty(EventProperty.Create('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch))
+
     if self.Ordered:
-      self.AddEventProperty('property-b', self.ObjectTypeNamePrefix + '-a', 'b', Merge = DropOrReplace)
-    self.AddEventProperty('property-c', self.ObjectTypeNamePrefix + '-a', 'c', Merge = DropOrAdd)
-    self.AddEventProperty('property-d', self.ObjectTypeNamePrefix + '-b', 'd', Merge = DropOrSum)
-    self.AddEventProperty('property-e', self.ObjectTypeNamePrefix + '-b', 'e', Merge = DropOrInc)
-    self.AddEventProperty('property-f', self.ObjectTypeNamePrefix + '-c', 'f', Merge = DropOrMultiply)
-    self.AddEventProperty('property-g', self.ObjectTypeNamePrefix + '-c', 'g', Merge = DropOrMin)
-    self.AddEventProperty('property-h', self.ObjectTypeNamePrefix + '-c', 'h', Merge = DropOrMax)
-    self.CloseEventDefinitionProperties()
-    self.OpenEventDefinitionRelations()
-    self.CloseEventDefinitionRelations()
-    self.CloseEventDefinition()
-    self.CloseEventDefinitions()
-    self.OpenObjectTypes()
-    self.AddObjectType(self.ObjectTypeNamePrefix + '-a', 'a', 'string:%d:cs' % self.PropertyStringLength)
-    self.AddObjectType(self.ObjectTypeNamePrefix + '-b', 'b', 'number:bigint:signed')
-    self.AddObjectType(self.ObjectTypeNamePrefix + '-c', 'c', 'number:decimal:10:9:signed')
-    self.CloseObjectTypes()
-    self.OpenSourceDefinitions()
+      eventType.AddProperty(
+        EventProperty.Create('property-b', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrReplace)
+      )
+
+    eventType.AddProperty(
+      EventProperty.Create('property-c', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrAdd)
+    ).AddProperty(
+      EventProperty.Create('property-d', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrSum)
+    ).AddProperty(
+      EventProperty.Create('property-e', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrInc)
+    ).AddProperty(
+      EventProperty.Create('property-f', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMultiply)
+    ).AddProperty(
+      EventProperty.Create('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
+    ).AddProperty(
+      EventProperty.Create('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
+    )
+
+    ontology.AddEventType(eventType)
+
+    ontology.AddObjectType(
+      ObjectType.Create(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
+    ).AddObjectType(
+      ObjectType.Create(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
+    ).AddObjectType(
+      ObjectType.Create(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
+    )
+
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
-      self.AddSource(SourceId, SourceUrl, '00000000', 'dummy source')
-    self.CloseSourceDefinitions()
-    self.CloseDefinitions()
-    sys.stdout.flush()
+      ontology.AddEventSource(EventSource.Create(SourceUrl))
+
+    self.AddOntology(ontology)
 
 
 def PrintHelp():
@@ -424,7 +442,11 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-Generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties,
+generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties,
                                     EventContentSize, RandomizeEventContent, GenerateCollisions,
                                     CollisionPercentage, EventTypeName, ObjectTypeNamePrefix,
                                     EventGroupSize, OutputDiversity, OrderedOutput)
+try:
+  generator.Start()
+except KeyboardInterrupt:
+  generator.Close()
