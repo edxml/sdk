@@ -48,74 +48,67 @@
 #
 
 import sys, re
-from xml.sax import make_parser
-from edxml.EDXMLFilter import EDXMLStreamFilter
+from edxml.EDXMLFilter import EDXMLPullFilter
 
-# This class is based on the EDXMLStreamFilter class,
-# and filters out <eventgroup> sections based on their
-# source and event type.
 
-class EDXMLEventGroupFilter(EDXMLStreamFilter):
-  def __init__ (self, SourceUrlPattern, EventTypeName):
+class EDXMLEventGroupFilter(EDXMLPullFilter):
+  def __init__(self, SourceUrlPattern, EventTypeName):
 
+    super(EDXMLEventGroupFilter, self).__init__(sys.stdout, False)
     self.SourceUrlPattern = SourceUrlPattern
     self.EventTypeName = EventTypeName
-    self.SourceUrlMapping = {}
+    self.passThrough = True
 
-    # Create Sax parser
-    self.SaxParser = make_parser()
-    # Call parent class constructor
-    EDXMLStreamFilter.__init__(self, self.SaxParser, False)
-    # Set self as content handler
-    self.SaxParser.setContentHandler(self)
+  def _parsedOntology(self, parsedOntology):
+    filteredEventTypes = []
+    filteredSources = []
 
-  def startElement(self, name, attrs):
+    if self.EventTypeName:
+      for eventTypeName in parsedOntology.GetEventTypeNames():
+        if eventTypeName != self.EventTypeName:
+          filteredEventTypes.append(eventTypeName)
 
-    if name == 'eventgroup':
+    for sourceUrl, source in parsedOntology.GenerateEventSources():
+      if re.match(self.SourceUrlPattern, sourceUrl) is not None:
+        filteredSources.append(sourceUrl)
 
-      SourceUrl = self.SourceUrlMapping[attrs.get('source-id')]
-      if re.match(self.SourceUrlPattern, SourceUrl) is None:
-        # No match, turn filter output off.
-        self.SetOutputEnabled(False)
+    for eventTypeName in filteredEventTypes:
+      parsedOntology.DeleteEventType(eventTypeName)
+    for eventSource in filteredSources:
+      parsedOntology.DeleteEventSource(eventSource)
 
-      if self.EventTypeName and attrs.get('event-type') != self.EventTypeName:
-        # No match, turn filter output off.
-        self.SetOutputEnabled(False)
+    parsedOntology.Validate()
 
-    elif name == 'source':
-      # Remember which Source ID belongs to which URL
-      self.SourceUrlMapping[attrs.get('source-id')] = attrs.get('url')
+    super(EDXMLEventGroupFilter, self)._parsedOntology(parsedOntology)
 
-      if re.match(self.SourceUrlPattern, attrs.get('url')) is None:
-        # No match, turn filter output off.
-        self.SetOutputEnabled(False)
-      else:
-        # Turn filter output back on
-        self.SetOutputEnabled(True)
+  def _openEventGroup(self, eventTypeName, eventSourceId):
 
-    elif name == 'eventtype':
+    if self.getOntology().GetEventSourceById(eventSourceId) is None:
+      # Source is gone, turn filter output off.
+      self.passThrough = False
+      eventTypeName = None
+      eventSourceId = None
 
-      if self.EventTypeName and attrs.get('name') != self.EventTypeName:
-        # No match, turn filter output off.
-        self.SetOutputEnabled(False)
-      else:
-        # Turn filter output back on
-        self.SetOutputEnabled(True)
+    if self.getOntology().GetEventType(eventTypeName) is None:
+      # Event type is gone, turn filter output off.
+      self.passThrough = False
+      eventTypeName = None
+      eventSourceId = None
 
-    # Call parent startElement to generate the output XML element.
-    EDXMLStreamFilter.startElement(self, name, attrs)
+    if self.passThrough:
+      super(EDXMLEventGroupFilter, self)._openEventGroup(eventTypeName, eventSourceId)
 
-  def endElement(self, name):
-    # Call parent implementation
-    EDXMLStreamFilter.endElement(self, name)
+  def _closeEventGroup(self, eventTypeName, eventSourceId):
 
-    if name == 'eventgroup':
-      # Turn filter output back on
-      self.SetOutputEnabled(True)
+    if self.passThrough:
+      super(EDXMLEventGroupFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
+    else:
+      self.passThrough = True
 
-    if name == 'sources':
-      # Turn filter output back on
-      self.SetOutputEnabled(True)
+  def _parsedEvent(self, edxmlEvent):
+    if self.passThrough:
+      super(EDXMLEventGroupFilter, self)._parsedEvent(edxmlEvent)
+
 
 def PrintHelp():
 
@@ -186,9 +179,8 @@ while CurrentArgument < ArgumentCount:
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-# Instantiate EDXMLEventGroupFilter
-EventGroupFilter = EDXMLEventGroupFilter(SourceFilter, EventTypeFilter)
-
-# Push input into the Sax parser.
-EventGroupFilter.SaxParser.parse(Input)
-
+with EDXMLEventGroupFilter(SourceFilter, EventTypeFilter) as eventFilter:
+  try:
+    eventFilter.parse(Input)
+  except KeyboardInterrupt:
+    pass
