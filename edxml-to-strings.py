@@ -35,34 +35,24 @@
 #  EDXML file or input stream. The strings are printed to standard output.
 
 import sys
-from xml.sax import make_parser
-from edxml.EDXMLParser import EDXMLParser
 
-# We create a class based on EDXMLParser,
-# overriding the ProcessEvent to process
-# the events in the EDXML stream.
+from edxml.EDXMLParser import EDXMLPullParser
 
-class EDXMLEventPrinter(EDXMLParser):
 
-  def __init__ (self, upstream, PrintShort = False, PrintColorized = False):
+class EDXMLEventPrinter(EDXMLPullParser):
 
-    EDXMLParser.__init__(self, upstream)
+  def __init__(self, PrintShort=False, PrintColorized=False):
 
+    super(EDXMLEventPrinter, self).__init__()
     self.Short = PrintShort
     self.Colorize = PrintColorized
 
-  # Override of EDXMLParser implementation
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
+  def _parsedEvent(self, edxmlEvent):
 
-    # Group event objects by property.
-    Properties = [Object['property'] for Object in EventObjects]
-    EventProperties = {Property: [Object['value'] for Object in EventObjects if Object['property'] == Property] for Property in Properties}
+    print self.getOntology().GetEventType(edxmlEvent.GetTypeName()).EvaluateReporterString(
+      edxmlEvent, short=self.Short, colorize=self.Colorize
+    )
 
-    # Use the EDXMLDefinitions instance in the
-    # EDXMLParser class to generate the string
-    print unicode(self.Definitions.EvaluateReporterString(
-      EventTypeName, EventProperties, Short = self.Short, Colorize = self.Colorize
-    )).encode('utf-8')
 
 def PrintHelp():
 
@@ -124,18 +114,10 @@ while CurrentArgument < ArgumentCount:
 
   CurrentArgument += 1
 
-# Create a SAX parser, and provide it with
-# an EDXMLEventPrinter instance as content handler.
-# This places the EDXMLEventPrinter instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser = make_parser()
-SaxParser.setContentHandler(EDXMLEventPrinter(SaxParser, PrintShort = Short, PrintColorized = Colorize))
-
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-# Now we feed EDXML data into the Sax parser. This will trigger
-# calls to ProcessEvent in our EDXMLEventPrinter, producing output.
-
-SaxParser.parse(Input)
+try:
+  EDXMLEventPrinter(PrintShort=Short, PrintColorized=Colorize).parse(Input)
+except KeyboardInterrupt:
+  pass
