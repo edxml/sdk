@@ -35,25 +35,20 @@
 #  EDXML file or input stream. The hashes are printed to standard output.
 
 import sys
-from xml.sax import make_parser
-from edxml.EDXMLParser import EDXMLParser
+from edxml.EDXMLParser import EDXMLPullParser
 
-# We create a class based on EDXMLParser,
-# overriding the ProcessEvent to process
-# the events in the EDXML stream.
 
-class EDXMLEventHasher(EDXMLParser):
+class EDXMLEventHasher(EDXMLPullParser):
 
-  def __init__ (self, upstream):
+  def __init__(self):
 
-    EDXMLParser.__init__(self, upstream)
+    super(EDXMLEventHasher, self).__init__(sys.stdout)
 
-  # Override of EDXMLParser implementation
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
+  def _parsedEvent(self, edxmlEvent):
 
-    # Use the EDXMLDefinitions instance in the 
-    # EDXMLParser class to compute the sticky hash
-    print self.Definitions.ComputeStickyHash(EventTypeName, EventObjects, EventContent)
+    ontology = self.getOntology()
+    print edxmlEvent.Normalize(ontology).ComputeStickyHash(ontology)
+
 
 def PrintHelp():
 
@@ -100,18 +95,10 @@ while CurrentArgument < ArgumentCount:
 
   CurrentArgument += 1
 
-# Create a SAX parser, and provide it with
-# an EDXMLEventHasher instance as content handler.
-# This places the EDXMLEventHasher instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser = make_parser()
-SaxParser.setContentHandler(EDXMLEventHasher(SaxParser))
-
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-# Now we feed EDXML data into the Sax parser. This will trigger
-# calls to ProcessEvent in our EDXMLEventHasher, producing output.
-
-SaxParser.parse(Input)
+try:
+  EDXMLEventHasher().parse(Input)
+except KeyboardInterrupt:
+  sys.exit()
