@@ -35,17 +35,17 @@
 #  It prints event counts, lists defined event types, object types, source
 #  URLs, and so on.
 
-import sys
 import string
-from xml.sax import make_parser
-from edxml.EDXMLBase import EDXMLError
-from edxml.EDXMLParser import EDXMLParser
+import sys
+
+from edxml.EDXMLParser import EDXMLPullParser
+
 
 def PrintHelp():
 
   print """
 
-   This utility outputs various statistics for a set of EDXML files. It 
+   This utility outputs various statistics for a set of EDXML files. It
    prints event counts, lists defined event types, object types, source
    URLs, and so on.
 
@@ -69,7 +69,7 @@ def PrintHelp():
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
-InputFileNames = []
+InputFiles = []
 
 # Parse commandline arguments
 
@@ -81,7 +81,7 @@ while CurrentArgument < ArgumentCount:
 
   elif sys.argv[CurrentArgument] == '-f':
     CurrentArgument += 1
-    InputFileNames.append(sys.argv[CurrentArgument])
+    InputFiles.append((CurrentArgument, sys.argv[CurrentArgument]))
 
   else:
     sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
@@ -89,60 +89,46 @@ while CurrentArgument < ArgumentCount:
 
   CurrentArgument += 1
 
-# Create a SAX parser, and provide it with
-# an EDXMLParser instance as content handler.
-# This places the EDXMLParser instance in the
-# XML processing chain, just after SaxParser.
+Parser = EDXMLPullParser(validate=False)
 
-SaxParser = make_parser()
-Parser    = EDXMLParser(SaxParser, False)
-
-SaxParser.setContentHandler(Parser)
-
-if len(InputFileNames) == 0:
+if len(InputFiles) == 0:
 
   # Feed the parser from standard input.
+  InputFiles = [('standard input', sys.stdin)]
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
-  SaxParser.parse(sys.stdin)
 
-else:
+# We repeatedly use the same parser to process all EDXML files in succession.
 
-  # We repeatedly use the same SAX parser and
-  # EDXMLParser to process all EDXML files in
-  # succession. This will raise EDXMLError as
-  # soon as inconsistencies are detected.
+for FileName, File in InputFiles:
+  sys.stderr.write("Processing %s..." % FileName)
 
-  for FileName in InputFileNames:
-    sys.stderr.write("Processing %s..." % FileName)
-
-    try:
-      SaxParser.parse(open(FileName))
-    except EDXMLError as Error:
-      print("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (( FileName, str(Error) )) )
-      sys.exit(1)
-    except:
-      raise
-
-# Now we query the Definitions instance in EDXMLParser
-# to obtain statistics about the data we parsed.
+  try:
+    Parser.parse(File)
+  except KeyboardInterrupt:
+    sys.exit(0)
 
 print "\n"
-print "Total event count: %s\n" % Parser.GetEventCount()
+print "Total event count: %s\n" % Parser.getEventCounter()
 print "Event counts per type:\n"
 
-for EventTypeName in sorted(Parser.Definitions.GetEventTypeNames()):
-  print "%s: %s" % (( string.ljust(EventTypeName, 40), Parser.GetEventCount(EventTypeName) ))
+for EventTypeName in sorted(Parser.getOntology().GetEventTypeNames()):
+  print "%s: %s" % (string.ljust(EventTypeName, 40), Parser.getEventTypeCounter(EventTypeName))
 
 print "\nObject Types:\n"
 
-for ObjectTypeName in sorted(Parser.Definitions.GetObjectTypeNames()):
-  DataType = Parser.Definitions.GetObjectTypeDataType(ObjectTypeName)
-  print "%s: %s" % (( string.ljust(ObjectTypeName, 40), DataType ))
+for ObjectTypeName in sorted(Parser.getOntology().GetObjectTypeNames()):
+  DataType = Parser.getOntology().GetObjectType(ObjectTypeName).GetDataType()
+  print "%s: %s" % (string.ljust(ObjectTypeName, 40), str(DataType))
+
+predicates = set()
+for EventTypeName, EventType in Parser.getOntology().GenerateEventTypes():
+  for Relation in EventType.GetPropertyRelations():
+    predicates.add(Relation.GetTypePredicate())
 
 print "\nProperty relation predicates:\n"
-for Predicate in sorted(Parser.Definitions.GetRelationPredicates()):
+for Predicate in sorted(predicates):
   print Predicate
 
 print "\nSource URLs:\n"
-for URL in sorted(Parser.Definitions.GetSourceURLs()):
-  print URL
+for Url, Source in sorted(Parser.getOntology().GenerateEventSources()):
+  print Url
