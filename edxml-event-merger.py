@@ -44,141 +44,77 @@
 
 import sys
 import time
-from StringIO import StringIO
-from xml.sax import make_parser
-from xml.sax.saxutils import XMLGenerator
-from edxml.EDXMLWriter import EDXMLWriter
-from edxml.EDXMLFilter import EDXMLEventEditor
-from edxml.EDXMLParser import EDXMLParser
+from edxml.EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 
-# We create a class based on EDXMLEventEditor,
-# overriding the EditEvent to process
-# the events in the EDXML stream.
 
-class EDXMLEventMerger(EDXMLEventEditor):
+class EDXMLEventMerger(EDXMLPullFilter):
 
-  def __init__ (self, upstream):
+  def __init__(self):
 
-    EDXMLEventEditor.__init__(self, upstream)
+    super(EDXMLEventMerger, self).__init__(sys.stdout)
     self.HashBuffer = {}
 
-  # Override of EDXMLEventEditor implementation
-  def EditEvent(self, SourceId, EventTypeName, EventObjects, EventContent, EventAttributes):
+  def _parsedEvent(self, edxmlEvent):
 
-    # Use the EDXMLDefinitions instance in the 
-    # EDXMLEventEditor class to compute the sticky hash
-    Hash = self.Definitions.ComputeStickyHash(EventTypeName, EventObjects, EventContent)
-
-    Properties = [Object['property'] for Object in EventObjects]
-    EventProperties = {Property: [Object['value'] for Object in EventObjects if Object['property'] == Property] for Property in Properties}
+    Hash = edxmlEvent.Normalize().ComputeStickyHash(self.getOntology())
 
     if Hash in self.HashBuffer:
-      self.Definitions.MergeEvents(EventTypeName, self.HashBuffer[Hash]['Objects'], EventProperties)
+      edxmlEvent.MergeWith([self.HashBuffer[Hash]], self.getOntology())
 
-      EventObjects = []
-      for Property, Values in self.HashBuffer[Hash]['Objects'].items():
-        for Value in Values:
-          EventObjects.append({'property': Property, 'value': Value})
-    else:
-      self.HashBuffer[Hash] = {
-        'Objects': EventProperties
-      }
+    self.HashBuffer[Hash] = edxmlEvent
 
-    return EventObjects, EventContent, EventAttributes
+    EDXMLPullFilter._parsedEvent(self, edxmlEvent)
 
-# We create another, slightly more complicated
-# class, based on EDXMLParser, overriding multiple
-# parent methods to buffer input events and generate
-# merged output events. By extending the low level
-# EDXMLParser in stead of the high level EDXMLEventEditor,
-# we have more control over the output.
 
-class BufferingEDXMLEventMerger(EDXMLParser):
+class BufferingEDXMLEventMerger(EDXMLPushFilter):
 
-  def __init__ (self, EventBufferSize, Latency, upstream):
+  def __init__(self, EventBufferSize, Latency):
 
+    super(BufferingEDXMLEventMerger, self).__init__(sys.stdout)
     self.BufferSize = 0
     self.MaxLatency = Latency
     self.MaxBufferSize = EventBufferSize
     self.LastOutputTime = time.time()
-    self.Buffer = {}
+    self.HashBuffer = {}
 
-    # Create a parser for the input.
-    EDXMLParser.__init__(self, upstream)
+  def _closeEventGroup(self, eventTypeName, eventSourceId):
 
-    # Create a generator for outputting EDXML.
-    self.Generator = EDXMLWriter(sys.stdout)
+    self._flushBuffer()
 
-  def DefinitionsLoaded(self):
+    EDXMLPushFilter._closeEventGroup(self, eventTypeName, eventSourceId)
 
-    # All definitions in the input have been read
-    # and parsed. We can regenerate the XML representation
-    # of the definitions and inject that into the EDXML
-    # generator, effectively duplicating the input
-    # definitions into the output.
-    DefinitionsElement = StringIO()
-    self.Definitions.GenerateXMLDefinitions(XMLGenerator(DefinitionsElement, 'utf-8'))
-    self.Generator.AddXmlDefinitionsElement(DefinitionsElement.getvalue())
-    self.Generator.OpenEventGroups()
+  def _parsedEvent(self, edxmlEvent):
 
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, Parents):
+    Hash = edxmlEvent.ComputeStickyHash(self.getOntology())
 
-    # An input event has been read and parsed. We buffer these
-    # events per event group, to allow outputting multiple events
-    # per event group.
-    Group = '%s:%s' % (EventTypeName, SourceId)
-    if not Group in self.Buffer:
-      self.Buffer[Group] = {}
-
-    # Use the EDXMLDefinitions instance in the
-    # EDXMLEventEditor class to compute the sticky hash
-    Hash = self.Definitions.ComputeStickyHash(EventTypeName, EventObjects, EventContent)
-
-    # Group event objects by property.
-    Properties = [Object['property'] for Object in EventObjects]
-    EventProperties = {Property: [Object['value'] for Object in EventObjects if Object['property'] == Property] for Property in Properties}
-
-    if Hash in self.Buffer[Group]:
+    if Hash in self.HashBuffer:
       # This hash is in our buffer, which means
-      # we have a collision. Merge input event
-      # into the buffered event.
-      self.Definitions.MergeEvents(EventTypeName, self.Buffer[Group][Hash]['Objects'], EventProperties)
+      # we have a collision. Add the event for
+      # merging later.
+      self.HashBuffer[Hash].append(edxmlEvent)
     else:
       # We have a new hash, add it to
       # the buffer.
-      self.Buffer[Group][Hash] = {
-        'EventTypeName': EventTypeName,
-        'SourceId': SourceId,
-        'Objects': EventProperties,
-        'EventContent': EventContent,
-        'Parents': Parents
-      }
+      self.HashBuffer[Hash] = [edxmlEvent]
 
-      self.BufferSize += 1
-      if self.BufferSize >= self.MaxBufferSize:
-        self.FlushBuffer()
+    self.BufferSize += 1
+    if self.BufferSize >= self.MaxBufferSize:
+      self._flushBuffer()
 
-    if self.BufferSize > 0 and self.MaxLatency > 0 and (time.time() - self.LastOutputTime) >= self.MaxLatency:
-      self.FlushBuffer()
+    if self.BufferSize > 0 and 0 < self.MaxLatency <= (time.time() - self.LastOutputTime):
+      self._flushBuffer()
 
-  def EndOfStream(self):
-    self.FlushBuffer()
-    self.Generator.CloseEventGroups()
-
-  def FlushBuffer(self):
-
-    # Traverse the event buffer, output events
-    # per event group.
-    for Group, Events in self.Buffer.items():
-      EventTypeName, SourceId = Group.split(':')
-      self.Generator.OpenEventGroup(EventTypeName, SourceId)
-      for Hash, Event in Events.items():
-        self.Generator.AddEvent(Event['Objects'], Event['EventContent'], Event['Parents'])
-      self.Generator.CloseEventGroup()
+  def _flushBuffer(self):
+    for eventHash, events in self.HashBuffer.iteritems():
+      if len(events) > 1:
+        outputEvent = events.pop()
+        outputEvent.MergeWith(events, self.getOntology())
+        self._writer.AddEvent(outputEvent)
 
     self.BufferSize = 0
     self.LastOutputTime = time.time()
     self.Buffer = {}
+
 
 def PrintHelp():
 
@@ -243,23 +179,6 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-# Create a SAX parser, and provide it with
-# an EDXMLEventMerger instance as content handler.
-# This places the EDXMLEventMerger instance in the
-# XML processing chain, just after SaxParser.
-
-if BufferSize > 1:
-  # If a maximum latency is specified, we need to
-  # use an incremental parser that we can feed.
-  SaxParser = make_parser(['xml.sax.IncrementalParser'])
-else:
-  SaxParser = make_parser()
-
-if BufferSize > 1:
-  SaxParser.setContentHandler(BufferingEDXMLEventMerger(BufferSize, OutputLatency, SaxParser))
-else:
-  SaxParser.setContentHandler(EDXMLEventMerger(SaxParser))
-
 if InputFileName is None:
   sys.stderr.write("\nNo filename was given, waiting for EDXML data on STDIN...(use --help to get help)")
   Input = sys.stdin
@@ -269,19 +188,22 @@ else:
 
 sys.stdout.flush()
 
-# Now we feed EDXML data into the Sax parser. This will trigger
-# calls to ProcessEvent in our EDXMLEventMerger, producing output.
-
 if BufferSize > 1:
   # We need to read input with minimal
   # input buffering. This works best
   # when using the readline() method.
-  while 1:
-    Line = Input.readline()
-
-    if not Line:
-      break
-
-    SaxParser.feed(Line)
+  with BufferingEDXMLEventMerger(BufferSize, OutputLatency) as Merger:
+    try:
+      while 1:
+        Line = Input.readline()
+        if not Line:
+          break
+        Merger.feed(Line)
+    except KeyboardInterrupt:
+      sys.exit()
 else:
-  SaxParser.parse(Input)
+  with EDXMLEventMerger() as Merger:
+    try:
+      Merger.parse(open('demo.edxml'))
+    except KeyboardInterrupt:
+      sys.exit()
