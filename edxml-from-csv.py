@@ -36,13 +36,10 @@
 #  to generate output. The input should have column names on the very first row,
 #  where the column names match the names of the event type properties.
 
-import sys, time
-from StringIO import StringIO
-from xml.sax import make_parser
-from xml.sax.saxutils import XMLGenerator
-from edxml.EDXMLBase import EDXMLError, EDXMLProcessingInterrupted
-from edxml.EDXMLParser import EDXMLValidatingParser
-from edxml.EDXMLWriter import EDXMLWriter
+import sys
+import time
+import edxml
+
 
 def PrintHelp():
 
@@ -146,31 +143,24 @@ if EventTypeColumn is None and OutputEventType is None:
   sys.stderr.write('I cannot determine the event type of the input data. Either specify an event type or a column that contains event type names. (use --help option to get help)\n')
   sys.exit(1)
 
-# Create a SAX parser, provide it with
-# an EDXMLValidatingParser instance as content handler.
-SaxParser = make_parser()
-MyEDXMLParser = EDXMLValidatingParser(SaxParser, SkipEvents = True)
-SaxParser.setContentHandler(MyEDXMLParser)
+Parser = edxml.EDXMLOntologyPullParser()
 
-# Parse the EDXML file. This yields a parsed ontology
-# in the EDXMLValidatingParser instance.
 try:
-  SaxParser.parse(OntologyInputFile)
-except EDXMLProcessingInterrupted:
+  Parser.parse(OntologyInputFile)
+except edxml.EDXMLOntologyPullParser.ProcessingInterrupted:
   pass
 
 # Remove the existing source definitions, we will
 # define our own data source.
-for SourceId in MyEDXMLParser.Definitions.GetSourceIDs():
-  MyEDXMLParser.Definitions.RemoveSource(SourceId)
+for url, source in Parser.getOntology().GenerateEventSources():
+  Parser.getOntology().DeleteEventSource(url)
 
 # Define new data source.
-MyEDXMLParser.Definitions.AddSource(OutputSourceUrl, {'source-id': 'csv', 'url': OutputSourceUrl, 'date-acquired' : DateAcquired, 'description': 'Imported from CSV data'})
+Parser.getOntology().AddEventSource(edxml.ontology.EventSource.Create(
+  OutputSourceUrl, Description='Imported from CSV data', AcquisitionDate=DateAcquired
+))
 
-# Generate the <definitions> element from the EDXML file we
-# just parsed using MyEDXMLParser.
-DefinitionsElement = StringIO()
-MyEDXMLParser.Definitions.GenerateXMLDefinitions(XMLGenerator(DefinitionsElement, 'utf-8'))
+OutputSourceId = Parser.getOntology().GetEventSource(OutputSourceUrl).GetId()
 
 if Input == sys.stdin:
   sys.stderr.write('Waiting for CSV data on standard input... (use --help option to get help)\n')
@@ -179,8 +169,8 @@ if Input == sys.stdin:
 # from the input EDXML file. This duplicates the <definitions>
 # element from the input EDXML file, except for the source
 # definitions that we replaced with our own.
-MyWriter = EDXMLWriter(sys.stdout, Validate = True, ValidateObjects = True)
-MyWriter.AddXmlDefinitionsElement(DefinitionsElement.getvalue())
+MyWriter = edxml.EDXMLWriter(sys.stdout)
+MyWriter.AddOntology(Parser.getOntology())
 
 # We will start outputting event groups now.
 MyWriter.OpenEventGroups()
@@ -189,6 +179,9 @@ CurrentOutputEventType = None
 ColumnPropertyMapping = None
 PreviousSplitLine = None
 PreviousLineProperties = None
+OutputEvent = edxml.EventElement({}, OutputEventType, OutputSourceUrl)
+OutputProperties = {}
+UniqueOutputProperties = {}
 
 for Line in Input:
   if ColumnPropertyMapping is None:
@@ -214,8 +207,18 @@ for Line in Input:
     OutputEventType = SplitLine[EventTypeColumn]
     del SplitLine[EventTypeColumn]
 
+  if OutputEventType not in OutputProperties:
+    OutputProperties[OutputEventType] = Parser.getOntology().GetEventType(OutputEventType).GetProperties()
+    UniqueOutputProperties[OutputEventType] = Parser.getOntology().GetEventType(OutputEventType).GetUniqueProperties()
+
+    OutputProperties[OutputEventType] = [Property for Property in OutputProperties[OutputEventType] if Property in PropertyColumnMapping]
+    UniqueOutputProperties[OutputEventType] = [Property for Property in UniqueOutputProperties[OutputEventType] if Property in PropertyColumnMapping]
+
   # Create dictionary of properties and their objects
-  LineProperties = {Property: [SplitLine[PropertyColumnMapping[Property]]] for Property in MyEDXMLParser.Definitions.GetEventTypeProperties(OutputEventType) if SplitLine[PropertyColumnMapping[Property]] != '' }
+  LineProperties = {}
+  for Property in OutputProperties[OutputEventType]:
+    if SplitLine[PropertyColumnMapping[Property]] != '':
+      LineProperties[Property] = [SplitLine[PropertyColumnMapping[Property]]]
 
   if PreviousSplitLine is not None:
 
@@ -233,7 +236,7 @@ for Line in Input:
       # Check if we have exactly one differing property, which
       # must NOT be a unique property. Differing unique properties
       # always mean that we are looking at two different events.
-      if len(DiffProperties) > 0 and DiffProperties[0] not in MyEDXMLParser.Definitions.GetUniqueProperties(OutputEventType):
+      if len(DiffProperties) > 0 and DiffProperties[0] not in UniqueOutputProperties[OutputEventType]:
         Property = DiffProperties[0]
 
         # Add the value to existing dictionary and move on to the next line.
@@ -244,25 +247,25 @@ for Line in Input:
       if CurrentOutputEventType is not None:
         if PreviousLineProperties is not None:
           try:
-            MyWriter.AddEvent(PreviousLineProperties)
-          except EDXMLError as Error:
+            MyWriter.AddEvent(OutputEvent.SetProperties(PreviousLineProperties))
+          except edxml.EDXMLValidationError as Error:
             # Invalid event, just skip it.
             sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
         MyWriter.CloseEventGroup()
-        MyWriter.OpenEventGroup(OutputEventType, 'csv')
+        MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
       else:
-        MyWriter.OpenEventGroup(OutputEventType, 'csv')
+        MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
         if PreviousLineProperties is not None:
           try:
-            MyWriter.AddEvent(PreviousLineProperties)
-          except EDXMLError as Error:
+            MyWriter.AddEvent(OutputEvent.SetProperties(PreviousLineProperties))
+          except edxml.EDXMLValidationError as Error:
             # Invalid event, just skip it.
             sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
       CurrentOutputEventType = OutputEventType
     else:
       try:
-        MyWriter.AddEvent(PreviousLineProperties)
-      except EDXMLError as Error:
+        MyWriter.AddEvent(OutputEvent.SetProperties(PreviousLineProperties))
+      except edxml.EDXMLValidationError as Error:
         # Invalid event, just skip it.
         sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
 
@@ -273,11 +276,19 @@ if PreviousSplitLine is not None:
   if OutputEventType != CurrentOutputEventType:
     if CurrentOutputEventType is not None:
       MyWriter.CloseEventGroup()
-    MyWriter.OpenEventGroup(OutputEventType, 'csv')
+    MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
     CurrentOutputEventType = OutputEventType
+    if OutputEventType not in OutputProperties:
+      OutputProperties[OutputEventType] = Parser.getOntology().GetEventType(OutputEventType).GetProperties()
+      UniqueOutputProperties[OutputEventType] = Parser.getOntology().GetEventType(OutputEventType).GetUniqueProperties()
+
+      OutputProperties[OutputEventType] = [Property for Property in OutputProperties if Property in PropertyColumnMapping]
+      UniqueOutputProperties[OutputEventType] = [Property for Property in UniqueOutputProperties if Property in PropertyColumnMapping]
+
+    OutputEvent.SetType(OutputEventType)
   try:
-    MyWriter.AddEvent(PreviousLineProperties)
-  except EDXMLError as Error:
+    MyWriter.AddEvent(OutputEvent.SetProperties(PreviousLineProperties))
+  except edxml.EDXMLValidationError as Error:
     # Invalid event, just skip it.
     sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
 
