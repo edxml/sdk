@@ -37,31 +37,27 @@
 #  lines are generated.
 
 import sys
-from xml.sax import make_parser
-from edxml.EDXMLParser import EDXMLParser
 
-# We create a class based on EDXMLParser,
-# overriding the ProcessEvent to process
-# the events in the EDXML stream.
+from edxml.EDXMLParser import EDXMLPullParser
 
-class EDXML2CSV(EDXMLParser):
 
-  def __init__ (self, Upstream, OutputColumnNames, ColumnSeparator, PrintHeaderLine):
+class EDXML2CSV(EDXMLPullParser):
+
+  def __init__(self, OutputColumnNames, ColumnSeparator, PrintHeaderLine):
 
     self.PropertyNames = []
     self.ColumnSeparator = ColumnSeparator
     self.OutputColumnNames = OutputColumnNames
     self.PrintHeaderLine = PrintHeaderLine
-    EDXMLParser.__init__(self, Upstream)
+    super(EDXML2CSV, self).__init__(sys.stdout)
 
-  # Override of EDXMLParser implementation
-  def DefinitionsLoaded(self):
+  def _parsedOntology(self, ontology):
 
     # Compile a list of output columns,
     # one column per event property.
     PropertyNames = set()
-    for EventTypeName in self.Definitions.GetEventTypeNames():
-      PropertyNames.update(self.Definitions.GetEventTypeProperties(EventTypeName))
+    for EventTypeName, EventType in self.getOntology().GenerateEventTypes():
+      PropertyNames.update(EventType.GetProperties().keys())
 
     # Filter the available properties using
     # the list of requested output columns.
@@ -78,21 +74,21 @@ class EDXML2CSV(EDXMLParser):
     if self.PrintHeaderLine:
       sys.stdout.write('event type' + self.ColumnSeparator + self.ColumnSeparator.join(self.PropertyNames) + '\n')
 
-  # Override of EDXMLParser implementation
-  def ProcessEvent(self, EventTypeName, SourceId, EventObjects, EventContent, ExplicitParents):
+  def _parsedEvent(self, edxmlEvent):
 
     PropertyObjects = {}
-    EscapedEventContent = EventContent.replace('\n', '\\n').replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
+    EscapedEventContent = edxmlEvent.GetContent().replace('\n', '\\n').replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
 
     for PropertyName in self.PropertyNames:
       PropertyObjects[PropertyName] = []
 
-    for Object in EventObjects:
-      if Object['property'] in self.PropertyNames:
-        EscapedValue = Object['value'].replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
-        PropertyObjects[Object['property']].append(EscapedValue)
+    for PropertyName, Objects in edxmlEvent.GetProperties():
+      if PropertyName in self.PropertyNames:
+        for Object in Objects:
+          EscapedValue = Object.replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
+          PropertyObjects[PropertyName].append(EscapedValue)
 
-    self.IterateGenerateLines(self.PropertyNames, PropertyObjects, EventTypeName + self.ColumnSeparator, EscapedEventContent, 0)
+    self.IterateGenerateLines(self.PropertyNames, PropertyObjects, edxmlEvent.GetType() + self.ColumnSeparator, EscapedEventContent, 0)
 
   def IterateGenerateLines(self, Columns, PropertyObjects, LineStart, LineEnd, StartColumn):
 
@@ -134,6 +130,7 @@ class EDXML2CSV(EDXMLParser):
           return
 
       sys.stdout.write(unicode(Line + LineEnd + '\n').encode('utf-8'))
+
 
 def PrintHelp():
 
@@ -204,18 +201,10 @@ while CurrOption < len(sys.argv):
 
   CurrOption += 1
 
-# Create a SAX parser, and provide it with
-# an EDXML2CSV instance as content handler.
-# This places the EDXML2CSV instance in the
-# XML processing chain, just after SaxParser.
-
-SaxParser = make_parser()
-SaxParser.setContentHandler(EDXML2CSV(SaxParser, OutputColumns, ColumnSeparator, not SuppressHeaderLine))
-
-# Now we feed EDXML data into the Sax parser. This will trigger
-# calls to ProcessEvent in our EDXML2CSV, producing output.
-
 if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-SaxParser.parse(Input)
+try:
+  EDXML2CSV(OutputColumns, ColumnSeparator, not SuppressHeaderLine).parse(Input)
+except KeyboardInterrupt:
+  sys.exit()
