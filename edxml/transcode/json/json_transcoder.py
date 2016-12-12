@@ -360,13 +360,13 @@ class JsonTranscoder(EDXMLBase):
         for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():
           Type.AddProperty(EventProperty.Create(PropertyName, ObjectTypeName))
           if PropertyName in self.PROPERTY_DESCRIPTIONS:
-            Type.GetProperty(PropertyName).SetDescription(self.PROPERTY_DESCRIPTIONS[PropertyName])
+            Type[PropertyName].SetDescription(self.PROPERTY_DESCRIPTIONS[PropertyName])
           if PropertyName in self.PROPERTY_SIMILARITY:
-            Type.GetProperty(PropertyName).HintSimilar(self.PROPERTY_SIMILARITY[PropertyName])
+            Type[PropertyName].HintSimilar(self.PROPERTY_SIMILARITY[PropertyName])
           if PropertyName in self.PROPERTY_MERGE_STRATEGIES:
-            Type.GetProperty(PropertyName).SetMergeStrategy(self.PROPERTY_MERGE_STRATEGIES[PropertyName])
+            Type[PropertyName].SetMergeStrategy(self.PROPERTY_MERGE_STRATEGIES[PropertyName])
           if EventTypeName in self.TYPE_UNIQUE_PROPERTIES and PropertyName in self.TYPE_UNIQUE_PROPERTIES[EventTypeName]:
-            Type.GetProperty(PropertyName).Unique()
+            Type[PropertyName].Unique()
 
       if EventTypeName in self.PARENT_MAPPINGS:
         ParentEventTypeName = None

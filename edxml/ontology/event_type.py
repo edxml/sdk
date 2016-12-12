@@ -4,6 +4,7 @@ from StringIO import StringIO
 
 import pytz
 import re
+from collections import MutableMapping
 from typing import Dict
 from typing import List
 from dateutil import relativedelta
@@ -17,9 +18,12 @@ from edxml.EDXMLBase import EDXMLValidationError
 
 from edxml.EDXMLWriter import EDXMLWriter
 
-class EventType(object):
+class EventType(MutableMapping):
   """
-  Class representing an EDXML event type
+  Class representing an EDXML event type. The class provides
+  access to event properties by means of a dictionary interface.
+  For each of the properties there is a key matching the name of
+  the event property, the value is the property itself.
   """
 
   NAME_PATTERN = re.compile("^[a-z0-9-]*$")
@@ -72,6 +76,33 @@ class EventType(object):
 
     return cls(Name, DisplayName, Description)
 
+  def __delitem__(self, propertyName):
+    self._properties.pop(propertyName, None)
+
+  def __setitem__(self, propertyName, propertyInstance):
+    if isinstance(propertyInstance, edxml.ontology.EventProperty):
+      self._properties[propertyName] = propertyInstance
+    else:
+      raise TypeError('Not an event property: %s' % repr(propertyInstance))
+
+  def __len__(self):
+    return len(self._properties)
+
+  def __getitem__(self, propertyName):
+    return self._properties[propertyName]
+
+  def __contains__(self, propertyName):
+    try:
+      self._properties[propertyName]
+    except (KeyError, IndexError):
+      return False
+    else:
+      return True
+
+  def __iter__(self):
+    for propertyName, prop in self._properties.iteritems():
+      yield propertyName
+
   def GetName(self):
     """
 
@@ -122,17 +153,6 @@ class EventType(object):
       list[str]:
     """
     return self._attr['classlist'].split(',')
-
-  def GetProperty(self, PropertyName):
-    """
-
-    Returns the property instance of the event type
-    property having specified name.
-
-    Returns:
-       edxml.ontology.EventProperty: The EventProperty instance
-    """
-    return self._properties[PropertyName]
 
   def GetProperties(self):
     """
@@ -1019,7 +1039,7 @@ class EventType(object):
       raise Exception('Event type update removed properties.')
 
     for propertyName, eventProperty in self.GetProperties().items():
-      eventProperty.Update(eventType.GetProperty(propertyName))
+      eventProperty.Update(eventType[propertyName])
 
     self.Validate()
 

@@ -236,8 +236,8 @@ class Ontology(object):
                                      (eventTypeName, eventType.GetParent().GetEventType()))
 
     # Check if the object type of each property exists
-    for eventTypeName, eventType in self._event_types.items():
-      for propertyName, eventProperty in eventType.GetProperties().items():
+    for eventTypeName, eventType in self._event_types.iteritems():
+      for propertyName, eventProperty in eventType.iteritems():
         if self.GetObjectType(eventProperty.GetObjectTypeName()) is None:
           raise EDXMLValidationError(
             'Property "%s" of event type "%s" refers to undefined object type "%s".' %
@@ -246,8 +246,8 @@ class Ontology(object):
 
     # Check if merge strategies make sense for the
     # configured property merge strategies
-    for eventTypeName, eventType in self._event_types.items():
-      for propertyName, eventProperty in eventType.GetProperties().items():
+    for eventTypeName, eventType in self._event_types.iteritems():
+      for propertyName, eventProperty in eventType.iteritems():
         if eventProperty.GetMergeStrategy() in ('min', 'max', 'increment', 'sum', 'multiply'):
           dataType = self.GetObjectType(eventProperty.GetObjectTypeName()).GetDataType()
           if not dataType.IsNumerical():
@@ -259,8 +259,8 @@ class Ontology(object):
     # Check if unique properties have their merge strategies set
     # to 'match'
     # TODO: Still needed for EDXML 3?
-    for eventTypeName, eventType in self._event_types.items():
-      for propertyName, eventProperty in eventType.GetProperties().items():
+    for eventTypeName, eventType in self._event_types.iteritems():
+      for propertyName, eventProperty in eventType.iteritems():
         if eventProperty.IsUnique():
           if eventProperty.GetMergeStrategy() != 'match':
             raise EDXMLValidationError(
@@ -276,9 +276,9 @@ class Ontology(object):
 
     # Verify that non-unique event type only have
     # properties with merge strategy 'drop'.
-    for eventTypeName, eventType in self._event_types.items():
+    for eventTypeName, eventType in self._event_types.iteritems():
       if not eventType.IsUnique():
-        for propertyName, eventProperty in eventType.GetProperties().items():
+        for propertyName, eventProperty in eventType.iteritems():
           if eventProperty.GetMergeStrategy() != 'drop':
             raise EDXMLValidationError(
               'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
@@ -288,11 +288,11 @@ class Ontology(object):
     # Check if properties in property relations are defined
     for eventTypeName, eventType in self._event_types.items():
       for relation in eventType.GetPropertyRelations():
-        if relation.GetSource() not in eventType.GetProperties().keys():
+        if relation.GetSource() not in eventType.keys():
           raise EDXMLValidationError(
             'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
             (eventTypeName, relation.GetSource()))
-        if relation.GetDest() not in eventType.GetProperties().keys():
+        if relation.GetDest() not in eventType.keys():
           raise EDXMLValidationError(
             'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
             (eventTypeName, relation.GetDest()))
@@ -305,7 +305,7 @@ class Ontology(object):
       # Check if all unique parent properties are present
       # in the property map
       parentEventType = self.GetEventType(eventType.GetParent().GetEventType())
-      for parentPropertyName, parentProperty in parentEventType.GetProperties().items():
+      for parentPropertyName, parentProperty in parentEventType.iteritems():
         if parentProperty.IsUnique():
           if parentPropertyName not in eventType.GetParent().GetPropertyMap().values():
             raise EDXMLValidationError(
@@ -316,7 +316,7 @@ class Ontology(object):
       for childProperty, parentProperty in eventType.GetParent().GetPropertyMap().items():
 
         # Check if child property exists
-        if childProperty not in eventType.GetProperties().keys():
+        if childProperty not in eventType.keys():
           raise EDXMLValidationError(
             'Event type %s contains a parent definition which refers to unknown child property \'%s\'.' %
             (eventTypeName, childProperty)
@@ -324,8 +324,8 @@ class Ontology(object):
 
         # Check if parent property exists and if it is a unique property
         parentEventType = self.GetEventType(eventType.GetParent().GetEventType())
-        if parentProperty not in parentEventType.GetProperties().keys() or \
-           parentEventType.GetProperty(parentProperty).GetMergeStrategy() != 'match':
+        if parentProperty not in parentEventType.keys() or \
+           parentEventType[parentProperty].GetMergeStrategy() != 'match':
           raise EDXMLValidationError(
             ('Event type %s contains a parent definition which refers to parent property "%s" of event type %s, '
              'but this property is not unique, or it does not exist.') %
@@ -333,12 +333,12 @@ class Ontology(object):
           )
 
         # Check if child property has allowed merge strategy
-        if eventType.GetProperty(childProperty).GetMergeStrategy() not in ('match', 'drop'):
+        if eventType[childProperty].GetMergeStrategy() not in ('match', 'drop'):
           raise EDXMLValidationError(
             ('Event type %s contains a parent definition which refers to child property \'%s\'. '
              'This property has merge strategy %s, which is not allowed for properties that are used in '
              'parent definitions.') %
-            (eventTypeName, childProperty, eventType.GetProperty(childProperty).GetMergeStrategy())
+            (eventTypeName, childProperty, eventType[childProperty].GetMergeStrategy())
           )
 
     return self

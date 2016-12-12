@@ -57,7 +57,7 @@ class EDXML2CSV(EDXMLPullParser):
     # one column per event property.
     PropertyNames = set()
     for EventTypeName, EventType in self.getOntology().GenerateEventTypes():
-      PropertyNames.update(EventType.GetProperties().keys())
+      PropertyNames.update(EventType.keys())
 
     # Filter the available properties using
     # the list of requested output columns.
