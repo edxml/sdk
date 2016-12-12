@@ -25,7 +25,7 @@ class ObjectType(object):
       'description'    : Description or Name,
       'data-type'      : DataType,
       'enp'            : int(Enp),
-      'compress'       : Compress,
+      'compress'       : bool(Compress),
       'fuzzy-matching' : FuzzyMatching,
       'regexp'         : Regexp
     }
