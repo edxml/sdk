@@ -542,7 +542,7 @@ class DataType(object):
           )
     elif splitDataType[0] == 'ip':
       try:
-        return [unicode('%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.'))) for value in values]
+        return [u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values]
       except (ValueError, TypeError):
         raise EDXMLValidationError(
           'Invalid IPv4 address in list: "%s"' % '","'.join([repr(value) for value in values])
