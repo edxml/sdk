@@ -46,6 +46,12 @@ class EventProperty(object):
       'similar':           Similar
     }
 
+    self._ontology = None   # type: edxml.ontology.Ontology
+
+  def _setOntology(self, ontology):
+    self._ontology = ontology
+    return self
+
   @classmethod
   def Create(cls, Name, ObjectTypeName, Description = None):
     """

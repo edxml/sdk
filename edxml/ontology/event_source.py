@@ -6,6 +6,7 @@ import uuid
 from time import strftime, gmtime
 
 from edxml.EDXMLWriter import EDXMLWriter
+import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 
 
@@ -25,6 +26,12 @@ class EventSource(object):
       'description':   str(Description) if Description else 'undescribed source',
       'date-acquired': str(AcquisitionDate) if AcquisitionDate else strftime("%Y%m%d", gmtime())
     }
+
+    self._ontology = None   # type: edxml.ontology.Ontology
+
+  def _setOntology(self, ontology):
+    self._ontology = ontology
+    return self
 
   @classmethod
   def Create(cls, Url, Description = None, AcquisitionDate = None):

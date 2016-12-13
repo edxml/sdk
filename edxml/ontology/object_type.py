@@ -4,6 +4,7 @@ from lxml import etree
 import re
 import sre_constants
 
+import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import DataType
 
@@ -29,6 +30,12 @@ class ObjectType(object):
       'fuzzy-matching' : FuzzyMatching,
       'regexp'         : Regexp
     }
+
+    self._ontology = None   # type: edxml.ontology.Ontology
+
+  def _setOntology(self, ontology):
+    self._ontology = ontology
+    return self
 
   @classmethod
   def Create(cls, Name, DisplayNameSingular = None, DisplayNamePlural = None, Description = None, DataType ='string:0:cs:u'):

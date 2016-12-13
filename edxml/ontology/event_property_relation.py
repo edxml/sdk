@@ -24,6 +24,12 @@ class PropertyRelation(object):
       'directed':          bool(Directed),
     }
 
+    self._ontology = None   # type: edxml.ontology.Ontology
+
+  def _setOntology(self, ontology):
+    self._ontology = ontology
+    return self
+
   @classmethod
   def Create(cls, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
     """

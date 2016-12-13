@@ -35,8 +35,9 @@ class Ontology(object):
     if name in self._event_types:
       self._event_types[name].Update(eventType)
     else:
-      self._event_types[name] = eventType.Validate()
+      self._event_types[name] = eventType.Validate()._setOntology(self)
 
+    self._invalidate()
     return self
 
   def AddObjectType(self, objectType):
@@ -56,8 +57,9 @@ class Ontology(object):
     if name in self._object_types:
       self._object_types[name].Update(objectType)
     else:
-      self._object_types[name] = objectType.Validate()
+      self._object_types[name] = objectType.Validate()._setOntology(self)
 
+    self._invalidate()
     return self
 
   def AddEventSource(self, eventSource):
@@ -77,7 +79,7 @@ class Ontology(object):
     if url in self._sources:
       self._sources[url].Update(eventSource)
     else:
-      self._sources[url] = eventSource.Validate()
+      self._sources[url] = eventSource.Validate()._setOntology(self)
 
     return self
 

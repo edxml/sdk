@@ -50,6 +50,7 @@ class EventType(MutableMapping):
     self._relations = []    # type: List[edxml.ontology.PropertyRelation]
     self._parent = Parent   # type: edxml.ontology.EventTypeParent
     self._relaxNG = None    # type: etree.RelaxNG
+    self._ontology = None   # type: edxml.ontology.Ontology
 
   @classmethod
   def Create(cls, Name, DisplayNameSingular = None, DisplayNamePlural = None, Description = None):
@@ -102,6 +103,14 @@ class EventType(MutableMapping):
   def __iter__(self):
     for propertyName, prop in self._properties.iteritems():
       yield propertyName
+
+  def _setOntology(self, ontology):
+    self._ontology = ontology
+    for propertyName, prop in self._properties.iteritems():
+      prop._setOntology(ontology)
+    for relation in self._relations:
+      relation._setOntology(ontology)
+    return self
 
   def GetName(self):
     """
