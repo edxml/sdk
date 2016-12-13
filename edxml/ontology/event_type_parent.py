@@ -4,7 +4,6 @@ import re
 import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 
-from edxml.EDXMLWriter import EDXMLWriter
 
 class EventTypeParent(object):
   """

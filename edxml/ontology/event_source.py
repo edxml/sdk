@@ -5,7 +5,6 @@ import re
 import uuid
 from time import strftime, gmtime
 
-from edxml.EDXMLWriter import EDXMLWriter
 import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 

@@ -16,7 +16,6 @@ from termcolor import colored
 import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 
-from edxml.EDXMLWriter import EDXMLWriter
 
 class EventType(MutableMapping):
   """
