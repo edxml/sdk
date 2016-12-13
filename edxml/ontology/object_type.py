@@ -257,6 +257,23 @@ class ObjectType(object):
 
     return self
 
+  def SetFuzzyMatchingAttribute(self, attribute):
+    """
+
+    Sets the EDXML fuzzy-matching attribute.
+
+    Notes:
+      It is recommended to use the FuzzyMatch...() methods
+      in stead to configure fuzzy matching.
+
+    Args:
+      attribute (str): The attribute value
+
+    Returns:
+      ObjectType: The ObjectType instance
+    """
+    self._attr['fuzzy-matching'] = attribute
+    return self
 
   def FuzzyMatchHead(self, Length):
     """
