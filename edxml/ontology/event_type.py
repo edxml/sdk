@@ -313,6 +313,24 @@ class EventType(MutableMapping):
         self._attr['classlist'] = ClassName
       else:
         self._attr['classlist'] = ','.join(list(set(self._attr['classlist'].split(',') + [ClassName])))
+
+    return self
+
+  def SetClasses(self, ClassNames):
+    """
+
+    Replaces the list of classes that the event type
+    belongs to with the specified list. Any duplicates
+    are automatically removed from the list.
+
+    Args:
+      ClassNames (Iterable[str]):
+
+    Returns:
+      EventType: The EventType instance
+    """
+    self._attr['classlist'] = ','.join(list(set(ClassNames)))
+
     return self
 
   def SetName(self, EventTypeName):
