@@ -190,11 +190,15 @@ class JsonTranscoderMediator(EDXMLBase):
 
   def _write_ontology(self):
     for Transcoder in self._transcoders.values():
-      for ObjectType in Transcoder.GenerateObjectTypes():
-        self._writer.AddObjectType(ObjectType)
+      Transcoder.SetOntology(self._writer.GetOntology())
 
     for Transcoder in self._transcoders.values():
-      Transcoder.SetOntology(self._writer.GetOntology())
+      for _ in Transcoder.GenerateObjectTypes():
+        # Here, we only populate the ontology, we
+        # don't do anything with the ontology elements.
+        pass
+
+    for Transcoder in self._transcoders.values():
       for _, _ in Transcoder.GenerateEventTypes():
         # Here, we only populate the ontology, we
         # don't do anything with the ontology elements.

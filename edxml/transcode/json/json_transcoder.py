@@ -332,8 +332,7 @@ class JsonTranscoder(EDXMLBase):
     """
     return []
 
-  @staticmethod
-  def GenerateObjectTypes():
+  def GenerateObjectTypes(self):
     """
 
     This method may be used to generate generic EDXML

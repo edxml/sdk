@@ -273,13 +273,9 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       EventProperty.Create('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
     )
 
-    ontology.AddObjectType(
-      ObjectType.Create(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
-    ).AddObjectType(
-      ObjectType.Create(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
-    ).AddObjectType(
-      ObjectType.Create(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
-    )
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
 
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
       ontology.AddEventSource(EventSource.Create(SourceUrl))
