@@ -156,9 +156,9 @@ for url, source in Parser.getOntology().GenerateEventSources():
   Parser.getOntology().DeleteEventSource(url)
 
 # Define new data source.
-Parser.getOntology().AddEventSource(edxml.ontology.EventSource.Create(
+Parser.getOntology().CreateEventSource(
   OutputSourceUrl, Description='Imported from CSV data', AcquisitionDate=DateAcquired
-))
+)
 
 OutputSourceId = Parser.getOntology().GetEventSource(OutputSourceUrl).GetId()
 

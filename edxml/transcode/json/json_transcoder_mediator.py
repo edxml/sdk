@@ -141,7 +141,7 @@ class JsonTranscoderMediator(EDXMLBase):
     self._warn_invalid_events = Warn
     return self
 
-  def AddEventSource(self, Source):
+  def AddEventSource(self, SourceUrl):
     """
 
     Adds an EDXML event source definition. If no event sources
@@ -160,12 +160,15 @@ class JsonTranscoderMediator(EDXMLBase):
     mediator.
 
     Args:
-      Source (EventSource): An EventSource instance
+      SourceUrl (str): An Event Source url
 
     Returns:
       JsonTranscoderMediator:
     """
-    self._sources.append(Source)
+    # TODO: To allow the user to create sources using the
+    # ontology instance of the writer, we should instantiate
+    # the writer in the constructor.
+    self._sources.append(SourceUrl)
     return self
 
   @classmethod
@@ -206,10 +209,10 @@ class JsonTranscoderMediator(EDXMLBase):
 
     if len(self._sources) == 0:
       self.Warning('No EDXML source was defined, generating bogus source.')
-      self._sources.append(EventSource.Create('/undefined/'))
+      self._sources.append('/undefined/')
 
-    for Source in self._sources:
-      self._writer.AddEventSource(Source)
+    for SourceUrl in self._sources:
+      self._writer.GetOntology().CreateEventSource(SourceUrl)
 
   def _create_writer(self):
     self._writer = SimpleEDXMLWriter(self._output, self._validate_events)

@@ -278,7 +278,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
 
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
-      ontology.AddEventSource(EventSource.Create(SourceUrl))
+      ontology.CreateEventSource(SourceUrl)
 
     self.AddOntology(ontology)
 
