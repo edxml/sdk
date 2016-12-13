@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import edxml
 from edxml.ontology.event_type_parent import EventTypeParent
 
 from edxml.EDXMLBase import EDXMLBase
@@ -193,10 +194,16 @@ class JsonTranscoder(EDXMLBase):
 
   def __init__(self):
     super(JsonTranscoder, self).__init__()
+
+    self._ontology = None  # type: edxml.ontology.Ontology
     self.reporter_strings = [
       'short',
       'long'
     ]
+
+  def SetOntology(self, ontology):
+    self._ontology = ontology
+    return self
 
   def Generate(self, Json, RecordTypeName, **kwargs):
     """
@@ -351,7 +358,7 @@ class JsonTranscoder(EDXMLBase):
       tuple[str, EventType]:
     """
     for EventTypeName in self.TYPES:
-      Type = EventType.Create(EventTypeName, Description=self.TYPE_DESCRIPTIONS.get(EventTypeName))\
+      Type = self._ontology.CreateEventType(EventTypeName, Description=self.TYPE_DESCRIPTIONS.get(EventTypeName))\
         .SetDisplayName(*self.TYPE_DISPLAY_NAMES.get(EventTypeName, [None, None]))\
         .SetReporterShort(self.TYPE_REPORTERS_SHORT.get(EventTypeName))\
         .SetReporterLong(self.TYPE_REPORTERS_LONG.get(EventTypeName))

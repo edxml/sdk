@@ -194,8 +194,11 @@ class JsonTranscoderMediator(EDXMLBase):
         self._writer.AddObjectType(ObjectType)
 
     for Transcoder in self._transcoders.values():
-      for EventTypeName, EventType in Transcoder.GenerateEventTypes():
-        self._writer.AddEventType(EventType)
+      Transcoder.SetOntology(self._writer.GetOntology())
+      for _, _ in Transcoder.GenerateEventTypes():
+        # Here, we only populate the ontology, we
+        # don't do anything with the ontology elements.
+        pass
 
     if len(self._sources) == 0:
       self.Warning('No EDXML source was defined, generating bogus source.')

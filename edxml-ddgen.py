@@ -251,7 +251,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrInc      = 'drop'
 
     ontology = edxml.ontology.Ontology()
-    eventType = EventType.Create(self.EventTypeName)\
+    eventType = ontology.CreateEventType(self.EventTypeName)\
         .AddProperty(EventProperty.Create('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch))
 
     if self.Ordered:
@@ -272,8 +272,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     ).AddProperty(
       EventProperty.Create('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
     )
-
-    ontology.AddEventType(eventType)
 
     ontology.AddObjectType(
       ObjectType.Create(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
