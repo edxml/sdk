@@ -33,7 +33,7 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, Name, ObjectTypeName, Description = None, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectTypeName, Description = None, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge ='drop', Similar =''):
 
     self._attr = {
       'name':              Name,
@@ -46,31 +46,12 @@ class EventProperty(object):
       'similar':           Similar
     }
 
-    self._ontology = None   # type: edxml.ontology.Ontology
+    self._eventType = eventType  # type: edxml.ontology.EventType
 
-  def _setOntology(self, ontology):
-    self._ontology = ontology
+  def _setEventType(self, eventType):
+    self._eventType = eventType
     return self
 
-  @classmethod
-  def Create(cls, Name, ObjectTypeName, Description = None):
-    """
-
-    Create a new event property.
-
-    Note:
-       The description should be really short, indicating
-       which role the object has in the event type.
-
-    Args:
-      Name (str): Property name
-      ObjectTypeName (str): Name of the object type
-      Description (str): Property description
-
-    Returns:
-      EventProperty: The EventProperty instance
-    """
-    return cls(Name, ObjectTypeName, Description)
 
   def GetName(self):
     """
@@ -358,8 +339,9 @@ class EventProperty(object):
     return self
 
   @classmethod
-  def Read(cls, propertyElement):
+  def Read(cls, propertyElement, parentEventType):
     return cls(
+      parentEventType,
       propertyElement.attrib['name'],
       propertyElement.attrib['object-type'],
       propertyElement.attrib['description'],

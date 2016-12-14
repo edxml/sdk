@@ -252,26 +252,17 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     ontology = edxml.ontology.Ontology()
     eventType = ontology.CreateEventType(self.EventTypeName)\
-        .AddProperty(EventProperty.Create('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch))
+        .CreateProperty('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch)
 
     if self.Ordered:
-      eventType.AddProperty(
-        EventProperty.Create('property-b', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrReplace)
-      )
+      eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrReplace)
 
-    eventType.AddProperty(
-      EventProperty.Create('property-c', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrAdd)
-    ).AddProperty(
-      EventProperty.Create('property-d', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrSum)
-    ).AddProperty(
-      EventProperty.Create('property-e', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrInc)
-    ).AddProperty(
-      EventProperty.Create('property-f', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMultiply)
-    ).AddProperty(
-      EventProperty.Create('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
-    ).AddProperty(
-      EventProperty.Create('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
-    )
+    eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrAdd)
+    eventType.CreateProperty('property-d', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrSum)
+    eventType.CreateProperty('property-e', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrInc)
+    eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMultiply)
+    eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
+    eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
 
     ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
     ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')

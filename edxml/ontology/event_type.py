@@ -81,8 +81,6 @@ class EventType(MutableMapping):
 
   def _setOntology(self, ontology):
     self._ontology = ontology
-    for propertyName, prop in self._properties.iteritems():
-      prop._setOntology(ontology)
     for relation in self._relations:
       relation._setOntology(ontology)
     return self
@@ -235,6 +233,28 @@ class EventType(MutableMapping):
       EventTypeParent: The parent event type
     """
     return self._parent
+
+  def CreateProperty(self, Name, ObjectTypeName, Description = None):
+    """
+
+    Create a new event property.
+
+    Note:
+       The description should be really short, indicating
+       which role the object has in the event type.
+
+    Args:
+      Name (str): Property name
+      ObjectTypeName (str): Name of the object type
+      Description (str): Property description
+
+    Returns:
+      EventProperty: The EventProperty instance
+    """
+    if Name not in self._properties:
+      self._properties[Name] = edxml.ontology.EventProperty(self, Name, ObjectTypeName, Description)
+
+    return self._properties[Name]
 
   def AddProperty(self, Property):
     """
@@ -990,7 +1010,7 @@ class EventType(MutableMapping):
         eventType.SetParent(edxml.ontology.EventTypeParent.Read(element))
       elif element.tag == 'properties':
         for propertyElement in element:
-          eventType.AddProperty(edxml.ontology.EventProperty.Read(propertyElement))
+          eventType.AddProperty(edxml.ontology.EventProperty.Read(propertyElement, eventType))
 
       elif element.tag == 'relations':
         for relationElement in element:

@@ -364,7 +364,7 @@ class JsonTranscoder(EDXMLBase):
 
       if EventTypeName in self.TYPE_PROPERTIES:
         for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():
-          Type.AddProperty(EventProperty.Create(PropertyName, ObjectTypeName))
+          Type.CreateProperty(PropertyName, ObjectTypeName)
           if PropertyName in self.PROPERTY_DESCRIPTIONS:
             Type[PropertyName].SetDescription(self.PROPERTY_DESCRIPTIONS[PropertyName])
           if PropertyName in self.PROPERTY_SIMILARITY:
