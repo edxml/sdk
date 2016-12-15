@@ -115,7 +115,7 @@ class Ontology(object):
     self._childModifiedCallback()
     return self._sources[Url]
 
-  def AddEventType(self, eventType):
+  def _addEventType(self, eventType):
     """
 
     Adds specified event type to the ontology. If the
@@ -137,7 +137,7 @@ class Ontology(object):
     self._invalidate()
     return self
 
-  def AddObjectType(self, objectType):
+  def _addObjectType(self, objectType):
     """
 
     Adds specified object type to the ontology. If the
@@ -159,7 +159,7 @@ class Ontology(object):
     self._invalidate()
     return self
 
-  def AddEventSource(self, eventSource):
+  def _addEventSource(self, eventSource):
     """
 
     Adds specified event source to the ontology. If the
@@ -292,17 +292,17 @@ class Ontology(object):
 
   def __parseEventTypes(self, eventtypesElement):
     for typeElement in eventtypesElement:
-      self.AddEventType(EventType.Read(typeElement, self))
+      self._addEventType(EventType.Read(typeElement, self))
 
   def __parseObjectTypes(self, objecttypesElement):
     for typeElement in objecttypesElement:
-      self.AddObjectType(
+      self._addObjectType(
         ObjectType.Read(typeElement, self)
       )
 
   def __parseSources(self, sourcesElement):
     for sourceElement in sourcesElement:
-      self.AddEventSource(EventSource.Read(sourceElement, self))
+      self._addEventSource(EventSource.Read(sourceElement, self))
 
   def Validate(self):
     """
@@ -471,11 +471,11 @@ class Ontology(object):
 
     if type(otherOntology) == Ontology:
       for ObjectTypeName, objectType in otherOntology.GenerateObjectTypes():
-        self.AddObjectType(objectType)
+        self._addObjectType(objectType)
       for EventTypeName, eventType in otherOntology.GenerateEventTypes():
-        self.AddEventType(eventType)
+        self._addEventType(eventType)
       for Url, source in otherOntology.GenerateEventSources():
-        self.AddEventSource(source)
+        self._addEventSource(source)
 
     elif isinstance(otherOntology, etree._Element):
       for element in otherOntology:
