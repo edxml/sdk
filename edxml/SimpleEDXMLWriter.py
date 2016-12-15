@@ -195,55 +195,6 @@ class SimpleEDXMLWriter(object):
     self._ontology.Update(edxmlOntology)
     return self
 
-  def AddEventType(self, Type):
-    """
-
-    Add specified event type to the output stream.
-
-    Args:
-      Type (EventType): EventType instance
-
-    Returns:
-     SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-    """
-    if self._writing_events:
-      raise EDXMLError('You cannot add ontology elements after writing the first event.')
-
-    self._ontology.AddEventType(Type)
-    return self
-
-  def AddObjectType(self, Type):
-    """
-
-    Add specified object type to the output stream.
-
-    Args:
-      Type (ObjectType): ObjectType instance
-
-    Returns:
-     SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-    """
-    if self._writing_events:
-      raise EDXMLError('You cannot add ontology elements after writing the first event.')
-
-    self._ontology.AddObjectType(Type)
-    return self
-
-  def AddEventSource(self, Source):
-    """
-
-    Add specified event source to the output stream.
-
-    Args:
-      Source (EventSource): EventSource instance
-
-    Returns:
-     SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-    """
-    self._ontology.AddEventSource(Source)
-    self._source_ids[Source.GetUrl()] = Source.GetId()
-    return self
-
   def SetEventType(self, EventTypeName):
     """
 
