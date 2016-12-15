@@ -33,11 +33,11 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, eventType, Name, ObjectTypeName, Description = None, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectType, Description = None, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge ='drop', Similar =''):
 
     self._attr = {
       'name':              Name,
-      'object-type':       ObjectTypeName,
+      'object-type':       ObjectType.GetName(),
       'description' :      Description or Name,
       'defines-entity':    bool(DefinesEntity),
       'entity-confidence': float(EntityConfidence),
@@ -47,6 +47,8 @@ class EventProperty(object):
     }
 
     self._eventType = eventType  # type: edxml.ontology.EventType
+    self._objectType = ObjectType  # type: edxml.ontology.ObjectType
+    self._dataType = ObjectType.GetDataType()  # type: edxml.ontology.ObjectType
 
   def _setEventType(self, eventType):
     self._eventType = eventType
@@ -113,11 +115,8 @@ class EventProperty(object):
     """
     return self._attr['similar']
 
-  def GetDataType(self, ontology):
-    # TODO: As soon as object types are read BEFORE event
-    # types, we should keep references to the ObjectType instances
-    # inside the EventProperty instances.
-    return ontology.GetObjectType(self._attr['object-type']).GetDataType()
+  def GetDataType(self):
+    return self._dataType
 
   def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
     """
@@ -425,10 +424,20 @@ class EventProperty(object):
 
   @classmethod
   def Read(cls, propertyElement, parentEventType):
+    name = propertyElement.attrib['name']
+    objectTypeName = propertyElement.attrib['object-type']
+    objectType = parentEventType._ontology.GetObjectType(objectTypeName)
+
+    if not objectType:
+      raise EDXMLValidationError(
+        'Property "%s" of event type "%s" refers to undefined object type "%s".' %
+        (name, parentEventType.GetName(), objectTypeName)
+      )
+
     return cls(
       parentEventType,
       propertyElement.attrib['name'],
-      propertyElement.attrib['object-type'],
+      objectType,
       propertyElement.attrib['description'],
       propertyElement.get('defines-entity', 'false') == 'true',
       propertyElement.get('entity-confidence', 0),

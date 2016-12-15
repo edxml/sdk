@@ -443,7 +443,7 @@ class EDXMLEvent(MutableMapping):
       if MergeStrategy in ('min', 'max', 'increment', 'sum', 'multiply'):
         # We have a merge strategy that requires us to cast
         # the object values into numbers.
-        SplitDataType = properties[PropertyName].GetDataType(edxmlOntology).GetSplit()
+        SplitDataType = properties[PropertyName].GetDataType().GetSplit()
         if SplitDataType[0] in ('number', 'timestamp'):
           if MergeStrategy in ('min', 'max'):
             Values = set()
@@ -584,7 +584,7 @@ class EDXMLEvent(MutableMapping):
     for PropertyName in properties.keys():
       if PropertyName in eventProperties:
         eventProperties[PropertyName] = properties[PropertyName]\
-          .GetDataType(edxmlOntology)\
+          .GetDataType()\
           .NormalizeObjects(eventProperties[PropertyName])
 
     self.SetProperties(eventProperties)

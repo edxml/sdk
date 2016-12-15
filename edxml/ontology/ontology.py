@@ -481,13 +481,25 @@ class Ontology(object):
     elif isinstance(otherOntology, etree._Element):
       for element in otherOntology:
         if element.tag == 'eventtypes':
-          self.__parseEventTypes(element)
+          eventTypes = element
+          #self.__parseEventTypes(element)
         elif element.tag == 'objecttypes':
-          self.__parseObjectTypes(element)
+          objectTypes = element
+          #self.__parseObjectTypes(element)
         elif element.tag == 'sources':
-          self.__parseSources(element)
+          sources = element
+          #self.__parseSources(element)
         else:
           raise TypeError('Unexpected element: "%s"' % element.tag)
+
+      # As long as object type definitions come after
+      # event type definitions in EDXML data, we need
+      # to change processing order to prevent event types
+      # from trying to read object type information.
+      # TODO: Restore as soon as EDXML structure is changed.
+      self.__parseObjectTypes(objectTypes)
+      self.__parseEventTypes(eventTypes)
+      self.__parseSources(sources)
 
       self.Validate()
     else:

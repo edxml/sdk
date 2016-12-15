@@ -250,7 +250,19 @@ class EventType(MutableMapping):
       EventProperty: The EventProperty instance
     """
     if Name not in self._properties:
-      self._properties[Name] = edxml.ontology.EventProperty(self, Name, ObjectTypeName, Description)
+      objectType = self._ontology.GetObjectType(ObjectTypeName)
+      if objectType:
+        self._properties[Name] = edxml.ontology.EventProperty(self, Name, objectType, Description).Validate()
+      else:
+        raise Exception(
+          'Attempt to create property "%s" of event type "%s" referring to undefined object type "%s".' %
+          (Name, self.GetName(), ObjectTypeName)
+        )
+    else:
+      raise Exception(
+        'Attempt to create existing property "%s" of event type "%s".' %
+        (Name, self.GetName())
+      )
 
     return self._properties[Name]
 

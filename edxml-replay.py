@@ -86,8 +86,7 @@ class EDXMLReplay(EDXMLPullFilter):
     # Find all timestamps in event
     for PropertyName, Objects in edxmlEvent.GetProperties().items():
       if PropertyName not in self.KnownProperties:
-        ObjectTypeName = self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetObjectTypeName()
-        if str(self._ontology.GetObjectType(ObjectTypeName).GetDataType()) == 'timestamp':
+        if str(self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()) == 'timestamp':
           self.TimestampProperties.append(PropertyName)
         self.KnownProperties.append(PropertyName)
 
