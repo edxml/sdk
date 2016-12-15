@@ -13,60 +13,38 @@ class PropertyRelation(object):
   Class representing a relation between two EDXML properties
   """
 
-  def __init__(self, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
+  def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
 
     self._attr = {
-      'property1':         Source,
-      'property2':         Dest,
+      'property1':         Source.GetName(),
+      'property2':         Dest.GetName(),
       'description':       Description,
       'type':              '%s:%s' % (TypeClass, TypePredicate),
       'confidence':        float(Confidence),
       'directed':          bool(Directed),
     }
 
-    self._ontology = None   # type: edxml.ontology.Ontology
+    self._eventType = EventType  # type: edxml.ontology.EventType
 
-  def _setOntology(self, ontology):
-    self._ontology = ontology
     return self
-
-  @classmethod
-  def Create(cls, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
-    """
-
-    Create a new property relation
-
-    Args:
-      Source (str): Name of source property
-      Dest (str): Name of destination property
-      Description (str): Relation description, with property placeholders
-      TypeClass (str): Relation type class ('inter', 'intra' or 'other')
-      TypePredicate (str): free form predicate
-      Confidence (float): Relation confidence [0.0,1.0]
-      Directed (bool): Directed relation True / False
-
-    Returns:
-      PropertyRelation:
-    """
-    return cls(Source, Dest, Description, TypeClass, TypePredicate, Confidence, Directed)
 
   def GetSource(self):
     """
 
-    Returns the name of the source property.
+    Returns the source property.
 
     Returns:
-      str:
+      edxml.ontology.EventProperty:
     """
     return self._attr['property1']
 
-  def GetDest(self):
+  def GetTarget(self):
     """
 
-    Returns the name of the destination property.
+    Returns the target property.
 
     Returns:
-      str:
+      edxml.ontology.EventProperty:
     """
     return self._attr['property1']
 
@@ -130,6 +108,23 @@ class PropertyRelation(object):
       bool:
     """
     return self._attr['directed']
+
+  def Because(self, Reason):
+    """
+
+    Sets the relation description to specified string,
+    which should contain placeholders for the values
+    of both related properties.
+
+    Args:
+      Reason (str): Relation description
+
+    Returns:
+      PropertyRelation: The PropertyRelation instance
+
+    """
+    self._attr['description'] = Reason
+    return self
 
   def SetConfidence(self, Confidence):
     """
@@ -219,10 +214,20 @@ class PropertyRelation(object):
     return self
 
   @classmethod
-  def Read(cls, relationElement):
+  def Read(cls, relationElement, eventType):
+    source = relationElement.attrib['property1']
+    target = relationElement.attrib['property2']
+
+    for propertyName in (source, target):
+      if propertyName not in eventType:
+        raise EDXMLValidationError(
+          'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
+          (eventType.GetName(), propertyName))
+
     return cls(
-      relationElement.attrib['property1'],
-      relationElement.attrib['property2'],
+      eventType,
+      eventType[relationElement.attrib['property1']],
+      eventType[relationElement.attrib['property2']],
       relationElement.attrib['description'],
       relationElement.attrib['type'].split(':')[0],
       relationElement.attrib['type'].split(':')[1],

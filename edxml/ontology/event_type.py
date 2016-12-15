@@ -81,8 +81,6 @@ class EventType(MutableMapping):
 
   def _setOntology(self, ontology):
     self._ontology = ontology
-    for relation in self._relations:
-      relation._setOntology(ontology)
     return self
 
   def GetName(self):
@@ -271,10 +269,33 @@ class EventType(MutableMapping):
 
     return self
 
+  def CreateRelation(self, Source, Target, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
+    """
+
+    Create a new property relation
+
+    Args:
+      Source (str): Name of source property
+      Target (str): Name of target property
+      Description (str): Relation description, with property placeholders
+      TypeClass (str): Relation type class ('inter', 'intra' or 'other')
+      TypePredicate (str): free form predicate
+      Confidence (float): Relation confidence [0.0,1.0]
+      Directed (bool): Directed relation True / False
+
+    Returns:
+      PropertyRelation: The PropertyRelation instance
+    """
+    relation = edxml.ontology.PropertyRelation(self, self[Source], self[Target], Description, TypeClass, TypePredicate, Confidence, Directed)
+    self._relations.append(relation.Validate())
+    return relation
+
   def AddRelation(self, Relation):
     """
 
-    Add specified property relation
+    Add specified property relation. It is recommended to use the methods
+    from the EventProperty class in stead, to create property relations using
+    a syntax that yields more readable code.
 
     Args:
       Relation (PropertyRelation): Property relation
@@ -1014,7 +1035,7 @@ class EventType(MutableMapping):
 
       elif element.tag == 'relations':
         for relationElement in element:
-          eventType.AddRelation(edxml.ontology.PropertyRelation.Read(relationElement))
+          eventType.AddRelation(edxml.ontology.PropertyRelation.Read(relationElement, eventType))
 
     return eventType
 

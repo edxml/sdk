@@ -119,6 +119,91 @@ class EventProperty(object):
     # inside the EventProperty instances.
     return ontology.GetObjectType(self._attr['object-type']).GetDataType()
 
+  def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+    """
+
+    Creates and returns a relation between this property and
+    the specified target property.
+
+    When no reason is specified, the reason is constructed by
+    wrapping the type predicate with the place holders for
+    the two properties.
+
+    Args:
+      TypePredicate (str): free form predicate
+      TargetPropertyName (str): Name of the related property
+      Reason (str): Relation description, with property placeholders
+      Confidence (float): Relation confidence [0.0,1.0]
+      Directed (bool): Directed relation True / False
+
+    Returns:
+      EventPropertyRelation: The EventPropertyRelation instance
+
+    """
+    return self._eventType.CreateRelation(
+      self.GetName(), TargetPropertyName,
+      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      'other', TypePredicate, Confidence, Directed
+    )
+
+  def RelateInter(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+    """
+
+    Creates and returns a relation between this property and
+    the specified target property. The relation is an 'inter'
+    relation, indicating that the related objects belong to
+    different, related entities.
+
+    When no reason is specified, the reason is constructed by
+    wrapping the type predicate with the place holders for
+    the two properties.
+
+    Args:
+      TypePredicate (str): free form predicate
+      TargetPropertyName (str): Name of the related property
+      Reason (str): Relation description, with property placeholders
+      Confidence (float): Relation confidence [0.0,1.0]
+      Directed (bool): Directed relation True / False
+
+    Returns:
+      EventPropertyRelation: The EventPropertyRelation instance
+
+    """
+    return self._eventType.CreateRelation(
+      self.GetName(), TargetPropertyName,
+      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      'inter', TypePredicate, Confidence, Directed
+    )
+
+  def RelateIntra(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+    """
+
+    Creates and returns a relation between this property and
+    the specified target property. The relation is an 'intra'
+    relation, indicating that the related objects belong to
+    the same entity.
+
+    When no reason is specified, the reason is constructed by
+    wrapping the type predicate with the place holders for
+    the two properties.
+
+    Args:
+      TargetPropertyName (str): Name of the related property
+      Reason (str): Relation description, with property placeholders
+      TypePredicate (str): free form predicate
+      Confidence (float): Relation confidence [0.0,1.0]
+      Directed (bool): Directed relation True / False
+
+    Returns:
+      EventPropertyRelation: The EventPropertyRelation instance
+
+    """
+    return self._eventType.CreateRelation(
+      self.GetName(), TargetPropertyName,
+      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      'intra', TypePredicate, Confidence, Directed
+    )
+
   def SetMergeStrategy(self, MergeStrategy):
     """
 

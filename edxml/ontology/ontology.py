@@ -384,18 +384,6 @@ class Ontology(object):
               (eventTypeName, propertyName, eventProperty.GetMergeStrategy())
             )
 
-    # Check if properties in property relations are defined
-    for eventTypeName, eventType in self._event_types.items():
-      for relation in eventType.GetPropertyRelations():
-        if relation.GetSource() not in eventType.keys():
-          raise EDXMLValidationError(
-            'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
-            (eventTypeName, relation.GetSource()))
-        if relation.GetDest() not in eventType.keys():
-          raise EDXMLValidationError(
-            'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
-            (eventTypeName, relation.GetDest()))
-
     # Validate event parent definitions
     for eventTypeName, eventType in self._event_types.items():
       if eventType.GetParent() is None:
