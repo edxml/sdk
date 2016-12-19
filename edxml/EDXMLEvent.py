@@ -607,31 +607,19 @@ class EDXMLEvent(MutableMapping):
 
     ObjectStrings = set()
     eventType = edxmlOntology.GetEventType(self.EventTypeName)
-    unique = eventType.IsUnique()
     propertyObjects = self.GetProperties()
 
-    if unique:
-      properties = eventType.GetUniqueProperties()
-    else:
-      properties = eventType.GetProperties()
-
-    for PropertyName in properties:
-      if PropertyName not in propertyObjects:
-        # Event has no objects for this property.
-        continue
-
-      dataType = properties[PropertyName].GetDataType(edxmlOntology).GetSplit()
-
-      if dataType[0] == 'number' and dataType[1] in ['float', 'double']:
-        # Floating point objects are ignored.
-        continue
-
-      ObjectStrings.update([u'%s:%s' % (PropertyName, value) for value in propertyObjects[PropertyName]])
+    for PropertyName in eventType.GetHashProperties():
+      try:
+        ObjectStrings.update([u'%s:%s' % (PropertyName, value) for value in propertyObjects[PropertyName]])
+      except KeyError:
+        # Event has no objects for this property
+        pass
 
     # Now we compute the SHA1 hash value of the unicode
     # string representation of the event, and output in hex
 
-    if unique:
+    if eventType.IsUnique():
       return hashlib.sha1(
         (u'%s\n%s\n%s' % (self.SourceUrl, self.EventTypeName, '\n'.join(sorted(ObjectStrings)))).encode('utf-8')
       ).hexdigest()
