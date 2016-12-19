@@ -33,10 +33,6 @@ class ObjectType(object):
 
     self._ontology = Ontology  # type: edxml.ontology.Ontology
 
-  def _setOntology(self, ontology):
-    self._ontology = ontology
-    return self
-
   def _childModifiedCallback(self):
     """Callback for change tracking"""
     return self
