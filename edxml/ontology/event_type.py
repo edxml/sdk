@@ -83,6 +83,11 @@ class EventType(MutableMapping):
     self._ontology = ontology
     return self
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
+    self._ontology._childModifiedCallback()
+    return self
+
   def GetName(self):
     """
 
@@ -264,6 +269,7 @@ class EventType(MutableMapping):
         (Name, self.GetName())
       )
 
+    self._childModifiedCallback()
     return self._properties[Name]
 
   def AddProperty(self, Property):
@@ -279,6 +285,7 @@ class EventType(MutableMapping):
     """
     self._properties[Property.GetName()] = Property.Validate()
 
+    self._childModifiedCallback()
     return self
 
   def CreateRelation(self, Source, Target, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
@@ -300,6 +307,8 @@ class EventType(MutableMapping):
     """
     relation = edxml.ontology.PropertyRelation(self, self[Source], self[Target], Description, TypeClass, TypePredicate, Confidence, Directed)
     self._relations.append(relation.Validate())
+
+    self._childModifiedCallback()
     return relation
 
   def AddRelation(self, Relation):
@@ -317,6 +326,7 @@ class EventType(MutableMapping):
     """
     self._relations.append(Relation.Validate())
 
+    self._childModifiedCallback()
     return self
 
   def SetDescription(self, Description):
@@ -332,6 +342,8 @@ class EventType(MutableMapping):
     """
 
     self._attr['description'] = str(Description)
+
+    self._childModifiedCallback()
     return self
 
   def SetParent(self, Parent):
@@ -347,6 +359,7 @@ class EventType(MutableMapping):
     """
     self._parent = Parent
 
+    self._childModifiedCallback()
     return self
 
   def AddClass(self, ClassName):
@@ -366,6 +379,7 @@ class EventType(MutableMapping):
       else:
         self._attr['classlist'] = ','.join(list(set(self._attr['classlist'].split(',') + [ClassName])))
 
+    self._childModifiedCallback()
     return self
 
   def SetClasses(self, ClassNames):
@@ -383,6 +397,7 @@ class EventType(MutableMapping):
     """
     self._attr['classlist'] = ','.join(list(set(ClassNames)))
 
+    self._childModifiedCallback()
     return self
 
   def SetName(self, EventTypeName):
@@ -397,6 +412,7 @@ class EventType(MutableMapping):
     """
     self._attr['name'] = EventTypeName
 
+    self._childModifiedCallback()
     return self
 
   def SetDisplayName(self, Singular, Plural = None):
@@ -418,6 +434,7 @@ class EventType(MutableMapping):
       Plural = '%ss' % Singular
     self._attr['display-name'] = '%s/%s' % (Singular, Plural)
 
+    self._childModifiedCallback()
     return self
 
   def SetReporterShort(self, Reporter):
@@ -434,6 +451,8 @@ class EventType(MutableMapping):
 
     if Reporter:
       self._attr['reporter-short'] = Reporter
+
+    self._childModifiedCallback()
     return self
 
   def SetReporterLong(self, Reporter):
@@ -450,6 +469,8 @@ class EventType(MutableMapping):
 
     if Reporter:
       self._attr['reporter-long'] = Reporter
+
+    self._childModifiedCallback()
     return self
 
   def EvaluateReporterString(self, edxmlEvent, short=False, capitalize=True, colorize=False):
@@ -1096,6 +1117,7 @@ class EventType(MutableMapping):
     for propertyName, eventProperty in self.GetProperties().items():
       eventProperty.Update(eventType[propertyName])
 
+    self._childModifiedCallback()
     self.Validate()
 
     return self

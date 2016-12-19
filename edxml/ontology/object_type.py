@@ -37,6 +37,9 @@ class ObjectType(object):
     self._ontology = ontology
     return self
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
+    return self
 
   def GetName(self):
     """

@@ -21,6 +21,10 @@ class EventTypeParent(object):
       'siblings-description': SiblingsDescription or 'sharing'
     }
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
+    return self
+
   @classmethod
   def Create(cls, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
     """

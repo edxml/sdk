@@ -26,6 +26,8 @@ class PropertyRelation(object):
 
     self._eventType = EventType  # type: edxml.ontology.EventType
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
     return self
 
   def GetSource(self):

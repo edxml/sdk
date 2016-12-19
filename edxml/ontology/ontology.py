@@ -115,6 +115,10 @@ class Ontology(object):
     self._childModifiedCallback()
     return self._sources[Url]
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
+    return self
+
   def _addEventType(self, eventType):
     """
 
@@ -133,8 +137,8 @@ class Ontology(object):
       self._event_types[name].Update(eventType)
     else:
       self._event_types[name] = eventType.Validate()._setOntology(self)
+      self._childModifiedCallback()
 
-    self._invalidate()
     return self
 
   def _addObjectType(self, objectType):
@@ -155,8 +159,8 @@ class Ontology(object):
       self._object_types[name].Update(objectType)
     else:
       self._object_types[name] = objectType.Validate()._setOntology(self)
+      self._childModifiedCallback()
 
-    self._invalidate()
     return self
 
   def _addEventSource(self, eventSource):
@@ -177,6 +181,7 @@ class Ontology(object):
       self._sources[url].Update(eventSource)
     else:
       self._sources[url] = eventSource.Validate()._setOntology(self)
+      self._childModifiedCallback()
 
     return self
 

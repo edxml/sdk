@@ -54,6 +54,9 @@ class EventProperty(object):
     self._eventType = eventType
     return self
 
+  def _childModifiedCallback(self):
+    """Callback for change tracking"""
+    return self
 
   def GetName(self):
     """
