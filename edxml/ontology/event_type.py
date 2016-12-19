@@ -51,6 +51,8 @@ class EventType(MutableMapping):
     self._relaxNG = None       # type: etree.RelaxNG
     self._ontology = Ontology  # type: edxml.ontology.Ontology
 
+    self.__cachedUniqueProperties = None  # type: Dict[str, edxml.ontology.EventProperty]
+    self.__cachedHashProperties = None    # type: Dict[str, edxml.ontology.EventProperty]
 
   def __delitem__(self, propertyName):
     self._properties.pop(propertyName, None)
@@ -85,6 +87,8 @@ class EventType(MutableMapping):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self.__cachedUniqueProperties = None
+    self.__cachedHashProperties = None
     self._ontology._childModifiedCallback()
     return self
 
@@ -165,6 +169,34 @@ class EventType(MutableMapping):
     """
     return {n: p for n, p in self._properties.items() if p.IsUnique()}
 
+  def GetHashProperties(self):
+    """
+
+    Returns a dictionary containing all properties
+    of the event type that must be included when
+    computing its sticky hash. The keys in the dictionary
+    are the property names, the values are the
+    EDXMLProperty instances.
+
+    Returns:
+       Dict[str, edxml.ontology.EventProperty]: Properties
+    """
+
+    if self.__cachedHashProperties is None:
+      props = {}
+
+      for n, p in self._properties.items():
+        dataType = p.GetDataType().GetSplit()
+
+        if not self.IsUnique() or p.IsUnique():
+          if dataType[0] != 'number' or dataType[1] not in ('float', 'double'):
+            # Floating point objects are ignored.
+            props[n] = p
+
+      self.__cachedHashProperties = props
+
+    return self.__cachedHashProperties
+
   def GetPropertyRelations(self):
     """
 
@@ -200,11 +232,13 @@ class EventType(MutableMapping):
     Returns:
       bool:
     """
-    for eventProperty in self._properties.values():
-      if eventProperty.IsUnique():
-        return True
+    if self.__cachedUniqueProperties is None:
+      self.__cachedUniqueProperties = {}
+      for propertyName, eventProperty in self._properties.iteritems():
+        if eventProperty.IsUnique():
+          self.__cachedUniqueProperties[propertyName] = eventProperty
 
-    return False
+    return len(self.__cachedUniqueProperties) > 0
 
   def GetReporterShort(self):
     """
