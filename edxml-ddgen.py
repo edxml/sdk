@@ -251,8 +251,13 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrInc      = 'drop'
 
     ontology = edxml.ontology.Ontology()
-    eventType = ontology.CreateEventType(self.EventTypeName)\
-        .CreateProperty('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch)
+
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
+
+    eventType = ontology.CreateEventType(self.EventTypeName)
+    eventType.CreateProperty('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch)
 
     if self.Ordered:
       eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrReplace)
@@ -263,10 +268,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMultiply)
     eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
     eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
-
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
 
     for SourceId, SourceUrl in self.EventSourceIdDict.items():
       ontology.CreateEventSource(SourceUrl)

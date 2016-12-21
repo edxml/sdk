@@ -485,25 +485,13 @@ class Ontology(object):
     elif isinstance(otherOntology, etree._Element):
       for element in otherOntology:
         if element.tag == 'eventtypes':
-          eventTypes = element
-          #self.__parseEventTypes(element)
+          self.__parseEventTypes(element)
         elif element.tag == 'objecttypes':
-          objectTypes = element
-          #self.__parseObjectTypes(element)
+          self.__parseObjectTypes(element)
         elif element.tag == 'sources':
-          sources = element
-          #self.__parseSources(element)
+          self.__parseSources(element)
         else:
           raise TypeError('Unexpected element: "%s"' % element.tag)
-
-      # As long as object type definitions come after
-      # event type definitions in EDXML data, we need
-      # to change processing order to prevent event types
-      # from trying to read object type information.
-      # TODO: Restore as soon as EDXML structure is changed.
-      self.__parseObjectTypes(objectTypes)
-      self.__parseEventTypes(eventTypes)
-      self.__parseSources(sources)
 
       self.Validate()
     else:
@@ -522,15 +510,14 @@ class Ontology(object):
 
     """
     ontologyElement = etree.Element('definitions')
-    eventTypes = etree.SubElement(ontologyElement, 'eventtypes')
-
-    for eventTypeName, eventType in self._event_types.iteritems():
-      eventTypes.append(eventType.GenerateXml())
-
     objectTypes = etree.SubElement(ontologyElement, 'objecttypes')
+    eventTypes = etree.SubElement(ontologyElement, 'eventtypes')
 
     for objectTypeName, objectType in self._object_types.iteritems():
       objectTypes.append(objectType.GenerateXml())
+
+    for eventTypeName, eventType in self._event_types.iteritems():
+      eventTypes.append(eventType.GenerateXml())
 
     eventSources = etree.SubElement(ontologyElement, 'sources')
 
