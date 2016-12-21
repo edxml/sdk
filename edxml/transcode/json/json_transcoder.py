@@ -106,22 +106,45 @@ class JsonTranscoder(EDXMLBase):
 
   """
 
-  PROPERTY_DESCRIPTIONS = {}
+  TYPE_PROPERTY_DESCRIPTIONS = {}
   """
-  The PROPERTY_DESCRIPTIONS attribute is a dictionary mapping EDXML property names to descriptions.
+  The TYPE_PROPERTY_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to property
+  descriptions. Each property description is a dictionary mapping property names to descriptions.
   It will be used to automatically set the descriptions of any automatically generated properties.
+
+  Example::
+
+      {
+        'event_type_name': {
+          'property-a': 'description',
+          'property-b': 'description'
+        }
+      }
+
   """
 
-  PROPERTY_SIMILARITY = {}
+  TYPE_PROPERTY_SIMILARITY = {}
   """
-  The PROPERTY_SIMILARITY attribute is a dictionary mapping EDXML property names to EDXML 'similar'
+  The TYPE_PROPERTY_SIMILARITY attribute is a dictionary mapping EDXML event type names to property
+  similarities. Each property similarity is a dictionary mapping property names to EDXML 'similar'
   attributes. It will be used to automatically set the similar attributes of any automatically
   generated properties.
+
+  Example::
+
+      {
+        'event_type_name': {
+          'property-a': 'similar attribute',
+          'property-b': 'similar attribute'
+        }
+      }
+
   """
 
-  PROPERTY_MERGE_STRATEGIES = {}
+  TYPE_PROPERTY_MERGE_STRATEGIES = {}
   """
-  The PROPERTY_MERGE_STRATEGIES attribute is a dictionary mapping EDXML property names to EDXML 'merge'
+  The TYPE_PROPERTY_MERGE_STRATEGIES attribute is a dictionary mapping EDXML event type names to property
+  merge strategies. Each property merge strategy is a dictionary mapping property names to EDXML 'merge'
   attributes, which indicate the merge strategy of the property. It will be used to set the merge attribute
   for any automatically generated properties.
 
@@ -129,15 +152,21 @@ class JsonTranscoder(EDXMLBase):
   which is 'match' for unique properties and 'drop' for all other properties.
 
   For convenience, the EventProperty class defines some class attributes representing the available
-  merge strategies. Example::
+  merge strategies.
 
-    {'property_name': EventProperty.MERGE_ADD}
+  Example::
+
+    {
+      'event_type_name': {
+        'property_name': EventProperty.MERGE_ADD
+      }
+    }
 
   """
 
   TYPE_UNIQUE_PROPERTIES = {}
   """
-  The UNIQUE_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of unique properties.
+  The TYPE_UNIQUE_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of unique properties.
   The lists will be used to mark the listed properties as unique in automatically generated properties. Example::
 
     {'event_type_name': ['unique-property-a', 'unique-property-b']}
@@ -365,13 +394,13 @@ class JsonTranscoder(EDXMLBase):
       if EventTypeName in self.TYPE_PROPERTIES:
         for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():
           Type.CreateProperty(PropertyName, ObjectTypeName)
-          if PropertyName in self.PROPERTY_DESCRIPTIONS:
-            Type[PropertyName].SetDescription(self.PROPERTY_DESCRIPTIONS[PropertyName])
-          if PropertyName in self.PROPERTY_SIMILARITY:
-            Type[PropertyName].HintSimilar(self.PROPERTY_SIMILARITY[PropertyName])
-          if PropertyName in self.PROPERTY_MERGE_STRATEGIES:
-            Type[PropertyName].SetMergeStrategy(self.PROPERTY_MERGE_STRATEGIES[PropertyName])
-          if EventTypeName in self.TYPE_UNIQUE_PROPERTIES and PropertyName in self.TYPE_UNIQUE_PROPERTIES[EventTypeName]:
+          if PropertyName in self.TYPE_PROPERTY_DESCRIPTIONS.get(EventTypeName, {}):
+            Type[PropertyName].SetDescription(self.TYPE_PROPERTY_DESCRIPTIONS[EventTypeName][PropertyName])
+          if PropertyName in self.TYPE_PROPERTY_SIMILARITY.get(EventTypeName, {}):
+            Type[PropertyName].HintSimilar(self.TYPE_PROPERTY_SIMILARITY[EventTypeName][PropertyName])
+          if PropertyName in self.TYPE_PROPERTY_MERGE_STRATEGIES.get(EventTypeName, {}):
+            Type[PropertyName].SetMergeStrategy(self.TYPE_PROPERTY_MERGE_STRATEGIES[EventTypeName][PropertyName])
+          if PropertyName in self.TYPE_UNIQUE_PROPERTIES.get(EventTypeName, {}):
             Type[PropertyName].Unique()
 
       if EventTypeName in self.PARENT_MAPPINGS:
