@@ -89,6 +89,28 @@ class EventTypeParent(object):
 
     return self
 
+  def Map(self, ChildPropertyName, ParentPropertyName = None):
+    """
+
+    Add a property mapping, mapping a property in the child
+    event type to the corresponding property in the parent.
+    When the parent property name is omitted, it is assumed
+    that the parent and child properties are named identically.
+
+    Args:
+      ChildPropertyName (str):  Child property
+      ParentPropertyName (str): Parent property
+
+    Returns:
+      EventTypeParent: The EventTypeParent instance
+    """
+    ParentPropertyName = ChildPropertyName if ParentPropertyName is None else ParentPropertyName
+
+    current = dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
+    current[ChildPropertyName] = ParentPropertyName
+    self._attr['propertymap'] = ','.join(['%s:%s' % (Child, Parent) for Child, Parent in current.items()])
+    return self
+
   def GetEventType(self):
     """
 

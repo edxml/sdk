@@ -51,6 +51,8 @@ class EventType(MutableMapping):
     self._relaxNG = None       # type: etree.RelaxNG
     self._ontology = Ontology  # type: edxml.ontology.Ontology
 
+    self._parentDescription = None  # type: str
+
     self.__cachedUniqueProperties = None  # type: Dict[str, edxml.ontology.EventProperty]
     self.__cachedHashProperties = None    # type: Dict[str, edxml.ontology.EventProperty]
 
@@ -363,6 +365,49 @@ class EventType(MutableMapping):
     self._childModifiedCallback()
     return self
 
+  def MakeChildren(self, SiblingsDescription, Parent):
+    """
+
+    Marks this event type as child of the specified parent event type.
+
+    Notes:
+      You must call IsParent() on the parent before calling MakeChildren()
+
+    Args:
+      SiblingsDescription (str): EDXML siblings-description attribute
+      Parent (edxml.ontology.EventType): Parent event type
+
+    Returns:
+      edxml.ontology.EventTypeParent: The event type parent definition
+    """
+    if self._parentDescription:
+      self._parent = edxml.ontology.EventTypeParent(Parent.GetName(), '', self._parentDescription, SiblingsDescription)
+      self._childModifiedCallback()
+      return self._parent
+    else:
+      raise Exception('You must call IsParent() on the parent before calling MakeChildren().')
+
+  def IsParent(self, ParentDescription, Child):
+    """
+
+    Marks this event type as parent of the specified child event type.
+
+    Notes:
+      To be used in conjunction with the MakeChildren() method.
+
+    Args:
+      ParentDescription (str): EDXML parent-description attribute
+      Child (edxml.ontology.EventType): Child event type
+
+    Returns:
+      EventType: The EventType instance
+
+    """
+
+    Child._parentDescription = ParentDescription
+    Child._childModifiedCallback()
+    return self
+
   def SetDescription(self, Description):
     """
 
@@ -384,6 +429,11 @@ class EventType(MutableMapping):
     """
 
     Set the parent event type
+
+    Notes:
+      It is recommended to use the MakeChildren() and
+      IsParent() methods in stead whenever possible,
+      which results in more readable code.
 
     Args:
       Parent (EventTypeParent): Parent event type
