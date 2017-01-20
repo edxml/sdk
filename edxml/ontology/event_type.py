@@ -523,9 +523,9 @@ class EventType(MutableMapping):
 
   def SetReporterShort(self, Reporter):
     """
-    
+
     Set the short reporter string
-    
+
     Args:
       Reporter (str): The short reporter string 
 

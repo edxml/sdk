@@ -167,7 +167,7 @@ class ObjectType(object):
     """
 
     Configure the data type.
-    
+
     Args:
       dataType (DataType): DataType instance
 
