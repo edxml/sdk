@@ -305,7 +305,7 @@ class EDXMLParserBase(object):
     # handler source patterns to source URLs
     self.__sourceUrlPatternMap = defaultdict(list)
     for pattern in self.__eventSourceHandlers.keys():
-      for sourceUrl, source in self._ontology.GenerateEventSources():
+      for sourceUrl, source in self._ontology.GetEventSources():
         if re.match(pattern, sourceUrl):
           self.__sourceUrlPatternMap[pattern].append(sourceUrl)
 

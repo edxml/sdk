@@ -277,8 +277,8 @@ class SimpleEDXMLWriter(object):
     EventSourceId = self._ontology.GetEventSource(Source).GetId() if Source is not None else self._current_source_id
     EventTypeName = Type if Type is not None else self._current_event_type
     if EventSourceId is None:
-      if len([source for source in self._ontology.GenerateEventSources()]) == 1:
-        EventSourceId = next(iter(self._ontology.GenerateEventSources())).GetId()
+      if len(self._ontology.GetEventSources()) == 1:
+        EventSourceId = self._ontology.GetEventSources().keys()[0]
       else:
         raise EDXMLError('No event source was specified.')
 

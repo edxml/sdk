@@ -245,44 +245,41 @@ class Ontology(object):
 
     return self
 
-  def GenerateEventTypes(self):
+  def GetEventTypes(self):
     """
 
-    Generates all event types in the ontology as
-    dictionary elements. The keys are the event type
+    Returns a dictionary containing all event types
+    in the ontology. The keys are the event type
     names, the values are EventType instances.
 
-    Yields:
-      EventType: EventType instance
+    Returns:
+      Dict[str, edxml.ontology.EventType]: EventType instances
     """
-    for name, eventType in self._event_types.items():
-      yield name, eventType
+    return self._event_types
 
-  def GenerateObjectTypes(self):
+  def GetObjectTypes(self):
     """
 
-    Generates all object types in the ontology as
-    dictionary elements. The keys are the object type
+    Returns a dictionary containing all object types
+    in the ontology. The keys are the object type
     names, the values are ObjectType instances.
 
-    Yields:
-      ObjectType: ObjectType instance
+    Returns:
+      Dict[str, edxml.ontology.ObjectType]: ObjectType instances
     """
-    for name, objectType in self._object_types.items():
-      yield name, objectType
+    return self._object_types
 
-  def GenerateEventSources(self):
+  def GetEventSources(self):
     """
 
-    Generates all event sources in the ontology as
-    dictionary elements. The keys are the event source
+    Returns a dictionary containing all event sources
+    in the ontology. The keys are the event source
     URLs, the values are EventSource instances.
 
-    Yields:
-      EventSource: EventSource instance
+    Returns:
+      Dict[str, edxml.ontology.EventSource]: EventSource instances
     """
-    for url, eventSource in self._sources.items():
-      yield url, eventSource
+    return self._sources
 
   def GetEventTypeNames(self):
     """
@@ -535,11 +532,11 @@ class Ontology(object):
     """
 
     if type(otherOntology) == Ontology:
-      for ObjectTypeName, objectType in otherOntology.GenerateObjectTypes():
+      for ObjectTypeName, objectType in otherOntology.GetObjectTypes().items():
         self._addObjectType(objectType)
-      for EventTypeName, eventType in otherOntology.GenerateEventTypes():
+      for EventTypeName, eventType in otherOntology.GetEventTypes().items():
         self._addEventType(eventType)
-      for Url, source in otherOntology.GenerateEventSources():
+      for uri, source in otherOntology.GetEventSources().items():
         self._addEventSource(source)
 
     elif isinstance(otherOntology, etree._Element):
