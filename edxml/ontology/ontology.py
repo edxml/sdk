@@ -115,6 +115,66 @@ class Ontology(object):
     self._childModifiedCallback()
     return self._sources[Url]
 
+  def DeleteObjectType(self, objectTypeName):
+    """
+
+    Deletes specified object type from the ontology, if
+    it exists.
+
+    Warnings:
+      Deleting object types may result in an invalid ontology.
+
+    Args:
+      objectTypeName (str): An EDXML object type name
+    Returns:
+      Ontology: The ontology
+    """
+
+    if objectTypeName in self._object_types:
+      del self._object_types[objectTypeName]
+      self._childModifiedCallback()
+
+    return self
+
+  def DeleteEventType(self, eventTypeName):
+    """
+
+    Deletes specified event type from the ontology, if
+    it exists.
+
+    Warnings:
+      Deleting event types may result in an invalid ontology.
+
+    Args:
+      eventTypeName (str): An EDXML event type name
+    Returns:
+      Ontology: The ontology
+    """
+
+    if eventTypeName in self._event_types:
+      del self._event_types[eventTypeName]
+      self._childModifiedCallback()
+
+    return self
+
+  def DeleteEventSource(self, sourceUrl):
+    """
+
+    Deletes specified event source definition from the
+    ontology, if it exists.
+
+    Args:
+      sourceUrl (str): An EDXML event source URL
+    Returns:
+      Ontology: The ontology
+    """
+
+    if sourceUrl in self._sources:
+      del self._sources[sourceUrl]
+      self._childModifiedCallback()
+
+    return self
+
   def _childModifiedCallback(self):
     """Callback for change tracking"""
     return self
