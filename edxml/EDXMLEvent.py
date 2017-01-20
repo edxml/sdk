@@ -27,7 +27,7 @@ class EDXMLEvent(MutableMapping):
 
   """
 
-  def __init__(self, Properties, EventTypeName = None, SourceUrl = None, Parents = None, Content = None):
+  def __init__(self, Properties, EventTypeName = None, SourceUri = None, Parents = None, Content = None):
     """
 
     Creates a new EDXML event. The Properties argument must be a
@@ -38,7 +38,7 @@ class EDXMLEvent(MutableMapping):
     Args:
       Properties (Dict[str,List[unicode]]): Dictionary of properties
       EventTypeName (Optional[str]): Name of the event type
-      SourceUrl (Optional[str]): Event source URL
+      SourceUri (Optional[str]): Event source URI
       Parents (Optional[List[str]]): List of explicit parent hashes
       Content (Optional[unicode]): Event content
 
@@ -47,7 +47,7 @@ class EDXMLEvent(MutableMapping):
     """
     self.Properties = Properties
     self.EventTypeName = EventTypeName
-    self.SourceUrl = SourceUrl
+    self.SourceUri = SourceUri
     self.Parents = set(Parents) if Parents is not None else set()
     self.Content = unicode(Content) if Content else u''
 
@@ -94,10 +94,10 @@ class EDXMLEvent(MutableMapping):
     Returns:
        EDXMLEvent
     """
-    return EDXMLEvent(self.Properties.copy(), self.EventTypeName, self.SourceUrl, list(self.Parents), self.Content)
+    return EDXMLEvent(self.Properties.copy(), self.EventTypeName, self.SourceUri, list(self.Parents), self.Content)
 
   @classmethod
-  def Create(cls, Properties, EventTypeName = None, SourceUrl = None, Parents = None, Content = None):
+  def Create(cls, Properties, EventTypeName = None, SourceUri = None, Parents = None, Content = None):
     """
 
     Creates a new EDXML event. The Properties argument must be a
@@ -112,7 +112,7 @@ class EDXMLEvent(MutableMapping):
     Args:
       Properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
       EventTypeName (Optional[str]): Name of the event type
-      SourceUrl (Optional[str]): Event source URL
+      SourceUri (Optional[str]): Event source URI
       Parents (Optional[List[str]]): List of explicit parent hashes
       Content (Optional[unicode]): Event content
 
@@ -122,7 +122,7 @@ class EDXMLEvent(MutableMapping):
     return cls(
       {Property: Value if type(Value) == list else [Value] for Property, Value in Properties.items()},
       EventTypeName,
-      SourceUrl,
+      SourceUri,
       Parents,
       Content
     )
@@ -138,16 +138,16 @@ class EDXMLEvent(MutableMapping):
     """
     return self.EventTypeName
 
-  def GetSourceUrl(self):
+  def GetSourceUri(self):
     """
 
-    Returns the URL of the event source.
+    Returns the URI of the event source.
 
     Returns:
-      str: The source URL
+      str: The source URI
 
     """
-    return self.SourceUrl
+    return self.SourceUri
 
   def GetProperties(self):
     """
@@ -185,7 +185,7 @@ class EDXMLEvent(MutableMapping):
     return self.Content
 
   @classmethod
-  def Read(cls, EventTypeName, SourceUrl, EventElement):
+  def Read(cls, EventTypeName, SourceUri, EventElement):
     """
 
     Creates and returns a new EDXMLEvent instance by reading it from
@@ -193,7 +193,7 @@ class EDXMLEvent(MutableMapping):
 
     Args:
       EventTypeName (str): The name of the event type
-      SourceUrl (str): The URL of the EDXML event source
+      SourceUri (str): The URI of the EDXML event source
       EventElement (etree.Element): The XML element containing the event
 
     Returns:
@@ -211,7 +211,7 @@ class EDXMLEvent(MutableMapping):
       elif element.tag == 'content':
         Content = element.text
 
-    return cls(PropertyObjects, EventTypeName, SourceUrl, EventElement.attrib.get('parents'), Content)
+    return cls(PropertyObjects, EventTypeName, SourceUri, EventElement.attrib.get('parents'), Content)
 
   def SetProperties(self, properties):
     """
@@ -329,18 +329,18 @@ class EDXMLEvent(MutableMapping):
     self.Content = Content
     return self
 
-  def SetSource(self, SourceUrl):
+  def SetSource(self, SourceUri):
     """
 
     Set the event source.
 
     Args:
-      SourceUrl (str): EDXML source URL
+      SourceUri (str): EDXML source URI
 
     Returns:
       EDXMLEvent:
     """
-    self.SourceUrl = SourceUrl
+    self.SourceUri = SourceUri
     return self
 
   def AddParents(self, ParentHashes):
@@ -621,11 +621,11 @@ class EDXMLEvent(MutableMapping):
 
     if eventType.IsUnique():
       return hashlib.sha1(
-        (u'%s\n%s\n%s' % (self.SourceUrl, self.EventTypeName, '\n'.join(sorted(ObjectStrings)))).encode('utf-8')
+        (u'%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(ObjectStrings)))).encode('utf-8')
       ).hexdigest()
     else:
       return hashlib.sha1(
-        (u'%s\n%s\n%s\n%s' % (self.SourceUrl, self.EventTypeName, '\n'.join(sorted(ObjectStrings)), self.Content)).encode('utf-8')
+        (u'%s\n%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(ObjectStrings)), self.Content)).encode('utf-8')
       ).hexdigest()
 
 
@@ -755,7 +755,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     return deepcopy(self)
 
   @classmethod
-  def Create(cls, Properties, EventTypeName=None, SourceUrl=None, Parents=None, Content=None):
+  def Create(cls, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
     """
 
     This override of the Create() method of the EDXMLEvent class
@@ -769,7 +769,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     raise NotImplementedError('ParsedEvent objects can only be created by parsers')
 
   @classmethod
-  def Read(cls, EventTypeName, SourceUrl, EventElement):
+  def Read(cls, EventTypeName, SourceUri, EventElement):
     """
 
     Creates and returns a new EDXMLEvent instance by reading it from
@@ -777,7 +777,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
     Args:
       EventTypeName (str): The name of the event type
-      SourceUrl (str): The URL of the EDXML event source
+      SourceUri (str): The URI of the EDXML event source
       EventElement (etree.Element): The XML element containing the event
 
     Returns:
@@ -795,7 +795,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
       elif element.tag == 'content':
         Content = element.text
 
-    return cls(PropertyObjects, EventTypeName, SourceUrl, EventElement.attrib.get('parents'), Content)
+    return cls(PropertyObjects, EventTypeName, SourceUri, EventElement.attrib.get('parents'), Content)
 
   def GetProperties(self):
     try:
@@ -973,7 +973,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
   or SimpleEDXMLWriter.
   """
 
-  def __init__(self, Properties, EventTypeName=None, SourceUrl=None, Parents=None, Content=None):
+  def __init__(self, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
     """
 
     Creates a new EDXML event. The Properties argument must be a
@@ -984,14 +984,14 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     Args:
       Properties (Dict(str, List[unicode])): Dictionary of properties
       EventTypeName (Optional[str]): Name of the event type
-      SourceUrl (Optional[optional]): Event source URL
+      SourceUri (Optional[optional]): Event source URI
       Parents (Optional[List[str]]): List of explicit parent hashes
       Content (Optional[unicode]): Event content
 
     Returns:
       EventElement:
     """
-    super(EventElement, self).__init__(Properties, EventTypeName, SourceUrl, Parents, Content)
+    super(EventElement, self).__init__(Properties, EventTypeName, SourceUri, Parents, Content)
 
     # These are now kept in an etree element.
     self.Properties = None
@@ -1108,7 +1108,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     return deepcopy(self)
 
   @classmethod
-  def Create(cls, Properties, EventTypeName=None, SourceUrl=None, Parents=None, Content=None):
+  def Create(cls, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
     """
 
     Creates a new EDXML event. The Properties argument must be a
@@ -1123,7 +1123,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     Args:
       Properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
       EventTypeName (Optional[str]): Name of the event type
-      SourceUrl (Optional[str]): Event source URL
+      SourceUri (Optional[str]): Event source URI
       Parents (Optional[List[str]]): List of explicit parent hashes
       Content (Optional[unicode]): Event content
 
@@ -1133,13 +1133,13 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     return cls(
       {Property: Value if type(Value) == list else [Value] for Property, Value in Properties.items()},
       EventTypeName,
-      SourceUrl,
+      SourceUri,
       Parents,
       Content
     )
 
   @classmethod
-  def Read(cls, EventTypeName, SourceUrl, EventElement):
+  def Read(cls, EventTypeName, SourceUri, EventElement):
     """
 
     Creates and returns a new EventElement instance by reading it from
@@ -1147,7 +1147,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
 
     Args:
       EventTypeName (str): The name of the event type
-      SourceUrl (str): The URL of the EDXML event source
+      SourceUri (str): The URI of the EDXML event source
       EventElement (etree.Element): The XML element containing the event
 
     Returns:

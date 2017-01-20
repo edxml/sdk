@@ -63,8 +63,7 @@ class EDXMLParserBase(object):
     self._eventClass = None
 
     self.__currentEventType = None       # type: str
-    self.__currentEventSourceId = None   # type: str
-    self.__currentEventSourceUrl = None  # type: str
+    self.__currentEventSourceUri = None  # type: str
     self.__currentEventSource = None     # type: edxml.ontology.EventSource
     self.__currentGroupEventCount = 0    # type: int
     self.__rootElement = None            # type: etree.Element
@@ -76,7 +75,7 @@ class EDXMLParserBase(object):
     self.__eventTypeHandlers = {}        # type: Dict[str, callable]
     self.__eventSourceHandlers = {}      # type: Dict[str, callable]
     self.__currentEventHandlers = []     # type: List[callable]
-    self.__sourceUrlPatternMap = {}      # type: Dict[Any, List[str]]
+    self.__sourceUriPatternMap = {}      # type: Dict[Any, List[str]]
 
     self.__schema = None                 # type: etree.RelaxNG
     self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
@@ -133,7 +132,7 @@ class EDXMLParserBase(object):
     """
 
     Register a handler for specified event sources. Whenever
-    an event is parsed that has an event source URL patching
+    an event is parsed that has an event source URI matching
     any of the specified regular expressions, the supplied
     handler will be called with the event (which will be a
     ParsedEvent instance) as its only argument.
@@ -302,12 +301,12 @@ class EDXMLParserBase(object):
     self._parsedOntology(self._ontology)
 
     # Use the ontology to build a mapping of event
-    # handler source patterns to source URLs
-    self.__sourceUrlPatternMap = defaultdict(list)
+    # handler source patterns to source URIs
+    self.__sourceUriPatternMap = defaultdict(list)
     for pattern in self.__eventSourceHandlers.keys():
-      for sourceUrl, source in self._ontology.GetEventSources():
-        if re.match(pattern, sourceUrl):
-          self.__sourceUrlPatternMap[pattern].append(sourceUrl)
+      for sourceUri, source in self._ontology.GetEventSources():
+        if re.match(pattern, sourceUri):
+          self.__sourceUriPatternMap[pattern].append(sourceUri)
 
   def _parsedOntology(self, edxmlOntology):
     """
@@ -335,8 +334,8 @@ class EDXMLParserBase(object):
             # yet.
             self.__parseEventGroup(elem.getparent())
 
-          if self.__currentEventType is not None and self.__currentEventSourceUrl is not None:
-            elem.SetType(self.__currentEventType).SetSource(self.__currentEventSourceUrl)
+          if self.__currentEventType is not None and self.__currentEventSourceUri is not None:
+            elem.SetType(self.__currentEventType).SetSource(self.__currentEventSourceUri)
             self.__parseEvent(elem)
             self.__currentGroupEventCount += 1
             if self.__currentGroupEventCount > 1:
@@ -347,13 +346,12 @@ class EDXMLParserBase(object):
       if elem.tag == 'eventgroup':
         if elem.getparent().tag == 'eventgroups':
           if self.__currentGroupElement is not None:
-            self._closeEventGroup(self.__currentEventType, self.__currentEventSourceId)
+            self._closeEventGroup(self.__currentEventType, self.__currentEventSourceUri)
             self.__currentGroupEventCount = 0
           self.__currentGroupElement = None
           self.__currentEventType = None
           self.__currentEventSource = None
-          self.__currentEventSourceId = None
-          self.__currentEventSourceUrl = None
+          self.__currentEventSourceUri = None
         continue
 
       if elem.tag == 'definitions':
@@ -364,50 +362,50 @@ class EDXMLParserBase(object):
   def __parseEventGroup(self, groupElement):
 
     if self.__currentGroupElement is not None:
-      self._closeEventGroup(self.__currentEventType, self.__currentEventSourceId)
+      self._closeEventGroup(self.__currentEventType, self.__currentEventSourceUri)
 
     self.__currentGroupElement = groupElement
-    self._openEventGroup(groupElement.attrib['event-type'], groupElement.attrib['source-id'])
+    self._openEventGroup(groupElement.attrib['event-type'], groupElement.attrib['source-uri'])
 
-    if self.__currentEventType is None and self.__currentEventSourceId is None:
+    if self.__currentEventType is None and self.__currentEventSourceUri is None:
       # This may happen when an extension of this
       # class 'swallows' an event group.
       self.__currentEventSource = None
-      self.__currentEventSourceUrl = None
+      self.__currentEventSourceUri = None
       self.__eventTypeSchema = None
       return
 
-    self.__currentEventSource = self._ontology.GetEventSourceById(self.__currentEventSourceId)
+    self.__currentEventSource = self._ontology.GetEventSource(self.__currentEventSourceUri)
 
     if self.__currentEventSource is None:
       raise EDXMLValidationError(
-        "An eventgroup refers to Source ID %s, which is not defined." % self.__currentEventSourceId
+        "An eventgroup refers to Source URI %s, which is not defined." % self.__currentEventSourceUri
       )
     if self._ontology.GetEventType(self.__currentEventType) is None:
       raise EDXMLValidationError(
         "An eventgroup refers to eventtype %s, which is not defined." % self.__currentEventType
       )
 
-    self.__currentEventSourceUrl = self.__currentEventSource.GetUrl()
+    self.__currentEventSourceUri = self.__currentEventSource.GetUri()
 
     if self.__validate:
       self.__eventTypeSchema = self.getEventTypeSchema(self.__currentEventType)
 
-  def _closeEventGroup(self, eventTypeName, eventSourceId):
+  def _closeEventGroup(self, eventTypeName, eventSourceUri):
     """
 
     Callback that is invoked whenever an open event group
-    is closed. The event type name and source ID match the
+    is closed. The event type name and source URI match the
     values that were passed to _openEventGroup().
 
     Args:
       eventTypeName (str): The event type name
-      eventSourceId (str): Identifier of the event source
+      eventSourceUri (str): URI of the event source
 
     """
     pass
 
-  def _openEventGroup(self, eventTypeName, eventSourceId):
+  def _openEventGroup(self, eventTypeName, eventSourceUri):
     """
 
     Callback that is invoked whenever a new event group
@@ -425,23 +423,22 @@ class EDXMLParserBase(object):
 
     Args:
       eventTypeName (str): The event type name
-      eventSourceId (str): Identifier of the event source
+      eventSourceUri (str): URI of the event source
 
     """
     self.__currentEventType = eventTypeName
-    self.__currentEventSourceId = eventSourceId
+    self.__currentEventSourceUri = eventSourceUri
 
     self.__currentEventHandlers = []
 
-    if self.__currentEventType and self.__currentEventSourceId:
+    if self.__currentEventType and self.__currentEventSourceUri:
 
       # Add handlers for the event type
       self.__currentEventHandlers.extend(self.__eventTypeHandlers.get(self.__currentEventType, ()))
 
       # Add handlers for the event source
-      currentUrl = self._ontology.GetEventSourceById(self.__currentEventSourceId).GetUrl()
       for pattern, handlers in self.__eventSourceHandlers.iteritems():
-        if currentUrl in self.__sourceUrlPatternMap[pattern]:
+        if self.__currentEventSourceUri in self.__sourceUriPatternMap[pattern]:
           self.__currentEventHandlers.extend(handlers)
 
     if len(self.__currentEventHandlers) == 0:

@@ -78,7 +78,7 @@ class EDXMLFilter(EDXMLParserBase):
     self._writer.AddOntology(parsedOntology)
     self._writer.OpenEventGroups()
 
-  def _openEventGroup(self, eventTypeName, eventSourceId):
+  def _openEventGroup(self, eventTypeName, eventSourceUri):
     """
 
     Callback that writes a new <eventgroup> opening tag
@@ -89,11 +89,11 @@ class EDXMLFilter(EDXMLParserBase):
 
     Args:
       eventTypeName (str): The name of the event type
-      eventSourceId: The source identifier
+      eventSourceUri: The source URI
 
     """
-    super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceId)
-    self._writer.OpenEventGroup(eventTypeName, eventSourceId)
+    super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
+    self._writer.OpenEventGroup(eventTypeName, eventSourceUri)
     self.__groupOpen = True
 
   def _closeEventGroup(self, eventTypeName, eventSourceId):

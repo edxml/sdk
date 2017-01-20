@@ -123,10 +123,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         except GeneratorExit:
           pass
 
-  def __InnerXMLSerialiserCoRoutine(self, EventTypeName, EventSourceId):
+  def __InnerXMLSerialiserCoRoutine(self, EventTypeName, EventSourceUri):
     """Coroutine which performs the actual XML serialisation of eventgroups"""
     with etree.xmlfile(self.Output, encoding='utf-8') as Writer:
-      with Writer.element('eventgroup', **{'event-type': EventTypeName, 'source-id': EventSourceId}):
+      with Writer.element('eventgroup', **{'event-type': EventTypeName, 'source-uri': EventSourceUri}):
         Writer.flush()
         try:
           while True:
@@ -177,13 +177,13 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     self.ElementStack.append('eventgroups')
 
-  def OpenEventGroup(self, EventTypeName, SourceId):
+  def OpenEventGroup(self, EventTypeName, SourceUri):
     """Opens an event group.
 
     Args:
       EventTypeName (str): Name of the eventtype
 
-      SourceId (str): Source Id
+      SourceUri (str): EDXML event source URI
 
     """
 
@@ -191,12 +191,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.ElementStack.append('eventgroup')
 
     self.CurrentElementTypeName = EventTypeName
-    self.CurrentElementSourceId = SourceId
 
     if self.Validate:
       self.__eventTypeSchema = self.getEventTypeSchema(self.CurrentElementTypeName)
 
-    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, str(self.CurrentElementSourceId))
+    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, SourceUri)
     self.EventGroupXMLWriter.next()
 
   def Close(self):

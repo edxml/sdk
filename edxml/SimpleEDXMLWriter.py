@@ -53,7 +53,7 @@ class SimpleEDXMLWriter(object):
     self._ignore_invalid_objects = False
     self._ignore_invalid_events = False
     self._log_invalid_events = False
-    self._current_source_id = None
+    self._currentSourceUri = None
     self._current_event_type = None
     self._current_event_group_source = None
     self._current_event_group_type = None
@@ -61,7 +61,6 @@ class SimpleEDXMLWriter(object):
     self._ontology = Ontology()
     self._event_type_postprocessors = {}
     self._automerge = {}
-    self._source_ids = {}
     self._writer = EDXMLWriter(Output, Validate)
 
   def __enter__(self):
@@ -212,7 +211,7 @@ class SimpleEDXMLWriter(object):
 
     return self
 
-  def SetEventSource(self, SourceId):
+  def SetEventSource(self, SourceUri):
     """
 
     Set the default event source for the output events. If no explicit
@@ -220,12 +219,12 @@ class SimpleEDXMLWriter(object):
     be used.
 
     Args:
-      SourceId (str): The event source identifier
+      SourceUri (str): The event source URI
 
     Returns:
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
     """
-    self._current_source_id = SourceId
+    self._currentSourceUri = SourceUri
 
     return self
 
@@ -249,7 +248,7 @@ class SimpleEDXMLWriter(object):
       Event.Content,
       Event.Parents,
       Event.EventTypeName,
-      self._source_ids.get(Event.SourceUrl)
+      Event.SourceUri
     )
 
   def GenerateEvent(self, Properties, Content=u'', Parents=None, Type=None, Source=None):
@@ -268,21 +267,19 @@ class SimpleEDXMLWriter(object):
       Content (unicode): Event content string
       Parents (list[str], Optional): List of sticky hashes, as hex strings
       Type (str, Optional): Event type name
-      Source (str, Optional): Source identifier
+      Source (str, Optional): EDXML event source URI
 
     Returns:
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
     """
 
-    EventSourceId = self._ontology.GetEventSource(Source).GetId() if Source is not None else self._current_source_id
+    EventSourceUri = self._ontology.GetEventSource(Source).GetUri() if Source is not None else self._currentSourceUri
     EventTypeName = Type if Type is not None else self._current_event_type
-    if EventSourceId is None:
+    if EventSourceUri is None:
       if len(self._ontology.GetEventSources()) == 1:
-        EventSourceId = self._ontology.GetEventSources().keys()[0]
+        EventSourceUri = self._ontology.GetEventSources().keys()[0]
       else:
         raise EDXMLError('No event source was specified.')
-
-    SourceUrl = self._ontology.GetEventSourceById(EventSourceId).GetUrl()
 
     if EventTypeName is None:
       if len(self._ontology.GetEventTypeNames()) == 1:
@@ -291,11 +288,11 @@ class SimpleEDXMLWriter(object):
         raise EDXMLError('No event type was specified.')
 
     if EventTypeName in self._event_type_postprocessors:
-      self._event_type_postprocessors[EventTypeName](Properties, Content, Parents, EventTypeName, EventSourceId)
+      self._event_type_postprocessors[EventTypeName](Properties, Content, Parents, EventTypeName, EventSourceUri)
 
-    Event = EDXMLEvent.Create(Properties, EventTypeName, SourceUrl, Parents, Content)
+    Event = EDXMLEvent.Create(Properties, EventTypeName, EventSourceUri, Parents, Content)
 
-    EventGroup = '%s:%s' % (EventTypeName, EventSourceId)
+    EventGroup = '%s:%s' % (EventTypeName, EventSourceUri)
     if not EventGroup in self._event_buffers:
       self._event_buffers[EventGroup] = {True: {}, False: []}
 
@@ -321,7 +318,7 @@ class SimpleEDXMLWriter(object):
 
     if self.__currBufSize > self.__maxBufSize or \
        0 < self._max_latency <= (time.time() - self._last_write_time):
-       self._flush_buffer(EventTypeName, EventSourceId, EventGroup, Merge)
+       self._flush_buffer(EventTypeName, EventSourceUri, EventGroup, Merge)
 
     return self
 
@@ -360,19 +357,19 @@ class SimpleEDXMLWriter(object):
     self._max_latency = Latency
     return self
 
-  def _flush_buffer(self, EventTypeName, EventSourceId, EventGroupId, Merge):
+  def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
     if not self._writing_events:
       self._writer.AddOntology(self._ontology)
       self._writer.OpenEventGroups()
       self._writing_events = True
 
-    if self._current_event_group_type != EventTypeName or self._current_event_group_source != EventSourceId:
+    if self._current_event_group_type != EventTypeName or self._current_event_group_source != EventSourceUri:
       if self._current_event_group_type is not None:
         self._writer.CloseEventGroup()
-      self._writer.OpenEventGroup(EventTypeName, EventSourceId)
+      self._writer.OpenEventGroup(EventTypeName, EventSourceUri)
       self._current_event_group_type = EventTypeName
-      self._current_event_group_source = EventSourceId
+      self._current_event_group_source = EventSourceUri
 
     if Merge:
       for Hash, Events in self._event_buffers[EventGroupId][Merge].items():
@@ -412,10 +409,10 @@ class SimpleEDXMLWriter(object):
       self._writing_events = True
 
     for GroupId in self._event_buffers:
-      EventTypeName, EventSourceId = GroupId.split(':')
+      EventTypeName, EventSourceUri = GroupId.split(':')
       for Merge in self._event_buffers[GroupId]:
         if len(self._event_buffers[GroupId][Merge]) > 0:
-          self._flush_buffer(EventTypeName, EventSourceId, GroupId, Merge)
+          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
 
     if self._current_event_group_type is not None:
       self._writer.CloseEventGroup()

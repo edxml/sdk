@@ -2,7 +2,6 @@
 from lxml import etree
 
 import re
-import uuid
 from time import strftime, gmtime
 
 import edxml
@@ -14,14 +13,13 @@ class EventSource(object):
   Class representing an EDXML event source
   """
 
-  SOURCE_URL_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
+  SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
   ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
-  def __init__(self, Ontology, Id, Url, Description = None, AcquisitionDate = None):
+  def __init__(self, Ontology, Uri, Description = None, AcquisitionDate = None):
 
     self._attr = {
-      'source-id':     str(Id),
-      'url':           str(Url).rstrip('/') + '/',
+      'uri':           str(Uri).rstrip('/') + '/',
       'description':   str(Description) if Description else 'undescribed source',
       'date-acquired': str(AcquisitionDate) if AcquisitionDate else strftime("%Y%m%d", gmtime())
     }
@@ -36,25 +34,15 @@ class EventSource(object):
     """Callback for change tracking"""
     return self
 
-  def GetId(self):
+  def GetUri(self):
     """
 
-    Returns the source Id
+    Returns the source URI
 
     Returns:
       str:
     """
-    return self._attr['source-id']
-
-  def GetUrl(self):
-    """
-
-    Returns the source URL
-
-    Returns:
-      str:
-    """
-    return self._attr['url']
+    return self._attr['uri']
 
   def GetAcquisitionDateString(self):
     """
@@ -93,12 +81,9 @@ class EventSource(object):
       EventSource: The EventSource instance
 
     """
-    if len(self._attr['source-id']) == 0:
-      raise EDXMLValidationError('Event source has an empty source-id attribute.')
-
-    if not re.match(self.SOURCE_URL_PATTERN, self._attr['url']):
+    if not re.match(self.SOURCE_URI_PATTERN, self._attr['uri']):
       raise EDXMLValidationError(
-        'Event source has an invalid URL: "%s"' % self._attr['url']
+        'Event source has an invalid URI: "%s"' % self._attr['uri']
       )
 
     if not 1 <= len(self._attr['description']) <= 128:
@@ -115,8 +100,7 @@ class EventSource(object):
   def Read(cls, sourceElement, ontology):
     return cls(
       ontology,
-      sourceElement.attrib['source-id'],
-      sourceElement.attrib['url'],
+      sourceElement.attrib['uri'],
       sourceElement.attrib['description'],
       sourceElement.attrib['date-acquired']
     )
@@ -135,9 +119,9 @@ class EventSource(object):
       EventSource: The updated EventSource instance
 
     """
-    if self._attr['url'] != source.GetUrl():
+    if self._attr['uri'] != source.GetUri():
       raise Exception('Attempt to update event source "%s" with source "%s".',
-                      (self._attr['url'], source.GetUrl()))
+                      (self._attr['uri'], source.GetUri()))
 
     self.Validate()
 
