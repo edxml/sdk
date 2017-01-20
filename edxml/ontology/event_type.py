@@ -701,175 +701,252 @@ class EventType(MutableMapping):
       for placeholder in placeholders:
 
         objectStrings = []
-        exploded = placeholder[1].split(':')
+        try:
+          formatter, argumentString = placeholder[1].split(':', 1)
+          arguments = argumentString.split(',')
+        except ValueError:
+          # No formatter present.
+          formatter = None
+          arguments = placeholder[1].split(',')
 
-        if len(exploded) >= 2:
-          formatter = exploded.pop(0)
-          propertyList = exploded.pop(0)
-        else:
-          formatter = ''
-          propertyList = exploded[0]
+        if not formatter:
+          try:
+            objectStrings.extend(eventObjectValues[arguments[0]])
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+          continue
 
-        if len(propertyList) > 0:
-          properties = propertyList.split(',')
+        if formatter == 'TIMESPAN':
 
-          for propertyName in properties:
-            if propertyName not in eventObjectValues or len(eventObjectValues[propertyName]) == 0:
-              if formatter == 'EMPTY':
-                # Use the first formatter argument
-                # in stead of the object value itself.
-                objectStrings.append(exploded[0])
-              else:
-                # One of the place holders has no associated
-                # value, so we return an empty string.
-                return ''
-
-          properties = [propertyName for propertyName in properties if propertyName in eventObjectValues]
-
-          if formatter == 'TIMESPAN':
-
-            timestamps = []
-            for propertyName in properties:
+          timestamps = []
+          for propertyName in arguments:
+            try:
               for objectValue in eventObjectValues[propertyName]:
                 timestamps.append(float(objectValue))
+            except KeyError:
+              pass
 
-            if len(timestamps) > 0:
-              dateTimeA = datetime.datetime.fromtimestamp(min(timestamps))
-              dateTimeB = datetime.datetime.fromtimestamp(max(timestamps))
-              objectStrings.append(u'between %s and %s' % (dateTimeA.isoformat(' '), dateTimeB.isoformat(' ')))
+          if len(timestamps) > 0:
+            dateTimeA = datetime.datetime.fromtimestamp(min(timestamps))
+            dateTimeB = datetime.datetime.fromtimestamp(max(timestamps))
+            objectStrings.append(u'between %s and %s' % (dateTimeA.isoformat(' '), dateTimeB.isoformat(' ')))
+          else:
+            # No valid replacement string could be generated, which implies
+            # that we must return an empty string.
+            return u''
 
-          elif formatter == 'DURATION':
+        elif formatter == 'DURATION':
 
-            timestamps = []
-            for propertyName in properties:
+          timestamps = []
+          for propertyName in arguments:
+            try:
               for objectValue in eventObjectValues[propertyName]:
                 timestamps.append(float(objectValue))
+            except KeyError:
+              pass
 
-            if len(timestamps) > 0:
-              objectStrings.append(__formatTimeDuration(min(timestamps), max(timestamps)))
+          if len(timestamps) > 0:
+            objectStrings.append(__formatTimeDuration(min(timestamps), max(timestamps)))
+          else:
+            # No valid replacement string could be generated, which implies
+            # that we must return an empty string.
+            return u''
 
-          elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
+        elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
 
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                timestamp = float(objectValue)
-                timeZone = pytz.timezone("UTC")
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
 
-                try:
-                  if formatter == 'FULLDATETIME':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
-                  elif formatter == 'DATETIME':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'B %d %Y at %H:%M:%Sh UTC'))
-                  elif formatter == 'DATE':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'%a, %B %d %Y'))
-                  elif formatter == 'YEAR':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'%Y'))
-                  elif formatter == 'MONTH':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'%B %Y'))
-                  elif formatter == 'WEEK':
-                    objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                         .strftime(u'week %W of %Y'))
-                except ValueError:
-                  # This may happen for some time stamps before year 1900, which
-                  # is not supported by strftime.
-                  objectStrings.append(u'some date, a long, long time ago')
+          for objectValue in values:
+            timestamp = float(objectValue)
+            timeZone = pytz.timezone("UTC")
 
-          elif formatter == 'BYTECOUNT':
+            try:
+              if formatter == 'FULLDATETIME':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
+              elif formatter == 'DATETIME':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'B %d %Y at %H:%M:%Sh UTC'))
+              elif formatter == 'DATE':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'%a, %B %d %Y'))
+              elif formatter == 'YEAR':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'%Y'))
+              elif formatter == 'MONTH':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'%B %Y'))
+              elif formatter == 'WEEK':
+                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
+                                     .strftime(u'week %W of %Y'))
+            except ValueError:
+              # This may happen for some time stamps before year 1900, which
+              # is not supported by strftime.
+              objectStrings.append(u'some date, a long, long time ago')
 
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                objectStrings.append(__formatByteCount(int(objectValue)))
+        elif formatter == 'BYTECOUNT':
 
-          elif formatter == 'LATITUDE':
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
+            objectStrings.append(__formatByteCount(int(objectValue)))
+
+        elif formatter == 'LATITUDE':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
             degrees = int(objectValue)
             minutes = int((objectValue - degrees) * 60.0)
             seconds = int((objectValue - degrees - (minutes / 60.0)) * 3600.0)
 
             objectStrings.append(u'%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S'))
 
-          elif formatter == 'LONGITUDE':
+        elif formatter == 'LONGITUDE':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
             degrees = int(objectValue)
             minutes = int((objectValue - degrees) * 60.0)
             seconds = int((objectValue - degrees - (minutes / 60.0)) * 3600.0)
 
             objectStrings.append(u'%d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
 
-          elif formatter == 'CURRENCY':
+        elif formatter == 'CURRENCY':
 
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                objectStrings.append(u'%.2f%s' % (int(objectValue), exploded[0]))
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
 
-          elif formatter == 'COUNTRYCODE':
+          propertyName, currencySymbol = arguments
+          for objectValue in values:
+            objectStrings.append(u'%.2f%s' % (int(objectValue), currencySymbol))
 
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                try:
-                  objectStrings.append(countries.get(objectValue).name)
-                except KeyError:
-                  objectStrings.append(objectValue + u' (unknown country code)')
+        elif formatter == 'COUNTRYCODE':
 
-          elif formatter == 'BOOLEAN_STRINGCHOICE':
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                if objectValue == 'true':
-                  # Print first string
-                  objectStrings.append(exploded[0])
-                else:
-                  # Print second string
-                  objectStrings.append(exploded[1])
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
 
-          elif formatter == 'BOOLEAN_ON_OFF':
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                if objectValue == 'true':
-                  # Print 'on'
-                  objectStrings.append(u'on')
-                else:
-                  # Print 'off'
-                  objectStrings.append(u'off')
+          for objectValue in values:
+            try:
+              objectStrings.append(countries.get(objectValue).name)
+            except KeyError:
+              objectStrings.append(objectValue + u' (unknown country code)')
 
-          elif formatter == 'BOOLEAN_IS_ISNOT':
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                if objectValue == 'true':
-                  # Print 'is'
-                  objectStrings.append(u'is')
-                else:
-                  # Print 'is not'
-                  objectStrings.append(u'is not')
+        elif formatter == 'BOOLEAN_STRINGCHOICE':
 
-          elif formatter == 'EMPTY':
-            pass
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
 
+          propertyName, true, false = arguments
+          for objectValue in values:
+            if objectValue == u'true':
+              objectStrings.append(true)
+            else:
+              objectStrings.append(false)
+
+        elif formatter == 'BOOLEAN_ON_OFF':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
+            if objectValue == u'true':
+              # Print 'on'
+              objectStrings.append(u'on')
+            else:
+              # Print 'off'
+              objectStrings.append(u'off')
+
+        elif formatter == 'BOOLEAN_IS_ISNOT':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
+            if objectValue == u'true':
+              # Print 'is'
+              objectStrings.append(u'is')
+            else:
+              # Print 'is not'
+              objectStrings.append(u'is not')
+
+        elif formatter == 'EMPTY':
+
+          propertyName = arguments[0]
+          if propertyName not in eventObjectValues or len(eventObjectValues[propertyName]) == 0:
+            # Property has no object, use the second formatter argument
+            # in stead of the object value itself.
+            objectStrings.append(arguments[0])
           else:
-            for propertyName in properties:
-              for objectValue in eventObjectValues[propertyName]:
-                objectStrings.append(objectValue)
+            # Property has an object, so the formatter will
+            # yield an empty string. This in turn implies that
+            # we must produce an empty result.
+            return u''
 
         if len(objectStrings) > 0:
           if len(objectStrings) > 1:
             # If one property has multiple objects,
             # list them all.
-            LastObjectValue = objectStrings.pop()
-            if colorize:
-              ObjectString = ', '.join(colored(ObjectString, 'white', attrs=['bold']) for ObjectString in objectStrings)\
-                             + u' and ' + LastObjectValue
+            if u''.join(objectStrings) != u'':
+              LastObjectValue = objectStrings.pop()
+              if colorize:
+                ObjectString = u', '.join(colored(ObjectString, 'white', attrs=['bold']) for ObjectString in objectStrings)\
+                               + u' and ' + LastObjectValue
+              else:
+                ObjectString = u', '.join(objectStrings)\
+                               + u' and ' + LastObjectValue
             else:
-              ObjectString = ', '.join(objectStrings)\
-                             + u' and ' + LastObjectValue
+              ObjectString = u''
           else:
-            if colorize:
+            if colorize and objectStrings[0] != u'':
               ObjectString = colored(objectStrings[0], 'white', attrs=['bold'])
             else:
               ObjectString = objectStrings[0]
         else:
-          ObjectString = ''
+          ObjectString = u''
 
         replacements[placeholder[0]] = ObjectString
 
@@ -877,6 +954,10 @@ class EventType(MutableMapping):
       # by the actual (formatted) object values
 
       for placeholder, replacement in replacements.items():
+        if replacement == u'':
+          # Placeholder produces empty string, which
+          # implies that we must produce an empty result.
+          return u''
         string = string.replace(placeholder, replacement)
 
       return string
@@ -954,136 +1035,134 @@ class EventType(MutableMapping):
     placeholderStrings = re.findall(self.REPORTER_PLACEHOLDER_PATTERN, string)
 
     for string in placeholderStrings:
-      stringComponents = str(string).split(':')
-      if len(stringComponents) == 1:
+      try:
+        formatter, argumentString = str(string).split(':', 1)
+        arguments = argumentString.split(',')
+      except ValueError:
         # Placeholder does not contain a formatter.
-        if stringComponents[0] in self._properties.keys():
+        if str(string) in self._properties.keys():
           continue
-      else:
-        # Some kind of string formatter was used.
-        # Figure out which one, and check if it
-        # is used correctly.
-        if stringComponents[0] in ['DURATION', 'TIMESPAN']:
-          durationProperties = stringComponents[1].split(',')
-
-          if len(durationProperties) != 2:
-            raise EDXMLValidationError(
-              ('Event type %s contains a reporter string containing a string formatter (%s) '
-               'which requires two properties, but %d properties were specified.') %
-              (self._attr['name'], stringComponents[0], len(durationProperties))
-            )
-
-          if durationProperties[0] in self._properties.keys() and \
-             durationProperties[1] in self._properties.keys():
-
-            # Check that both properties are timestamps
-            for propertyName in durationProperties:
-              if propertyName == '':
-                raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, stringComponents[0]))
-              if str(self._properties[propertyName].GetDataType()) != 'timestamp':
-                raise EDXMLValidationError(
-                  ('Event type %s contains a reporter string which uses a time related formatter, '
-                   'but the used property (%s) is not a timestamp.') % (self._attr['name'], propertyName)
-                )
-
-            continue
         else:
-          if not stringComponents[0] in self.KNOWN_FORMATTERS:
-            raise EDXMLValidationError(
-              'Event type %s contains a reporter string which refers to an unknown formatter: %s' %
-              (self._attr['name'], stringComponents[0])
-            )
-
-          if stringComponents[0] in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
-            # Check that only one property is specified after the formatter
-            if len(stringComponents[1].split(',')) > 1:
-              raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. '
-                 'Multiple properties were specified: %s') % (self._attr['name'], stringComponents[0], stringComponents[1])
-              )
-            # Check that property is a timestamp
-            if stringComponents[1] == '':
-              raise EDXMLValidationError(
-                'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
-              )
-            if str(self._properties[stringComponents[1]].GetDataType()) != 'timestamp':
-              raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter. '
-                 'The used property (%s) is not a timestamp, though.') % (self._attr['name'], stringComponents[0], stringComponents[1])
-              )
-
-          elif stringComponents[0] in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
-            # Check that no additional options are present
-            if len(stringComponents) > 2:
-              raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter. '
-                 'This formatter accepts no options, but they were specified: %s') %
-                (self._attr['name'], stringComponents[0], string)
-              )
-            # Check that only one property is specified after the formatter
-            if len(stringComponents[1].split(',')) > 1:
-              raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter. '
-                 'This formatter accepts just one property. Multiple properties were given though: %s')
-                % (self._attr['name'], stringComponents[0], stringComponents[1])
-              )
-            if stringComponents[0] in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
-              # Check that property is a boolean
-              if stringComponents[1] == '':
-                raise EDXMLValidationError(
-                  'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
-                )
-              if str(self._properties[stringComponents[1]].GetDataType()) != 'boolean':
-                raise EDXMLValidationError(
-                  ('Event type %s contains a reporter string which uses the %s formatter. '
-                   'The used property (%s) is not a boolean, though.') %
-                  (self._attr['name'], stringComponents[0], stringComponents[1])
-                )
-
-          elif stringComponents[0] == 'CURRENCY':
-            if len(stringComponents) != 3:
-              raise EDXMLValidationError(
-                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-                (self._attr['name'], stringComponents[0], string)
-              )
-
-          elif stringComponents[0] == 'EMPTY':
-            if len(stringComponents) != 3:
-              raise EDXMLValidationError(
-                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-                (self._attr['name'], stringComponents[0], string)
-              )
-
-          elif stringComponents[0] == 'BOOLEAN_STRINGCHOICE':
-            if len(stringComponents) != 4:
-              raise EDXMLValidationError(
-                'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-                (self._attr['name'], stringComponents[0], string)
-              )
-            # Check that property is a boolean
-            if stringComponents[1] == '':
-              raise EDXMLValidationError(
-                'Invalid property name in %s formatter: "%s"' % (stringComponents[1], stringComponents[0])
-              )
-            if str(self._properties[stringComponents[1]].GetDataType()) != 'boolean':
-              raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter. '
-                 'The used property (%s) is not a boolean, though.') %
-                (self._attr['name'], stringComponents[0], stringComponents[1])
-              )
-
-          else:
-            raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses an unknown formatter: %s' %
-              (self._attr['name'], stringComponents[0])
-            )
-
-          if stringComponents[1] in self._properties.keys():
-            continue
-
           raise EDXMLValidationError(
             'Event type %s contains a reporter string which refers to one or more nonexistent properties: %s' %
             (self._attr['name'], string)
+          )
+
+      # Some kind of string formatter was used.
+      # Figure out which one, and check if it
+      # is used correctly.
+      if formatter in ['DURATION', 'TIMESPAN']:
+
+        if len(arguments) != 2:
+          raise EDXMLValidationError(
+            ('Event type %s contains a reporter string containing a string formatter (%s) '
+             'which requires two properties, but %d properties were specified.') %
+            (self._attr['name'], formatter, len(arguments))
+          )
+
+        if arguments[0] in self._properties.keys() and \
+           arguments[1] in self._properties.keys():
+
+          # Check that both properties are timestamps
+          for propertyName in arguments:
+            if propertyName == '':
+              raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, formatter))
+            if str(self._properties[propertyName].GetDataType()) != 'timestamp':
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses a time related formatter, '
+                 'but the used property (%s) is not a timestamp.') % (self._attr['name'], propertyName)
+              )
+
+          continue
+      else:
+        if formatter not in self.KNOWN_FORMATTERS:
+          raise EDXMLValidationError(
+            'Event type %s contains a reporter string which refers to an unknown formatter: %s' %
+            (self._attr['name'], formatter)
+          )
+
+        if formatter in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
+          # Check that only one property is specified after the formatter
+          if len(arguments) > 1:
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. '
+               'Multiple properties were specified: %s') % (self._attr['name'], formatter, argumentString)
+            )
+          # Check that property is a timestamp
+          if argumentString == '':
+            raise EDXMLValidationError(
+              'Invalid property name in %s formatter: "%s"' % (argumentString, formatter)
+            )
+          if str(self._properties[argumentString].GetDataType()) != 'timestamp':
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string which uses the %s formatter. '
+               'The used property (%s) is not a timestamp, though.') % (self._attr['name'], formatter, argumentString)
+            )
+
+        elif formatter in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+          # Check that no additional arguments are present
+          if len(arguments) > 1:
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string which uses the %s formatter. '
+               'This formatter accepts no arguments, but they were specified: %s') %
+              (self._attr['name'], formatter, string)
+            )
+          # Check that only one property is specified after the formatter
+          if len(arguments) > 1:
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string which uses the %s formatter. '
+               'This formatter accepts just one property. Multiple properties were given though: %s')
+              % (self._attr['name'], formatter, argumentString)
+            )
+          if formatter in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+            # Check that property is a boolean
+            if argumentString == '':
+              raise EDXMLValidationError(
+                'Invalid property name in %s formatter: "%s"' % (argumentString, formatter)
+              )
+            if str(self._properties[argumentString].GetDataType()) != 'boolean':
+              raise EDXMLValidationError(
+                ('Event type %s contains a reporter string which uses the %s formatter. '
+                 'The used property (%s) is not a boolean, though.') %
+                (self._attr['name'], formatter, argumentString)
+              )
+
+        elif formatter == 'CURRENCY':
+          if len(arguments) != 2:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, string)
+            )
+
+        elif formatter == 'EMPTY':
+          if len(arguments) != 2:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, string)
+            )
+
+        elif formatter == 'BOOLEAN_STRINGCHOICE':
+          if len(arguments) != 3:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, string)
+            )
+          # Check that property is a boolean
+          if argumentString == '':
+            raise EDXMLValidationError(
+              'Invalid property name in %s formatter: "%s"' % (argumentString, formatter)
+            )
+          if str(self._properties[arguments[0]].GetDataType()) != 'boolean':
+            raise EDXMLValidationError(
+              ('Event type %s contains a reporter string which uses the %s formatter. '
+               'The used property (%s) is not a boolean, though.') %
+              (self._attr['name'], formatter, argumentString)
+            )
+
+        else:
+          raise EDXMLValidationError(
+            'Event type %s contains a reporter string which uses an unknown formatter: %s' %
+            (self._attr['name'], formatter)
           )
 
     return self
