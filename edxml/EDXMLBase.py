@@ -29,11 +29,8 @@
 
 """This module contains generic (base)classes used throughout the SDK."""
 import traceback
-from datetime import datetime
-from decimal import *
 import sys
 import re
-from dateutil.parser import parse
 
 
 class EDXMLError(Exception):
@@ -62,15 +59,6 @@ class EDXMLBase(object):
     self.WarningCount = 0
     self.ErrorCount = 0
 
-    # Expression used for matching SHA1 hashlinks
-    self.HashlinkPattern = re.compile("^[0-9a-zA-Z]{40}$")
-    # Expression used for matching string datatypes
-    self.StringDataTypePattern = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
-    # Expression used for matching binstring datatypes
-    self.BinstringDataTypePattern = re.compile("binstring:[0-9]+(:r)?")
-    # Expression used to find placeholders in event reporter strings
-    self.PlaceHolderPattern = re.compile("\[\[([^\]]*)\]\]")
-
   def Error(self, Message):
     """Raises :class:`EDXMLError`.
 
@@ -98,162 +86,6 @@ class EDXMLBase(object):
   def GetErrorCount(self):
     """Returns the number of errors generated"""
     return self.ErrorCount
-
-  def ValidateDataType(self, ObjectType, DataType):
-    """Validate a data type.
-
-    Args:
-      ObjectType (str): Name of the object type having specified data type
-
-      DataType (str):   EDXML data type
-
-    calls :func:`Error` when datatype is invalid.
-
-    """
-
-    SplitDataType = DataType.split(':')
-
-    if SplitDataType[0] == 'enum':
-      if len(SplitDataType) > 1:
-        return
-    elif SplitDataType[0] == 'datetime':
-      if len(SplitDataType) == 1:
-        return
-    elif SplitDataType[0] == 'ip':
-      if len(SplitDataType) == 1:
-        return
-    elif SplitDataType[0] == 'hashlink':
-      if len(SplitDataType) == 1:
-        return
-    elif SplitDataType[0] == 'boolean':
-      if len(SplitDataType) == 1:
-        return
-    elif SplitDataType[0] == 'geo':
-      if len(SplitDataType) == 2:
-        if SplitDataType[1] == 'point':
-          return
-    elif SplitDataType[0] == 'number':
-      if len(SplitDataType) >= 2:
-        if SplitDataType[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double']:
-          if len(SplitDataType) == 3:
-            if SplitDataType[2] == 'signed':
-              return
-          else:
-            return
-        elif SplitDataType[1] == 'decimal':
-          if len (SplitDataType) >= 4:
-            try:
-              int(SplitDataType[2])
-              int(SplitDataType[3])
-            except:
-              pass
-            else:
-              if int(SplitDataType[3]) > int(SplitDataType[2]):
-                self.Error("Invalid Decimal: " + DataType)
-              if len (SplitDataType) > 4:
-                if len (SplitDataType) == 5:
-                  if SplitDataType[4] == 'signed':
-                    return
-              else:
-                return
-        elif SplitDataType[1] == 'hex':
-          if len(SplitDataType) > 3:
-            try:
-              HexLength        = int(SplitDataType[2])
-              DigitGroupLength = int(SplitDataType[3])
-            except:
-              pass
-            else:
-              if HexLength % DigitGroupLength != 0:
-                self.Error("Length of hex datatype is not a multiple of separator distance: " + DataType)
-              if len(SplitDataType[4]) == 0:
-                if len(SplitDataType) == 6:
-                  # This happens if the colon ':' is used as separator
-                  return
-              else:
-                return
-          else:
-            return
-    elif SplitDataType[0] == 'string':
-      if re.match(self.StringDataTypePattern, DataType):
-        return
-    elif SplitDataType[0] == 'binstring':
-      if re.match(self.BinstringDataTypePattern, DataType):
-        return
-
-    self.Error("EDXMLBase::ValidateDataType: Object type %s has an unsupported data type: %s" % (( ObjectType, DataType )) )
-
-  def NormalizeObject(self, Value, DataType):
-    """Normalize an object value to a unicode string
-
-    Prepares an object value for computing sticky hashes, by
-    applying the normalization rules as outlined in the EDXML
-    specification. It takes a string containing an object value
-    as input and returns a normalized unicode string.
-
-    Args:
-      Value (str, unicode): The input object value
-
-      DataType (str): EDXML data type
-
-    Returns:
-      unicode. The normalized object value
-
-    calls :func:`Error` when value is invalid.
-    """
-    if DataType[0] == 'number':
-      if DataType[1] == 'decimal':
-        DecimalPrecision = DataType[3]
-        return unicode('%.' + DecimalPrecision + 'f') % Decimal(Value)
-      elif DataType[1] in [ 'tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
-        return u'%d' % int(Value)
-      elif DataType[1] in ['float', 'double']:
-        try:
-          return u'%f' % float(Value)
-        except Exception as Except:
-          self.Error("NormalizeObject: Invalid non-integer: '%s': %s" % (( Value, Except )))
-      else:
-        # Must be hexadecimal
-        return unicode(Value.lower())
-    elif DataType[0] == 'ip':
-      try:
-        Octets = Value.split('.')
-      except Exception as Except:
-        self.Error("NormalizeObject: Invalid IP: '%s': %s" % (( Value, Except )))
-      else:
-        try:
-          return unicode('%d.%d.%d.%d' % (( int(Octets[0]), int(Octets[1]), int(Octets[2]), int(Octets[3]) ))  )
-        except:
-          self.Error("NormalizeObject: Invalid IP: '%s'" % Value)
-    elif DataType[0] == 'geo':
-      if DataType[1] == 'point':
-        try:
-          return u'%.6f,%.6f' % tuple(float(Coordinate) for Coordinate in Value.split(','))
-        except Exception as Except:
-          self.Error("NormalizeObject: Invalid geo:point: '%s': %s" % (( Value, Except )))
-
-    elif DataType[0] == 'string':
-
-      if not isinstance(Value, unicode):
-        if not isinstance(Value, str):
-          self.Warning("NormalizeObject: Expected a string, but passed value is no string: '%s'" % str(Value) )
-          Value = unicode(Value)
-        try:
-          Value = Value.decode('utf-8')
-        except UnicodeDecodeError:
-          # String is not proper UTF8. Lets try to decode it as Latin1
-          try:
-            Value = Value.decode('latin-1').encode('utf-8').decode('utf-8')
-          except:
-            self.Error("NormalizeObject: Failed to convert string object to unicode: '%s'." % repr(Value) )
-
-      if DataType[2] == 'ci':
-        Value = Value.lower()
-      return unicode(Value)
-    elif DataType[0] == 'boolean':
-      return unicode(Value.lower())
-    else:
-      return unicode(Value )
 
 
 class EvilCharacterFilter(object):
