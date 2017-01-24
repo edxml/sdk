@@ -444,12 +444,16 @@ class EDXMLEvent(MutableMapping):
         # We have a merge strategy that requires us to cast
         # the object values into numbers.
         SplitDataType = properties[PropertyName].GetDataType().GetSplit()
-        if SplitDataType[0] in ('number', 'timestamp'):
+        if SplitDataType[0] in ('number', 'datetime'):
           if MergeStrategy in ('min', 'max'):
             Values = set()
-            if SplitDataType[0] == 'timestamp':
-              Values.update(Decimal(Value) for Value in Source[PropertyName])
-              Values.update(Decimal(Value) for Value in Target[PropertyName])
+            if SplitDataType[0] == 'datetime':
+              # Note that we add the datetime values as
+              # regular strings and just let min() and max()
+              # use lexicographical sorting to determine which
+              # of the datetime values to pick.
+              Values.update(Source[PropertyName])
+              Values.update(Target[PropertyName])
             else:
               if SplitDataType[1] in ('float', 'double'):
                 Values.update(float(Value) for Value in Source[PropertyName])
@@ -466,64 +470,48 @@ class EDXMLEvent(MutableMapping):
             else:
               Target[PropertyName] = {str(max(Values))}
 
-          elif MergeStrategy == 'increment':
-            if SplitDataType[0] == 'timestamp':
-              Target[PropertyName] = {'%.6f' % Decimal(next(iter(Target[PropertyName]))) + Decimal(len(Source[PropertyName]))}
-            else:
-              if SplitDataType[1] in ('float', 'double'):
-                Target[PropertyName] = {str(float(next(iter(Target[PropertyName]))) + len(collidingEvents))}
-              elif SplitDataType[1] == 'decimal':
-                Target[PropertyName] = {str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
-              elif SplitDataType[1] != 'hex':
-                Target[PropertyName] = {str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+            if SplitDataType[1] in ('float', 'double'):
+              Target[PropertyName] = {str(float(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+            elif SplitDataType[1] == 'decimal':
+              Target[PropertyName] = {str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+            elif SplitDataType[1] != 'hex':
+              Target[PropertyName] = {str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
 
           elif MergeStrategy == 'sum':
-            if SplitDataType[0] == 'timestamp':
-              Target[PropertyName] = {
-                '%.6f' % Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName])
-              }
             # When hex is not in number family anymore, replace the below line with elif SplitDataType[0] == 'number':
-            else:
-              if SplitDataType[1] in ['float', 'double']:
-                Target[PropertyName] = {
-                  str(float(next(iter(Target[PropertyName]))) + sum(float(Value) for Value in Source[PropertyName]))
-                }
-              elif SplitDataType[1] == 'decimal':
-                Target[PropertyName] = {
-                  str(Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName]))
-                }
-              elif SplitDataType[1] != 'hex':
-                Target[PropertyName] = {
-                  str(int(next(iter(Target[PropertyName]))) + sum(int(Value) for Value in Source[PropertyName]))
-                }
+            if SplitDataType[1] in ['float', 'double']:
+              Target[PropertyName] = {
+                str(float(next(iter(Target[PropertyName]))) + sum(float(Value) for Value in Source[PropertyName]))
+              }
+            elif SplitDataType[1] == 'decimal':
+              Target[PropertyName] = {
+                str(Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName]))
+              }
+            elif SplitDataType[1] != 'hex':
+              Target[PropertyName] = {
+                str(int(next(iter(Target[PropertyName]))) + sum(int(Value) for Value in Source[PropertyName]))
+              }
 
           elif MergeStrategy == 'multiply':
-            if SplitDataType[0] == 'timestamp':
+            if SplitDataType[1] in ('float', 'double'):
               Target[PropertyName] = {
-                '%.6f' % functools.reduce(
-                  operator.mul, [Decimal(Value) for Value in Target[PropertyName]], Decimal(next(iter(Source[PropertyName])))
+                str(functools.reduce(
+                  operator.mul, [float(Value) for Value in Target[PropertyName]], float(next(iter(Source[PropertyName]))))
                 )
               }
-            else:
-              if SplitDataType[1] in ('float', 'double'):
-                Target[PropertyName] = {
-                  str(functools.reduce(
-                    operator.mul, [float(Value) for Value in Target[PropertyName]], float(next(iter(Source[PropertyName]))))
-                  )
-                }
-              elif SplitDataType[1] == 'decimal':
-                sourceValue = Decimal(next(iter(Source[PropertyName])))
-                Target[PropertyName] = {
-                  str(functools.reduce(
-                    operator.mul, [Decimal(Value) for Value in Target[PropertyName]], sourceValue
-                  ).quantize(sourceValue))
-                }
-              elif SplitDataType[1] != 'hex':
-                Target[PropertyName] = {
-                  str(functools.reduce(
-                    operator.mul, [int(Value) for Value in Target[PropertyName]], int(next(iter(Source[PropertyName]))))
-                  )
-                }
+            elif SplitDataType[1] == 'decimal':
+              sourceValue = Decimal(next(iter(Source[PropertyName])))
+              Target[PropertyName] = {
+                str(functools.reduce(
+                  operator.mul, [Decimal(Value) for Value in Target[PropertyName]], sourceValue
+                ).quantize(sourceValue))
+              }
+            elif SplitDataType[1] != 'hex':
+              Target[PropertyName] = {
+                str(functools.reduce(
+                  operator.mul, [int(Value) for Value in Target[PropertyName]], int(next(iter(Source[PropertyName]))))
+                )
+              }
 
       elif MergeStrategy == 'add':
         Target[PropertyName].update(Source[PropertyName])

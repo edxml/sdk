@@ -29,16 +29,16 @@ class DataType(object):
     return self.type
 
   @classmethod
-  def Timestamp(cls):
+  def DateTime(cls):
     """
 
-    Create a timestamp DataType instance.
+    Create a datetime DataType instance.
 
     Returns:
       DataType:
     """
 
-    return cls('timestamp')
+    return cls('datetime')
 
   @classmethod
   def Boolean(cls):
@@ -285,9 +285,9 @@ class DataType(object):
   def IsNumerical(self):
     """
 
-    Returns True if the data type is a timestamp or
-    if the data type family is 'number', returns False
-    for all other data types.
+    Returns True if the data type is of data type
+    family 'number', but not 'number:hex'. Returns
+    False for all other data types.
 
     Returns:
       boolean:
@@ -299,7 +299,7 @@ class DataType(object):
       # been removed from number family
       if splitDataType[1] != 'hex':
         return True
-    elif splitDataType[0] == 'timestamp':
+    elif splitDataType[0] == 'datetime':
       return True
 
     return False
@@ -309,11 +309,14 @@ class DataType(object):
     e = ElementMaker()
     splitDataType = self.type.split(':')
 
-    if splitDataType[0] == 'timestamp':
+    if splitDataType[0] == 'datetime':
+      # We use a a restricted dateTime data type,
+      # which does not allow dates before 1583 or the 24th
+      # hour. Also, it requires an explicit UTC timezone
+      # and 6 decimal fractional seconds.
       element = e.data(
-          e.param('20', name='totalDigits'),
-          e.param('6', name='fractionDigits'),
-          type='decimal'
+          e.param('(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z', name='pattern'),
+          type='dateTime'
         )
 
     elif splitDataType[0] == 'number':
@@ -502,14 +505,7 @@ class DataType(object):
 
     splitDataType = self.type.split(':')
 
-    if splitDataType[0] == 'timestamp':
-      try:
-        return [u'%.6f' % Decimal(value) for value in values]
-      except TypeError:
-        raise EDXMLValidationError(
-          'Invalid timestamp in list: "%s"' % '","'.join([repr(value) for value in values])
-        )
-    elif splitDataType[0] == 'number':
+    if splitDataType[0] == 'number':
       if splitDataType[1] == 'decimal':
         DecimalPrecision = splitDataType[3]
         try:
@@ -597,7 +593,7 @@ class DataType(object):
     if splitDataType[0] == 'enum':
       if len(splitDataType) > 1:
         return self
-    elif splitDataType[0] == 'timestamp':
+    elif splitDataType[0] == 'datetime':
       if len(splitDataType) == 1:
         return self
     elif splitDataType[0] == 'ip':
@@ -663,3 +659,40 @@ class DataType(object):
         return self
 
     raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
+
+  @classmethod
+  def FormatUtcDateTime(cls, dateTime):
+    """
+
+    Formats specified dateTime object into a valid
+    EDXML datetime string.
+
+    Notes:
+
+      The datetime object must have its time zone
+      set to UTC.
+
+    Args:
+      dateTime (datetime.datetime): datetime object
+
+    Returns:
+      str: EDXML datetime string
+    """
+    try:
+      return dateTime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    except ValueError:
+      # Dates before year 1900 are not supported by strftime.
+      dateTime = dateTime.isoformat()
+      # The isoformat method yields a string formatted like
+      #
+      # YYYY-MM-DDTHH:MM:SS.mmmmmm
+      #
+      # unless the fractional part is zero. In that case, the
+      # fractional part is omitted, yielding invalid EDXML. Also,
+      # the UTC timezone is represented as '+00:00' rather than 'Z'.
+      if dateTime[19] != '.':
+        dateTime[19:] = '.000000Z'
+      else:
+        dateTime[25:].pad = 'Z'
+
+      return dateTime

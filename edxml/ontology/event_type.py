@@ -5,6 +5,8 @@ from StringIO import StringIO
 import pytz
 import re
 from collections import MutableMapping
+
+from dateutil.parser import parse
 from typing import Dict
 from typing import List
 from dateutil import relativedelta
@@ -639,8 +641,8 @@ class EventType(MutableMapping):
       return offset, elements
 
     def __formatTimeDuration(Min, Max):
-      dateTimeA = datetime.datetime.fromtimestamp(Min)
-      dateTimeB = datetime.datetime.fromtimestamp(Max)
+      dateTimeA = parse(Min)
+      dateTimeB = parse(Max)
       delta = relativedelta.relativedelta(dateTimeB, dateTimeA)
 
       if delta.minutes > 0:
@@ -693,7 +695,7 @@ class EventType(MutableMapping):
             # so we can safely capitalize.
             string = string[0].upper() + string[1:]
 
-      # Match on placeholders like "[[FULLDATETIME:timestamp]]", creating
+      # Match on placeholders like "[[FULLDATETIME:datetime]]", creating
       # groups of the strings in between the placeholders and the
       # placeholders themselves, with and without brackets included.
       placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
@@ -720,17 +722,18 @@ class EventType(MutableMapping):
 
         if formatter == 'TIMESPAN':
 
-          timestamps = []
+          dateTimeStrings = []
           for propertyName in arguments:
             try:
               for objectValue in eventObjectValues[propertyName]:
-                timestamps.append(float(objectValue))
+                dateTimeStrings.append(objectValue)
             except KeyError:
               pass
 
-          if len(timestamps) > 0:
-            dateTimeA = datetime.datetime.fromtimestamp(min(timestamps))
-            dateTimeB = datetime.datetime.fromtimestamp(max(timestamps))
+          if len(dateTimeStrings) > 0:
+            # Note that we use lexicographic sorting here.
+            dateTimeA = parse(min(dateTimeStrings))
+            dateTimeB = parse(max(dateTimeStrings))
             objectStrings.append(u'between %s and %s' % (dateTimeA.isoformat(' '), dateTimeB.isoformat(' ')))
           else:
             # No valid replacement string could be generated, which implies
@@ -739,16 +742,16 @@ class EventType(MutableMapping):
 
         elif formatter == 'DURATION':
 
-          timestamps = []
+          dateTimeStrings = []
           for propertyName in arguments:
             try:
               for objectValue in eventObjectValues[propertyName]:
-                timestamps.append(float(objectValue))
+                dateTimeStrings.append(objectValue)
             except KeyError:
               pass
 
-          if len(timestamps) > 0:
-            objectStrings.append(__formatTimeDuration(min(timestamps), max(timestamps)))
+          if len(dateTimeStrings) > 0:
+            objectStrings.append(__formatTimeDuration(min(dateTimeStrings), max(dateTimeStrings)))
           else:
             # No valid replacement string could be generated, which implies
             # that we must return an empty string.
@@ -764,28 +767,21 @@ class EventType(MutableMapping):
             return u''
 
           for objectValue in values:
-            timestamp = float(objectValue)
-            timeZone = pytz.timezone("UTC")
+            dateTime = parse(objectValue)
 
             try:
               if formatter == 'FULLDATETIME':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
+                objectStrings.append(dateTime.strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
               elif formatter == 'DATETIME':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'B %d %Y at %H:%M:%Sh UTC'))
+                objectStrings.append(dateTime.strftime(u'B %d %Y at %H:%M:%Sh UTC'))
               elif formatter == 'DATE':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'%a, %B %d %Y'))
+                objectStrings.append(dateTime.strftime(u'%a, %B %d %Y'))
               elif formatter == 'YEAR':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'%Y'))
+                objectStrings.append(dateTime.strftime(u'%Y'))
               elif formatter == 'MONTH':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'%B %Y'))
+                objectStrings.append(dateTime.strftime(u'%B %Y'))
               elif formatter == 'WEEK':
-                objectStrings.append(datetime.datetime.fromtimestamp(timestamp, timeZone)
-                                     .strftime(u'week %W of %Y'))
+                objectStrings.append(dateTime.strftime(u'week %W of %Y'))
             except ValueError:
               # This may happen for some time stamps before year 1900, which
               # is not supported by strftime.
@@ -1063,14 +1059,14 @@ class EventType(MutableMapping):
         if arguments[0] in self._properties.keys() and \
            arguments[1] in self._properties.keys():
 
-          # Check that both properties are timestamps
+          # Check that both properties are datetime values
           for propertyName in arguments:
             if propertyName == '':
               raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, formatter))
-            if str(self._properties[propertyName].GetDataType()) != 'timestamp':
+            if str(self._properties[propertyName].GetDataType()) != 'datetime':
               raise EDXMLValidationError(
                 ('Event type %s contains a reporter string which uses a time related formatter, '
-                 'but the used property (%s) is not a timestamp.') % (self._attr['name'], propertyName)
+                 'but the used property (%s) is not a datetime value.') % (self._attr['name'], propertyName)
               )
 
           continue
@@ -1088,15 +1084,15 @@ class EventType(MutableMapping):
               ('Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. '
                'Multiple properties were specified: %s') % (self._attr['name'], formatter, argumentString)
             )
-          # Check that property is a timestamp
+          # Check that property is a datetime value
           if argumentString == '':
             raise EDXMLValidationError(
               'Invalid property name in %s formatter: "%s"' % (argumentString, formatter)
             )
-          if str(self._properties[argumentString].GetDataType()) != 'timestamp':
+          if str(self._properties[argumentString].GetDataType()) != 'datetime':
             raise EDXMLValidationError(
               ('Event type %s contains a reporter string which uses the %s formatter. '
-               'The used property (%s) is not a timestamp, though.') % (self._attr['name'], formatter, argumentString)
+               'The used property (%s) is not a datetime value, though.') % (self._attr['name'], formatter, argumentString)
             )
 
         elif formatter in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:

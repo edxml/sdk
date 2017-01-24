@@ -403,10 +403,11 @@ class Ontology(object):
       for propertyName, eventProperty in eventType.iteritems():
         if eventProperty.GetMergeStrategy() in ('min', 'max', 'increment', 'sum', 'multiply'):
           if not eventProperty.GetDataType().IsNumerical():
-            raise EDXMLValidationError(
-              ('Property "%s" of event type "%s" with merge strategy min, max, increment, sum or multiply '
-               'must be a number or timestamp.') % (propertyName, eventTypeName)
-            )
+            if eventProperty.GetMergeStrategy() not in ('min', 'max') or not eventProperty.GetDataType().IsDateTime():
+              raise EDXMLValidationError(
+                  'Property "%s" of event type "%s" has data type %s, which cannot be used with merge strategy %s.'
+                  % (propertyName, eventTypeName, eventProperty.GetDataType(), eventProperty.GetMergeStrategy())
+              )
 
     # Check if unique properties have their merge strategies set
     # to 'match'

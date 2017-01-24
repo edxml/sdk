@@ -29,9 +29,12 @@
 
 """This module contains generic (base)classes used throughout the SDK."""
 import traceback
+from datetime import datetime
 from decimal import *
 import sys
 import re
+from dateutil.parser import parse
+
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
@@ -113,7 +116,7 @@ class EDXMLBase(object):
     if SplitDataType[0] == 'enum':
       if len(SplitDataType) > 1:
         return
-    elif SplitDataType[0] == 'timestamp':
+    elif SplitDataType[0] == 'datetime':
       if len(SplitDataType) == 1:
         return
     elif SplitDataType[0] == 'ip':
@@ -200,11 +203,9 @@ class EDXMLBase(object):
 
     ObjectDataType = DataType.split(':')
 
-    if ObjectDataType[0] == 'timestamp':
-      try:
-        float(Value)
-      except:
-        self.Error("Invalid timestamp '%s' of object type %s." % (( str(Value), ObjectTypeName )))
+    if ObjectDataType[0] == 'datetime':
+      if not re.match('^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$', Value):
+        self.Error("Invalid datetime value '%s' of object type %s." % (( str(Value), ObjectTypeName )))
     elif ObjectDataType[0] == 'number':
       if ObjectDataType[1] == 'decimal':
         if len(ObjectDataType) < 5:
@@ -350,9 +351,7 @@ class EDXMLBase(object):
 
     calls :func:`Error` when value is invalid.
     """
-    if DataType[0] == 'timestamp':
-      return u'%.6f' % Decimal(Value)
-    elif DataType[0] == 'number':
+    if DataType[0] == 'number':
       if DataType[1] == 'decimal':
         DecimalPrecision = DataType[3]
         return unicode('%.' + DecimalPrecision + 'f') % Decimal(Value)
