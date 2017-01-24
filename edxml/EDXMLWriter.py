@@ -245,8 +245,12 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         try:
           self._ontology.GetEventType(self.CurrentElementTypeName).validateEventStructure(event)
 
-          # EventType validator did not find the issue. We have
-          # no other option than to raise the RelaxNG error.
+          # EventType structure checks out alright. Let us check the object values.
+          self._ontology.GetEventType(self.CurrentElementTypeName).validateEventObjects(event)
+
+          # EventType validation did not find the issue. We have
+          # no other option than to raise a RelaxNG error containing
+          # a undoubtedly cryptic error message.
           raise EDXMLValidationError(self.__eventTypeSchema.error_log.last_error.message)
 
         except EDXMLValidationError as exception:

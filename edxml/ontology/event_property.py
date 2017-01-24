@@ -118,7 +118,26 @@ class EventProperty(object):
     """
     return self._attr['similar']
 
+  def GetObjectType(self):
+    """
+
+    Returns the ObjectType instance that is associated
+    with the property.
+
+    Returns:
+      ObjectType: The ObjectType instance
+    """
+    return self._objectType
+
   def GetDataType(self):
+    """
+
+    Returns the DataType instance that is associated
+    with the object type of the property.
+
+    Returns:
+      DataType: The DataType instance
+    """
     return self._dataType
 
   def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
@@ -290,6 +309,7 @@ class EventProperty(object):
       bool:
     """
     return self._attr['defines-entity']
+
   def HintSimilar(self, Similarity):
     """
 

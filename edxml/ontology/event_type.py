@@ -1399,6 +1399,38 @@ class EventType(MutableMapping):
             (self._attr['name'], PropertyName)
           )
 
+    return self
+
+  def validateEventObjects(self, edxmlEvent):
+    """
+
+    Validates the object values in the event by comparing
+    the values with their data types. Generates exceptions
+    that are much more readable than standard XML validation
+    exceptions.
+
+    Args:
+      edxmlEvent (edxml.EDXMLEvent):
+    Raises:
+      EDXMLValidationError
+    Returns:
+      EventType: The EventType instance
+    """
+
+    for propertyName, objects in edxmlEvent.items():
+
+      propertyObjectType = self._properties[propertyName].GetObjectType()
+
+      for objectValue in objects:
+        try:
+          propertyObjectType.ValidateObjectValue(objectValue)
+        except EDXMLValidationError as e:
+          raise EDXMLValidationError(
+            'Invalid value for property %s of event type %s: %s' % (propertyName, self._attr['name'], e)
+          )
+
+    return self
+
   def generateRelaxNG(self, Ontology):
     """
 

@@ -576,6 +576,121 @@ class DataType(object):
           'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
         )
 
+  def ValidateObjectValue(self, value):
+    """
+
+    Validates the provided object value against
+    the data type, raising an EDXMLValidationException
+    when the value is invalid.
+
+    Args:
+      value (unicode): Object value
+    Raises:
+      EDXMLValidationError
+    Returns:
+       DataType:
+    """
+    splitDataType = self.type.split(':')
+
+    if splitDataType[0] == 'datetime':
+      if not re.match('^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$', value):
+        raise EDXMLValidationError("Invalid value for data type %s: '%s'." % (self.type, value))
+    elif splitDataType[0] == 'number':
+      if splitDataType[1] == 'decimal':
+        if len(splitDataType) < 5:
+          # Decimal is unsigned.
+          if Decimal(value) < 0:
+            raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
+      elif splitDataType[1] == 'hex':
+        if len(splitDataType) > 3:
+          HexSeparator = splitDataType[4]
+          if len(HexSeparator) == 0 and len(splitDataType) == 6:
+            HexSeparator = ':'
+          value = ''.join(c for c in str(value) if c != HexSeparator)
+        try:
+          value.decode("hex")
+        except ValueError:
+          raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
+      elif splitDataType[1] == 'float' or splitDataType[1] == 'double':
+        try:
+          float(value)
+        except ValueError:
+          raise EDXMLValidationError("Invalid floating point number '%s'." % value)
+        if len(splitDataType) < 3:
+          # number is unsigned.
+          if value < 0:
+            raise EDXMLValidationError("Unsigned floating point value is negative: '%s'." % value)
+      else:
+        try:
+          int(value)
+        except:
+          raise EDXMLValidationError("Invalid number '%s'." % value)
+        if len(splitDataType) < 3:
+          # number is unsigned.
+          if value < 0:
+            raise EDXMLValidationError("Unsigned integer value is negative: '%s'." % value)
+    elif splitDataType[0] == 'geo':
+      if splitDataType[1] == 'point':
+        # This is the only option at the moment.
+        SplitGeoPoint = value.split(',')
+        if len(SplitGeoPoint) != 2:
+          raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        try:
+          GeoLat = float(SplitGeoPoint[0])
+          GeoLon = float(SplitGeoPoint[1])
+        except:
+          raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        if GeoLat < -90 or GeoLat > 90:
+          raise EDXMLValidationError("The geo:point value '%s' contains a latitude that is not within range [-90,90]." % value)
+        if GeoLon < -180 or GeoLon > 180:
+          raise EDXMLValidationError("The geo:point value '%s' contains a longitude that is not within range [-180,180]." % value)
+      else:
+        raise EDXMLValidationError("Invalid geo data type: '%s'" % value)
+    elif splitDataType[0] == 'string':
+
+      # Check length of object value
+      if value == '':
+        raise EDXMLValidationError("Value of %s object is empty.")
+      MaxStringLength = int(splitDataType[1])
+      if MaxStringLength > 0:
+        if len(value) > MaxStringLength:
+          raise EDXMLValidationError("string too long for data type %s: '%s'" % (self.type, value))
+
+      # Check character set of object value
+      if len(splitDataType) < 4 or 'u' not in splitDataType[3]:
+        # String should only contain latin1 characters.
+        try:
+          unicode(value).encode('latin1')
+        except:
+          raise EDXMLValidationError("string of data type %s contains unicode characters: %s" % (self.type, value))
+    elif splitDataType[0] == 'binstring':
+      if 0 < splitDataType[1] < len(value):
+          raise EDXMLValidationError("string of data type %s too long: '%s'" % (self.type, value))
+    elif splitDataType[0] == 'hashlink':
+      if not re.match(self.HASHLINK_PATTERN, value):
+        raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
+    elif splitDataType[0] == 'ip':
+      SplitIp = value.split('.')
+      if len(SplitIp) != 4:
+        raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+      for SplitIpPart in SplitIp:
+        try:
+          if not 0 <= int(SplitIpPart) <= 255:
+            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+        except:
+            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+    elif splitDataType[0] == 'boolean':
+      ObjectString = value.lower()
+      if ObjectString not in ['true', 'false']:
+        raise EDXMLValidationError("Invalid boolean: '%s'" % value)
+    elif splitDataType[0] == 'enum':
+      if value not in splitDataType[1:]:
+        raise EDXMLValidationError("Invalid value for data type %s: '%s'" % (self.type, value))
+    else:
+      raise EDXMLValidationError("Invalid data type: '%s'" % self.type)
+
+    return self
+
   def Validate(self):
     """
 

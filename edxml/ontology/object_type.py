@@ -326,6 +326,39 @@ class ObjectType(object):
 
     return DataType(self._attr['data-type']).GenerateRelaxNG(self._attr['regexp'])
 
+  def ValidateObjectValue(self, value):
+    """
+
+    Validates the provided object value against
+    the object type definition as well as its
+    data type, raising an EDXMLValidationException
+    when the value is invalid.
+
+    Args:
+      value (unicode): Object value
+    Raises:
+      EDXMLValidationError
+    Returns:
+       ObjectType: The ObjectType instance
+    """
+
+    # First, validate against data type
+    self.GetDataType().ValidateObjectValue(value)
+
+    # Validate against object type specific restrictions,
+    # like the regular expression.
+    splitDataType = self._attr['data-type'].split(':')
+
+    if splitDataType[0] == 'string':
+      if len(splitDataType) >= 4 and 'i' in splitDataType[3]:
+        # Perform regex matching on lower case string
+        value = value.lower()
+      if not re.match(self._attr['regexp'], value):
+        raise EDXMLValidationError(
+          "Object value '%s' of object type %s does not match regexp '%s' of the object type."
+          % (value, self._attr['name'], self._attr['regexp'])
+        )
+
   def Validate(self):
     """
 
