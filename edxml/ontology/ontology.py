@@ -15,9 +15,36 @@ class Ontology(object):
   """
 
   def __init__(self):
+    self._version = 0
     self._event_types = {}    # type: Dict[str, edxml.ontology.EventType]
     self._object_types = {}   # type: Dict[str, edxml.ontology.ObjectType]
     self._sources = {}        # type: Dict[str, edxml.ontology.EventSource]
+
+  def GetVersion(self):
+    """
+
+    Returns the current ontology version. The initial
+    version of a newly created empty ontology is zero.
+    On each change, the version is incremented.
+
+    Returns:
+      int: Ontology version
+
+    """
+    return self._version
+
+  def IsModifiedSince(self, version):
+    """
+
+    Returns True if the ontology is newer than
+    the specified version. Returns False if the
+    ontology version is equal or older.
+
+    Returns:
+      bool:
+
+    """
+    return self._version > version
 
   def CreateObjectType(self, Name, DisplayNameSingular = None, DisplayNamePlural = None,
                        Description = None, DataType ='string:0:cs:u'):
@@ -176,6 +203,7 @@ class Ontology(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._version += 1
     return self
 
   def _addEventType(self, eventType):

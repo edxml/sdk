@@ -71,6 +71,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.Validate = Validate
     self.Output = Output
     self.ElementStack = []
+    self.CurrentEventTypeName = None
+    self.CurrentEventSourceUri = None
 
     # Initialize lxml.etree based XML generators. This
     # will write the XML declaration and open the
@@ -107,6 +109,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         Writer.flush()
         try:
           while True:
+            # This is the main loop which generates eventgroups elements.
             Element = (yield)
             if Element is None:
               # Sending None signals the end of the generation of
@@ -116,10 +119,18 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 Writer.flush()
                 while True:
                   Element = (yield)
+                  if Element is None:
+                    # Sending None signals the end of the generation of
+                    # the eventgroups element. We break out of the loop,
+                    # causing the context manager to write the closing
+                    # tag of the eventgroups element. We then fall back
+                    # into the outer while loop.
+                    break
                   Writer.write(Element, pretty_print=True)
                   Writer.flush()
-            Writer.write(Element, pretty_print=True)
-            Writer.flush()
+            else:
+              Writer.write(Element, pretty_print=True)
+              Writer.flush()
         except GeneratorExit:
           pass
 
@@ -139,7 +150,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
   def AddOntology(self, edxmlOntology):
     """
 
-    Writes an EDXML ontology element into the output.
+    Writes an EDXML ontology element into the output. This method
+    may be called at any point in the EDXML generation process, it
+    will automatically close and reopen the current eventgroup and
+    eventgroups elements if necessary.
 
     Args:
       edxmlOntology (edxml.ontology.Ontology): The ontology
@@ -148,10 +162,20 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       EDXMLWriter: The writer
 
     """
+    reOpenEventGroups = False
+    prevEventTypeName = None
+    prevEventSource = None
+
     if len(self.ElementStack) > 0:
-      raise EDXMLValidationError(
-        'A <definitions> tag must be child of the <events> tag. Did you forget to call CloseEventGroups()?'
-      )
+      if self.ElementStack[-1] == 'eventgroup':
+        prevEventTypeName = self.CurrentEventTypeName
+        prevEventSource   = self.CurrentEventSourceUri
+        self.CloseEventGroup()
+
+    if len(self.ElementStack) > 0:
+      if self.ElementStack[-1] == 'eventgroups':
+        reOpenEventGroups = True
+        self.CloseEventGroups()
 
     if self._ontology is None:
       self._ontology = edxmlOntology.Validate()
@@ -162,6 +186,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     self.XMLWriter.send(edxmlOntology.GenerateXml())
     self.__eventTypeSchemaCache = {}
+
+    if reOpenEventGroups:
+      self.OpenEventGroups()
+    if prevEventTypeName is not None and prevEventSource is not None:
+      self.OpenEventGroup(prevEventTypeName, prevEventSource)
 
     return self
 
@@ -187,15 +216,17 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     """
 
-    if self.ElementStack[-1] != 'eventgroups': self.Error('An <eventgroup> tag must be child of an <eventgroups> tag. Did you forget to call CloseEventGroup()?')
+    if len(self.ElementStack) == 0:
+      self.OpenEventGroups()
     self.ElementStack.append('eventgroup')
 
-    self.CurrentElementTypeName = EventTypeName
+    self.CurrentEventTypeName = EventTypeName
+    self.CurrentEventSourceUri = SourceUri
 
     if self.Validate:
-      self.__eventTypeSchema = self.getEventTypeSchema(self.CurrentElementTypeName)
+      self.__eventTypeSchema = self.getEventTypeSchema(self.CurrentEventTypeName)
 
-    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentElementTypeName, SourceUri)
+    self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentEventTypeName, SourceUri)
     self.EventGroupXMLWriter.next()
 
   def Close(self):
@@ -203,6 +234,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       self.CloseEventGroup()
     if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroups':
       self.CloseEventGroups()
+    self.XMLWriter.close()
 
   def CloseEventGroup(self):
     """Closes a previously opened event group"""
@@ -243,10 +275,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         # exception that is more readable than the RelaxNG
         # error is, by validating using the EventType class.
         try:
-          self._ontology.GetEventType(self.CurrentElementTypeName).validateEventStructure(event)
+          self._ontology.GetEventType(self.CurrentEventTypeName).validateEventStructure(event)
 
           # EventType structure checks out alright. Let us check the object values.
-          self._ontology.GetEventType(self.CurrentElementTypeName).validateEventObjects(event)
+          self._ontology.GetEventType(self.CurrentEventTypeName).validateEventObjects(event)
 
           # EventType validation did not find the issue. We have
           # no other option than to raise a RelaxNG error containing
@@ -268,5 +300,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     """Closes a previously opened <eventgroups> section"""
     if self.ElementStack[-1] != 'eventgroups': self.Error('Unbalanced <eventgroups> tag. Did you forget to call CloseEventGroup()?')
     self.ElementStack.pop()
-
-    self.XMLWriter.close()
+    # We send None to the outer XML generator, to
+    # hint it that the eventgroups element has been
+    # completed and we want it to generate the
+    # eventgroups closing tag.
+    self.XMLWriter.send(None)

@@ -33,6 +33,8 @@ This module offers various classes for incremental parsing of EDXML data streams
 """
 import os
 from collections import defaultdict
+
+from copy import deepcopy
 from lxml import etree
 from typing import Any
 from typing import Dict
@@ -87,6 +89,7 @@ class EDXMLParserBase(object):
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
+    self.__validateRootElement()
     self._close()
 
   def _close(self):
@@ -256,39 +259,80 @@ class EDXMLParserBase(object):
     while self.__rootElement.tag != 'events':
       self.__rootElement = self.__rootElement.getparent()
 
-  def __validateXmlTree(self):
+  def __validateRootElement(self):
+    # Note that this method can only be called after
+    # parsing is completed. At any other stage in the
+    # parsing process, the tree structure is incomplete.
     if not self.__schema:
       self.__schema = etree.RelaxNG(
         etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
       )
-    self.__schema.assertValid(self.__rootElement)
+
+    try:
+      self.__schema.assertValid(self.__rootElement)
+    except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
+      # XML structure is invalid.
+      raise EDXMLValidationError(
+        "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
+        (etree.tostring(self.__rootElement), str(ValidationError))
+      )
+
+  def __validateDefinitionsElement(self, ontologyElement):
+    if not self.__schema:
+      self.__schema = etree.RelaxNG(
+        etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
+      )
+
+    # Since lxml iterparse gives us partial XML
+    # trees, elements from which we have not seen
+    # its closing tag yet may not be valid yet. So,
+    # we integrate the definitions element into a
+    # skeleton tree, yielding a complete, valid
+    # EDXML structure.
+    skeleton = etree.Element('events', attrib=self.__rootElement.attrib)
+    skeleton.append(deepcopy(ontologyElement))
+    etree.SubElement(skeleton, 'eventgroups')
+
+    try:
+      self.__schema.assertValid(skeleton)
+    except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
+      # XML structure is invalid.
+      raise EDXMLValidationError(
+        "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
+        (etree.tostring(self.__rootElement), str(ValidationError))
+      )
 
   def __processOntology(self, ontologyElement):
+    precedingEventGroupsElement = ontologyElement.getprevious()
+    if precedingEventGroupsElement is not None:
+      precedingDefinitionsElement = precedingEventGroupsElement.getprevious()
+      if precedingDefinitionsElement is None:
+        # XML structure is invalid, because there must be
+        # a definitions element preceding the eventgroups element.
+        raise EDXMLValidationError(
+          "EDXML structure contains a definitions element without a preceding eventgroups element: %s\n" %
+          (etree.tostring(self.__rootElement))
+        )
+
+      # We have one complete pair of a definitions and
+      # an eventgroups tag preceding the current definitions
+      # element. We can safely delete them.
+      del self.__rootElement[0:2]
+
+    # Before parsing the ontology information, we validate
+    # the generic structure of the definitions element, using
+    # the RelaxNG schema.
+    self.__validateDefinitionsElement(ontologyElement)
+
+    # We survived XML structure validation. We can proceed
+    # and process the new ontology information.
     if self._ontology is None:
       self._ontology = edxml.ontology.Ontology()
+
     try:
       self._ontology.Update(ontologyElement)
       self.__eventTypeSchemaCache = {}
     except EDXMLValidationError as exception:
-      # Since we did not validate the XML structure
-      # yet, it may be that parsing failed due to
-      # an invalid XML structure. Check it out.
-      try:
-        self.__validateXmlTree()
-      except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
-        # XML structure is invalid.
-        raise EDXMLValidationError(
-          "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-          (etree.tostring(self.__rootElement), str(ValidationError))
-        )
-      # XML structure is OK. Must be some logic error in the
-      # ontology. Since XML validation errors can be rather cryptic,
-      # we will first try to validate the ontology to see if that
-      # reveals the problem.
-      self._ontology.Validate()
-
-      # Ok, ontology validation did not catch it, we have no other
-      # choice but to throw the XML validation error at our poor users.
       raise EDXMLValidationError(
         "Invalid ontology definition detected: %s\n%s" % (etree.tostring(ontologyElement), str(exception))
       )
@@ -363,6 +407,21 @@ class EDXMLParserBase(object):
 
     if self.__currentGroupElement is not None:
       self._closeEventGroup(self.__currentEventType, self.__currentEventSourceUri)
+
+    # Since lxml iterparse gives us partial XML
+    # trees, elements from which we have not seen
+    # its closing tag yet may not be valid yet. For
+    # that reason, we cannot use the EDXML RelaxNG
+    # schema to validate the full XML structure while
+    # parsing is still in progress. Hence the explicit
+    # attribute validation here.
+
+    eventTypeName = groupElement.attrib.get('event-type', '')
+    sourceUri = groupElement.attrib.get('source-uri', '')
+    if not re.match('^[a-z0-9.]+$', eventTypeName):
+      raise EDXMLValidationError('An eventgroup tag has an invalid event-type attribute: "%s"' % eventTypeName)
+    if not re.match('^(/[a-z0-9-]+)*/$', sourceUri):
+      raise EDXMLValidationError('An eventgroup tag has an invalid source-uri attribute: "%s"' % sourceUri)
 
     self.__currentGroupElement = groupElement
     self._openEventGroup(groupElement.attrib['event-type'], groupElement.attrib['source-uri'])

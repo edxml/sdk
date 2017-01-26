@@ -47,9 +47,10 @@ class SimpleEDXMLWriter(object):
 
     self.__maxBufSize = 1024
     self.__currBufSize = 0
+    self._output = Output
+    self._validate = Validate
     self._max_latency = 0
     self._last_write_time = time.time()
-    self._writing_events = False
     self._ignore_invalid_objects = False
     self._ignore_invalid_events = False
     self._log_invalid_events = False
@@ -59,9 +60,10 @@ class SimpleEDXMLWriter(object):
     self._current_event_group_type = None
     self._event_buffers = {}
     self._ontology = Ontology()
+    self._last_written_ontology_version = self._ontology.GetVersion()
     self._event_type_postprocessors = {}
     self._automerge = {}
-    self._writer = EDXMLWriter(Output, Validate)
+    self._writer = None
 
   def __enter__(self):
     return self
@@ -188,9 +190,6 @@ class SimpleEDXMLWriter(object):
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
 
     """
-    if self._writing_events:
-      raise EDXMLError('You cannot add ontology information after writing the first event.')
-
     self._ontology.Update(edxmlOntology)
     return self
 
@@ -296,11 +295,6 @@ class SimpleEDXMLWriter(object):
     if not EventGroup in self._event_buffers:
       self._event_buffers[EventGroup] = {True: {}, False: []}
 
-    if not self._writing_events:
-      self._writer.AddOntology(self._ontology)
-      self._writer.OpenEventGroups()
-      self._writing_events = True
-
     Merge = EventTypeName in self._automerge
     if Merge:
       # We need to compute the sticky hash, check
@@ -359,11 +353,24 @@ class SimpleEDXMLWriter(object):
 
   def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
-    if not self._writing_events:
+    if not self._writer:
+      # We did not create the EDXMLWriter yet.
+      self._writer = EDXMLWriter(self._output, self._validate)
       self._writer.AddOntology(self._ontology)
+      self._last_written_ontology_version = self._ontology.GetVersion()
       self._writer.OpenEventGroups()
-      self._writing_events = True
 
+    if self._ontology.IsModifiedSince(self._last_written_ontology_version):
+      # TODO: Rather than outputting a complete, new
+      # ontology, we should only output the ontology
+      # elements that are new or updated.
+      if self._current_event_group_type is not None:
+        self._writer.CloseEventGroup()
+        self._current_event_group_type = None
+      self._writer.CloseEventGroups()
+      self._writer.AddOntology(self._ontology)
+      self._last_written_ontology_version = self._ontology.GetVersion()
+      self._writer.OpenEventGroups()
     if self._current_event_group_type != EventTypeName or self._current_event_group_source != EventSourceUri:
       if self._current_event_group_type is not None:
         self._writer.CloseEventGroup()
@@ -379,7 +386,9 @@ class SimpleEDXMLWriter(object):
         else:
           self._event_buffers[EventGroupId][Merge][Hash] = self._event_buffers[EventGroupId][Merge][Hash].pop()
 
-    for Event in self._event_buffers[EventGroupId][Merge].itervalues():
+    Events = self._event_buffers[EventGroupId][Merge].itervalues() if Merge else self._event_buffers[EventGroupId][Merge]
+
+    for Event in Events:
       try:
         self._writer.AddEvent(Event)
       except EDXMLValidationError as Error:
@@ -403,10 +412,17 @@ class SimpleEDXMLWriter(object):
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
     """
 
-    if not self._writing_events:
+    if not self._writer:
+      # We did not create the EDXMLWriter yet.
+      self._writer = EDXMLWriter(self._output, self._validate)
+
+    if self._ontology.IsModifiedSince(self._last_written_ontology_version):
+      if self._current_event_group_type is not None:
+        self._writer.CloseEventGroup()
+        self._writer.CloseEventGroups()
+        self._current_event_group_type = None
       self._writer.AddOntology(self._ontology)
-      self._writer.OpenEventGroups()
-      self._writing_events = True
+      self._last_written_ontology_version = self._ontology.GetVersion()
 
     for GroupId in self._event_buffers:
       EventTypeName, EventSourceUri = GroupId.split(':')
@@ -418,5 +434,5 @@ class SimpleEDXMLWriter(object):
       self._writer.CloseEventGroup()
       self._current_event_group_type = None
 
-    self._writer.CloseEventGroups()
+    self._writer.Close()
     return self

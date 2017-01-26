@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from edxml import Ontology
 from edxml.EDXMLBase import EDXMLBase, EDXMLError
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 from edxml.ontology import EventSource
@@ -43,8 +44,9 @@ class JsonTranscoderMediator(EDXMLBase):
 
     super(JsonTranscoderMediator, self).__init__()
     self._output = Output
-    self._writer = None
-    self._ontology_written = False
+    self._writer = None   # var: edxml.SimpleEDXMLWriter
+    self._ontology = Ontology()
+    self._last_written_ontology_version = self._ontology.GetVersion()
 
   @classmethod
   def Register(cls, RecordTypeName, Transcoder):
@@ -155,21 +157,21 @@ class JsonTranscoderMediator(EDXMLBase):
     The mediator will not output the EDXML ontology until
     it receives its first event through the Process() method.
     This means that the caller can generate an event source
-    'just in time' by inspecting the first record it receives
-    from its input and call this method to add it to the
-    mediator.
+    'just in time' by inspecting the input record and use this
+    method to create the appropriate source definition.
+
+    Returns the created EventSource instance, to allow it to
+    be customized.
 
     Args:
       SourceUri (str): An Event Source URI
 
     Returns:
-      JsonTranscoderMediator:
+      EventSource:
     """
-    # TODO: To allow the user to create sources using the
-    # ontology instance of the writer, we should instantiate
-    # the writer in the constructor.
-    self._sources.append(SourceUri)
-    return self
+    source = self._ontology.CreateEventSource(SourceUri)
+    self._sources.append(source)
+    return source
 
   @classmethod
   def GetTranscoder(cls, RecordTypeName):
@@ -191,9 +193,11 @@ class JsonTranscoderMediator(EDXMLBase):
     else:
       return cls._transcoders.get('JSON_OF_UNKNOWN_TYPE', None)
 
-  def _write_ontology(self):
+  def _write_initial_ontology(self):
+    # Here, we write the ontology elements that are
+    # defined by the various transcoders.
     for Transcoder in self._transcoders.values():
-      Transcoder.SetOntology(self._writer.GetOntology())
+      Transcoder.SetOntology(self._ontology)
 
     for Transcoder in self._transcoders.values():
       for _ in Transcoder.GenerateObjectTypes():
@@ -209,10 +213,21 @@ class JsonTranscoderMediator(EDXMLBase):
 
     if len(self._sources) == 0:
       self.Warning('No EDXML source was defined, generating bogus source.')
-      self._sources.append('/undefined/')
+      self._sources.append(self._ontology.CreateEventSource('/undefined/'))
 
-    for SourceUri in self._sources:
-      self._writer.GetOntology().CreateEventSource(SourceUri)
+    # Add the generated ontology elements and
+    # create a new, empty ontology for accumulating
+    # ontology updates that may generated later, by event
+    # transcoders.
+    self._writer.AddOntology(self._ontology)
+    self._last_written_ontology_version = self._ontology.GetVersion()
+
+  def _write_ontology_update(self):
+    # Here, we write ontology updates resulting
+    # from adding new ontology elements while
+    # generating events. Currently, this is limited
+    # to event source definitions.
+    self._writer.AddOntology(self._ontology)
 
   def _create_writer(self):
     self._writer = SimpleEDXMLWriter(self._output, self._validate_events)
@@ -260,10 +275,17 @@ class JsonTranscoderMediator(EDXMLBase):
         self.Warning('Record was: %s' % JsonData)
 
       for Event in Transcoder.Generate(JsonData, RecordType):
-        if not self._ontology_written:
+        if not self._writer:
+          # Apparently, this is the first event that
+          # is generated. Create an EDXML writer and
+          # write the initial ontology.
           self._create_writer()
-          self._write_ontology()
-          self._ontology_written = True
+          self._write_initial_ontology()
+        if self._ontology.IsModifiedSince(self._last_written_ontology_version):
+          # Ontology was changed since we wrote the last ontology update,
+          # so we need to write another update.
+          self._write_ontology_update()
+          self._last_written_ontology_version = self._ontology.GetVersion()
 
         if Transcoder.IsPostProcessor():
           try:
