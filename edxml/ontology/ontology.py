@@ -223,7 +223,7 @@ class Ontology(object):
     if name in self._event_types:
       self._event_types[name].Update(eventType)
     else:
-      self._event_types[name] = eventType.Validate()._setOntology(self)
+      self._event_types[name] = eventType.Validate()
       self._childModifiedCallback()
 
     return self
@@ -245,7 +245,7 @@ class Ontology(object):
     if name in self._object_types:
       self._object_types[name].Update(objectType)
     else:
-      self._object_types[name] = objectType.Validate()._setOntology(self)
+      self._object_types[name] = objectType.Validate()
       self._childModifiedCallback()
 
     return self
@@ -267,7 +267,7 @@ class Ontology(object):
     if uri in self._sources:
       self._sources[uri].Update(eventSource)
     else:
-      self._sources[uri] = eventSource.Validate()._setOntology(self)
+      self._sources[uri] = eventSource.Validate()
       self._childModifiedCallback()
 
     return self

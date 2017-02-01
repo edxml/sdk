@@ -85,10 +85,6 @@ class EventType(MutableMapping):
     for propertyName, prop in self._properties.iteritems():
       yield propertyName
 
-  def _setOntology(self, ontology):
-    self._ontology = ontology
-    return self
-
   def _childModifiedCallback(self):
     """Callback for change tracking"""
     self.__cachedUniqueProperties = None
