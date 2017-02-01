@@ -65,7 +65,7 @@ def PrintHelp():
                       an EDXML stream which holds the ontology, containing the eventtype
                       definition that matches the CVS input data.
 
-     -u --source-url  This option must be followed by the EDXML source URL that represents
+     -u --source-uri  This option must be followed by the EDXML source URI that represents
                       the origin of the input data.
 
      -e --event-type  This option must be followed by the name of the event type that the
@@ -90,7 +90,7 @@ OntologyInputFile = None
 ColumnSeparator = '\t'
 OutputEventType = None
 EventTypeColumn = None
-OutputSourceUrl = None
+OutputSourceUri = None
 CurrOption = 1
 TimeAcquired = time.gmtime()
 DateAcquired = "%04d%02d%02d" % (( TimeAcquired.tm_year, TimeAcquired.tm_mon, TimeAcquired.tm_mday ))
@@ -109,9 +109,9 @@ while CurrOption < len(sys.argv):
     CurrOption += 1
     OntologyInputFile = open(sys.argv[CurrOption])
 
-  elif sys.argv[CurrOption] in ('-u', '--source-url'):
+  elif sys.argv[CurrOption] in ('-u', '--source-uri'):
     CurrOption += 1
-    OutputSourceUrl = sys.argv[CurrOption]
+    OutputSourceUri = sys.argv[CurrOption]
 
   elif sys.argv[CurrOption] in ('-e', '--event-type'):
     CurrOption += 1
@@ -135,8 +135,8 @@ if OntologyInputFile is None:
   sys.stderr.write('No ontology source was specified. (use --help option to get help)\n')
   sys.exit(1)
 
-if OutputSourceUrl is None:
-  sys.stderr.write('No source URL was specified. (use --help option to get help)\n')
+if OutputSourceUri is None:
+  sys.stderr.write('No source URI was specified. (use --help option to get help)\n')
   sys.exit(1)
 
 if EventTypeColumn is None and OutputEventType is None:
@@ -152,15 +152,13 @@ except edxml.EDXMLOntologyPullParser.ProcessingInterrupted:
 
 # Remove the existing source definitions, we will
 # define our own data source.
-for url, source in Parser.getOntology().GenerateEventSources():
-  Parser.getOntology().DeleteEventSource(url)
+for uri, source in Parser.getOntology().GetEventSources():
+  Parser.getOntology().DeleteEventSource(uri)
 
 # Define new data source.
 Parser.getOntology().CreateEventSource(
-  OutputSourceUrl, Description='Imported from CSV data', AcquisitionDate=DateAcquired
+  OutputSourceUri, Description='Imported from CSV data', AcquisitionDate=DateAcquired
 )
-
-OutputSourceId = Parser.getOntology().GetEventSource(OutputSourceUrl).GetId()
 
 if Input == sys.stdin:
   sys.stderr.write('Waiting for CSV data on standard input... (use --help option to get help)\n')
@@ -179,7 +177,7 @@ CurrentOutputEventType = None
 ColumnPropertyMapping = None
 PreviousSplitLine = None
 PreviousLineProperties = None
-OutputEvent = edxml.EventElement({}, OutputEventType, OutputSourceUrl)
+OutputEvent = edxml.EventElement({}, OutputEventType, OutputSourceUri)
 OutputProperties = {}
 UniqueOutputProperties = {}
 
@@ -252,9 +250,9 @@ for Line in Input:
             # Invalid event, just skip it.
             sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
         MyWriter.CloseEventGroup()
-        MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
+        MyWriter.OpenEventGroup(OutputEventType, OutputSourceUri)
       else:
-        MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
+        MyWriter.OpenEventGroup(OutputEventType, OutputSourceUri)
         if PreviousLineProperties is not None:
           try:
             MyWriter.AddEvent(OutputEvent.SetProperties(PreviousLineProperties))
@@ -276,7 +274,7 @@ if PreviousSplitLine is not None:
   if OutputEventType != CurrentOutputEventType:
     if CurrentOutputEventType is not None:
       MyWriter.CloseEventGroup()
-    MyWriter.OpenEventGroup(OutputEventType, OutputSourceId)
+    MyWriter.OpenEventGroup(OutputEventType, OutputSourceUri)
     CurrentOutputEventType = OutputEventType
     if OutputEventType not in OutputProperties:
       OutputProperties[OutputEventType] = Parser.getOntology().GetEventType(OutputEventType).GetProperties()
@@ -295,4 +293,4 @@ if PreviousSplitLine is not None:
 if CurrentOutputEventType is not None:
   MyWriter.CloseEventGroup()
 
-MyWriter.CloseEventGroups()
+MyWriter.Close()
