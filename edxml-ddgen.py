@@ -67,7 +67,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     self.ObjectTypeNamePrefix = ObjectTypeNamePrefix
     self.Diversity = Diversity
     self.EventGroupSize = EventGroupSize
-    self.EventSourceIdDict = {'0': '/source-a/', '1': '/source-b/'}
+    self.EventSourceUriList = ('/source-a/', '/source-b/')
     self.RandomContentCharacters = u'abcdefghijklmnop  '
     self.RandomContentCharactersLength = len(self.RandomContentCharacters)
     self.TimeStart = time.time()
@@ -78,10 +78,9 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
   def Start(self):
     self.WriteDefinitions()
     self.OpenEventGroups()
-    self.OpenEventGroup(self.EventTypeName, str(self.EventGroupCounter % 2))
+    self.OpenEventGroup(self.EventTypeName, self.EventSourceUriList[self.EventGroupCounter % 2])
     self.WriteEvents()
-    self.CloseEventGroup()
-    self.CloseEventGroups()
+    self.Close()
 
     TimeElapsed = time.time() - self.TimeStart + 1e-9
     sys.stderr.write("Wrote %d events in %d seconds, %d events per second.\n" % (( self.EventCounter, TimeElapsed, (self.EventCounter / TimeElapsed) )))
@@ -191,7 +190,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
           self.EventGroupCounter += 1
           self.CurrentEventGroupSize = 0
           self.CloseEventGroup()
-          self.OpenEventGroup(self.EventTypeName, str(self.EventGroupCounter % 2))
+          self.OpenEventGroup(self.EventTypeName, self.EventSourceUriList[self.EventGroupCounter % 2])
 
         if self.EventRate > 0:
           # An event rate is specified, which means we
@@ -269,8 +268,8 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
     eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
 
-    for SourceId, SourceUrl in self.EventSourceIdDict.items():
-      ontology.CreateEventSource(SourceUrl)
+    for uri in self.EventSourceUriList:
+      ontology.CreateEventSource(uri)
 
     self.AddOntology(ontology)
 
