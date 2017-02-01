@@ -36,7 +36,7 @@
 #
 #  Parameters:
 #
-#  -s    Takes a regular expression for filtering source URLs (optional).
+#  -s    Takes a regular expression for filtering source URIs (optional).
 #  -e    Takes an event type name for filtering on events of a certain type (optional).
 #
 #  Examples:
@@ -52,10 +52,10 @@ from edxml.EDXMLFilter import EDXMLPullFilter
 
 
 class EDXMLEventGroupFilter(EDXMLPullFilter):
-  def __init__(self, SourceUrlPattern, EventTypeName):
+  def __init__(self, SourceUriPattern, EventTypeName):
 
     super(EDXMLEventGroupFilter, self).__init__(sys.stdout, False)
-    self.SourceUrlPattern = SourceUrlPattern
+    self.SourceUriPattern = SourceUriPattern
     self.EventTypeName = EventTypeName
     self.passThrough = True
 
@@ -68,9 +68,9 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
         if eventTypeName != self.EventTypeName:
           filteredEventTypes.append(eventTypeName)
 
-    for sourceUrl, source in parsedOntology.GenerateEventSources():
-      if re.match(self.SourceUrlPattern, sourceUrl) is not None:
-        filteredSources.append(sourceUrl)
+    for sourceUri, source in parsedOntology.GetEventSources():
+      if re.match(self.SourceUriPattern, sourceUri) is not None:
+        filteredSources.append(sourceUri)
 
     for eventTypeName in filteredEventTypes:
       parsedOntology.DeleteEventType(eventTypeName)
@@ -81,22 +81,22 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
 
     super(EDXMLEventGroupFilter, self)._parsedOntology(parsedOntology)
 
-  def _openEventGroup(self, eventTypeName, eventSourceId):
+  def _openEventGroup(self, eventTypeName, eventSourceUri):
 
-    if self.getOntology().GetEventSourceById(eventSourceId) is None:
+    if self.getOntology().GetEventSource(eventSourceUri) is None:
       # Source is gone, turn filter output off.
       self.passThrough = False
       eventTypeName = None
-      eventSourceId = None
+      eventSourceUri = None
 
     if self.getOntology().GetEventType(eventTypeName) is None:
       # Event type is gone, turn filter output off.
       self.passThrough = False
       eventTypeName = None
-      eventSourceId = None
+      eventSourceUri = None
 
     if self.passThrough:
-      super(EDXMLEventGroupFilter, self)._openEventGroup(eventTypeName, eventSourceId)
+      super(EDXMLEventGroupFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
 
   def _closeEventGroup(self, eventTypeName, eventSourceId):
 
