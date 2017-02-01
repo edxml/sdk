@@ -29,10 +29,10 @@ sources, and so on.
     :show-inheritance:
 """
 from data_type import DataType
+from event_type import EventType
 from event_property import EventProperty
 from event_property_relation import PropertyRelation
 from event_source import EventSource
-from event_type import EventType
 from event_type_parent import EventTypeParent
 from object_type import ObjectType
 from ontology import Ontology
