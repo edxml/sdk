@@ -38,8 +38,13 @@
 
 import sys
 import time
+from datetime import datetime
+
+import pytz
+from dateutil.parser import parse
 
 from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.ontology import DataType
 
 
 class EDXMLReplay(EDXMLPullFilter):
@@ -62,7 +67,7 @@ class EDXMLReplay(EDXMLPullFilter):
     self.TimeShift = None
     self.SpeedMultiplier = SpeedMultiplier
     self.BufferStufferEnabled = BufferStufferEnabled
-    self.TimestampProperties = []
+    self.DateTimeProperties = []
     self.KnownProperties = []
     self.CurrentEventTypeName = None
 
@@ -75,8 +80,8 @@ class EDXMLReplay(EDXMLPullFilter):
 
   def _parsedEvent(self, edxmlEvent):
 
-    Timestamps = []
-    TimestampObjects = []
+    DateTimeStrings = []
+    DateTimeObjects = []
     NewEventObjects = []
 
     if self.BufferStufferEnabled:
@@ -86,27 +91,28 @@ class EDXMLReplay(EDXMLPullFilter):
     # Find all timestamps in event
     for PropertyName, Objects in edxmlEvent.GetProperties().items():
       if PropertyName not in self.KnownProperties:
-        if str(self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()) == 'timestamp':
-          self.TimestampProperties.append(PropertyName)
+        if str(self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()) == 'datetime':
+          self.DateTimeProperties.append(PropertyName)
         self.KnownProperties.append(PropertyName)
 
-      if PropertyName in self.TimestampProperties:
-        TimestampObjects.append((PropertyName, Objects))
-        Timestamps.extend([float(Object) for Object in Objects])
+      if PropertyName in self.DateTimeProperties:
+        DateTimeObjects.append((PropertyName, Objects))
+        DateTimeStrings.extend(Objects)
       else:
         # We copy all event objects, except
         # for the timestamps
         NewEventObjects.extend(Objects)
 
-    if len(Timestamps) > 0:
+    if len(DateTimeStrings) > 0:
       # We will use the smallest timestamp
-      # as the event timestamp.
-      CurrentEventTimestamp = min(Timestamps)
+      # as the event timestamp. Note that we
+      # use lexicographical ordering here.
+      CurrentEventDateTime = parse(min(DateTimeStrings))
       if self.TimeShift:
 
         # Determine how much time remains before
         # the event should be output.
-        Delay = CurrentEventTimestamp + self.TimeShift - time.time()
+        Delay = (CurrentEventDateTime - datetime.now(pytz.UTC)).total_seconds() + self.TimeShift
         if Delay >= 0:
           time.sleep(Delay * SpeedMultiplier)
 
@@ -122,14 +128,15 @@ class EDXMLReplay(EDXMLPullFilter):
       else:
         # Determine the global time shift between
         # the input dataset and the current time.
-        self.TimeShift = time.time() - CurrentEventTimestamp
+        self.TimeShift = (datetime.now(pytz.UTC) - CurrentEventDateTime).total_seconds()
 
       # Now we add the timestamp objects, replacing
       # their values with the current time.
-      for PropertyName, Objects in TimestampObjects:
-        edxmlEvent[PropertyName] = [u'%.6f' % time.time() for Object in Objects]
+      for PropertyName, Objects in DateTimeObjects:
+        edxmlEvent[PropertyName] = [DataType.FormatUtcDateTime(datetime.now(tz=pytz.utc)) for Object in Objects]
 
     EDXMLPullFilter._parsedEvent(self, edxmlEvent)
+
 
 def PrintHelp():
 
