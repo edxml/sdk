@@ -548,11 +548,15 @@ class Ontology(object):
     Args:
       otherOntology (Union[lxml.etree.Element,Ontology]):
 
+    Raises;
+      EDXMLValidationError
+
     Returns:
       Ontology: The ontology
     """
 
     if type(otherOntology) == Ontology:
+      otherOntology.Validate()
       for ObjectTypeName, objectType in otherOntology.GetObjectTypes().items():
         self._addObjectType(objectType)
       for EventTypeName, eventType in otherOntology.GetEventTypes().items():
