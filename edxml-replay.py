@@ -69,9 +69,9 @@ class EDXMLReplay(EDXMLPullFilter):
     # Call parent class constructor
     super(EDXMLReplay, self).__init__(EDXMLReplay.UnbufferedStdout(sys.stdout))
 
-  def _openEventGroup(self, eventTypeName, eventSourceId):
+  def _openEventGroup(self, eventTypeName, eventSourceUri):
     self.CurrentEventTypeName = eventTypeName
-    EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceId)
+    EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceUri)
 
   def _parsedEvent(self, edxmlEvent):
 
