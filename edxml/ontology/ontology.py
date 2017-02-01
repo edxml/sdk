@@ -573,7 +573,7 @@ class Ontology(object):
         elif element.tag == 'sources':
           self.__parseSources(element)
         else:
-          raise TypeError('Unexpected element: "%s"' % element.tag)
+          raise EDXMLValidationError('Unexpected ontology element: "%s"' % element.tag)
 
       self.Validate()
     else:
