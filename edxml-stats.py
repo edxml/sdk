@@ -130,5 +130,5 @@ for Predicate in sorted(predicates):
   print Predicate
 
 print "\nSource URLs:\n"
-for Url, Source in sorted(Parser.getOntology().GenerateEventSources()):
-  print Url
+for Uri, Source in sorted(Parser.getOntology().GetEventSources()):
+  print Uri
