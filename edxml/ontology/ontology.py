@@ -537,6 +537,22 @@ class Ontology(object):
 
     return ontology
 
+  def AddBrick(self, ontologyBrick):
+    """
+    Updates the ontology using the definitions contained
+    in specified ontology brick.
+
+    Args:
+      ontologyBrick (Brick):
+
+    Returns:
+      Ontology: The ontology
+
+    """
+    ontologyBrick.AddTo(self)
+
+    return self
+
   def Update(self, otherOntology):
     """
 

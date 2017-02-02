@@ -36,3 +36,4 @@ from event_source import EventSource
 from event_type_parent import EventTypeParent
 from object_type import ObjectType
 from ontology import Ontology
+from brick import Brick
