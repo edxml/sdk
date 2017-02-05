@@ -14,7 +14,7 @@ class ObjectType(object):
   Class representing an EDXML object type
   """
 
-  NAME_PATTERN = re.compile('^[a-z0-9-]{1,40}$')
+  NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
   DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
   FUZZY_MATCHING_PATTERN = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
@@ -22,7 +22,7 @@ class ObjectType(object):
 
     self._attr = {
       'name': Name,
-      'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('-')),
+      'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
       'description'    : Description or Name,
       'data-type'      : DataType,
       'enp'            : int(Enp),
@@ -374,7 +374,7 @@ class ObjectType(object):
       ObjectType: The ObjectType instance
 
     """
-    if not len(self._attr['name']) <= 40:
+    if not len(self._attr['name']) <= 64:
       raise EDXMLValidationError('The name of object type "%s" is too long.' % self._attr['name'])
     if not re.match(self.NAME_PATTERN, self._attr['name']):
       raise EDXMLValidationError('Object type "%s" has an invalid name.' % self._attr['name'])
