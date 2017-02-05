@@ -27,7 +27,7 @@ class EventType(MutableMapping):
   the event property, the value is the property itself.
   """
 
-  NAME_PATTERN = re.compile("^[a-z0-9-]*$")
+  NAME_PATTERN = re.compile("^[a-z0-9.]*$")
   DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
   CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
   REPORTER_PLACEHOLDER_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
@@ -40,7 +40,7 @@ class EventType(MutableMapping):
 
     self._attr = {
       'name': Name,
-      'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('-')),
+      'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
       'description'    : Description or Name,
       'classlist'      : ClassList,
       'reporter-short' : ReporterShort,
@@ -1175,7 +1175,7 @@ class EventType(MutableMapping):
       EventType: The EventType instance
 
     """
-    if not len(self._attr['name']) <= 40:
+    if not len(self._attr['name']) <= 64:
       raise EDXMLValidationError('The name of event type "%s" is too long.' % self._attr['name'])
     if not re.match(self.NAME_PATTERN, self._attr['name']):
       raise EDXMLValidationError('Event type "%s" has an invalid name.' % self._attr['name'])

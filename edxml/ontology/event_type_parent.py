@@ -171,7 +171,7 @@ class EventTypeParent(object):
       EventTypeParent: The EventTypeParent instance
 
     """
-    if not len(self._attr['eventtype']) <= 40:
+    if not len(self._attr['eventtype']) <= 64:
       raise EDXMLValidationError(
         'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
         self._attr['eventtype']
