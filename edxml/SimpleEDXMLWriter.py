@@ -167,16 +167,6 @@ class SimpleEDXMLWriter(object):
 
     return self
 
-  def GetOntology(self):
-    """
-
-    Returns the current ontology that is used to produce output.
-
-    Returns:
-       edxml.ontology.Ontology: The current output ontology
-    """
-    return self._ontology
-
   def AddOntology(self, edxmlOntology):
     """
 
