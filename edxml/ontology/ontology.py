@@ -109,7 +109,7 @@ class Ontology(object):
     self._childModifiedCallback()
     return self._event_types[Name]
 
-  def CreateEventSource(self, Uri, Description=None, AcquisitionDate=None):
+  def CreateEventSource(self, Uri, Description='no description available', AcquisitionDate='00000000'):
     """
 
     Creates a new event source definition. If no acquisition date

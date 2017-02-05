@@ -16,12 +16,12 @@ class EventSource(object):
   SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
   ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
-  def __init__(self, Ontology, Uri, Description = None, AcquisitionDate = None):
+  def __init__(self, Ontology, Uri, Description='no description available', AcquisitionDate='00000000'):
 
     self._attr = {
       'uri':           str(Uri).rstrip('/') + '/',
-      'description':   str(Description) if Description else 'undescribed source',
-      'date-acquired': str(AcquisitionDate) if AcquisitionDate else strftime("%Y%m%d", gmtime())
+      'description':   str(Description),
+      'date-acquired': str(AcquisitionDate)
     }
 
     self._ontology = Ontology  # type: edxml.ontology.Ontology
