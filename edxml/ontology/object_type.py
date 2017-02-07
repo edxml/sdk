@@ -18,14 +18,13 @@ class ObjectType(object):
   DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
   FUZZY_MATCHING_PATTERN = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
-  def __init__(self, Ontology, Name, DisplayName, Description = None, DataType ='string:0:cs:u', Enp = 0, Compress = False, FuzzyMatching ='none', Regexp ='[\s\S]*'):
+  def __init__(self, Ontology, Name, DisplayName, Description = None, DataType ='string:0:cs:u', Compress = False, FuzzyMatching ='none', Regexp ='[\s\S]*'):
 
     self._attr = {
       'name': Name,
       'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
       'description'    : Description or Name,
       'data-type'      : DataType,
-      'enp'            : int(Enp),
       'compress'       : bool(Compress),
       'fuzzy-matching' : FuzzyMatching,
       'regexp'         : Regexp
@@ -102,17 +101,6 @@ class ObjectType(object):
     """
 
     return DataType(self._attr['data-type'])
-
-  def GetEntityNamingPriority(self):
-    """
-
-    Returns entity naming priority of the object type.
-
-    Returns:
-      int:
-    """
-
-    return self._attr['enp']
 
   def IsCompressible(self):
     """
@@ -196,22 +184,6 @@ class ObjectType(object):
     if Plural is None:
       Plural = '%ss' % Singular
     self._attr['display-name'] = '%s/%s' % (Singular, Plural)
-
-    return self
-
-  def SetEntityNamingPriority(self, Priority):
-    """
-
-    Configure the entity naming priority of
-    the object type.
-
-    Args:
-      Priority (int): The EDXML priority attribute
-
-    Returns:
-      ObjectType: The ObjectType instance
-    """
-    self._attr['enp'] = int(Priority)
 
     return self
 
@@ -410,11 +382,6 @@ class ObjectType(object):
         'Object type "%s" has an invalid compress attribute: "%s"' % (self._attr['name'], repr(self._attr['compress']))
       )
 
-    if not 0 <= int(self._attr['enp']) < 256:
-      raise EDXMLValidationError(
-        'Object type "%s" has an invalid entity naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
-      )
-
     try:
       re.compile(self._attr['regexp'])
     except sre_constants.error:
@@ -433,7 +400,6 @@ class ObjectType(object):
       typeElement.get('display-name', '/'),
       typeElement.attrib['description'],
       typeElement.attrib['data-type'],
-      int(typeElement.get('enp', 0)),
       typeElement.get('compress', 'false') == 'true',
       typeElement.get('fuzzy-matching', 'none'),
       typeElement.get('regexp', '[\s\S]*')
@@ -463,10 +429,6 @@ class ObjectType(object):
 
     if self._attr['data-type'] != str(objectType.GetDataType()):
       raise Exception('Attempt to update object type "%s", but data types do not match.',
-                      (self._attr['name'], objectType.GetName()))
-
-    if int(self._attr['enp']) != objectType.GetEntityNamingPriority():
-      raise Exception('Attempt to update object type "%s", but Entity Naming Priorities do not match.',
                       (self._attr['name'], objectType.GetName()))
 
     if self._attr['compress'] != objectType.IsCompressible():
@@ -499,6 +461,5 @@ class ObjectType(object):
     attribs = dict(self._attr)
 
     attribs['compress'] = 'true' if self._attr['compress'] else 'false'
-    attribs['enp'] = '%d' % attribs['enp']
 
     return etree.Element('objecttype', attribs)

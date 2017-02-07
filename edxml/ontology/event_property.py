@@ -33,7 +33,7 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, eventType, Name, ObjectType, Description = None, DefinesEntity = False, EntityConfidence = 0, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectType, Description = None, DefinesEntity = False, EntityConfidence = 0, Enp = 128, Unique = False, Merge ='drop', Similar =''):
 
     self._attr = {
       'name':              Name,
@@ -42,6 +42,7 @@ class EventProperty(object):
       'defines-entity':    bool(DefinesEntity),
       'entity-confidence': float(EntityConfidence),
       'unique':            bool(Unique),
+      'enp':               int(Enp),
       'merge':             Merge,
       'similar':           Similar
     }
@@ -139,6 +140,17 @@ class EventProperty(object):
       DataType: The DataType instance
     """
     return self._dataType
+
+  def GetEntityNamingPriority(self):
+    """
+
+    Returns entity naming priority of the event property.
+
+    Returns:
+      int:
+    """
+
+    return self._attr['enp']
 
   def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
     """
@@ -293,10 +305,27 @@ class EventProperty(object):
       Confidence (float): entity identification confidence [0.0, 1.0]
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['defines-entity'] = True
     self._attr['entity-confidence'] = float(Confidence)
+    return self
+
+  def SetEntityNamingPriority(self, Priority):
+    """
+
+    Configure the entity naming priority of
+    the property. When the value is not explicitly
+    specified using this method, it's value is 128.
+
+    Args:
+      Priority (int): The EDXML priority attribute
+
+    Returns:
+      edxml.ontology.EventProperty: The EventProperty instance
+    """
+    self._attr['enp'] = int(Priority)
+
     return self
 
   def IsEntity(self):
@@ -440,6 +469,11 @@ class EventProperty(object):
     if not len(self._attr['similar']) <= 64:
       raise EDXMLValidationError('Property attribute is too long: similar="%s"' % self._attr['similar'])
 
+    if not 0 <= int(self._attr['enp']) < 256:
+      raise EDXMLValidationError(
+        'Property "%s" has an invalid entity naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
+      )
+
     if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'increment', 'sum', 'multiply', 'match'):
       raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self._attr['merge'])
 
@@ -464,6 +498,7 @@ class EventProperty(object):
       propertyElement.attrib['description'],
       propertyElement.get('defines-entity', 'false') == 'true',
       propertyElement.get('entity-confidence', 0),
+      int(propertyElement.get('enp', 0)),
       propertyElement.get('unique', 'false') == 'true',
       propertyElement.get('merge', 'drop'),
       propertyElement.get('similar', '')
@@ -491,6 +526,10 @@ class EventProperty(object):
       raise Exception('Attempt to update event property "%s", but descriptions do not match.',
                       (self._attr['name'], eventProperty.GetName()))
 
+    if int(self._attr['enp']) != eventProperty.GetEntityNamingPriority():
+      raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.',
+                      (self._attr['name'], eventProperty.GetName()))
+
     self.Validate()
 
     return self
@@ -511,5 +550,6 @@ class EventProperty(object):
     attribs['defines-entity'] = 'true' if self._attr['defines-entity'] else 'false'
     attribs['entity-confidence'] = '%1.2f' % self._attr['entity-confidence']
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
+    attribs['enp'] = '%d' % attribs['enp']
 
     return etree.Element('property', attribs)
