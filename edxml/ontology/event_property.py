@@ -33,18 +33,18 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, eventType, Name, ObjectType, Description = None, DefinesEntity = False, EntityConfidence = 0, Enp = 128, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectType, Description = None, ConceptName = None, ConceptConfidence = 0, Enp = 128, Unique = False, Merge ='drop', Similar =''):
 
     self._attr = {
-      'name':              Name,
-      'object-type':       ObjectType.GetName(),
-      'description' :      Description or Name,
-      'defines-entity':    bool(DefinesEntity),
-      'entity-confidence': float(EntityConfidence),
-      'unique':            bool(Unique),
-      'enp':               int(Enp),
-      'merge':             Merge,
-      'similar':           Similar
+      'name':               Name,
+      'object-type':        ObjectType.GetName(),
+      'description':        Description or Name,
+      'concept':            ConceptName,
+      'concept-confidence': float(ConceptConfidence),
+      'unique':             bool(Unique),
+      'enp':                int(Enp),
+      'merge':              Merge,
+      'similar':            Similar
     }
 
     self._eventType = eventType  # type: edxml.ontology.EventType
@@ -102,12 +102,12 @@ class EventProperty(object):
   def GetEntityConfidence(self):
     """
 
-    Returns the entity identification confidence.
+    Returns the concept identification confidence.
 
     Returns:
       float:
     """
-    return self._attr['entity-confidence']
+    return self._attr['concept-confidence']
 
   def GetSimilarHint(self):
     """
@@ -141,10 +141,10 @@ class EventProperty(object):
     """
     return self._dataType
 
-  def GetEntityNamingPriority(self):
+  def GetConceptNamingPriority(self):
     """
 
-    Returns entity naming priority of the event property.
+    Returns concept naming priority of the event property.
 
     Returns:
       int:
@@ -185,7 +185,7 @@ class EventProperty(object):
     Creates and returns a relation between this property and
     the specified target property. The relation is an 'inter'
     relation, indicating that the related objects belong to
-    different, related entities.
+    different, related concept instances.
 
     When no reason is specified, the reason is constructed by
     wrapping the type predicate with the place holders for
@@ -214,7 +214,7 @@ class EventProperty(object):
     Creates and returns a relation between this property and
     the specified target property. The relation is an 'intra'
     relation, indicating that the related objects belong to
-    the same entity.
+    the same concept instance.
 
     When no reason is specified, the reason is constructed by
     wrapping the type predicate with the place holders for
@@ -295,31 +295,32 @@ class EventProperty(object):
     """
     return self._attr['unique']
 
-  def Entity(self, Confidence):
+  def Identifies(self, ConceptName, Confidence):
     """
 
-    Marks the property as an entity identifying
-    property, with specified confidence.
+    Marks the property as an identifier for specified
+    concept, with specified confidence.
 
     Args:
-      Confidence (float): entity identification confidence [0.0, 1.0]
+      ConceptName (str): concept name
+      Confidence (float): concept identification confidence [0.0, 1.0]
 
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['defines-entity'] = True
-    self._attr['entity-confidence'] = float(Confidence)
+    self._attr['concept'] = ConceptName
+    self._attr['concept-confidence'] = float(Confidence)
     return self
 
-  def SetEntityNamingPriority(self, Priority):
+  def SetConceptNamingPriority(self, Priority):
     """
 
-    Configure the entity naming priority of
+    Configure the concept naming priority of
     the property. When the value is not explicitly
     specified using this method, it's value is 128.
 
     Args:
-      Priority (int): The EDXML priority attribute
+      Priority (int): The EDXML enp attribute
 
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
@@ -328,16 +329,16 @@ class EventProperty(object):
 
     return self
 
-  def IsEntity(self):
+  def GetConceptName(self):
     """
 
-    Returns True if property is an entity identifying
-    property, returns False otherwise.
+    Returns the name of the concept if the property is an
+    identifier for a concept, returns None otherwise.
 
     Returns:
-      bool:
+      str:
     """
-    return self._attr['defines-entity']
+    return self._attr['concept']
 
   def HintSimilar(self, Similarity):
     """
@@ -471,7 +472,7 @@ class EventProperty(object):
 
     if not 0 <= int(self._attr['enp']) < 256:
       raise EDXMLValidationError(
-        'Property "%s" has an invalid entity naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
+        'Property "%s" has an invalid concept naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
       )
 
     if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'increment', 'sum', 'multiply', 'match'):
@@ -496,8 +497,8 @@ class EventProperty(object):
       propertyElement.attrib['name'],
       objectType,
       propertyElement.attrib['description'],
-      propertyElement.get('defines-entity', 'false') == 'true',
-      propertyElement.get('entity-confidence', 0),
+      propertyElement.get('concept'),
+      propertyElement.get('concept-confidence', 0),
       int(propertyElement.get('enp', 0)),
       propertyElement.get('unique', 'false') == 'true',
       propertyElement.get('merge', 'drop'),
@@ -526,7 +527,7 @@ class EventProperty(object):
       raise Exception('Attempt to update event property "%s", but descriptions do not match.',
                       (self._attr['name'], eventProperty.GetName()))
 
-    if int(self._attr['enp']) != eventProperty.GetEntityNamingPriority():
+    if int(self._attr['enp']) != eventProperty.GetConceptNamingPriority():
       raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.',
                       (self._attr['name'], eventProperty.GetName()))
 
@@ -547,8 +548,7 @@ class EventProperty(object):
 
     attribs = dict(self._attr)
 
-    attribs['defines-entity'] = 'true' if self._attr['defines-entity'] else 'false'
-    attribs['entity-confidence'] = '%1.2f' % self._attr['entity-confidence']
+    attribs['concept-confidence'] = '%1.2f' % self._attr['concept-confidence']
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
     attribs['enp'] = '%d' % attribs['enp']
 

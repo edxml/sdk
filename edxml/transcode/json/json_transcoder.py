@@ -361,6 +361,18 @@ class JsonTranscoder(EDXMLBase):
     """
     return []
 
+  def GenerateConcepts(self):
+    """
+
+    This method may be used to generate generic EDXML
+    concepts that are used by all transcoders.
+
+    Yields:
+      edxml.ontology.Concept:
+    """
+    return
+    yield
+
   def GenerateObjectTypes(self):
     """
 

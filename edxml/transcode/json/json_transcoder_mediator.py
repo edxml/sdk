@@ -206,6 +206,12 @@ class JsonTranscoderMediator(EDXMLBase):
         pass
 
     for Transcoder in self._transcoders.values():
+      for _ in Transcoder.GenerateConcepts():
+        # Here, we only populate the ontology, we
+        # don't do anything with the ontology elements.
+        pass
+
+    for Transcoder in self._transcoders.values():
       for _, _ in Transcoder.GenerateEventTypes():
         # Here, we only populate the ontology, we
         # don't do anything with the ontology elements.

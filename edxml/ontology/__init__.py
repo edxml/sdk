@@ -9,6 +9,9 @@ sources, and so on.
 ..  autoclass:: DataType
     :members:
     :show-inheritance:
+..  autoclass:: Concept
+    :members:
+    :show-inheritance:
 ..  autoclass:: EventProperty
     :members:
     :show-inheritance:
@@ -35,5 +38,6 @@ from event_property_relation import PropertyRelation
 from event_source import EventSource
 from event_type_parent import EventTypeParent
 from object_type import ObjectType
+from concept import Concept
 from ontology import Ontology
 from brick import Brick
