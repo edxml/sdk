@@ -592,6 +592,9 @@ class DataType(object):
     Returns:
        DataType:
     """
+    if type(value) not in (str, unicode):
+      raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
+
     splitDataType = self.type.split(':')
 
     if splitDataType[0] == 'datetime':
