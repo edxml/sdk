@@ -339,6 +339,13 @@ class EventType(MutableMapping):
     Returns:
       PropertyRelation: The PropertyRelation instance
     """
+
+    if Source not in self:
+      raise KeyError('Cannot find property %s in event type %s.' % (Source, self._attr['name']))
+
+    if Target not in self:
+      raise KeyError('Cannot find property %s in event type %s.' % (Target, self._attr['name']))
+
     relation = edxml.ontology.PropertyRelation(self, self[Source], self[Target], Description, TypeClass, TypePredicate, Confidence, Directed)
     self._relations.append(relation.Validate())
 
