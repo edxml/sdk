@@ -262,8 +262,8 @@ class SimpleEDXMLWriter(object):
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
     """
 
-    EventSourceUri = self._ontology.GetEventSource(Source).GetUri() if Source is not None else self._currentSourceUri
-    EventTypeName = Type if Type is not None else self._current_event_type
+    EventSourceUri = Source or self._currentSourceUri
+    EventTypeName = Type or self._current_event_type
     if EventSourceUri is None:
       if len(self._ontology.GetEventSources()) == 1:
         EventSourceUri = self._ontology.GetEventSources().keys()[0]
