@@ -552,4 +552,9 @@ class EventProperty(object):
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
     attribs['enp'] = '%d' % attribs['enp']
 
+    if attribs['concept'] is None:
+      del attribs['concept']
+      del attribs['concept-confidence']
+      del attribs['enp']
+
     return etree.Element('property', attribs)
