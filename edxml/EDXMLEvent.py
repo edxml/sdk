@@ -655,9 +655,12 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         try:
           etree.SubElement(props, key).text = v
         except TypeError:
-          # Value contains an illegal character,
-          # strip it.
-          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+          if type(value) in (str, unicode):
+            # Value contains an illegal character,
+            # strip it.
+            props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+          else:
+            raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     else:
       props = self.find('properties')
       try:
@@ -667,9 +670,12 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
       try:
         etree.SubElement(props, key).text = value
       except TypeError:
-        # Value contains an illegal character,
-        # strip it.
-        props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', value))
+        if type(value) in (str, unicode):
+          # Value contains an illegal character,
+          # strip it.
+          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', value))
+        else:
+          raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     try:
       del self.__properties
     except AttributeError:
@@ -916,9 +922,12 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     try:
       self.find('content').text = Content
     except ValueError:
-      # Content contains illegal character,
-      # strip it.
-      self.find('content').text = unicode(re.sub(self.evilXmlCharsRegExp, '', Content))
+      if type(Content) in (str, unicode):
+        # Content contains illegal character,
+        # strip it.
+        self.find('content').text = unicode(re.sub(self.evilXmlCharsRegExp, '', Content))
+      else:
+        raise ValueError('Event content value is not a string: %s' % repr(Content))
     return self
 
   def AddParents(self, ParentHashes):
@@ -996,18 +1005,24 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         try:
           etree.SubElement(p, propertyName).text = value
         except TypeError:
-          # Value contains an illegal character,
-          # strip it.
-          charFilter = EvilCharacterFilter()
-          p[-1].text = unicode(re.sub(charFilter.evilXmlCharsRegExp, '', value))
+          if type(value) in (str, unicode):
+            # Value contains an illegal character,
+            # strip it.
+            charFilter = EvilCharacterFilter()
+            p[-1].text = unicode(re.sub(charFilter.evilXmlCharsRegExp, '', value))
+          else:
+            raise ValueError('Object value is not a string: ' + repr(value))
     if Content:
       try:
         etree.SubElement(new, 'content').text = Content
       except TypeError:
-        # Content contains an illegal character,
-        # strip it.
-        charFilter = EvilCharacterFilter()
-        new[-1].text = unicode(re.sub(charFilter.evilXmlCharsRegExp, '', Content))
+        if type(Content) in (str, unicode):
+          # Content contains an illegal character,
+          # strip it.
+          charFilter = EvilCharacterFilter()
+          new[-1].text = unicode(re.sub(charFilter.evilXmlCharsRegExp, '', Content))
+        else:
+          raise ValueError('Event content is not a string: ' + repr(Content))
 
     self.element = new
     self.__properties = None
@@ -1030,9 +1045,12 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         try:
           etree.SubElement(props, key).text = v
         except TypeError:
-          # Value contains an illegal character,
-          # strip it.
-          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+          if type(value) in (str, unicode):
+            # Value contains an illegal character,
+            # strip it.
+            props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+          else:
+            raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     else:
       props = self.element.find('properties')
       try:
@@ -1042,9 +1060,12 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
       try:
         etree.SubElement(props, key).text = value
       except TypeError:
-        # Value contains an illegal character,
-        # strip it.
-        props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', value))
+        if type(value) in (str, unicode):
+          # Value contains an illegal character,
+          # strip it.
+          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+        else:
+          raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     self.__properties = None
 
   def __len__(self):
@@ -1281,9 +1302,12 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     except AttributeError:
       etree.SubElement(self.element, 'content').text = Content
     except ValueError:
-      # Content contains illegal character,
-      # strip it.
-      self.element.find('content').text = unicode(re.sub(self.evilXmlCharsRegExp, '', Content))
+      if type(Content) in (str, unicode):
+        # Content contains illegal character,
+        # strip it.
+        self.element.find('content').text = unicode(re.sub(self.evilXmlCharsRegExp, '', Content))
+      else:
+        raise ValueError('Event content value is not a string: %s' % repr(Content))
     return self
 
   def AddParents(self, ParentHashes):
