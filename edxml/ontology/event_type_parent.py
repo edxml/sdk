@@ -108,7 +108,11 @@ class EventTypeParent(object):
     """
     ParentPropertyName = ChildPropertyName if ParentPropertyName is None else ParentPropertyName
 
-    current = dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
+    try:
+      current = dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
+    except ValueError:
+      current = {}
+
     current[ChildPropertyName] = ParentPropertyName
     self._attr['propertymap'] = ','.join(['%s:%s' % (Child, Parent) for Child, Parent in current.items()])
     return self
