@@ -48,7 +48,7 @@ class PropertyRelation(object):
     Returns:
       edxml.ontology.EventProperty:
     """
-    return self._attr['property1']
+    return self._attr['property2']
 
   def GetDescription(self):
     """
