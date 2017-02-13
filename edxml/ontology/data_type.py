@@ -751,13 +751,20 @@ class DataType(object):
               else:
                 return self
         elif splitDataType[1] == 'hex':
+          try:
+            hexLength = int(splitDataType[2])
+          except (KeyError, ValueError):
+            raise EDXMLValidationError("Hex datatype does not specify a valid length: " + self.type)
+          if hexLength == 0:
+            raise EDXMLValidationError("Length of hex datatype must be greater than zero: " + self.type)
           if len(splitDataType) > 3:
             try:
-              hexLength = int(splitDataType[2])
               digitGroupLength = int(splitDataType[3])
             except ValueError:
               pass
             else:
+              if digitGroupLength == 0:
+                raise EDXMLValidationError("Group length in hex datatype must be greater than zero: " + self.type)
               if hexLength % digitGroupLength != 0:
                 raise EDXMLValidationError("Length of hex datatype is not a multiple of separator distance: " + self.type)
               if len(splitDataType[4]) == 0:
