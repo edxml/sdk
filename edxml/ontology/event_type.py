@@ -1365,7 +1365,7 @@ class EventType(MutableMapping):
 
     for propertyName, objects in edxmlEvent.items():
 
-      if propertyName in ParentPropertyMapping and len(objects) > 0:
+      if propertyName in ParentPropertyMapping and len(objects) > 1:
           raise EDXMLValidationError(
             ('An event of type %s contains multiple objects of property %s, '
              'but this property can only have one object due to it being used '
