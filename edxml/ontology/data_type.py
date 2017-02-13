@@ -412,6 +412,7 @@ class DataType(object):
       length = int(splitDataType[1])
       isUnicode = len(splitDataType) > 3 and 'u' in splitDataType[3]
       element = e.data(type='string')
+      etree.SubElement(element, 'param', name='minLength').text = '1'
       if length > 0:
         etree.SubElement(element, 'param', name='maxLength').text = str(length)
       if not isUnicode:
@@ -422,6 +423,7 @@ class DataType(object):
     elif splitDataType[0] == 'binstring':
       length = int(splitDataType[1])
       element = e.data(type='string')
+      etree.SubElement(element, 'param', name='minLength').text = '1'
       if length > 0:
         etree.SubElement(element, 'param', name='maxLength').text = str(length)
       if RegExp != '[\s\S]*':
