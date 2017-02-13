@@ -175,7 +175,7 @@ class EventProperty(object):
     """
     return self._eventType.CreateRelation(
       self.GetName(), TargetPropertyName,
-      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      Reason or '[[%s]] %s [[%s]]' % (self.GetName(), TypePredicate, TargetPropertyName),
       'other', TypePredicate, Confidence, Directed
     )
 
@@ -199,12 +199,12 @@ class EventProperty(object):
       Directed (bool): Directed relation True / False
 
     Returns:
-      EventPropertyRelation: The EventPropertyRelation instance
+      edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
     """
     return self._eventType.CreateRelation(
       self.GetName(), TargetPropertyName,
-      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      Reason or '[[%s]] %s [[%s]]' % (self.GetName(), TypePredicate, TargetPropertyName),
       'inter', TypePredicate, Confidence, Directed
     )
 
@@ -233,7 +233,7 @@ class EventProperty(object):
     """
     return self._eventType.CreateRelation(
       self.GetName(), TargetPropertyName,
-      Reason or '%s %s %s' % (self.GetName(), TypePredicate, TargetPropertyName),
+      Reason or '[[%s]] %s [[%s]]' % (self.GetName(), TypePredicate, TargetPropertyName),
       'intra', TypePredicate, Confidence, Directed
     )
 
