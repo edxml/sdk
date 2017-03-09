@@ -188,6 +188,29 @@ class SimpleEDXMLWriter(object):
     self._ontology.Update(edxmlOntology)
     return self
 
+  def SetOntology(self, edxmlOntology):
+    """
+
+    Sets the output ontology to be used for producing the output
+    stream. Changes to the specified ontology instance will be tracked,
+    so it can be extended while writing events.
+
+    Any previously added ontology information will be added to the
+    specified Ontology instance, which may lead to validation errors.
+
+    Args:
+      edxmlOntology (edxml.ontology.Ontology): The EDXML ontology
+
+    Returns:
+      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+
+    """
+    edxmlOntology.Update(self._ontology)
+    self._ontology = edxmlOntology
+    self._last_written_ontology_version = -1
+
+    return self
+
   def SetEventType(self, EventTypeName):
     """
 
