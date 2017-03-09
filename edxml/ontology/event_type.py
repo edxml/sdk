@@ -811,7 +811,7 @@ class EventType(MutableMapping):
               if formatter == 'FULLDATETIME':
                 objectStrings.append(dateTime.strftime(u'%A, %B %d %Y at %H:%M:%Sh UTC'))
               elif formatter == 'DATETIME':
-                objectStrings.append(dateTime.strftime(u'B %d %Y at %H:%M:%Sh UTC'))
+                objectStrings.append(dateTime.strftime(u'%B %d %Y at %H:%M:%Sh UTC'))
               elif formatter == 'DATE':
                 objectStrings.append(dateTime.strftime(u'%a, %B %d %Y'))
               elif formatter == 'YEAR':
