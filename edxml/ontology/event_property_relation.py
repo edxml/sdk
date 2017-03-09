@@ -251,10 +251,10 @@ class PropertyRelation(object):
       edxml.ontology.PropertyRelation: The updated PropertyRelation instance
 
     """
-    if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetDest():
+    if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetTarget():
       raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.',
                       (self._attr['property1'], self._attr['property2'],
-                       propertyRelation.GetSource(), propertyRelation.GetDest()))
+                       propertyRelation.GetSource(), propertyRelation.GetTarget()))
 
     self.Validate()
 
