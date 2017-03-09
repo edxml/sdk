@@ -220,6 +220,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       self.OpenEventGroups()
     self.ElementStack.append('eventgroup')
 
+    if self._ontology.GetEventType(EventTypeName) is None:
+      raise EDXMLValidationError('Attempt to open an event group using unknown event type: "%s"' % EventTypeName)
+    if self._ontology.GetEventSource(SourceUri) is None:
+      raise EDXMLValidationError('Attempt to open an event group using unknown source URI: "%s"' % SourceUri)
+
     self.CurrentEventTypeName = EventTypeName
     self.CurrentEventSourceUri = SourceUri
 
