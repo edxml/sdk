@@ -373,7 +373,10 @@ class EventType(MutableMapping):
   def MakeChildren(self, SiblingsDescription, Parent):
     """
 
-    Marks this event type as child of the specified parent event type.
+    Marks this event type as child of the specified parent event type. In
+    case all unique properties of the parent also exist in the child, a
+    default property mapping will be generated, mapping properties based
+    on identical property names.
 
     Notes:
       You must call IsParent() on the parent before calling MakeChildren()
@@ -385,12 +388,28 @@ class EventType(MutableMapping):
     Returns:
       edxml.ontology.EventTypeParent: The event type parent definition
     """
+
     if self._parentDescription:
       self._parent = edxml.ontology.EventTypeParent(Parent.GetName(), '', self._parentDescription, SiblingsDescription)
-      self._childModifiedCallback()
-      return self._parent
     else:
       raise Exception('You must call IsParent() on the parent before calling MakeChildren().')
+
+    # If all unique properties of the parent event type
+    # also exist in the child event type, we can create
+    # a default property map.
+    propertyMap = {}
+    for propertyName, eventProperty in Parent.GetUniqueProperties().items():
+      if propertyName in self:
+        propertyMap[propertyName] = propertyName
+      else:
+        propertyMap = {}
+        break
+
+    for childProperty, parentProperty in propertyMap.items():
+      self._parent.Map(childProperty, parentProperty)
+
+    self._childModifiedCallback()
+    return self._parent
 
   def IsParent(self, ParentDescription, Child):
     """
