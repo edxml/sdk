@@ -60,7 +60,7 @@ class EventSource(object):
       Description (str): Description
 
     Returns:
-      EventSource: The EventSource instance
+      edxml.ontology.EventSource: The EventSource instance
     """
 
     self._attr['description'] = str(Description)
@@ -74,7 +74,7 @@ class EventSource(object):
     Raises:
       EDXMLValidationError
     Returns:
-      EventSource: The EventSource instance
+      edxml.ontology.EventSource: The EventSource instance
 
     """
     if not re.match(self.SOURCE_URI_PATTERN, self._attr['uri']):
@@ -109,10 +109,10 @@ class EventSource(object):
     updated instance.
 
     Args:
-      source (EventSource): The new EventSource instance
+      source (edxml.ontology.EventSource): The new EventSource instance
 
     Returns:
-      EventSource: The updated EventSource instance
+      edxml.ontology.EventSource: The updated EventSource instance
 
     """
     if self._attr['uri'] != source.GetUri():

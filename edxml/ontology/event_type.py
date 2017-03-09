@@ -71,6 +71,14 @@ class EventType(MutableMapping):
     return len(self._properties)
 
   def __getitem__(self, propertyName):
+    """
+
+    Args:
+      propertyName (str): Name of an event property
+
+    Returns:
+      edxml.ontology.EventProperty:
+    """
     return self._properties[propertyName]
 
   def __contains__(self, propertyName):
@@ -82,6 +90,11 @@ class EventType(MutableMapping):
       return True
 
   def __iter__(self):
+    """
+
+    Yields:
+      Dict[str, edxml.ontology.EventProperty]
+    """
     for propertyName, prop in self._properties.iteritems():
       yield propertyName
 
@@ -139,7 +152,7 @@ class EventType(MutableMapping):
     belongs to.
 
     Returns:
-      list[str]:
+      List[str]:
     """
     return self._attr['classlist'].split(',')
 
@@ -152,7 +165,7 @@ class EventType(MutableMapping):
     EDXMLProperty instances.
 
     Returns:
-       dict[str,EventProperty]: Properties
+       Dict[str,edxml.ontology.EventProperty]: Properties
     """
     return self._properties
 
@@ -286,7 +299,7 @@ class EventType(MutableMapping):
       Description (str): Property description
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     if Name not in self._properties:
       objectType = self._ontology.GetObjectType(ObjectTypeName)
@@ -312,10 +325,10 @@ class EventType(MutableMapping):
     Add specified property
 
     Args:
-      Property (EventProperty): EventProperty instance
+      Property (edxml.ontology.EventProperty): EventProperty instance
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     self._properties[Property.GetName()] = Property.Validate()
 
@@ -337,7 +350,7 @@ class EventType(MutableMapping):
       Directed (bool): Directed relation True / False
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
 
     if Source not in self:
@@ -360,10 +373,10 @@ class EventType(MutableMapping):
     a syntax that yields more readable code.
 
     Args:
-      Relation (PropertyRelation): Property relation
+      Relation (edxml.ontology.PropertyRelation): Property relation
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     self._relations.append(Relation.Validate())
 
@@ -424,7 +437,7 @@ class EventType(MutableMapping):
       Child (edxml.ontology.EventType): Child event type
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
 
     """
 
@@ -441,7 +454,7 @@ class EventType(MutableMapping):
       Description (str): Description
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     self._attr['description'] = str(Description)
@@ -460,10 +473,10 @@ class EventType(MutableMapping):
       which results in more readable code.
 
     Args:
-      Parent (EventTypeParent): Parent event type
+      Parent (edxml.ontology.EventTypeParent): Parent event type
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     self._parent = Parent
 
@@ -479,7 +492,7 @@ class EventType(MutableMapping):
       ClassName (str):
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     if ClassName:
       if self._attr['classlist'] == '':
@@ -501,7 +514,7 @@ class EventType(MutableMapping):
       ClassNames (Iterable[str]):
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     self._attr['classlist'] = ','.join(list(set(ClassNames)))
 
@@ -515,8 +528,9 @@ class EventType(MutableMapping):
 
     Args:
      EventTypeName (str): Event type name
+
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     self._attr['name'] = EventTypeName
 
@@ -535,7 +549,7 @@ class EventType(MutableMapping):
       Plural (str): Plural display name
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     if Plural is None:
@@ -551,10 +565,10 @@ class EventType(MutableMapping):
     Set the short reporter string
 
     Args:
-      Reporter (str): The short reporter string 
+      Reporter (str): The short reporter string
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     if Reporter:
@@ -569,10 +583,10 @@ class EventType(MutableMapping):
     Set the long reporter string
 
     Args:
-      Reporter (str): The long reporter string 
+      Reporter (str): The long reporter string
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     if Reporter:
@@ -1032,10 +1046,12 @@ class EventType(MutableMapping):
     Args:
       string (unicode): The reporter string
       ontology (edxml.ontology.Ontology): The corresponding ontology
+
     Raises:
       EDXMLValidationError
+
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
 
     """
 
@@ -1261,10 +1277,10 @@ class EventType(MutableMapping):
     updated instance.
 
     Args:
-      eventType (EventType): The new EventType instance
+      eventType (edxml.ontology.EventType): The new EventType instance
 
     Returns:
-      EventType: The updated EventType instance
+      edxml.ontology.EventType: The updated EventType instance
 
     """
     if self._attr['name'] != eventType.GetName():
@@ -1371,10 +1387,12 @@ class EventType(MutableMapping):
 
     Args:
       edxmlEvent (edxml.EDXMLEvent):
+
     Raises:
       EDXMLValidationError
+
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     if self.GetParent() is not None:
@@ -1433,10 +1451,12 @@ class EventType(MutableMapping):
 
     Args:
       edxmlEvent (edxml.EDXMLEvent):
+
     Raises:
       EDXMLValidationError
+
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
 
     for propertyName, objects in edxmlEvent.items():
@@ -1462,7 +1482,7 @@ class EventType(MutableMapping):
     properties of the event type.
 
     Args:
-      Ontology: Ontology containing the event type
+      Ontology (edxml.ontology.Ontology): Ontology containing the event type
 
     Returns:
       ElementTree: The schema

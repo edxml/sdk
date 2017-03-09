@@ -67,7 +67,7 @@ class Ontology(object):
       DataType (str): a valid EDXML data type
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
 
     if DisplayNameSingular:
@@ -131,7 +131,7 @@ class Ontology(object):
       Description (str): Event type description
 
     Returns:
-      EventType: The EventType instance
+      edxml.ontology.EventType: The EventType instance
     """
     if DisplayNameSingular:
       DisplayName = '%s/%s' % (DisplayNameSingular, DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
@@ -168,7 +168,7 @@ class Ontology(object):
      AcquisitionDate (str): Acquisition date in format yyyymmdd
 
     Returns:
-      EventSource:
+      edxml.ontology.EventSource:
     """
 
     if Uri not in self._sources:
@@ -188,8 +188,9 @@ class Ontology(object):
 
     Args:
       objectTypeName (str): An EDXML object type name
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
 
     if objectTypeName in self._object_types:
@@ -231,8 +232,9 @@ class Ontology(object):
 
     Args:
       eventTypeName (str): An EDXML event type name
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
 
     if eventTypeName in self._event_types:
@@ -249,8 +251,9 @@ class Ontology(object):
 
     Args:
       sourceUri (str): An EDXML event source URI
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
 
     if sourceUri in self._sources:
@@ -272,9 +275,10 @@ class Ontology(object):
     for consistency with the existing definition.
 
     Args:
-      eventType (EventType): An EventType instance
+      eventType (edxml.ontology.EventType): An EventType instance
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
     name = eventType.GetName()
 
@@ -294,9 +298,10 @@ class Ontology(object):
     for consistency with the existing definition.
 
     Args:
-      objectType (ObjectType): An ObjectType instance
+      objectType (edxml.ontology.ObjectType): An ObjectType instance
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
     name = objectType.GetName()
 
@@ -339,9 +344,10 @@ class Ontology(object):
     for consistency with the existing definition.
 
     Args:
-      eventSource (EventSource): An EventSource instance
+      eventSource (edxml.ontology.EventSource): An EventSource instance
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
     uri = eventSource.GetUri()
 
@@ -443,8 +449,9 @@ class Ontology(object):
 
     Args:
       Name (str): Event type name
+
     Returns:
-      EventType: The event type instance
+      edxml.ontology.EventType: The event type instance
     """
     return self._event_types.get(Name)
 
@@ -487,8 +494,9 @@ class Ontology(object):
 
     Args:
       Uri (str): Event source URI
+
     Returns:
-      EventSource: The event source instance
+      edxml.ontology.EventSource: The event source instance
     """
     return self._sources.get(Uri)
 
@@ -519,8 +527,9 @@ class Ontology(object):
 
     Raises:
       EDXMLValidationError
+
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
 
     """
     # Validate all object types
@@ -679,7 +688,7 @@ class Ontology(object):
       definitionsElement (lxml.etree.Element):
 
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
 
     ontology = cls()
@@ -704,10 +713,10 @@ class Ontology(object):
     in specified ontology brick.
 
     Args:
-      ontologyBrick (Brick):
+      ontologyBrick (edxml.ontology.Brick):
 
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
 
     """
     ontologyBrick.AddTo(self)
@@ -723,13 +732,13 @@ class Ontology(object):
     containing a full definitions element.
 
     Args:
-      otherOntology (Union[lxml.etree.Element,Ontology]):
+      otherOntology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
 
     Raises;
       EDXMLValidationError
 
     Returns:
-      Ontology: The ontology
+      edxml.ontology.Ontology: The ontology
     """
 
     if type(otherOntology) == Ontology:

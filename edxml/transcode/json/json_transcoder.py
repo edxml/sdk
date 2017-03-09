@@ -380,7 +380,7 @@ class JsonTranscoder(EDXMLBase):
     object types that are used by all transcoders.
 
     Yields:
-      ObjectType:
+      edxml.ontology.ObjectType:
     """
     return
     yield

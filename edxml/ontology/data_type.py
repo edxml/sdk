@@ -47,7 +47,7 @@ class DataType(object):
     Create a boolean value DataType instance.
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
 
     return cls('boolean')
@@ -62,7 +62,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:tinyint%s' % (':signed' if Signed else ''))
 
@@ -76,7 +76,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:smallint%s' % (':signed' if Signed else ''))
 
@@ -90,7 +90,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:mediumint%s' % (':signed' if Signed else ''))
 
@@ -104,7 +104,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:int%s' % (':signed' if Signed else ''))
 
@@ -118,7 +118,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:bigint%s' % (':signed' if Signed else ''))
 
@@ -132,7 +132,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:float%s' % (':signed' if Signed else ''))
 
@@ -146,7 +146,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:double%s' % (':signed' if Signed else ''))
 
@@ -162,7 +162,7 @@ class DataType(object):
       Signed (bool): Create signed or unsigned number
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:decimal:%d:%d%s' % (TotalDigits, FractionalDigits, (':signed' if Signed else '')))
 
@@ -179,7 +179,7 @@ class DataType(object):
       ReverseStorage (bool): Hint storing the string in reverse character order
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     Flags = 'u' if RequireUnicode else ''
     Flags += 'r' if ReverseStorage else ''
@@ -196,7 +196,7 @@ class DataType(object):
       *Choices (str): Possible string values
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('enum:%s' % ':'.join(Choices))
 
@@ -212,7 +212,7 @@ class DataType(object):
       GroupSize (int): Number of hex digits per group
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('number:hex:%d%s' % (Length, ':%d:%s' % (GroupSize, Separator) if Separator and GroupSize else ''))
 
@@ -223,7 +223,7 @@ class DataType(object):
     Create a geographical location DataType instance.
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('geo:point')
 
@@ -234,7 +234,7 @@ class DataType(object):
     Create a hashlink DataType instance.
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('hashlink')
 
@@ -245,7 +245,7 @@ class DataType(object):
     Create an IPv4 DataType instance
 
     Returns:
-      DataType:
+      edxml.ontology.DataType:
     """
     return cls('ip')
 
@@ -590,7 +590,7 @@ class DataType(object):
     Raises:
       EDXMLValidationError
     Returns:
-       DataType:
+       edxml.ontology.DataType:
     """
     if type(value) not in (str, unicode):
       raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
@@ -706,7 +706,7 @@ class DataType(object):
     Raises:
       EDXMLValidationError
     Returns:
-       DataType:
+       edxml.ontology.DataType:
     """
     splitDataType = self.type.split(':')
 

@@ -48,12 +48,12 @@ class EventTypeParent(object):
 
     Args:
       ParentEventTypeName (str): Name of the parent event type
-      PropertyMap (dict[str, str]): Property map
-      ParentDescription (str, Optional): The EDXML parent-description attribute
-      SiblingsDescription (str, Optional): The EDXML siblings-description attribute
+      PropertyMap (Dict[str, str]): Property map
+      ParentDescription (Optional[str]): The EDXML parent-description attribute
+      SiblingsDescription (Optional[str]): The EDXML siblings-description attribute
 
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
     return cls(
       ParentEventTypeName,
@@ -70,7 +70,7 @@ class EventTypeParent(object):
       Description (str): The EDXML parent-description attribute
 
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
     self._attr['parent-description'] = Description
 
@@ -85,7 +85,7 @@ class EventTypeParent(object):
       Description (str): The EDXML siblings-description attribute
 
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
     self._attr['siblings-description'] = Description
 
@@ -104,7 +104,7 @@ class EventTypeParent(object):
       ParentPropertyName (str): Parent property
 
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
     ParentPropertyName = ChildPropertyName if ParentPropertyName is None else ParentPropertyName
 
@@ -135,7 +135,7 @@ class EventTypeParent(object):
     names of the parent.
 
     Returns:
-      dict[str,str]:
+      Dict[str,str]:
     """
     return dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
 
@@ -172,7 +172,7 @@ class EventTypeParent(object):
     Raises:
       EDXMLValidationError
     Returns:
-      EventTypeParent: The EventTypeParent instance
+      edxml.ontology.EventTypeParent: The EventTypeParent instance
 
     """
     if not len(self._attr['eventtype']) <= 64:
@@ -222,10 +222,10 @@ class EventTypeParent(object):
     updated instance.
 
     Args:
-      parent (EventTypeParent): The new EventTypeParent instance
+      parent (edxml.ontology.EventTypeParent): The new EventTypeParent instance
 
     Returns:
-      EventTypeParent: The updated EventTypeParent instance
+      edxml.ontology.EventTypeParent: The updated EventTypeParent instance
 
     """
     if self._attr['eventtype'] != parent.GetEventType():

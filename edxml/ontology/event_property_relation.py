@@ -36,7 +36,7 @@ class PropertyRelation(object):
     Returns the source property.
 
     Returns:
-      edxml.ontology.EventProperty:
+      str:
     """
     return self._attr['property1']
 
@@ -46,7 +46,7 @@ class PropertyRelation(object):
     Returns the target property.
 
     Returns:
-      edxml.ontology.EventProperty:
+      str:
     """
     return self._attr['property2']
 
@@ -122,7 +122,7 @@ class PropertyRelation(object):
       Reason (str): Relation description
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
 
     """
     self._attr['description'] = Reason
@@ -137,7 +137,7 @@ class PropertyRelation(object):
      Confidence (float): Relation confidence [0.0,1.0]
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
 
     self._attr['confidence'] = float(Confidence)
@@ -149,7 +149,7 @@ class PropertyRelation(object):
     Marks the property relation as directed
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
     self._attr['directed'] = True
     return self
@@ -160,7 +160,7 @@ class PropertyRelation(object):
     Marks the property relation as undirected
 
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
     self._attr['directed'] = False
     return self
@@ -177,7 +177,7 @@ class PropertyRelation(object):
     Raises:
       EDXMLValidationError
     Returns:
-      PropertyRelation: The PropertyRelation instance
+      edxml.ontology.PropertyRelation: The PropertyRelation instance
 
     """
     if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property1']):
@@ -245,10 +245,10 @@ class PropertyRelation(object):
     updated instance.
 
     Args:
-      propertyRelation (PropertyRelation): The new PropertyRelation instance
+      propertyRelation (edxml.ontology.PropertyRelation): The new PropertyRelation instance
 
     Returns:
-      PropertyRelation: The updated PropertyRelation instance
+      edxml.ontology.PropertyRelation: The updated PropertyRelation instance
 
     """
     if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetDest():

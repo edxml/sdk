@@ -97,7 +97,7 @@ class ObjectType(object):
     Returns the data type of the object type.
 
     Returns:
-      DataType: The data type
+      edxml.ontology.DataType: The data type
     """
 
     return DataType(self._attr['data-type'])
@@ -145,7 +145,7 @@ class ObjectType(object):
       Description (str): Description
 
     Returns:
-      EventSource: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
 
     self._attr['description'] = str(Description)
@@ -157,10 +157,10 @@ class ObjectType(object):
     Configure the data type.
 
     Args:
-      dataType (DataType): DataType instance
+      dataType (edxml.ontology.DataType): DataType instance
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['data-type'] = str(dataType)
 
@@ -178,7 +178,7 @@ class ObjectType(object):
       Plural (str): display name (plural form)
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
 
     if Plural is None:
@@ -197,7 +197,7 @@ class ObjectType(object):
       Pattern (str): Regular expression
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['regexp'] = str(Pattern)
 
@@ -216,7 +216,7 @@ class ObjectType(object):
       attribute (str): The attribute value
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['fuzzy-matching'] = attribute
     return self
@@ -231,7 +231,7 @@ class ObjectType(object):
       Length (int): Number of characters to match
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['fuzzy-matching'] = '[%d:]' % int(Length)
 
@@ -247,7 +247,7 @@ class ObjectType(object):
       Length (int): Number of characters to match
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['fuzzy-matching'] = '[:%d]' % int(Length)
 
@@ -263,7 +263,7 @@ class ObjectType(object):
       Pattern (str): Regular expression
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['fuzzy-matching'] = 'substring:%s' % str(Pattern)
 
@@ -276,7 +276,7 @@ class ObjectType(object):
     of the string (phonetic fingerprinting).
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['fuzzy-matching'] = 'phonetic'
 
@@ -288,7 +288,7 @@ class ObjectType(object):
     Enable compression for the object type.
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     self._attr['compress'] = True
 
@@ -308,10 +308,12 @@ class ObjectType(object):
 
     Args:
       value (unicode): Object value
+
     Raises:
       EDXMLValidationError
+
     Returns:
-       ObjectType: The ObjectType instance
+       edxml.ontology.ObjectType: The ObjectType instance
     """
 
     # First, validate against data type
@@ -342,8 +344,9 @@ class ObjectType(object):
 
     Raises:
       EDXMLValidationError
+
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
 
     """
     if not len(self._attr['name']) <= 64:
@@ -409,10 +412,10 @@ class ObjectType(object):
     """
 
     Args:
-      objectType (ObjectType): The new ObjectType instance
+      objectType (edxml.ontology.ObjectType): The new ObjectType instance
 
     Returns:
-      ObjectType: The updated ObjectType instance
+      edxml.ontology.ObjectType: The updated ObjectType instance
 
     """
     if self._attr['name'] != objectType.GetName():

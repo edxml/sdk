@@ -126,7 +126,7 @@ class EventProperty(object):
     with the property.
 
     Returns:
-      ObjectType: The ObjectType instance
+      edxml.ontology.ObjectType: The ObjectType instance
     """
     return self._objectType
 
@@ -137,7 +137,7 @@ class EventProperty(object):
     with the object type of the property.
 
     Returns:
-      DataType: The DataType instance
+      edxml.ontology.DataType: The DataType instance
     """
     return self._dataType
 
@@ -170,7 +170,7 @@ class EventProperty(object):
       Directed (bool): Directed relation True / False
 
     Returns:
-      EventPropertyRelation: The EventPropertyRelation instance
+      edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
     """
     return self._eventType.CreateRelation(
@@ -228,7 +228,7 @@ class EventProperty(object):
       Directed (bool): Directed relation True / False
 
     Returns:
-      EventPropertyRelation: The EventPropertyRelation instance
+      edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
     """
     return self._eventType.CreateRelation(
@@ -247,7 +247,7 @@ class EventProperty(object):
       MergeStrategy (str): The merge strategy
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = MergeStrategy
 
@@ -267,7 +267,7 @@ class EventProperty(object):
       Description (str): The property description
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['description'] = Description
     return self
@@ -279,7 +279,7 @@ class EventProperty(object):
     the merge strategy to 'match'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['unique'] = True
     self._attr['merge'] = 'match'
@@ -349,7 +349,7 @@ class EventProperty(object):
       Similarity (str): similar attribute string
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['similar'] = Similarity
     return self
@@ -360,7 +360,7 @@ class EventProperty(object):
     Set merge strategy to 'add'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'add'
     return self
@@ -371,7 +371,7 @@ class EventProperty(object):
     Set merge strategy to 'replace'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'replace'
     return self
@@ -383,7 +383,7 @@ class EventProperty(object):
     the default merge strategy.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'drop'
     return self
@@ -394,7 +394,7 @@ class EventProperty(object):
     Set merge strategy to 'min'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'min'
     return self
@@ -405,7 +405,7 @@ class EventProperty(object):
     Set merge strategy to 'max'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'max'
     return self
@@ -416,7 +416,7 @@ class EventProperty(object):
     Set merge strategy to 'increment'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'increment'
     return self
@@ -427,7 +427,7 @@ class EventProperty(object):
     Set merge strategy to 'sum'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'sum'
     return self
@@ -438,7 +438,7 @@ class EventProperty(object):
     Set merge strategy to 'multiply'.
 
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
     """
     self._attr['merge'] = 'multiply'
     return self
@@ -455,7 +455,7 @@ class EventProperty(object):
     Raises:
       EDXMLValidationError
     Returns:
-      EventProperty: The EventProperty instance
+      edxml.ontology.EventProperty: The EventProperty instance
 
     """
     if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self._attr['name']):
@@ -513,10 +513,10 @@ class EventProperty(object):
     updated instance.
 
     Args:
-      eventProperty (EventProperty): The new EventProperty instance
+      eventProperty (edxml.ontology.EventProperty): The new EventProperty instance
 
     Returns:
-      EventProperty: The updated EventProperty instance
+      edxml.ontology.EventProperty: The updated EventProperty instance
 
     """
     if self._attr['name'] != eventProperty.GetName():
