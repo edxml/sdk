@@ -757,9 +757,8 @@ class EventType(MutableMapping):
             # Property has no object, which implies that
             # we must produce an empty result.
             return u''
-          continue
 
-        if formatter == 'TIMESPAN':
+        elif formatter == 'TIMESPAN':
 
           dateTimeStrings = []
           for propertyName in arguments:
