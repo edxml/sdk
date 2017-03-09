@@ -2,7 +2,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                 Python class for EDXML data stream generation
 #
 #                  Copyright (c) 2010 - 2016 by D.H.J. Takken
@@ -48,7 +48,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
   The Output parameter is a file-like object
   that will be used to send the XML data to.
-  This file-like object can be pretty much 
+  This file-like object can be pretty much
   anything, as long as it has a write() method.
 
   The optional Validate parameter controls if

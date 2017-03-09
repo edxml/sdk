@@ -2,7 +2,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                     Python class for parsing EDXML data
 #
 #                  Copyright (c) 2010 - 2016 by D.H.J. Takken
