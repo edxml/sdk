@@ -31,9 +31,11 @@ class EventType(MutableMapping):
   DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
   CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
   REPORTER_PLACEHOLDER_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
-  KNOWN_FORMATTERS = ('TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-                      'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER',
-                      'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY')
+  KNOWN_FORMATTERS = (
+    'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
+    'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER',
+    'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
+  )
 
   def __init__(self, Ontology, Name, DisplayName = None, Description = None, ClassList ='',
                ReporterShort ='no description available', ReporterLong ='no description available', Parent = None):
@@ -44,7 +46,7 @@ class EventType(MutableMapping):
       'description'    : Description or Name,
       'classlist'      : ClassList,
       'reporter-short' : ReporterShort,
-      'reporter-long'  : ReporterLong
+      'reporter-long'  : ReporterLong.replace('\n', '[[NEWPAR:]]')
     }
 
     self._properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
@@ -580,7 +582,8 @@ class EventType(MutableMapping):
   def SetReporterLong(self, Reporter):
     """
 
-    Set the long reporter string
+    Set the long reporter string. Newline characters are automatically
+    replaced with [[NEWPAR:]] place holders.
 
     Args:
       Reporter (str): The long reporter string
@@ -590,7 +593,7 @@ class EventType(MutableMapping):
     """
 
     if Reporter:
-      self._attr['reporter-long'] = Reporter
+      self._attr['reporter-long'] = Reporter.replace('\n', '[[NEWPAR:]]')
 
     self._childModifiedCallback()
     return self
@@ -867,6 +870,18 @@ class EventType(MutableMapping):
 
             objectStrings.append(u'%d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
 
+        elif formatter == 'UPPERCASE':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          for objectValue in values:
+            objectStrings.append(objectValue.upper())
+
         elif formatter == 'CURRENCY':
 
           try:
@@ -879,6 +894,19 @@ class EventType(MutableMapping):
           propertyName, currencySymbol = arguments
           for objectValue in values:
             objectStrings.append(u'%.2f%s' % (int(objectValue), currencySymbol))
+
+        elif formatter == 'URL':
+
+          try:
+            values = eventObjectValues[arguments[0]]
+          except KeyError:
+            # Property has no object, which implies that
+            # we must produce an empty result.
+            return u''
+
+          propertyName, targetName = arguments
+          for objectValue in values:
+            objectStrings.append(u'%s (%s)' % (targetName, objectValue))
 
         elif formatter == 'COUNTRYCODE':
 
@@ -957,6 +985,10 @@ class EventType(MutableMapping):
             # yield an empty string. This in turn implies that
             # we must produce an empty result.
             return u''
+
+        elif formatter == 'NEWPAR':
+
+          objectStrings.append('\n')
 
         if len(objectStrings) > 0:
           if len(objectStrings) > 1:
@@ -1055,6 +1087,11 @@ class EventType(MutableMapping):
 
     """
 
+    ZeroArgumentFormatters = [
+      'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF',
+      'BOOLEAN_IS_ISNOT', 'UPPERCASE'
+    ]
+
     # Test if reporter string grammar is correct, by
     # checking that curly brackets are balanced.
     curlyNestings = {u'{': 1, u'}': -1}
@@ -1133,7 +1170,7 @@ class EventType(MutableMapping):
                'The used property (%s) is not a datetime value, though.') % (self._attr['name'], formatter, argumentString)
             )
 
-        elif formatter in ['LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'FILESERVER', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
+        elif formatter in ZeroArgumentFormatters:
           # Check that no additional arguments are present
           if len(arguments) > 1:
             raise EDXMLValidationError(
@@ -1168,8 +1205,22 @@ class EventType(MutableMapping):
               (self._attr['name'], formatter, string)
             )
 
+        elif formatter == 'URL':
+          if len(arguments) != 2:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, string)
+            )
+
         elif formatter == 'EMPTY':
           if len(arguments) != 2:
+            raise EDXMLValidationError(
+              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, string)
+            )
+
+        elif formatter == 'NEWPAR':
+          if len(arguments) != 1 or arguments[0] != '':
             raise EDXMLValidationError(
               'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
               (self._attr['name'], formatter, string)
