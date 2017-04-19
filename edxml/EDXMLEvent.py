@@ -1059,7 +1059,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         if type(value) in (str, unicode):
           # Value contains an illegal character,
           # strip it.
-          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', v))
+          props[-1].text = unicode(re.sub(self.evilXmlCharsRegExp, '', value))
         else:
           raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     self.__properties = None
