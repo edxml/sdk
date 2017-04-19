@@ -638,7 +638,9 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     return etree.tostring(self)
 
   def __delitem__(self, key):
-    self.find('properties').find(key).remove()
+    props = self.find('properties')
+    for element in props.findall(key):
+      props.remove(element)
     try:
       del self.__properties
     except AttributeError:
@@ -647,10 +649,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
   def __setitem__(self, key, value):
     if type(value) == list:
       props = self.find('properties')
-      try:
-        props.remove(props.find(key))
-      except TypeError:
-        pass
+      for existingValue in props.findall(key):
+        props.remove(existingValue)
       for v in value:
         try:
           etree.SubElement(props, key).text = v
@@ -663,10 +663,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     else:
       props = self.find('properties')
-      try:
-        props.remove(props.find(key))
-      except TypeError:
-        pass
+      for existingValue in props.findall(key):
+        props.remove(existingValue)
       try:
         etree.SubElement(props, key).text = value
       except TypeError:
@@ -1031,17 +1029,17 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     return etree.tostring(self.element)
 
   def __delitem__(self, key):
-    self.element.find('properties').find(key).remove()
+    props = self.element.find('properties')
+    for element in props.findall(key):
+      props.remove(element)
     self.__properties = None
 
   def __setitem__(self, key, value):
     if type(value) == list:
       props = self.element.find('properties')
-      try:
-        props.remove(props.find(key))
-      except TypeError:
-        pass
-      for v in value:
+      for existingValue in props.findall(key):
+        props.remove(existingValue)
+      for v in set(value):
         try:
           etree.SubElement(props, key).text = v
         except TypeError:
@@ -1053,10 +1051,8 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
             raise ValueError('Value of property %s is not a string: %s' % (key, repr(value)))
     else:
       props = self.element.find('properties')
-      try:
-        props.remove(props.find(key))
-      except TypeError:
-        pass
+      for existingValue in props.findall(key):
+        props.remove(existingValue)
       try:
         etree.SubElement(props, key).text = value
       except TypeError:
