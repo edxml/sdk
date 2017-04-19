@@ -86,6 +86,27 @@ class EDXMLEvent(MutableMapping):
     for PropertyName, Objects in self.Properties.items():
       yield PropertyName
 
+  def getAny(self, propertyName, default=None):
+    """
+
+    Convenience method for fetching any of possibly multiple
+    object values of a specific event property. If the requested
+    property has no object values, the specified default value
+    is returned in stead.
+
+    Args:
+      propertyName (string): Name of requested property
+      default: Default return value
+
+    Returns:
+
+    """
+    value = self.get(propertyName)
+    try:
+      return value[0]
+    except IndexError:
+      return default
+
   def copy(self):
     """
 
