@@ -38,7 +38,7 @@ class EventProperty(object):
     self._attr = {
       'name':               Name,
       'object-type':        ObjectType.GetName(),
-      'description':        Description or Name,
+      'description':        Description or Name.replace('-', ' '),
       'concept':            ConceptName,
       'concept-confidence': float(ConceptConfidence),
       'unique':             bool(Unique),
