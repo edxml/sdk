@@ -81,7 +81,10 @@ class EventType(MutableMapping):
     Returns:
       edxml.ontology.EventProperty:
     """
-    return self._properties[propertyName]
+    try:
+      return self._properties[propertyName]
+    except KeyError:
+      raise Exception('Event type %s has no property named %s.' % (self._attr['name'], propertyName))
 
   def __contains__(self, propertyName):
     try:
