@@ -261,11 +261,11 @@ class SimpleEDXMLWriter(object):
     """
 
     return self.GenerateEvent(
-      Event.Properties,
-      Event.Content,
-      Event.Parents,
-      Event.EventTypeName,
-      Event.SourceUri
+      Event.GetProperties(),
+      Event.GetContent(),
+      Event.GetExplicitParents(),
+      Event.GetTypeName(),
+      Event.GetSourceUri()
     )
 
   def GenerateEvent(self, Properties, Content=u'', Parents=None, Type=None, Source=None):
