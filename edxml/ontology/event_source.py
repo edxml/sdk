@@ -116,7 +116,7 @@ class EventSource(object):
 
     """
     if self._attr['uri'] != source.GetUri():
-      raise Exception('Attempt to update event source "%s" with source "%s".',
+      raise Exception('Attempt to update event source "%s" with source "%s".' %
                       (self._attr['uri'], source.GetUri()))
 
     self.Validate()

@@ -655,7 +655,7 @@ class DataType(object):
 
       # Check length of object value
       if value == '':
-        raise EDXMLValidationError("Value of %s object is empty.")
+        raise EDXMLValidationError("Value of %s object is empty." % self.type)
       MaxStringLength = int(splitDataType[1])
       if MaxStringLength > 0:
         if len(value) > MaxStringLength:

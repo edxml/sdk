@@ -520,16 +520,16 @@ class EventProperty(object):
 
     """
     if self._attr['name'] != eventProperty.GetName():
-      raise Exception('Attempt to update event property "%s" with event property "%s".',
+      raise Exception('Attempt to update event property "%s" with event property "%s".' %
                       (self._attr['name'], eventProperty.GetName()))
 
     if self._attr['description'] != eventProperty.GetDescription():
-      raise Exception('Attempt to update event property "%s", but descriptions do not match.',
-                      (self._attr['name'], eventProperty.GetName()))
+      raise Exception('Attempt to update event property "%s", but descriptions do not match.' % self._attr['name'],
+                      (self._attr['description'], eventProperty.GetName()))
 
     if int(self._attr['enp']) != eventProperty.GetConceptNamingPriority():
-      raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.',
-                      (self._attr['name'], eventProperty.GetName()))
+      raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.' % self._attr['name'],
+                      (self._attr['enp'], eventProperty.GetName()))
 
     self.Validate()
 

@@ -1334,21 +1334,21 @@ class EventType(MutableMapping):
 
     """
     if self._attr['name'] != eventType.GetName():
-      raise Exception('Attempt to update event type "%s" with event type "%s".',
+      raise Exception('Attempt to update event type "%s" with event type "%s".' %
                       (self._attr['name'], eventType.GetName()))
 
     if self._attr['description'] != eventType.GetDescription():
-      raise Exception('Attempt to update event type "%s", but descriptions do not match.',
-                      (self._attr['name'], eventType.GetName()))
+      raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self._attr['name'],
+                      (self._attr['description'], eventType.GetName()))
 
     if self.GetParent() is not None:
       if eventType.GetParent() is not None:
         self.GetParent().Update(eventType.GetParent())
       else:
-        raise Exception('Attempt to update event type "%s", but update does not define a parent.', self._attr['name'])
+        raise Exception('Attempt to update event type "%s", but update does not define a parent.' % self._attr['name'])
     else:
       if eventType.GetParent() is not None:
-        raise Exception('Attempt to update event type "%s", but update defines a parent.', self._attr['name'])
+        raise Exception('Attempt to update event type "%s", but update defines a parent.' % self._attr['name'])
 
     updatePropertyNames = set(eventType.GetProperties().keys())
     existingPropertyNames = set(self.GetProperties().keys())

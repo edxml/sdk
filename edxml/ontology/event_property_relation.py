@@ -252,7 +252,7 @@ class PropertyRelation(object):
 
     """
     if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetTarget():
-      raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.',
+      raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.' %
                       (self._attr['property1'], self._attr['property2'],
                        propertyRelation.GetSource(), propertyRelation.GetTarget()))
 

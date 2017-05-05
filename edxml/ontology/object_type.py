@@ -419,32 +419,32 @@ class ObjectType(object):
 
     """
     if self._attr['name'] != objectType.GetName():
-      raise Exception('Attempt to update object type "%s" with object type "%s".',
+      raise Exception('Attempt to update object type "%s" with object type "%s".' %
                       (self._attr['name'], objectType.GetName()))
 
     if self._attr['display-name'] != objectType.GetDisplayName():
-      raise Exception('Attempt to update object type "%s", but display names do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but display names do not match' % self._attr['name'],
+                      (self._attr['display-name'], objectType.GetName()))
 
     if self._attr['description'] != objectType.GetDescription():
-      raise Exception('Attempt to update object type "%s", but descriptions do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but descriptions do not match.' % self._attr['name'],
+                      (self._attr['description'], objectType.GetName()))
 
     if self._attr['data-type'] != str(objectType.GetDataType()):
-      raise Exception('Attempt to update object type "%s", but data types do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but data types do not match.' % self._attr['name'],
+                      (self._attr['data-type'], objectType.GetName()))
 
     if self._attr['compress'] != objectType.IsCompressible():
-      raise Exception('Attempt to update object type "%s", but compress flags do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but compress flags do not match.' % self._attr['name'],
+                      (self._attr['compress'], objectType.GetName()))
 
     if self._attr['fuzzy-matching'] != objectType.GetFuzzyMatching():
-      raise Exception('Attempt to update object type "%s", but fuzzy matching attributes do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but fuzzy matching attributes do not match.' % self._attr['name'],
+                      (self._attr['fuzzy-matching'], objectType.GetName()))
 
     if self._attr['regexp'] != objectType.GetRegexp():
-      raise Exception('Attempt to update object type "%s", but their regular expressions do not match.',
-                      (self._attr['name'], objectType.GetName()))
+      raise Exception('Attempt to update object type "%s", but their regular expressions do not match.' % self._attr['name'],
+                      (self._attr['regexp'], objectType.GetName()))
 
     self.Validate()
 

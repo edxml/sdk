@@ -229,8 +229,8 @@ class EventTypeParent(object):
 
     """
     if self._attr['eventtype'] != parent.GetEventType():
-      raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".',
-                      (self._attr['name'], parent.GetEventType()))
+      raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".' %
+                      (self._attr['eventtype'], parent.GetEventType()))
 
     self.Validate()
 
