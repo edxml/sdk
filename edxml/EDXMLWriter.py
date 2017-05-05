@@ -67,6 +67,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.__schema = None                 # type: etree.RelaxNG
     self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
     self.__eventTypeSchema = None        # type: etree.RelaxNG
+    self.__justWroteOntology = False
     self.InvalidEvents = 0
     self.Validate = Validate
     self.Output = Output
@@ -192,11 +193,17 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     if prevEventTypeName is not None and prevEventSource is not None:
       self.OpenEventGroup(prevEventTypeName, prevEventSource)
 
+    self.__justWroteOntology = True
+
     return self
 
   def OpenEventGroups(self):
     """Opens the <eventgroups> section, containing all eventgroups"""
     if len(self.ElementStack) > 0: self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
+
+    if not self.__justWroteOntology:
+      self.Error('Attempt to output an eventgroups element without a preceding definitions element.')
+    self.__justWroteOntology = False
 
     # We send None to the outer XML generator, to
     # hint it that the definitions element has been
