@@ -28,20 +28,12 @@
 #  ===========================================================================
 
 """This module contains generic (base)classes used throughout the SDK."""
-import traceback
 import sys
 import re
 
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
-
-  def __init__(self, message):
-    self.Trace = ''.join(traceback.format_stack())
-    super(Exception, self).__init__(message)
-
-  def GetStackTrace(self):
-    return self.Trace
 
 class EDXMLValidationError(EDXMLError):
   """Exception for signaling EDXML validation errors"""
