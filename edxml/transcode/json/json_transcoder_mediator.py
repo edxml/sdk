@@ -135,24 +135,24 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
             self.Warning(('The post processor of the transcoder for JSON record type %s failed '
                           'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
                          )
-
-        try:
-          self._writer.AddEvent(Event)
-        except StopIteration:
-          self._writer.Close()
-          pass
-        except EDXMLError as Except:
-          if not self._ignore_invalid_events:
-            raise
-          if self._warn_invalid_events:
-            self.Warning(('The transcoder for JSON record type %s produced an invalid '
-                          'event: %s\n\nContinuing...') % (RecordType, str(Except)))
-        except Exception as Except:
-          if self._debug:
-            raise
-          self.Warning(('Transcoder for JSON record type %s failed '
-                        'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
-                       )
+        else:
+          try:
+            self._writer.AddEvent(Event)
+          except StopIteration:
+            self._writer.Close()
+            pass
+          except EDXMLError as Except:
+            if not self._ignore_invalid_events:
+              raise
+            if self._warn_invalid_events:
+              self.Warning(('The transcoder for JSON record type %s produced an invalid '
+                            'event: %s\n\nContinuing...') % (RecordType, str(Except)))
+          except Exception as Except:
+            if self._debug:
+              raise
+            self.Warning(('Transcoder for JSON record type %s failed '
+                          'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
+                         )
     else:
       if self._debug:
         if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
