@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from edxml.transcode.transcoder import Transcoder
+
 from edxml import Ontology
 from edxml.EDXMLBase import EDXMLBase
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
@@ -33,6 +35,12 @@ class TranscoderMediator(EDXMLBase):
     self._writer = None   # var: edxml.SimpleEDXMLWriter
     self._ontology = Ontology()
     self._last_written_ontology_version = self._ontology.GetVersion()
+
+  @staticmethod
+  def _transcoderIsPostprocessor(transcoder):
+    thisMethod = getattr(transcoder, 'PostProcess')
+    baseMethod = getattr(Transcoder, 'PostProcess')
+    return thisMethod.__func__ is not baseMethod.__func__
 
   @classmethod
   def Register(cls, RecordIdentifier, Transcoder):

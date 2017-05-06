@@ -178,7 +178,7 @@ class XmlTranscoderMediator(TranscoderMediator):
           self._write_ontology_update()
           self._last_written_ontology_version = self._ontology.GetVersion()
 
-        if Transcoder.IsPostProcessor():
+        if self._transcoderIsPostprocessor(Transcoder):
           try:
             for PostProcessedEvent in Transcoder.PostProcess(Event):
               try:
