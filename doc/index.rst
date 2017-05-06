@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 The edxml Python package
-=====================================
+========================
 
 This site documents the edxml Python package, which is part of the `EDXML Software Developers Kit <https://github.com/dtakken/edxml-sdk/>`_. This package offers a reference implementation of the `EDXML specification <http://edxml.org/>`_ as well as classes for generating, validating and processing of EDXML data streams.
 

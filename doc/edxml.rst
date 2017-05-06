@@ -1,81 +1,13 @@
 edxml package
 =============
 
-edxml.EDXMLBase module
-----------------------
+Contents:
 
-.. automodule:: edxml.EDXMLBase
-    :members:
-    :show-inheritance:
+.. toctree::
+   :maxdepth: 2
 
-edxml.EDXMLEvent module
------------------------
-
-.. automodule:: edxml.EDXMLEvent
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.EDXMLDefinitions module
------------------------------
-
-.. automodule:: edxml.EDXMLDefinitions
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.EDXMLFilter module
-------------------------
-
-.. automodule:: edxml.EDXMLFilter
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.EDXMLParser module
-------------------------
-
-.. automodule:: edxml.EDXMLParser
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.EDXMLWriter module
-------------------------
-
-.. automodule:: edxml.EDXMLWriter
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.SimpleEDXMLWriter module
-------------------------------
-
-.. automodule:: edxml.SimpleEDXMLWriter
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.ontology module
----------------------
-
-.. automodule:: edxml.ontology
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.transcode module
-----------------------
-
-.. automodule:: edxml.transcode
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.transcode.json module
----------------------------
-
-.. automodule:: edxml.transcode.json
-    :special-members: __init__
-    :members:
-    :show-inheritance:
+   writing
+   reading
+   filtering
+   ontology
+   event
