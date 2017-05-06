@@ -33,7 +33,7 @@ class EventType(MutableMapping):
   REPORTER_PLACEHOLDER_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
   KNOWN_FORMATTERS = (
     'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-    'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER',
+    'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER', 'MERGE',
     'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
   )
 
@@ -915,6 +915,15 @@ class EventType(MutableMapping):
           for objectValue in values:
             objectStrings.append(u'%s (%s)' % (targetName, objectValue))
 
+        elif formatter == 'MERGE':
+
+          for propertyName in arguments:
+            try:
+              for objectValue in eventObjectValues[propertyName]:
+                objectStrings.append(objectValue)
+            except KeyError:
+              pass
+
         elif formatter == 'COUNTRYCODE':
 
           try:
@@ -1250,6 +1259,10 @@ class EventType(MutableMapping):
                'The used property (%s) is not a boolean, though.') %
               (self._attr['name'], formatter, argumentString)
             )
+
+        elif formatter == 'MERGE':
+          # No special requirements to check for
+          pass
 
         else:
           raise EDXMLValidationError(
