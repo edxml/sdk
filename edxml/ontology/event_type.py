@@ -308,6 +308,11 @@ class EventType(MutableMapping):
     """
     if Name not in self._properties:
       objectType = self._ontology.GetObjectType(ObjectTypeName)
+      if not objectType:
+        # Object type is not defined, try to load it from
+        # any registered ontology bricks
+        self._ontology._importObjectTypeFromBrick(ObjectTypeName)
+        objectType = self._ontology.GetObjectType(ObjectTypeName)
       if objectType:
         self._properties[Name] = edxml.ontology.EventProperty(self, Name, objectType, Description).Validate()
       else:

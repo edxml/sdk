@@ -14,6 +14,11 @@ class Ontology(object):
   Class representing an EDXML ontology
   """
 
+  _bricks = {
+    'object_types': None,
+    'concepts': None
+  }  # type: Dict[edxml.ontology.Ontology]
+
   def __init__(self):
     self._version = 0
     self._event_types = {}    # type: Dict[str, edxml.ontology.EventType]
@@ -46,6 +51,43 @@ class Ontology(object):
 
     """
     return self._version > version
+
+  @classmethod
+  def RegisterBrick(cls, ontologyBrick):
+    """
+
+    Registers an ontology brick with the Ontology class, allowing
+    Ontology instances to use any definitions offered by that brick.
+    Ontology brick packages expose a register() method, which calls
+    this method to register itself with the Ontology class.
+
+    Args:
+      ontologyBrick (edxml.ontology.Brick): Ontology brick
+
+    """
+
+    if not cls._bricks['object_types']:
+      cls._bricks['object_types'] = edxml.ontology.Ontology()
+    if not cls._bricks['concepts']:
+      cls._bricks['concepts'] = edxml.ontology.Ontology()
+
+    for _ in ontologyBrick.generateObjectTypes(cls._bricks['object_types']):
+      pass
+
+    for _ in ontologyBrick.generateConcepts(cls._bricks['concepts']):
+      pass
+
+  def _importObjectTypeFromBrick(self, ObjectTypeName):
+
+    objectType = Ontology._bricks['object_types'].GetObjectType(ObjectTypeName)
+    if objectType:
+      self._addObjectType(objectType)
+
+  def _importConceptFromBrick(self, ConceptName):
+
+    brickConcept = Ontology._bricks['concepts'].GetConcept(ConceptName)
+    if brickConcept:
+      self._addConcept(brickConcept)
 
   def CreateObjectType(self, Name, DisplayNameSingular = None, DisplayNamePlural = None,
                        Description = None, DataType ='string:0:cs:u'):
@@ -554,7 +596,12 @@ class Ontology(object):
     # Check if the object type of each property exists
     for eventTypeName, eventType in self._event_types.iteritems():
       for propertyName, eventProperty in eventType.iteritems():
-        if self.GetObjectType(eventProperty.GetObjectTypeName()) is None:
+        objectTypeName = eventProperty.GetObjectTypeName()
+        if self.GetObjectType(objectTypeName) is None:
+          # Object type is not defined, try to load it from
+          # any registered ontology bricks
+          self._importObjectTypeFromBrick(objectTypeName)
+        if self.GetObjectType(objectTypeName) is None:
           raise EDXMLValidationError(
             'Property "%s" of event type "%s" refers to undefined object type "%s".' %
             (propertyName, eventTypeName, eventProperty.GetObjectTypeName())
@@ -563,11 +610,17 @@ class Ontology(object):
     # Check if the concepts referred to by each property exists
     for eventTypeName, eventType in self._event_types.iteritems():
       for propertyName, eventProperty in eventType.iteritems():
-        if eventProperty.GetConceptName() is not None and self.GetConcept(eventProperty.GetConceptName()) is None:
-          raise EDXMLValidationError(
-            'Property "%s" of event type "%s" refers to undefined concept "%s".' %
-            (propertyName, eventTypeName, eventProperty.GetConceptName())
-          )
+        conceptName = eventProperty.GetConceptName()
+        if conceptName is not None:
+          if self.GetConcept(conceptName) is None:
+            # Concept is not defined, try to load it from
+            # any registered ontology bricks
+            self._importConceptFromBrick(conceptName)
+          if self.GetConcept(conceptName) is None:
+            raise EDXMLValidationError(
+              'Property "%s" of event type "%s" refers to undefined concept "%s".' %
+              (propertyName, eventTypeName, eventProperty.GetConceptName())
+            )
 
     # Check if merge strategies make sense for the
     # configured property merge strategies
