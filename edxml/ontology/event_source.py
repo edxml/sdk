@@ -66,6 +66,21 @@ class EventSource(object):
     self._attr['description'] = str(Description)
     return self
 
+  def SetAcquisitionDate(self, dateTime):
+    """
+
+    Sets the acquisition date
+
+    Args:
+      dateTime (datetime.datetime): Acquisition date
+
+    Returns:
+      edxml.ontology.EventSource: The EventSource instance
+    """
+
+    self._attr['date-acquired'] = dateTime.strftime('%Y%m01')
+    return self
+
   def Validate(self):
     """
 
