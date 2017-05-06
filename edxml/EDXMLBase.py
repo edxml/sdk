@@ -2,7 +2,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                     Several commonly used Python classes.
 #
 #                  Copyright (c) 2010 - 2016 by D.H.J. Takken
@@ -34,14 +34,18 @@ import re
 
 class EDXMLError(Exception):
   """Generic EDXML exception class"""
+  pass
+
 
 class EDXMLValidationError(EDXMLError):
   """Exception for signaling EDXML validation errors"""
   pass
 
+
 class EDXMLProcessingInterrupted(Exception):
   """Exception for signaling that EDXML processing was aborted"""
   pass
+
 
 class EDXMLBase(object):
   """Base class for most SDK subclasses"""
