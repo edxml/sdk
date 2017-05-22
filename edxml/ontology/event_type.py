@@ -1044,40 +1044,20 @@ class EventType(MutableMapping):
 
     def __processSplitPlaceholderString(Elements, Event, Capitalize, IterationLevel=0):
       Result = ''
-      ContainsSubStrings = False
-      NonEmptySubstringCounter = 0
 
       for Element in Elements:
         if type(Element) == list:
           Processed = __processSplitPlaceholderString(Element, Event, Capitalize, IterationLevel + 1)
-          ContainsSubStrings = True
           Capitalize = False
-          if len(Processed) > 0:
-            NonEmptySubstringCounter += 1
         else:
           if Element != '':
             Processed = __processSimplePlaceholderString(Element, Event, Capitalize)
-            if Processed == '':
-              # A non-empty component of the string evaluated into
-              # an empty string, which means that it must have contained
-              # a placeholder that resulted in an empty string, which
-              # implies that we should return an empty string as well.
-              return ''
             Capitalize = False
           else:
             Processed = ''
         Result += Processed
 
-      if ContainsSubStrings:
-        # Return empty string when all substrings are empty,
-        # unless IterationLevel is zero. This has the effect that
-        # the 'root' level processing never results in an empty string.
-        if NonEmptySubstringCounter == 0 and IterationLevel > 0:
-          return ''
-        else:
-          return Result
-      else:
-        return Result
+      return Result
 
     if short:
       ReporterString = unicode(self._attr['reporter-short'])
