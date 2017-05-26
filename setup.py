@@ -66,11 +66,5 @@ setup(
   # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
   # For an analysis of "install_requires" vs pip's requirements files see:
   # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-  install_requires = ['lxml>=3.4', 'python-dateutil', 'iso3166', 'pytz', 'termcolor'],
-
-  # If elementtree is available, it can be used for generating EDXML definitions
-  # in stead of using SAX XMLGenerator.
-  extras_require = {
-    'ElementTree':  ['elementtree']
-  }
+  install_requires = ['lxml>=3.4', 'python-dateutil', 'iso3166', 'pytz', 'termcolor', 'typing'],
 )
