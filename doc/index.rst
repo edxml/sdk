@@ -16,12 +16,28 @@ Example applications that use this package can be obtained from `Github <https:/
 
     pip install edxml
 
-Contents:
+Reference Manual
+================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 0
 
-   edxml
+   writing
+   reading
+   filtering
+   ontology
+   event
+
+Tutorials
+=========
+
+* :doc:`EDXML Data Modeling<tutorial/edxml-modelling>`
+
+EDXML Patterns
+==============
+
+* :doc:`Composed Data Sources<patterns/composed-sources>`
+* :doc:`Ontology Bricks<patterns/ontology-bricks>`
 
 Indices and tables
 ==================
