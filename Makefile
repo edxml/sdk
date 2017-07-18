@@ -9,6 +9,7 @@ dist:
 	python setup.py sdist upload
 
 doc:
+	pip install -e .[doc]
 	python setup.py build_sphinx
 
 clean:
