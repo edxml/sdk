@@ -77,19 +77,19 @@ Step 4: Define the Event Type
 
 At this point, we have our event story, a reporter string and we know which properties our EDXML event type will have. Time to write some code! Let us begin by creating a new, empty EDXML ontology:
 
-.. literalinclude:: tutorial/example1.py
+.. literalinclude:: example1.py
    :lines: 1-3
 
 Now we can use this ontology to define our own event type, which represents the FTP logging messages:
 
-.. literalinclude:: tutorial/example1.py
+.. literalinclude:: example1.py
    :lines: 28-35
 
 There are a few things to note about the event type definition. First of all, the SDK offers what is called a *fluid interface*, allowing to write short code that is easy to read. Then the even type name. For reasons pointed out in the EDXML specification, we use the dotted structure to create a private namespace for ourselves. We added the reporter string that we wrote down earlier, as well as a short variant.
 
 Next, let's add the event properties:
 
-.. literalinclude:: tutorial/example1.py
+.. literalinclude:: example1.py
    :lines: 37-41
 
 Above, we associated each property with an EDXML object type. Remember the difference between properties and object types from the EDXML specification: An object type is globally unique and groups values that represent *the same type of information*. An event property exists only within a single event type and provides context for an object type. Our event type contains two IPv4 addresses sharing a single object type, once in the context of an FTP client and once in the context of an FTP server.
@@ -105,7 +105,7 @@ Step 5: Define the Object Types
 
 Let us add some object type definitions then, starting out with the 'datetime' object type:
 
-.. literalinclude:: tutorial/example1.py
+.. literalinclude:: example1.py
    :lines: 7-10
 
 .. epigraph::
