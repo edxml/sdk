@@ -374,6 +374,9 @@ class SimpleEDXMLWriter(object):
 
   def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
+    if len(self._event_buffers[EventGroupId][Merge]) == 0:
+      return
+
     if not self._writer:
       # We did not create the EDXMLWriter yet.
       self._writer = EDXMLWriter(self._output, self._validate)
