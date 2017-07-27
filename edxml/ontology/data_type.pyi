@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from datetime import datetime
 from lxml import etree
 from typing import List
 
@@ -80,3 +80,6 @@ class DataType(object):
   def ValidateObjectValue(self, value: unicode) -> 'DataType': ...
 
   def Validate(self) -> 'DataType': ...
+
+  @classmethod
+  def FormatUtcDateTime(cls, dateTime: datetime) -> str: ...
