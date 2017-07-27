@@ -372,6 +372,25 @@ class SimpleEDXMLWriter(object):
     self._max_latency = Latency
     return self
 
+  def Flush(self, force=False):
+    """
+
+    Request the writer to flush its output buffer. Unless the force
+    argument is set to True, a buffer flush will only occur if needed.
+    Flushing is needed when either the buffer is full or the configured
+    output latency is exceeded.
+
+    Args:
+      force (bool): Force flushing or not
+
+    """
+    if self.__currBufSize > self.__maxBufSize or \
+       0 < self._max_latency <= (time.time() - self._last_write_time):
+      for GroupId in self._event_buffers:
+        EventTypeName, EventSourceUri = GroupId.split(':')
+        for Merge in self._event_buffers[GroupId]:
+          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
+
   def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
     if len(self._event_buffers[EventGroupId][Merge]) == 0:
