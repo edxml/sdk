@@ -330,7 +330,10 @@ class SimpleEDXMLWriter(object):
 
     if self.__currBufSize > self.__maxBufSize or \
        0 < self._max_latency <= (time.time() - self._last_write_time):
-       self._flush_buffer(EventTypeName, EventSourceUri, EventGroup, Merge)
+      for GroupId in self._event_buffers:
+        EventTypeName, EventSourceUri = GroupId.split(':')
+        for Merge in self._event_buffers[GroupId]:
+          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
 
     return self
 
