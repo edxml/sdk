@@ -226,11 +226,12 @@ class XmlTranscoderMediator(TranscoderMediator):
               self.Warning(('The transcoder for XML element at %s produced an invalid '
                             'event: %s\n\nContinuing...') % (ElementXPath, str(Except)))
           except Exception as Except:
-            if self._debug:
+            if not self._ignore_invalid_events or self._debug:
               raise
-            self.Warning(('Transcoder for XML element at %s failed '
-                          'with %s: %s\n\nContinuing...') % (ElementXPath, type(Except).__name__, str(Except))
-                         )
+            if self._warn_invalid_events:
+              self.Warning(('Transcoder for XML element at %s failed '
+                            'with %s: %s\n\nContinuing...') % (ElementXPath, type(Except).__name__, str(Except))
+                           )
     else:
       if self._debug:
         self.Warning(
