@@ -10,3 +10,5 @@ various types of input data (like JSON records) into EDXML output streams.
     :members:
     :show-inheritance:
 """
+from transcoder import *
+from mediator import *

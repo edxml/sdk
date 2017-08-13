@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from edxml.EDXMLEvent import EDXMLEvent
-import edxml.transcode.transcoder
+import edxml.transcode
 
 
-class JsonTranscoder(edxml.transcode.transcoder.Transcoder):
+class JsonTranscoder(edxml.transcode.Transcoder):
 
   ATTRIBUTE_MAP = {}
   """

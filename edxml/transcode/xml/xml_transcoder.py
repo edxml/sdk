@@ -7,10 +7,10 @@ from lxml import etree
 from lxml.etree import XPathSyntaxError
 from typing import Dict
 
-import edxml.transcode.transcoder
+import edxml.transcode
 
 
-class XmlTranscoder(edxml.transcode.transcoder.Transcoder):
+class XmlTranscoder(edxml.transcode.Transcoder):
 
   TYPE_MAP = {}
   """

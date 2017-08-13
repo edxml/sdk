@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from edxml.transcode.transcoder import Transcoder
+from edxml.transcode import Transcoder
 
 from edxml import Ontology
 from edxml.EDXMLBase import EDXMLBase
