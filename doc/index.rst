@@ -16,8 +16,32 @@ Example applications that use this package can be obtained from `Github <https:/
 
     pip install edxml
 
+Tutorials
+=========
+
+*Some guides to get you started.*
+
+.. toctree::
+   :glob:
+   :titlesonly:
+
+   tutorial/*
+
+EDXML Patterns
+==============
+
+*Cookbook solutions for common engineering problems.*
+
+.. toctree::
+   :glob:
+   :titlesonly:
+
+   patterns/*
+
 Reference Manual
 ================
+
+*Full documentation of all Python classes in the SDK.*
 
 .. toctree::
    :maxdepth: 0
@@ -27,17 +51,6 @@ Reference Manual
    filtering
    ontology
    event
-
-Tutorials
-=========
-
-* :doc:`EDXML Data Modeling<tutorial/edxml-modelling>`
-
-EDXML Patterns
-==============
-
-* :doc:`Composed Data Sources<patterns/composed-sources>`
-* :doc:`Ontology Bricks<patterns/ontology-bricks>`
 
 Indices and tables
 ==================
