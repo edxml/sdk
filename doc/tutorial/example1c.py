@@ -25,6 +25,10 @@ myOntology.CreateObjectType('computing.ftp.command')\
   .SetDataType(DataType.String(Length=255))\
   .SetDisplayName('FTP command')
 
+myOntology.CreateConcept('computer') \
+  .SetDescription('some kind of a computing device') \
+  .SetDisplayName('computer')
+
 myEventType = myOntology.CreateEventType('org.myorganization.logs.ftp')\
   .SetDisplayName('FTP command')\
   .SetDescription('a logged FTP command')\
@@ -40,29 +44,28 @@ myEventType.CreateProperty('client',  ObjectTypeName='computing.networking.host.
 myEventType.CreateProperty('user',    ObjectTypeName='computing.user.name')
 myEventType.CreateProperty('command', ObjectTypeName='computing.ftp.command')
 
+myEventType['user'].RelateTo('has access to', 'server') \
+                   .Because('a user named [[user]] issued a command on FTP server [[server]]') \
+                   .SetConfidence(1.0)
+
+myEventType['client'].Identifies('computer', 0.9)
+myEventType['server'].Identifies('computer', 0.9)
+
+myEventType['client'].RelateIntra('communicates with', 'server') \
+  .Because('[[client]] connected to FTP server [[server]]')
+
 mySource = myOntology.CreateEventSource('/myorganization/logs/ftp/')
 
-import sys
+import sys, json
 from edxml import SimpleEDXMLWriter, EDXMLEvent
 
-writer = SimpleEDXMLWriter(sys.stdout)
-writer.SetOntology(myOntology)
-writer.SetEventType('org.myorganization.logs.ftp')
-writer.SetEventSource('/myorganization/logs/ftp/')
+with SimpleEDXMLWriter(sys.stdout) as writer:
+  writer.SetOntology(myOntology)\
+        .SetEventType('org.myorganization.logs.ftp')\
+        .SetEventSource('/myorganization/logs/ftp/')
 
-import json
-from dateutil.parser import parse
-
-for line in sys.stdin:
-  properties = json.loads(line)
-
-  # Delete unused JSON fields
-  del properties['source']
-  del properties['offset']
-
-  # Convert time to valid EDXML datetime string
-  properties['datetime'] = DataType.FormatUtcDateTime(parse(properties['datetime']))
-
-  writer.AddEvent(EDXMLEvent(properties))
-
-writer.Close()
+  for line in sys.stdin:
+    properties = json.loads(line)
+    del properties['source']
+    del properties['offset']
+    writer.AddEvent(EDXMLEvent(properties).SetContent(line))
