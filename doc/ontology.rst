@@ -30,6 +30,16 @@ edxml.ontology.EventType
     :members:
     :show-inheritance:
 
+edxml.ontology.EventTypeParent
+------------------------------
+.. _`event type parents`:
+.. _EventTypeParent:
+
+.. autoclass:: edxml.ontology.EventTypeParent
+    :special-members: __init__
+    :members:
+    :show-inheritance:
+
 edxml.ontology.EventProperty
 ----------------------------
 .. _`event properties`:
