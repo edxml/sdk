@@ -13,6 +13,7 @@ When reading an EDXML data stream, the parser consumes both events and ontology 
 
 edxml.ontology.Ontology
 -----------------------
+.. py:module:: edxml.ontology
 .. _Ontology:
 
 .. autoclass:: edxml.ontology.Ontology
