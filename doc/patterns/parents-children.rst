@@ -18,7 +18,11 @@ This is only possible when:
 2. The child event contains a copy of all unique properties of the parent
 3. The properties that the child shares with the parent cannot be updated
 
-As an example, suppose that we wish to model a directory of files stored on a computer. We define one event type `dir` describing the directory itself, which may contain a property `name` containing the directory name and possibly some aggregate information like the total number of files it contains. Then we define another event type `file` describing a file contained in the directory. The file event type contains a property `dir` containing the name of the directory that contains the file.
+As an example, suppose that we wish to model a directory of files stored on a computer. We define one event type ``dir`` describing the directory itself, which may contain a unique property ``name`` containing the directory name and possibly some aggregate information like the total number of files it contains. Then we define another event type ``file`` describing a file contained in the directory. The file event type contains a property ``dir`` containing the name of the directory that contains the file.
+
+.. epigraph::
+
+  *Refer to* :doc:`this document<event-uniqueness>` *to learn about defining unique properties*
 
 Now we can express the parent-child relationship between both event types as follows:
 
