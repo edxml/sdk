@@ -51,7 +51,7 @@ copyright = u'2016, D.H.J. Takken'
 # built documents.
 #
 # The short X.Y version.
-version = '3.3'
+version = '3.0'
 # The full version, including alpha/beta/rc tags.
 release = '3.0.0'
 
