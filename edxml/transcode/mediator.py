@@ -18,6 +18,7 @@ class TranscoderMediator(EDXMLBase):
   transcode the types of input record that they support.
   """
 
+  _record_transcoders = {}
   _transcoders = {}
   _sources = []
 
@@ -43,7 +44,7 @@ class TranscoderMediator(EDXMLBase):
     return thisMethod.__func__ is not baseMethod.__func__
 
   @classmethod
-  def Register(cls, RecordIdentifier, Transcoder):
+  def Register(cls, RecordIdentifier, RecordTranscoder):
     """
 
     Register a transcoder for processing records identified by
@@ -63,10 +64,13 @@ class TranscoderMediator(EDXMLBase):
 
     Args:
       RecordIdentifier: Record type identifier
-      Transcoder (Transcoder): Transcoder class
+      RecordTranscoder (Transcoder): Transcoder class
     """
-    cls._transcoders[RecordIdentifier] = Transcoder()
-    cls._auto_merge_eventtypes.extend(cls._transcoders[RecordIdentifier].GetAutoMergeEventTypes())
+    if RecordTranscoder not in cls._transcoders:
+      cls._transcoders[RecordTranscoder] = RecordTranscoder()
+      cls._auto_merge_eventtypes.extend(cls._transcoders[RecordTranscoder].GetAutoMergeEventTypes())
+
+    cls._record_transcoders[RecordIdentifier] = RecordTranscoder
 
   def Debug(self):
     """
@@ -185,43 +189,62 @@ class TranscoderMediator(EDXMLBase):
       Transcoder:
     """
 
-    if RecordSelector in cls._transcoders:
-      return cls._transcoders[RecordSelector]
+    if RecordSelector in cls._record_transcoders:
+      return cls._transcoders[cls._record_transcoders[RecordSelector]]
     else:
-      return cls._transcoders.get('RECORD_OF_UNKNOWN_TYPE', None)
+      return cls._transcoders.get(cls._record_transcoders.get('RECORD_OF_UNKNOWN_TYPE'))
 
   def _write_initial_ontology(self):
     # Here, we write the ontology elements that are
     # defined by the various transcoders.
-    for Transcoder in self._transcoders.values():
-      Transcoder.SetOntology(self._ontology)
 
-    for Transcoder in self._transcoders.values():
-      for _ in Transcoder.GenerateObjectTypes():
-        # Here, we only populate the ontology, we
-        # don't do anything with the ontology elements.
+    # First, we accumulate the object types into an
+    # empty ontology.
+    objectTypes = Ontology()
+    for transcoder in self._transcoders.values():
+      transcoder.SetOntology(objectTypes)
+      for _ in transcoder.GenerateObjectTypes():
+        # Here, we only populate the list of object types,
+        # we don't do anything with them.
         pass
 
-    for Transcoder in self._transcoders.values():
-      for _ in Transcoder.GenerateConcepts():
-        # Here, we only populate the ontology, we
-        # don't do anything with the ontology elements.
+    # Add the object types to the main mediator ontology
+    self._ontology.Update(objectTypes)
+
+    # Then, we accumulate the concepts into an
+    # empty ontology.
+    concepts = Ontology()
+    for transcoder in self._transcoders.values():
+      transcoder.SetOntology(concepts)
+      for _ in transcoder.GenerateConcepts():
+        # Here, we only populate the list of concepts,
+        # we don't do anything with them.
         pass
 
-    for Transcoder in self._transcoders.values():
-      for _, _ in Transcoder.GenerateEventTypes():
+    # Add the concepts to the main mediator ontology
+    self._ontology.Update(concepts)
+
+    # Now, we allow each of the transcoders to create their event
+    # types in separate ontologies. We do that to allow two transcoders
+    # to create two event types that share the same name. That is
+    # a common pattern in transcoders that inherit event type definitions
+    # from their parent, adjust the event type and finally rename it.
+    for transcoder in self._transcoders.values():
+      transcoder.SetOntology(Ontology())
+      transcoder._ontology.Update(objectTypes, validate=False)
+      transcoder._ontology.Update(concepts, validate=False)
+      for _, _ in transcoder.GenerateEventTypes():
         # Here, we only populate the ontology, we
         # don't do anything with the ontology elements.
-        pass
+        self._ontology.Update(transcoder._ontology, validate=False)
+        transcoder._ontology.Update(objectTypes, validate=False)
+        transcoder._ontology.Update(concepts, validate=False)
+        transcoder.SetOntology(Ontology())
 
     if len(self._sources) == 0:
       self.Warning('No EDXML source was defined, generating bogus source.')
       self._sources.append(self._ontology.CreateEventSource('/undefined/'))
 
-    # Add the generated ontology elements and
-    # create a new, empty ontology for accumulating
-    # ontology updates that may generated later, by event
-    # transcoders.
     self._writer.AddOntology(self._ontology)
     self._last_written_ontology_version = self._ontology.GetVersion()
 
