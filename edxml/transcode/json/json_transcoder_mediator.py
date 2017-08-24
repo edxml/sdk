@@ -21,7 +21,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
   JSON records to the correct transcoder.
 
   If the constant is set to None, all JSON records will be routed to the fallback
-  transcoder. If there is not fallback transcoder available, the record will not
+  transcoder. If there is no fallback transcoder available, the record will not
   be processed.
 
   Note:
