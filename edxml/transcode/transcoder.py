@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import edxml
 from edxml.EDXMLBase import EDXMLBase
-from edxml.EDXMLEvent import EDXMLEvent
-from edxml.ontology.event_type_parent import EventTypeParent
+from edxml import EDXMLEvent
+from edxml.ontology import EventTypeParent
 
 
 class Transcoder(EDXMLBase):
