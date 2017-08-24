@@ -198,7 +198,7 @@ class Transcoder(EDXMLBase):
   """
   The PARENT_MAPPINGS attribute is a dictionary mapping EDXML event type names to parent property
   mappings. Each mapping is a dictionary containing properties of the event type as keys and properties
-  of the parent event type as values. Example:
+  of the parent event type as values. Example::
 
     PARENT_MAPPINGS = {
       'child-event-type-name': {
