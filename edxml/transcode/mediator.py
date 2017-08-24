@@ -68,7 +68,7 @@ class TranscoderMediator(EDXMLBase):
 
     Args:
       RecordIdentifier: Record type identifier
-      RecordTranscoder (Transcoder): Transcoder class
+      RecordTranscoder (class): Transcoder class
     """
     if RecordTranscoder not in cls._transcoders:
       cls._transcoders[RecordTranscoder] = RecordTranscoder()
