@@ -72,7 +72,8 @@ setup(
   # like building documentation.
   extras_require={
     'doc': [
-      'sphinx'
+      'sphinx',
+      'sphinxcontrib-napoleon'
     ]
   }
 )
