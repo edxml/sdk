@@ -23,6 +23,10 @@ class TranscoderMediator(EDXMLBase):
   _sources = []
 
   _debug = False
+  _disable_buffering = False
+  _warn_no_transcoder = False
+  _warn_fallback = False
+
   _validate_events = True
   _ignore_invalid_objects = False
   _ignore_invalid_events = False
@@ -72,16 +76,31 @@ class TranscoderMediator(EDXMLBase):
 
     cls._record_transcoders[RecordIdentifier] = RecordTranscoder
 
-  def Debug(self):
+  def Debug(self, disableBuffering=True, warnNoTranscoder=True, warnFallback=True):
     """
     Enable debugging mode, which prints informative
     messages about transcoding issues, disables
     event buffering and stops on errors.
 
+    Using the keyword arguments, specific debug features
+    can be disabled. When warnNoTranscoder is set to False,
+    no warnings will be generated when no matching transcoder
+    can be found. When warnFallback is set to False, no
+    warnings will be generated when an input record is routed
+    to the fallback transcoder.
+
+    Args:
+      disableBuffering (bool): Disable output buffering
+      warnNoTranscoder (bool): Warn when no transcoder found
+      warnFallback     (bool): Warn when using fallback transcoder
+
     Returns:
       TranscoderMediator:
     """
     self._debug = True
+    self._disable_buffering = disableBuffering
+    self._warn_no_transcoder = warnNoTranscoder
+    self._warn_fallback = warnFallback
 
     return self
 
@@ -257,8 +276,8 @@ class TranscoderMediator(EDXMLBase):
 
   def _create_writer(self):
     self._writer = SimpleEDXMLWriter(self._output, self._validate_events)
-    if self._debug:
-      self._writer.SetBufferSize(1)
+    if self._disable_buffering:
+      self._writer.SetBufferSize(0)
     if self._ignore_invalid_objects:
       self._writer.IgnoreInvalidObjects()
     if self._ignore_invalid_events:

@@ -97,7 +97,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
     if Transcoder:
 
-      if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._debug:
+      if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
         self.Warning('JSON record has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD)
         self.Warning('Record was: %s' % JsonData)
 
@@ -155,7 +155,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                           'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
                          )
     else:
-      if self._debug:
+      if self._warn_no_transcoder:
         if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
           self.Warning('JSON record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD)
         else:

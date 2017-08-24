@@ -179,7 +179,7 @@ class XmlTranscoderMediator(TranscoderMediator):
     Transcoder = self.GetTranscoder(MatchingElementXPath)
 
     if Transcoder:
-      if ElementXPath == 'RECORD_OF_UNKNOWN_TYPE' and self._debug:
+      if ElementXPath == 'RECORD_OF_UNKNOWN_TYPE' and self._warn_fallback:
         self.Warning(
           'XML element at %s does not match any XPath expressions, passing to fallback transcoder' %
           Tree.getpath(Element)
@@ -233,7 +233,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                             'with %s: %s\n\nContinuing...') % (ElementXPath, type(Except).__name__, str(Except))
                            )
     else:
-      if self._debug:
+      if self._warn_no_transcoder:
         self.Warning(
           'XML element at %s does not match any XPath expressions and no fallback transcoder is available.'
           % ElementXPath
