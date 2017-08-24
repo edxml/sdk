@@ -62,7 +62,7 @@ setup(
   },
 
   # List run-time dependencies here. These will be installed by pip when your
-  # project is installed. 
+  # project is installed.
   # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
   # For an analysis of "install_requires" vs pip's requirements files see:
   # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
