@@ -34,6 +34,14 @@ class TranscoderMediator(EDXMLBase):
   _warn_invalid_events = False
 
   def __init__(self, Output):
+    """
+
+    Create a new transcoder mediator which will output streaming
+    EDXML data using specified output.
+
+    Args:
+      Output (file): a file-like object
+    """
 
     super(TranscoderMediator, self).__init__()
     self._output = Output
