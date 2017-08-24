@@ -58,7 +58,7 @@ setup(
   # installed, specify them here. If using Python 2.6 or less, then these
   # have to be included in MANIFEST.in as well.
   package_data={
-    'edxml': ['schema/edxml-schema-3.0.0.rng'],
+    'edxml': ['schema/edxml-schema-3.0.0.rng', '**/*.pyi']
   },
 
   # List run-time dependencies here. These will be installed by pip when your
