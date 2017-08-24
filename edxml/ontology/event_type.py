@@ -345,6 +345,26 @@ class EventType(MutableMapping):
     self._childModifiedCallback()
     return self
 
+  def RemoveProperty(self, propertyName):
+    """
+
+    Removes specified property from the event type.
+
+    Notes:
+      Since the EventType class has a dictionary interface
+      for accessing event type properties, you can also use
+      the del operator to delete a property.
+
+    Args:
+      propertyName (str): The name of the property
+
+    Returns:
+      edxml.ontology.EventType: The EventType instance
+
+    """
+    self._properties.pop(propertyName, None)
+    return self
+
   def CreateRelation(self, Source, Target, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
     """
 
