@@ -776,7 +776,7 @@ class Ontology(object):
 
     return self
 
-  def Update(self, otherOntology):
+  def Update(self, otherOntology, validate=True):
     """
 
     Updates the ontology using the definitions contained
@@ -786,6 +786,7 @@ class Ontology(object):
 
     Args:
       otherOntology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
+      validate (bool): Validate the resulting ontology
 
     Raises;
       EDXMLValidationError
@@ -795,7 +796,8 @@ class Ontology(object):
     """
 
     if type(otherOntology) == Ontology:
-      otherOntology.Validate()
+      if validate:
+        otherOntology.Validate()
       for ObjectTypeName, objectType in otherOntology.GetObjectTypes().items():
         self._addObjectType(objectType)
       for EventTypeName, eventType in otherOntology.GetEventTypes().items():
@@ -818,7 +820,8 @@ class Ontology(object):
         else:
           raise EDXMLValidationError('Unexpected ontology element: "%s"' % element.tag)
 
-      self.Validate()
+      if validate:
+        self.Validate()
     else:
       raise TypeError('Cannot update ontology from %s', str(type(otherOntology)))
 
