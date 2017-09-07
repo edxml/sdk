@@ -123,7 +123,7 @@ class EDXMLFilter(EDXMLParserBase):
     in the output.
 
     Args:
-      edxmlEvent (edxml.EDXMLEvent.ParsedEvent): The event
+      edxmlEvent (edxml.ParsedEvent): The event
 
     """
     super(EDXMLFilter, self)._parsedEvent(edxmlEvent)

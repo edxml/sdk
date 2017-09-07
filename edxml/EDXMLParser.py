@@ -42,7 +42,7 @@ from typing import List
 
 import edxml
 from EDXMLBase import *
-from edxml.EDXMLEvent import ParsedEvent
+from edxml import ParsedEvent
 
 
 class EDXMLParserBase(object):

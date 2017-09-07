@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from edxml.EDXMLEvent import EDXMLEvent
+from edxml import EDXMLEvent
 import edxml.transcode
 
 

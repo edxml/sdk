@@ -260,7 +260,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     """
 
     Args:
-      event (edxml.EDXMLEvent.EDXMLEvent): The event
+      event (edxml.EDXMLEvent): The event
 
     Returns:
       EDXMLWriter:

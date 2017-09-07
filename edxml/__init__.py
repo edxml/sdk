@@ -5,7 +5,7 @@ from .version import __version__
 
 from EDXMLWriter import *
 from SimpleEDXMLWriter import *
-from EDXMLEvent import *
+from event import EDXMLEvent, EventElement, ParsedEvent
 from EDXMLParser import *
 from EDXMLFilter import *
 

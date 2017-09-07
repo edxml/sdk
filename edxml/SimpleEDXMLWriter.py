@@ -3,7 +3,7 @@ import time
 
 from edxml.EDXMLWriter import EDXMLWriter
 from edxml.EDXMLBase import EDXMLError, EDXMLValidationError
-from edxml.EDXMLEvent import EDXMLEvent
+from edxml import EDXMLEvent
 from edxml.ontology import Ontology
 
 
