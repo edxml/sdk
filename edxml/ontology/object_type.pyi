@@ -11,7 +11,7 @@ class ObjectType(object):
   DISPLAY_NAME_PATTERN = ...
   FUZZY_MATCHING_PATTERN = ...
 
-  def __init__(self, Ontology: edxml.ontology.Ontology, Name: str, DisplayName: str, Description: str = None,
+  def __init__(self, Ontology: edxml.ontology.Ontology, Name: str, DisplayName: str = None, Description: str = None,
                DataType: str ='string:0:cs:u', Compress: bool = False, FuzzyMatching: str ='none',
                Regexp: str ='[\s\S]*') -> None:
     self._attr = ... # type: Dict[str, Any]

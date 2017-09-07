@@ -115,7 +115,7 @@ class Ontology(object):
     if DisplayNameSingular:
       DisplayName = '%s/%s' % (DisplayNameSingular, DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
     else:
-      DisplayName = '/'
+      DisplayName = None
 
     if Name not in self._object_types:
       self._object_types[Name] = ObjectType(self, Name, DisplayName, Description, DataType)
