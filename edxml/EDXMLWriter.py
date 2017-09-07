@@ -75,6 +75,19 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.CurrentEventTypeName = None
     self.CurrentEventSourceUri = None
 
+    # Since we use multiple lxml file writers to produce output, passing a file name
+    # as output will truncate the output while writing data. Therefore, we only accept
+    # files and objects as output.
+
+    if type(self.Output) not in (file, object):
+      raise IOError('The output of the EDXML writer does not look like a file: ' + repr(self.Output))
+
+    # The lxml file writer will raise rather cryptic exceptions when the output is
+    # open file that is opened for reading, which is the default in Python. Check
+    # and raise an exception if needed.
+    if type(self.Output) == file and not ('w' in self.Output.mode or 'a' in self.Output.mode):
+      raise IOError('The output of the EDXML writer does not appear to be writable.')
+
     # Initialize lxml.etree based XML generators. This
     # will write the XML declaration and open the
     # <events> tag.
