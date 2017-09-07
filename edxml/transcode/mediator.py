@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from edxml.transcode import Transcoder
 
-from edxml import Ontology
+from edxml.ontology import Ontology
 from edxml.EDXMLBase import EDXMLBase
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 from edxml.ontology import EventSource

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import time
 
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml import EDXMLWriter
 from edxml.EDXMLBase import EDXMLError, EDXMLValidationError
 from edxml import EDXMLEvent
-from edxml.ontology import Ontology
+from edxml.ontology import *
 
 
 class SimpleEDXMLWriter(object):

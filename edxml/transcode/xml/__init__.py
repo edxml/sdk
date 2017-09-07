@@ -12,5 +12,5 @@ XML elements and route XML element types to the correct transcoder.
     :members:
     :show-inheritance:
 """
-from xml_transcoder import *
-from xml_transcoder_mediator import *
+from xml_transcoder import XmlTranscoder
+from xml_transcoder_mediator import XmlTranscoderMediator
