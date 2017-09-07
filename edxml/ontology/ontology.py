@@ -147,7 +147,7 @@ class Ontology(object):
     if DisplayNameSingular:
       DisplayName = '%s/%s' % (DisplayNameSingular, DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
     else:
-      DisplayName = '/'
+      DisplayName = None
 
     if Name not in self._concepts:
       self._concepts[Name] = Concept(self, Name, DisplayName, Description)
