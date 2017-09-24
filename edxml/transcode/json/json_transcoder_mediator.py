@@ -84,10 +84,16 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     Args:
       JsonData (dict,object): Json dictionary
     """
-    if type(JsonData) == dict:
-      RecordType = JsonData.get(self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+    if self.TYPE_FIELD is None:
+      # Type field is not set, which means we must use the
+      # fallback transcoder.
+      RecordType = 'RECORD_OF_UNKNOWN_TYPE'
     else:
-      RecordType = getattr(JsonData, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+      try:
+        RecordType = JsonData.get(self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+      except AttributeError:
+        RecordType = getattr(JsonData, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+
     Transcoder  = self.GetTranscoder(RecordType)
 
     if not Transcoder and RecordType != 'RECORD_OF_UNKNOWN_TYPE':
