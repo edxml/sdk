@@ -66,21 +66,28 @@ class JsonTranscoder(edxml.transcode.Transcoder):
       FieldPath = JsonField.split('.')
       if len(FieldPath) > 0:
         try:
-          if type(Json) == dict:
-            Value = Json.get(FieldPath[0])
-          else:
-            Value = getattr(Json, FieldPath[0])
+          # Try using the record as a dictionary
+          Value = Json.get(FieldPath[0])
         except AttributeError:
+          # That did not work. Try using the record
+          # as an object.
           try:
-            Value = Json[int(FieldPath[0])]
-          except (ValueError, IndexError):
-            # Field not found in JSON, try next.
-            continue
+            Value = getattr(Json, FieldPath[0])
+          except AttributeError:
+            # That did not work either. Try interpreting
+            # the field as an index into a list.
+            try:
+              Value = Json[int(FieldPath[0])]
+            except (ValueError, IndexError):
+              # Field not found in record, try next field.
+              continue
+        # Now descend into the record to find the innermost
+        # value that the field is referring to.
         for Field in FieldPath[1:]:
           try:
-            if type(Value) == dict:
+            try:
               Value = Value.get(Field)
-            else:
+            except AttributeError:
               Value = getattr(Value, Field)
           except AttributeError:
             try:
