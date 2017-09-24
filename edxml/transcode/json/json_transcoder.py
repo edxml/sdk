@@ -99,10 +99,10 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
         if Value is not None:
           if type(Value) == list:
-            Properties[PropertyName] = Value
+            Properties[PropertyName] = [v for v in Value if v != '']
           elif type(Value) == bool:
             Properties[PropertyName] = ['true' if Value else 'false']
           else:
-            Properties[PropertyName] = [Value]
+            Properties[PropertyName] = [Value] if Value != '' else []
 
     yield EDXMLEvent(Properties, EventTypeName)
