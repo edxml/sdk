@@ -1,4 +1,4 @@
-lxml>=3.4
+lxml>=3.8
 sphinxcontrib-napoleon
 python-dateutil
 iso3166
