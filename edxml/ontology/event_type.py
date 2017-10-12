@@ -1544,6 +1544,36 @@ class EventType(MutableMapping):
 
     return self
 
+  def normalizeEventObjects(self, edxmlEvent):
+    """
+
+    Normalizes the object values in the event, resulting in
+    valid EDXML object value strings. Raises an exception
+    in case an object value cannot be normalized.
+
+    Args:
+      edxmlEvent (edxml.EDXMLEvent):
+
+    Raises:
+      EDXMLValidationError
+
+    Returns:
+      edxml.ontology.EventType: The EventType instance
+    """
+
+    for propertyName, objects in edxmlEvent.items():
+
+      propertyObjectType = self._properties[propertyName].GetObjectType()
+
+      try:
+        edxmlEvent[propertyName] = propertyObjectType.GetDataType().NormalizeObjects(objects)
+      except EDXMLValidationError as e:
+        raise EDXMLValidationError(
+          'Invalid value for property %s of event type %s: %s' % (propertyName, self._attr['name'], e)
+        )
+
+    return self
+
   def generateRelaxNG(self, Ontology):
     """
 

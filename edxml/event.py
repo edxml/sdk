@@ -571,34 +571,6 @@ class EDXMLEvent(MutableMapping):
     else:
       return False
 
-  def Normalize(self, edxmlOntology):
-    """
-
-    Normalizes all event properties that require normalization
-    for computing the sticky hash.
-
-    Args:
-      edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
-
-    Returns:
-      EDXMLEvent:
-
-    """
-    eventType = edxmlOntology.GetEventType(self.EventTypeName)
-    if eventType.IsUnique():
-      properties = eventType.GetUniqueProperties()
-    else:
-      properties = eventType.GetProperties()
-    eventProperties = self.GetProperties()
-    for PropertyName in properties.keys():
-      if PropertyName in eventProperties:
-        eventProperties[PropertyName] = properties[PropertyName]\
-          .GetDataType()\
-          .NormalizeObjects(eventProperties[PropertyName])
-
-    self.SetProperties(eventProperties)
-    return self
-
   def ComputeStickyHash(self, edxmlOntology):
     """Computes the sticky hash of the event.
 

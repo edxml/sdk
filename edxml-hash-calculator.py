@@ -47,7 +47,7 @@ class EDXMLEventHasher(EDXMLPullParser):
   def _parsedEvent(self, edxmlEvent):
 
     ontology = self.getOntology()
-    print edxmlEvent.Normalize(ontology).ComputeStickyHash(ontology)
+    print edxmlEvent.ComputeStickyHash(ontology)
 
 
 def PrintHelp():

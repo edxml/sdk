@@ -56,7 +56,7 @@ class EDXMLEventMerger(EDXMLPullFilter):
 
   def _parsedEvent(self, edxmlEvent):
 
-    Hash = edxmlEvent.Normalize().ComputeStickyHash(self.getOntology())
+    Hash = edxmlEvent.ComputeStickyHash(self.getOntology())
 
     if Hash in self.HashBuffer:
       edxmlEvent.MergeWith([self.HashBuffer[Hash]], self.getOntology())

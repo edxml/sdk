@@ -325,7 +325,7 @@ class SimpleEDXMLWriter(object):
     if Merge:
       # We need to compute the sticky hash, check
       # for collisions and merge if needed.
-      Hash = Event.Normalize(self._ontology).ComputeStickyHash(self._ontology)
+      Hash = Event.ComputeStickyHash(self._ontology)
 
       if Hash not in self._event_buffers[EventGroup][Merge]:
         self._event_buffers[EventGroup][Merge][Hash] = [Event]
