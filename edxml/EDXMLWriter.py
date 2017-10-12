@@ -278,6 +278,12 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.EventGroupXMLWriter.next()
 
   def Close(self):
+    if self.__justWroteOntology:
+      # EDXML data streams must contain sequences of pairs of
+      # a <definitions> element followed by a <eventgroups>
+      # element. Apparently, we just wrote a <definitions>
+      # element, so we must open a new eventgroups tag.
+      self.OpenEventGroups()
     if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroup':
       self.CloseEventGroup()
     if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroups':
