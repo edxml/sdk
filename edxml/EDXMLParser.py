@@ -392,6 +392,11 @@ class EDXMLParserBase(object):
             self.__parseEvent(elem)
             self.__currentGroupEventCount += 1
             if self.__currentGroupEventCount > 1:
+              # Delete the event tag, unless it is
+              # the first event tag in the event group.
+              # We do not want to delete the event that
+              # we are currently processing, lxml does
+              # not like that.
               del self.__currentGroupElement[0]
               pass
         continue
