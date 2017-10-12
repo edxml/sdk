@@ -606,35 +606,30 @@ class EDXMLEvent(MutableMapping):
       edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
 
     Note:
-      The object values of the event must have been normalized using
-      :func:`Normalize`.
+      The object values of the event must be valid EDXML object value strings or
+      values that can be cast to valid EDXML object value strings.
 
     Returns:
       str: A hexadecimal string representation of the hash.
 
     """
 
-    ObjectStrings = set()
     eventType = edxmlOntology.GetEventType(self.EventTypeName)
-    propertyObjects = self.GetProperties()
+    objects = self.Properties
+    hashProperties = eventType.GetHashProperties()
 
-    for PropertyName in eventType.GetHashProperties():
-      try:
-        ObjectStrings.update([u'%s:%s' % (PropertyName, value) for value in propertyObjects[PropertyName]])
-      except KeyError:
-        # Event has no objects for this property
-        pass
+    objectStrings = set('%s:%s' % (p, v) for p in objects if p in hashProperties for v in objects[p])
 
-    # Now we compute the SHA1 hash value of the unicode
+    # Now we compute the SHA1 hash value of the byte
     # string representation of the event, and output in hex
 
     if eventType.IsUnique():
       return hashlib.sha1(
-        (u'%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(ObjectStrings)))).encode('utf-8')
+        '%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(objectStrings)))
       ).hexdigest()
     else:
       return hashlib.sha1(
-        (u'%s\n%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(ObjectStrings)), self.Content)).encode('utf-8')
+        '%s\n%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(objectStrings)), self.Content)
       ).hexdigest()
 
 
