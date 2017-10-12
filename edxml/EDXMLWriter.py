@@ -36,10 +36,10 @@ to generate EDXML streams.
 
 """
 
+import edxml
+
 from lxml import etree
 from typing import Dict
-
-import edxml
 from EDXMLBase import *
 
 

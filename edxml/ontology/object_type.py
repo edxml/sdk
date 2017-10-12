@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 
 import re
 import sre_constants
-
 import edxml
+
+from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import DataType
 

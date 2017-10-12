@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+
 import re
 import unicodedata
+import edxml.transcode
 
 from edxml import EventElement
 from lxml import etree
 from lxml.etree import XPathSyntaxError
 from typing import Dict
-
-import edxml.transcode
 
 
 class XmlTranscoder(edxml.transcode.Transcoder):

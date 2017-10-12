@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 
 import re
+import edxml.ontology
 
 from edxml.EDXMLBase import EDXMLValidationError
-import edxml.ontology
+from lxml import etree
 
 
 class EventProperty(object):

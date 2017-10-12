@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from edxml import EDXMLEvent
+
 import edxml.transcode
+
+from edxml import EDXMLEvent
 
 
 class JsonTranscoder(edxml.transcode.Transcoder):

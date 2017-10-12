@@ -32,15 +32,14 @@
 This module offers various classes for incremental parsing of EDXML data streams.
 """
 import os
-from collections import defaultdict
+import edxml
 
+from collections import defaultdict
 from copy import deepcopy
 from lxml import etree
 from typing import Any
 from typing import Dict
 from typing import List
-
-import edxml
 from EDXMLBase import *
 from edxml import ParsedEvent
 

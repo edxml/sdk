@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 
+import edxml
+
+from datetime import datetime
 from lxml import etree
 from typing import Any
 from typing import Dict
-
-import edxml
 
 
 class EventSource(object):

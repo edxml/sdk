@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from decimal import Decimal
 
 import re
+
+from decimal import Decimal
 from lxml import etree
 from lxml.builder import ElementMaker
-
 from edxml.EDXMLBase import EDXMLValidationError
 
 

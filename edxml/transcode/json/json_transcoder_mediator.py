@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from edxml.EDXMLBase import EDXMLError
+
 import edxml.transcode.mediator
+
+from edxml.EDXMLBase import EDXMLError
 
 
 class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):

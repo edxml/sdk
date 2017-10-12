@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from lxml import etree
-
-from typing import Dict
-
 import edxml.ontology
+
+from lxml import etree
+from typing import Dict
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import *
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+
+import edxml
+
 from lxml import etree
 from typing import Any
 from typing import Dict
 
-import edxml
-from edxml.ontology.element import OntologyElement
 
-
-class EventProperty(OntologyElement):
+class EventProperty(object):
 
   EDXML_PROPERTY_NAME_PATTERN = ...
 

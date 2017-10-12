@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import re
 import functools
 import hashlib
 import operator
+
 from collections import MutableMapping
 from collections import defaultdict
 from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
-
-import re
 from edxml.EDXMLBase import EvilCharacterFilter
 
 

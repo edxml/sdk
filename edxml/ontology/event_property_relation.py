@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 
 import re
+import edxml.ontology
 
+from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import EventProperty
-import edxml.ontology
 
 
 class PropertyRelation(object):

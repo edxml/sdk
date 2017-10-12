@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import lxml
-
 import edxml
+
 from lxml import etree
-from typing import List, Dict, Generator, Union, Tuple
+from typing import List, Dict, Union
 
 
 class Ontology(object):

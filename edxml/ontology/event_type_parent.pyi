@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
+
 from lxml import etree
 from typing import Dict
-
-import edxml
 
 
 class EventTypeParent(object):

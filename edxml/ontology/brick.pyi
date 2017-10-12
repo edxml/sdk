@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from typing import List
 
 import edxml
+from typing import List
 
 
 class Brick(object):

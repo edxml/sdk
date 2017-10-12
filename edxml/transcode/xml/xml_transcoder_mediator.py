@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+
 from lxml import etree
 from lxml.etree import XPathSyntaxError
-
 from edxml.EDXMLBase import EDXMLError
 from edxml.transcode import TranscoderMediator
 

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from collections import MutableMapping
+import edxml
 
+from collections import MutableMapping
 from lxml import etree
 from typing import Dict, Union, Generator, List, Set
-
-import edxml
 from edxml.EDXMLBase import EvilCharacterFilter
 
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import edxml
+
 from typing import List, Dict, Iterable
 from lxml import etree
-import edxml
 
 
 class EventType(object):

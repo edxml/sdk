@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-import datetime
-from StringIO import StringIO
 
-import pytz
+import edxml
 import re
-from collections import MutableMapping
 
+from StringIO import StringIO
+from collections import MutableMapping
 from dateutil.parser import parse
 from typing import Dict
 from typing import List
@@ -15,7 +14,6 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from termcolor import colored
 
-import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 
 

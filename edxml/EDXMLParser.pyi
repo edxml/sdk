@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+
+import edxml
 import io
 
 from lxml import etree
 from typing import Union, List
-
-import edxml
 
 
 class EDXMLParserBase(object):

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+
+import edxml
+
 from lxml import etree
 from typing import Any
 from typing import Dict
-
-import edxml
 
 
 class ObjectType(object):

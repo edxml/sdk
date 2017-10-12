@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from edxml.transcode import Transcoder
 
+from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
 from edxml.EDXMLBase import EDXMLBase
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter

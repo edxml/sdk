@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 
 import re
-from time import strftime, gmtime
-
 import edxml
+
+from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
 
 
