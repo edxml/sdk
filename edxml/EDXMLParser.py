@@ -534,7 +534,7 @@ class EDXMLParserBase(object):
           self._ontology.GetEventType(self.__currentEventType).validateEventStructure(event)
 
           # EventType structure checks out alright. Let us check the object values.
-          self._ontology.GetEventType(self.__currentEventType).validateEventObjects()
+          self._ontology.GetEventType(self.__currentEventType).validateEventObjects(event)
 
           # EventType validation did not find the issue. We have
           # no other option than to raise a RelaxNG error containing
