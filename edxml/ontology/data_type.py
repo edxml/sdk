@@ -516,18 +516,19 @@ class DataType(object):
     return element
 
   def NormalizeObjects(self, values):
-    """Normalize object values to unicode strings
+    """Normalize values to valid EDXML object value strings
 
-    Prepares object values for computing sticky hashes, by
-    applying the normalization rules as outlined in the EDXML
-    specification. It takes a list of object values as input
-    and returns a list of normalized unicode strings.
+    Converts each of the provided values into unicode strings
+    that are valid string representations for the data type.
+    It takes an iterable as input and returns a list of
+    normalized unicode strings.
 
     The object values must be appropriate for the data type.
     For example, numerical data types require values that
     can be cast into a number, string data types require
-    string values. When inappropriate values are encountered,
-    an EDXMLValidationError will be raised.
+    values that can be cast to a string. When inappropriate
+    values are encountered, an EDXMLValidationError will be
+    raised.
 
     Args:
       values (List[Any]): The input object values
