@@ -165,7 +165,7 @@ class Concept(object):
     return cls(
       ontology,
       typeElement.attrib['name'],
-      typeElement.attrib('display-name'),
+      typeElement.attrib['display-name'],
       typeElement.attrib['description'],
     )
 
