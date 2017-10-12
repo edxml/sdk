@@ -320,47 +320,66 @@ class DataType(object):
         )
 
     elif splitDataType[0] == 'number':
-      if splitDataType[1] == 'tinyint':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='byte')
-        else:
-          element = e.data(type='unsignedByte')
+      if splitDataType[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint'):
+        if splitDataType[1] == 'tinyint':
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='byte')
+          else:
+            element = e.data(type='unsignedByte')
 
-      elif splitDataType[1] == 'smallint':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='short')
-        else:
-          element = e.data(type='unsignedShort')
+        elif splitDataType[1] == 'smallint':
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='short')
+          else:
+            element = e.data(type='unsignedShort')
 
-      elif splitDataType[1] == 'mediumint':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='short')
-        else:
-          element = e.data(type='unsignedShort')
+        elif splitDataType[1] == 'mediumint':
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='short')
+          else:
+            element = e.data(type='unsignedShort')
 
-      elif splitDataType[1] == 'int':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='int')
-        else:
-          element = e.data(type='unsignedInt')
+        elif splitDataType[1] == 'int':
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='int')
+          else:
+            element = e.data(type='unsignedInt')
 
-      elif splitDataType[1] == 'bigint':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='long')
         else:
-          element = e.data(type='unsignedLong')
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='long')
+          else:
+            element = e.data(type='unsignedLong')
 
-      elif splitDataType[1] == 'float':
         if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='float')
+          # Assure that values are not zero padded, zero is
+          # not signed and no plus sign is present
+          etree.SubElement(element, 'param', name='pattern').text = '(-?[1-9]\d*)|0'
         else:
-          element = e.data(e.param(str(0), name='minInclusive'), type='float')
+          # Assure that values are not zero padded and no
+          # plus sign is present
+          etree.SubElement(element, 'param', name='pattern').text = '([1-9]\d*)|0'
 
-      elif splitDataType[1] == 'double':
-        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
-          element = e.data(type='double')
+      elif splitDataType[1] in ('float', 'double'):
+        if splitDataType[1] == 'float':
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='float')
+          else:
+            element = e.data(e.param(str(0), name='minInclusive'), type='float')
         else:
-          element = e.data(e.param(str(0), name='minInclusive'), type='double')
+          if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+            element = e.data(type='double')
+          else:
+            element = e.data(e.param(str(0), name='minInclusive'), type='double')
+
+        if len(splitDataType) > 2 and splitDataType[2] == 'signed':
+          # Assure that values are in 1.234567E+001 format, no leading
+          # plus sign is present and zero is not signed.
+          etree.SubElement(element, 'param', name='pattern').text = '(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+        else:
+          # Assure that values are in 1.234567E+001 format and not leading
+          # plus sign is present.
+          etree.SubElement(element, 'param', name='pattern').text = '([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
 
       elif splitDataType[1] == 'decimal':
         digits, fractional = splitDataType[2:4]
@@ -369,8 +388,19 @@ class DataType(object):
           e.param(fractional, name='fractionDigits'),
           type='decimal'
         )
-        if len(splitDataType) < 4:
+
+        if len(splitDataType) < 5:
           etree.SubElement(element, 'param', name='minInclusive').text = str(0)
+          # Assure that integer part is not zero padded, fractional part
+          # is padded and no plus sign is present
+          etree.SubElement(element, 'param', name='pattern').text = \
+            '([^+0][^+]*\..{%d})|(0\..{%d})' % (int(fractional), int(fractional))
+        else:
+          # Assure that integer part is not zero padded, fractional part
+          # is padded, zero is unsigned and no plus sign is present
+          etree.SubElement(element, 'param', name='pattern').text = \
+            '(-?[^+0-][^+]*\..{%d})|(-?0\.(?!.*0{%d})\d{%d})|0\.0{%d}' % \
+            (int(fractional), int(fractional), int(fractional), int(fractional))
 
       elif splitDataType[1] == 'hex':
         digits = int(splitDataType[2])
@@ -529,11 +559,19 @@ class DataType(object):
           )
       elif splitDataType[1] in ['float', 'double']:
         try:
-          return [u'%f' % float(value) for value in values]
-        except TypeError:
+          for i, value in enumerate(values):
+            values[i] = u'%.6E' % float(value)
+            mantissa, exponent = values[i].split('E')
+            if mantissa in ('0.000000', '-0.000000'):
+              values[i] = '0.000000E+000'
+            else:
+              values[i] = '%sE%+04d' % (mantissa, int(exponent))
+        except ValueError:
           raise EDXMLValidationError(
             'Invalid floating point value in list: "%s"' % '","'.join([repr(value) for value in values])
           )
+        else:
+          return values
       else:
         # Must be hexadecimal
         try:
