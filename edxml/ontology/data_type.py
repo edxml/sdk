@@ -387,14 +387,14 @@ class DataType(object):
             if numGroups > 1:
               element = e.data(
                 e.param(
-                  '[A-Fa-f\d]{%d}(%s[A-Fa-f\d]{%d}){%d}' % (groupLength, groupSeparator, groupLength, numGroups - 1),
+                  '[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (groupLength, groupSeparator, groupLength, numGroups - 1),
                   name='pattern'
                 ), type='string'
               )
             else:
               element = e.data(
                 e.param(
-                  '[A-Fa-f\d]{%d}' % groupLength,
+                  '[a-f\d]{%d}' % groupLength,
                   name='pattern'
                 ), type='string'
               )
@@ -611,6 +611,8 @@ class DataType(object):
           if Decimal(value) < 0:
             raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
       elif splitDataType[1] == 'hex':
+        if value.lower() != value:
+          raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
         if len(splitDataType) > 3:
           HexSeparator = splitDataType[4]
           if len(HexSeparator) == 0 and len(splitDataType) == 6:
