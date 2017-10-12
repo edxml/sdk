@@ -75,6 +75,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.CurrentEventTypeName = None
     self.CurrentEventSourceUri = None
 
+    self._numEventsRepaired = 0
+    self._numEventsProduced = 0
+
     # Since we use multiple lxml file writers to produce output, passing a file name
     # as output will truncate the output while writing data. Therefore, we only accept
     # files, file-like objects as output.
@@ -111,6 +114,27 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self._ontology.GetEventType(eventTypeName).generateRelaxNG(self._ontology)
       )
     return self.__eventTypeSchemaCache.get(eventTypeName)
+
+  def __generateEventValidationException(self, event, eventElement):
+    try:
+      self._ontology.GetEventType(self.CurrentEventTypeName).validateEventStructure(event)
+
+      # EventType structure checks out alright. Let us check the object values.
+      self._ontology.GetEventType(self.CurrentEventTypeName).validateEventObjects(event)
+
+      # EventType validation did not find the issue. We have
+      # no other option than to raise a RelaxNG error containing
+      # a undoubtedly cryptic error message.
+      # TODO: In lxml 3.8, the error_log has a path attribute, which is an xpath
+      # pointing to the exact location of the problem. Show that in the exception.
+      raise EDXMLValidationError(self.__eventTypeSchema.error_log.last_error.message)
+
+    except EDXMLValidationError as exception:
+      self.InvalidEvents += 1
+      raise EDXMLValidationError, 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
+        etree.tostring(eventElement, pretty_print=True).encode('utf-8'), exception,
+        'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
+        'and begin writing a new event.'), sys.exc_info()[2]
 
   def __OuterXMLSerialiserCoRoutine(self):
     """Coroutine which performs the actual XML serialisation"""
@@ -295,27 +319,24 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     if self.Validate:
       if not self.__eventTypeSchema.validate(eventElement):
-        # Event does not validate. Try to generate a validation
-        # exception that is more readable than the RelaxNG
-        # error is, by validating using the EventType class.
+        # Event does not validate.
         try:
-          self._ontology.GetEventType(self.CurrentEventTypeName).validateEventStructure(event)
+          # Try to repair the event by normalizing the object
+          # values.
+          self._ontology.GetEventType(self.CurrentEventTypeName).normalizeEventObjects(event)
+        except EDXMLValidationError:
+          # Repairing failed.
+          self.__generateEventValidationException(event, eventElement)
+        else:
+          # Repairing succeeded. For the time being, just to be sure,
+          # we validate the event again.
+          # TODO: Remove this second validation once normalizeEventObjects()
+          # is known to yield valid object values in all cases.
+          if not self.__eventTypeSchema.validate(eventElement):
+            self.__generateEventValidationException(event, eventElement)
+          self._numEventsRepaired += 1
 
-          # EventType structure checks out alright. Let us check the object values.
-          self._ontology.GetEventType(self.CurrentEventTypeName).validateEventObjects(event)
-
-          # EventType validation did not find the issue. We have
-          # no other option than to raise a RelaxNG error containing
-          # a undoubtedly cryptic error message.
-          raise EDXMLValidationError(self.__eventTypeSchema.error_log.last_error.message)
-
-        except EDXMLValidationError as exception:
-          self.InvalidEvents += 1
-          raise EDXMLValidationError, 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
-            etree.tostring(eventElement, pretty_print=True).encode('utf-8'), exception,
-            'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
-            'and begin writing a new event.'), sys.exc_info()[2]
-
+    self._numEventsProduced += 1
     self.EventGroupXMLWriter.send(eventElement)
 
     return self
