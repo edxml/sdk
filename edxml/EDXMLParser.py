@@ -89,8 +89,17 @@ class EDXMLParserBase(object):
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
-    self.__validateRootElement()
-    self._close()
+    # Note that, below, we check if an exception occurred.
+    # We only perform the final global document structure
+    # validation when no error occurred, because the validator
+    # may not have consumed all of its input due to this
+    # exception. Python will destruct the parser context before
+    # the exception reaches its handler. Validation might throw
+    # a second exception complaining about the document being
+    # invalid, masking the original problem.
+    if exc_type is None:
+      self.__validateRootElement()
+      self._close()
 
   def _close(self):
     """
