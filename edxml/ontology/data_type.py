@@ -411,12 +411,16 @@ class DataType(object):
     elif splitDataType[0] == 'string':
       length = int(splitDataType[1])
       isUnicode = len(splitDataType) > 3 and 'u' in splitDataType[3]
+      isCaseSensitive = splitDataType[2] == 'cs'
       element = e.data(type='string')
       etree.SubElement(element, 'param', name='minLength').text = '1'
       if length > 0:
         etree.SubElement(element, 'param', name='maxLength').text = str(length)
       if not isUnicode:
-        etree.SubElement(element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+        if isCaseSensitive:
+          etree.SubElement(element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+        else:
+          etree.SubElement(element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
       if RegExp != '[\s\S]*':
         etree.SubElement(element, 'param', name='pattern').text = RegExp
 
@@ -660,6 +664,10 @@ class DataType(object):
       if MaxStringLength > 0:
         if len(value) > MaxStringLength:
           raise EDXMLValidationError("string too long for data type %s: '%s'" % (self.type, value))
+
+      if splitDataType[2] == 'ci':
+        if value.lower() != value:
+          raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
 
       # Check character set of object value
       if len(splitDataType) < 4 or 'u' not in splitDataType[3]:
