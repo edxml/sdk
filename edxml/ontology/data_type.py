@@ -3,6 +3,9 @@
 import re
 
 from decimal import Decimal
+
+from datetime import datetime
+from dateutil.parser import parse
 from lxml import etree
 from lxml.builder import ElementMaker
 from edxml.EDXMLBase import EDXMLValidationError
@@ -526,9 +529,10 @@ class DataType(object):
     The object values must be appropriate for the data type.
     For example, numerical data types require values that
     can be cast into a number, string data types require
-    values that can be cast to a string. When inappropriate
-    values are encountered, an EDXMLValidationError will be
-    raised.
+    values that can be cast to a string. Values of datetime
+    data type may be datetime instances or any string that
+    dateutil can parse. When inappropriate values are
+    encountered, an EDXMLValidationError will be raised.
 
     Args:
       values (List[Any]): The input object values
@@ -542,7 +546,17 @@ class DataType(object):
 
     splitDataType = self.type.split(':')
 
-    if splitDataType[0] == 'number':
+    if splitDataType[0] == 'datetime':
+      for i, value in enumerate(values):
+        if isinstance(value, datetime):
+          values[i] = self.FormatUtcDateTime(value)
+        elif type(value) in (str, unicode):
+          try:
+            values[i] = self.FormatUtcDateTime(parse(value))
+          except Exception:
+            raise EDXMLValidationError('Invalid datetime string: %s' % value)
+      return values
+    elif splitDataType[0] == 'number':
       if splitDataType[1] == 'decimal':
         DecimalPrecision = splitDataType[3]
         try:
