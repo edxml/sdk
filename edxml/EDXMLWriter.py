@@ -142,7 +142,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       if not 'flush' in dir(Writer):
         raise Exception('The installed version of lxml is too old. Please install version >= 3.4.')
       Writer.write_declaration()
-      with Writer.element('edxml'):
+      with Writer.element('edxml', version='3.0.0'):
         Writer.flush()
         try:
           while True:

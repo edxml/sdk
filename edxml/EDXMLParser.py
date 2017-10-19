@@ -379,6 +379,18 @@ class EDXMLParserBase(object):
       if self.__rootElement is None:
         self.__findRootElement(elem)
 
+      if elem.tag == 'edxml':
+        if elem.getparent() is None:
+          versionString = elem.attrib['version']
+          if versionString is None:
+            raise EDXMLValidationError('Root element is missing the version attribute.')
+          version = versionString.split('.')
+          if len(version) != 3:
+            raise EDXMLValidationError('Root element contains invalid version attribute: "%s"' % versionString)
+          if int(version[0]) != 3 or int(version[1]) > 0:
+            raise EDXMLValidationError('Unsupported EDXML version: "%s"' % versionString)
+        continue
+
       if elem.tag == 'event':
         if elem.getparent().tag == 'eventgroup':
           if self.__currentGroupElement is None:
@@ -599,7 +611,7 @@ class EDXMLPullParser(EDXMLParserBase):
     self._elementIterator = etree.iterparse(
       inputFile,
       events=['end'],
-      tag=('event', 'eventgroup', 'ontology'),
+      tag=('edxml', 'ontology', 'eventgroup', 'event'),
       no_network=True, resolve_entities=False
     )
 
