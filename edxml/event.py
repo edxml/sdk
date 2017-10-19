@@ -587,7 +587,7 @@ class EDXMLEvent(MutableMapping):
     """
 
     eventType = edxmlOntology.GetEventType(self.EventTypeName)
-    objects = self.Properties
+    objects = self.GetProperties()
     hashProperties = eventType.GetHashProperties()
 
     objectStrings = set('%s:%s' % (p, v) for p in objects if p in hashProperties for v in objects[p])
