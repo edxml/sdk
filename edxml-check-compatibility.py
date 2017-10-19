@@ -32,7 +32,7 @@
 #
 #
 # 
-#  Python script that checks if the ontologies in de <definitions>
+#  Python script that checks if the ontologies in de <ontology>
 #  sections in all specified EDXML files are compatible.
 
 import sys
@@ -45,8 +45,8 @@ def PrintHelp():
 
   print """
 
-   This utility checks if the ontologies in de <definitions>
-   sections in all specified EDXML files are compatible or not.
+   This utility checks if the ontologies in de <ontology>
+   elements in all specified EDXML files are compatible or not.
    Only compatible EDXML files can be merged. If all files prove
    compatible, the exit status is zero.
 

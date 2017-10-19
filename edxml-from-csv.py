@@ -163,8 +163,8 @@ Parser.getOntology().CreateEventSource(
 if Input == sys.stdin:
   sys.stderr.write('Waiting for CSV data on standard input... (use --help option to get help)\n')
 
-# Instantiate an EDXMLWriter and insert the <definitions> element
-# from the input EDXML file. This duplicates the <definitions>
+# Instantiate an EDXMLWriter and insert the <ontology> element
+# from the input EDXML file. This duplicates the <ontology>
 # element from the input EDXML file, except for the source
 # definitions that we replaced with our own.
 MyWriter = edxml.EDXMLWriter(sys.stdout)

@@ -33,13 +33,13 @@
 # 
 #  This utility reads multiple compatible EDXML files and merges them into
 #  one new EDXML file, which is then printed on standard output. It works in
-#  two passes. First, it compiles and integrates all <definitions> sections
+#  two passes. First, it compiles and integrates all <ontology> elements
 #  from all EDXML files into a EDXMLParser instance. Then, in a second pass,
-#  it outputs the unified <definitions> section and outputs the eventgroups
+#  it outputs the unified <ontology> element and outputs the eventgroups
 #  in each of the EDXML files.
 #
 #  The script demonstrates the use of EDXMLStreamFilter and merging of 
-#  <definitions> sections from multiple EDXML sources.
+#  <ontology> elements from multiple EDXML sources.
 
 import sys
 from xml.sax import make_parser

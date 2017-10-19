@@ -294,7 +294,7 @@ class EDXMLParserBase(object):
     # Since lxml iterparse gives us partial XML
     # trees, elements from which we have not seen
     # its closing tag yet may not be valid yet. So,
-    # we integrate the definitions element into a
+    # we integrate the ontology element into a
     # skeleton tree, yielding a complete, valid
     # EDXML structure.
     skeleton = etree.Element('events', attrib=self.__rootElement.attrib)
@@ -316,19 +316,19 @@ class EDXMLParserBase(object):
       precedingDefinitionsElement = precedingEventGroupsElement.getprevious()
       if precedingDefinitionsElement is None:
         # XML structure is invalid, because there must be
-        # a definitions element preceding the eventgroups element.
+        # an ontology element preceding the eventgroups element.
         raise EDXMLValidationError(
-          "EDXML structure contains a definitions element without a preceding eventgroups element: %s\n" %
+          "EDXML structure contains an ontology element without a preceding eventgroups element: %s\n" %
           (etree.tostring(self.__rootElement))
         )
 
-      # We have one complete pair of a definitions and
-      # an eventgroups tag preceding the current definitions
+      # We have one complete pair of an ontology and
+      # an eventgroups element preceding the current ontology
       # element. We can safely delete them.
       del self.__rootElement[0:2]
 
     # Before parsing the ontology information, we validate
-    # the generic structure of the definitions element, using
+    # the generic structure of the ontology element, using
     # the RelaxNG schema.
     self.__validateDefinitionsElement(ontologyElement)
 
@@ -411,7 +411,7 @@ class EDXMLParserBase(object):
           self.__currentEventSourceUri = None
         continue
 
-      if elem.tag == 'definitions':
+      if elem.tag == 'ontology':
         if elem.getparent().tag == 'events':
           self.__processOntology(elem)
         continue
@@ -599,7 +599,7 @@ class EDXMLPullParser(EDXMLParserBase):
     self._elementIterator = etree.iterparse(
       inputFile,
       events=['end'],
-      tag=('event', 'eventgroup', 'definitions'),
+      tag=('event', 'eventgroup', 'ontology'),
       no_network=True, resolve_entities=False
     )
 
@@ -649,7 +649,7 @@ class EDXMLPushParser(EDXMLParserBase):
     if self._elementIterator is None:
       self.__inputParser = etree.XMLPullParser(
         events=['end'],
-        tag=('event', 'eventgroup', 'definitions'),
+        tag=('event', 'eventgroup', 'ontology'),
         target=self.__feedTarget, no_network=True, resolve_entities=False
       )
 

@@ -150,7 +150,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             Element = (yield)
             if Element is None:
               # Sending None signals the end of the generation of
-              # the definitions element, and the beginning of the
+              # the ontology element, and the beginning of the
               # eventgroups element.
               with Writer.element('eventgroups'):
                 Writer.flush()
@@ -238,11 +238,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     if len(self.ElementStack) > 0: self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
 
     if not self.__justWroteOntology:
-      self.Error('Attempt to output an eventgroups element without a preceding definitions element.')
+      self.Error('Attempt to output an eventgroups element without a preceding ontology element.')
     self.__justWroteOntology = False
 
     # We send None to the outer XML generator, to
-    # hint it that the definitions element has been
+    # hint it that the ontology element has been
     # completed and we want it to generate the
     # eventgroups opening tag.
     self.XMLWriter.send(None)
@@ -280,8 +280,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
   def Close(self):
     if self.__justWroteOntology:
       # EDXML data streams must contain sequences of pairs of
-      # a <definitions> element followed by a <eventgroups>
-      # element. Apparently, we just wrote a <definitions>
+      # an <ontology> element followed by an <eventgroups>
+      # element. Apparently, we just wrote an <ontology>
       # element, so we must open a new eventgroups tag.
       self.OpenEventGroups()
     if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroup':

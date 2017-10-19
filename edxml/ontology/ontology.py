@@ -733,11 +733,11 @@ class Ontology(object):
     return self
 
   @classmethod
-  def Read(cls, definitionsElement):
+  def Read(cls, ontologyElement):
     """
 
     Args:
-      definitionsElement (lxml.etree.Element):
+      ontologyElement (lxml.etree.Element):
 
     Returns:
       edxml.ontology.Ontology: The ontology
@@ -745,7 +745,7 @@ class Ontology(object):
 
     ontology = cls()
 
-    for element in definitionsElement:
+    for element in ontologyElement:
       if element.tag == 'eventtypes':
         ontology.__parseEventTypes(element)
       elif element.tag == 'objecttypes':
@@ -781,7 +781,7 @@ class Ontology(object):
     Updates the ontology using the definitions contained
     in another ontology. The other ontology may be specified
     in the form of an Ontology instance or an lxml Element
-    containing a full definitions element.
+    containing a full ontology element.
 
     Args:
       otherOntology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
@@ -830,13 +830,13 @@ class Ontology(object):
     """
 
     Generates an lxml etree Element representing
-    the EDXML <definitions> tag for this ontology.
+    the EDXML <ontology> tag for this ontology.
 
     Returns:
       etree.Element: The element
 
     """
-    ontologyElement = etree.Element('definitions')
+    ontologyElement = etree.Element('ontology')
     objectTypes     = etree.SubElement(ontologyElement, 'objecttypes')
     concepts        = etree.SubElement(ontologyElement, 'concepts')
     eventTypes      = etree.SubElement(ontologyElement, 'eventtypes')

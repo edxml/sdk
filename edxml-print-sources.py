@@ -58,9 +58,9 @@ class EDXMLParser(XMLFilterBase):
   def endElement(self, name):
 
     if self.SkipEvents:
-      if name == 'definitions':
+      if name == 'ontology':
 
-        # We hit the end of the definitions block,
+        # We hit the end of the ontology element,
         # and we were instructed to skip parsing the
         # event data, so we should abort parsing now.
         raise EDXMLProcessingInterrupted('')

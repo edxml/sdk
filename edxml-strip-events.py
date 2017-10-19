@@ -33,7 +33,7 @@
 #
 # 
 #  Python script that will filter out the event data from EDXML and validate the
-#  ontology in the <definitions> section in the process. The stripped version of
+#  ontology in the <ontology> element in the process. The stripped version of
 #  the input is printed on standard output.
 
 import sys
@@ -47,7 +47,7 @@ def PrintHelp():
   print """
 
    This utility will filter out the event data from EDXML streams and validate the
-   ontology in the <definitions> section in the process. The stripped version of
+   ontology in the <ontology> section in the process. The stripped version of
    the input is printed on standard output.
 
    Options:

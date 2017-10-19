@@ -113,7 +113,7 @@ sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName)
 
 Parser = EDXMLOntologyPullParser()
 
-# Parse the definitions from the specified
+# Parse the ontology from the specified
 # EDXML file.
 
 if Input == sys.stdin:
