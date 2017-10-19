@@ -293,6 +293,13 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       self.CloseEventGroups()
     self.XMLWriter.close()
 
+    if self._numEventsProduced > 0 and (100 * self._numEventsRepaired) / self._numEventsProduced > 10:
+      sys.stderr.write(
+        'WARNING: %d out of %d events were automatically repaired because they were invalid. '
+        'If performance is important, verify your event generator code to produce valid events.\n' %
+        (self._numEventsRepaired, self._numEventsProduced)
+      )
+
   def CloseEventGroup(self):
     """Closes a previously opened event group"""
     if self.ElementStack[-1] != 'eventgroup': self.Error('Unbalanced <eventgroup> tag. Did you forget to call CloseEvent()?')
