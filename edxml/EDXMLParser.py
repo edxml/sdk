@@ -264,7 +264,7 @@ class EDXMLParserBase(object):
     # find this way is the eventgroup tag that
     # contains the current event.
     self.__rootElement = eventElement.getparent()
-    while self.__rootElement.tag != 'events':
+    while self.__rootElement.tag != 'edxml':
       self.__rootElement = self.__rootElement.getparent()
 
   def __validateRootElement(self):
@@ -297,7 +297,7 @@ class EDXMLParserBase(object):
     # we integrate the ontology element into a
     # skeleton tree, yielding a complete, valid
     # EDXML structure.
-    skeleton = etree.Element('events', attrib=self.__rootElement.attrib)
+    skeleton = etree.Element('edxml', attrib=self.__rootElement.attrib)
     skeleton.append(deepcopy(ontologyElement))
     etree.SubElement(skeleton, 'eventgroups')
 
@@ -412,7 +412,7 @@ class EDXMLParserBase(object):
         continue
 
       if elem.tag == 'ontology':
-        if elem.getparent().tag == 'events':
+        if elem.getparent().tag == 'edxml':
           self.__processOntology(elem)
         continue
 
