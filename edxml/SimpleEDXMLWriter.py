@@ -55,6 +55,7 @@ class SimpleEDXMLWriter(object):
     self._ignore_invalid_objects = False
     self._ignore_invalid_events = False
     self._log_invalid_events = False
+    self._log_repaired_events = False
     self._currentSourceUri = None
     self._current_event_type = None
     self._current_event_group_source = None
@@ -151,6 +152,20 @@ class SimpleEDXMLWriter(object):
     self._ignore_invalid_objects = True
     self._ignore_invalid_events = True
     self._log_invalid_events = Warn
+
+    return self
+
+  def LogRepairedEvents(self):
+    """
+
+    Enables logging of events that were invalid and needed
+    to be repaired.
+
+    Returns:
+       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+
+    """
+    self._log_repaired_events = True
 
     return self
 
@@ -407,7 +422,7 @@ class SimpleEDXMLWriter(object):
 
     if not self._writer:
       # We did not create the EDXMLWriter yet.
-      self._writer = EDXMLWriter(self._output, self._validate)
+      self._writer = EDXMLWriter(self._output, self._validate, self._log_repaired_events)
       self._writer.AddOntology(self._ontology)
       self._last_written_ontology_version = self._ontology.GetVersion()
       self._writer.OpenEventGroups()
@@ -472,7 +487,7 @@ class SimpleEDXMLWriter(object):
 
     if not self._writer:
       # We did not create the EDXMLWriter yet.
-      self._writer = EDXMLWriter(self._output, self._validate)
+      self._writer = EDXMLWriter(self._output, self._validate, self._log_repaired_events)
 
     if flush and self._ontology.IsModifiedSince(self._last_written_ontology_version):
       if self._current_event_group_type is not None:

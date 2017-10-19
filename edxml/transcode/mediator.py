@@ -30,6 +30,7 @@ class TranscoderMediator(EDXMLBase):
   _validate_events = True
   _ignore_invalid_objects = False
   _ignore_invalid_events = False
+  _log_repaired_events = False
   _auto_merge_eventtypes = []
   _warn_invalid_events = False
   _defaultSourceUri = None
@@ -85,7 +86,7 @@ class TranscoderMediator(EDXMLBase):
 
     cls._record_transcoders[RecordIdentifier] = RecordTranscoder
 
-  def Debug(self, disableBuffering=True, warnNoTranscoder=True, warnFallback=True):
+  def Debug(self, disableBuffering=True, warnNoTranscoder=True, warnFallback=True, logRepairedEvents=True):
     """
     Enable debugging mode, which prints informative
     messages about transcoding issues, disables
@@ -96,12 +97,15 @@ class TranscoderMediator(EDXMLBase):
     no warnings will be generated when no matching transcoder
     can be found. When warnFallback is set to False, no
     warnings will be generated when an input record is routed
-    to the fallback transcoder.
+    to the fallback transcoder. When logRepairedEvents is set
+    to False, no message will be generated when an invalid
+    event was repaired.
 
     Args:
-      disableBuffering (bool): Disable output buffering
-      warnNoTranscoder (bool): Warn when no transcoder found
-      warnFallback     (bool): Warn when using fallback transcoder
+      disableBuffering  (bool): Disable output buffering
+      warnNoTranscoder  (bool): Warn when no transcoder found
+      warnFallback      (bool): Warn when using fallback transcoder
+      logRepairedEvents (bool): Log events that were repaired
 
     Returns:
       TranscoderMediator:
@@ -110,6 +114,7 @@ class TranscoderMediator(EDXMLBase):
     self._disable_buffering = disableBuffering
     self._warn_no_transcoder = warnNoTranscoder
     self._warn_fallback = warnFallback
+    self._log_repaired_events = logRepairedEvents
 
     return self
 
@@ -312,6 +317,8 @@ class TranscoderMediator(EDXMLBase):
       self._writer.IgnoreInvalidObjects()
     if self._ignore_invalid_events:
       self._writer.IgnoreInvalidEvents(self._warn_invalid_events)
+    if self._log_repaired_events:
+      self._writer.LogRepairedEvents()
     for EventTypeName in self._auto_merge_eventtypes:
       self._writer.AutoMerge(EventTypeName)
 

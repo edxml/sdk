@@ -40,6 +40,7 @@ import edxml
 
 from lxml import etree
 from typing import Dict
+from copy import deepcopy
 from EDXMLBase import *
 
 
@@ -58,8 +59,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
   Args:
     Output (file): File-like output object
     Validate (bool, optional): Enable output validation (True) or not (False)
+    LogRepairedEvents (bool, optional): Log repaired events (True) or not (False)
   """
-  def __init__(self, Output, Validate=True):
+  def __init__(self, Output, Validate=True, LogRepairedEvents=False):
 
     super(EDXMLWriter, self).__init__()
 
@@ -68,6 +70,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
     self.__eventTypeSchema = None        # type: etree.RelaxNG
     self.__justWroteOntology = False
+    self._log_repaired_events = LogRepairedEvents
     self.InvalidEvents = 0
     self.Validate = Validate
     self.Output = Output
@@ -329,7 +332,18 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         try:
           # Try to repair the event by normalizing the object
           # values.
-          self._ontology.GetEventType(self.CurrentEventTypeName).normalizeEventObjects(event)
+          if self._log_repaired_events:
+            originalEvent = deepcopy(event)
+            self._ontology.GetEventType(self.CurrentEventTypeName).normalizeEventObjects(event)
+            for propertyName in originalEvent.keys():
+              if event[propertyName] != originalEvent[propertyName]:
+                sys.stderr.write(
+                  'Repaired invalid property %s of event type %s: %s => %s\n' %
+                  (propertyName, self.CurrentEventTypeName, repr(originalEvent[propertyName]), repr(event[propertyName]))
+                )
+          else:
+            self._ontology.GetEventType(self.CurrentEventTypeName).normalizeEventObjects(event)
+
         except EDXMLValidationError:
           # Repairing failed.
           self.__generateEventValidationException(event, eventElement)
