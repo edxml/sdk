@@ -78,15 +78,17 @@ class Ontology(object):
 
   def _importObjectTypeFromBrick(self, ObjectTypeName):
 
-    objectType = Ontology._bricks['object_types'].GetObjectType(ObjectTypeName)
-    if objectType:
-      self._addObjectType(objectType)
+    if Ontology._bricks['object_types'] is not None:
+      objectType = Ontology._bricks['object_types'].GetObjectType(ObjectTypeName)
+      if objectType:
+        self._addObjectType(objectType)
 
   def _importConceptFromBrick(self, ConceptName):
 
-    brickConcept = Ontology._bricks['concepts'].GetConcept(ConceptName)
-    if brickConcept:
-      self._addConcept(brickConcept)
+    if Ontology._bricks['concepts'] is not None:
+      brickConcept = Ontology._bricks['concepts'].GetConcept(ConceptName)
+      if brickConcept:
+        self._addConcept(brickConcept)
 
   def CreateObjectType(self, Name, DisplayNameSingular = None, DisplayNamePlural = None,
                        Description = None, DataType ='string:0:cs:u'):
