@@ -3,3 +3,6 @@ build/
 dist/
 doc/_build/
 edxml.egg-info/
+.DS_Store
+*/.DS_Store
+.idea/
