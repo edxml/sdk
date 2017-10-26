@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<edxml version="3.0.0"><ontology>
+  <objecttypes>
+    <objecttype compress="false" data-type="number:decimal:12:9:signed" description="objecttype.c" display-name="objecttype c/objecttype c" fuzzy-matching="none" name="objecttype.c" regexp="[\s\S]*"/>
+    <objecttype compress="false" data-type="number:bigint:signed" description="objecttype.b" display-name="objecttype b/objecttype b" fuzzy-matching="none" name="objecttype.b" regexp="[\s\S]*"/>
+    <objecttype compress="false" data-type="string:16:cs" description="objecttype.a" display-name="objecttype a/objecttype a" fuzzy-matching="none" name="objecttype.a" regexp="[\s\S]*"/>
+  </objecttypes>
+  <concepts/>
+  <eventtypes>
+    <eventtype classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" reporter-long="no description available" reporter-short="no description available">
+      <properties>
+        <property description="property f" merge="drop" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
+        <property description="property g" merge="drop" name="property-g" object-type="objecttype.c" similar="" unique="false"/>
+        <property description="property d" merge="drop" name="property-d" object-type="objecttype.b" similar="" unique="false"/>
+        <property description="property e" merge="drop" name="property-e" object-type="objecttype.b" similar="" unique="false"/>
+        <property description="property b" merge="drop" name="property-b" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property c" merge="drop" name="property-c" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property a" merge="drop" name="property-a" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property h" merge="drop" name="property-h" object-type="objecttype.c" similar="" unique="false"/>
+      </properties>
+      <relations/>
+    </eventtype>
+  </eventtypes>
+  <sources>
+    <source date-acquired="00000000" description="no description available" uri="/source-b/"/>
+    <source date-acquired="00000000" description="no description available" uri="/source-a/"/>
+  </sources>
+</ontology>
+<eventgroups><eventgroup source-uri="/source-a/" event-type="eventtype.a"><event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+<event>
+  <properties>
+    <property-f>1.000000000</property-f>
+    <property-g>10.000000000</property-g>
+    <property-d>10</property-d>
+    <property-e>1</property-e>
+    <property-b>value</property-b>
+    <property-c>value</property-c>
+    <property-a>value</property-a>
+    <property-h>100.000000000</property-h>
+  </properties>
+</event>
+</eventgroup></eventgroups></edxml>
