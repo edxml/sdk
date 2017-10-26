@@ -56,8 +56,8 @@ class EDXML2CSV(EDXMLPullParser):
     # Compile a list of output columns,
     # one column per event property.
     PropertyNames = set()
-    for EventTypeName, EventType in self.getOntology().GenerateEventTypes():
-      PropertyNames.update(EventType.keys())
+    for EventTypeName, EventType in self.getOntology().GetEventTypes().iteritems():
+        PropertyNames.update(EventType.GetProperties().keys())
 
     # Filter the available properties using
     # the list of requested output columns.
@@ -82,13 +82,14 @@ class EDXML2CSV(EDXMLPullParser):
     for PropertyName in self.PropertyNames:
       PropertyObjects[PropertyName] = []
 
-    for PropertyName, Objects in edxmlEvent.GetProperties():
+    for PropertyName, Objects in edxmlEvent.GetProperties().iteritems():
       if PropertyName in self.PropertyNames:
         for Object in Objects:
           EscapedValue = Object.replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
           PropertyObjects[PropertyName].append(EscapedValue)
 
-    self.IterateGenerateLines(self.PropertyNames, PropertyObjects, edxmlEvent.GetType() + self.ColumnSeparator, EscapedEventContent, 0)
+        self.IterateGenerateLines(self.PropertyNames, PropertyObjects, edxmlEvent.GetTypeName() + self.ColumnSeparator,
+                                  EscapedEventContent, 0)
 
   def IterateGenerateLines(self, Columns, PropertyObjects, LineStart, LineEnd, StartColumn):
 
