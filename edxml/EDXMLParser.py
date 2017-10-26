@@ -445,9 +445,9 @@ class EDXMLParserBase(object):
 
     eventTypeName = groupElement.attrib.get('event-type', '')
     sourceUri = groupElement.attrib.get('source-uri', '')
-    if not re.match('^[a-z0-9.]+$', eventTypeName):
+    if not re.match(edxml.ontology.EventType.NAME_PATTERN.pattern, eventTypeName):
       raise EDXMLValidationError('An eventgroup tag has an invalid event-type attribute: "%s"' % eventTypeName)
-    if not re.match('^(/[a-z0-9-]+)*/$', sourceUri):
+    if not re.match(edxml.ontology.EventSource.SOURCE_URI_PATTERN.pattern, sourceUri):
       raise EDXMLValidationError('An eventgroup tag has an invalid source-uri attribute: "%s"' % sourceUri)
 
     self.__currentGroupElement = groupElement
