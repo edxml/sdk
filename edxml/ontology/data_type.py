@@ -402,8 +402,8 @@ class DataType(object):
           # Assure that integer part is not zero padded, fractional part
           # is padded, zero is unsigned and no plus sign is present
           etree.SubElement(element, 'param', name='pattern').text = \
-            '(-?[^+0-][^+]*\..{%d})|(-?0\.(?!.*0{%d})\d{%d})|0\.0{%d}' % \
-            (int(fractional), int(fractional), int(fractional), int(fractional))
+            '(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
+            (int(fractional), int(fractional))
 
       elif splitDataType[1] == 'hex':
         digits = int(splitDataType[2])
