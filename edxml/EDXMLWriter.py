@@ -84,7 +84,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # Since we use multiple lxml file writers to produce output, passing a file name
     # as output will truncate the output while writing data. Therefore, we only accept
     # files, file-like objects as output.
-    if 'write' not in dir(self.Output):
+    if not hasattr(self.Output, 'write'):
       raise IOError('The output of the EDXML writer does not look like an open file: ' + repr(self.Output))
 
     # The lxml file writer will raise rather cryptic exceptions when the output is
