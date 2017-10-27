@@ -101,9 +101,9 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       'property-c': [u'value'],
       'property-d': [u'10'],
       'property-e': [u'1'],
-      'property-f': [u'1.000'],
-      'property-g': [u'10.000'],
-      'property-h': [u'100.000']
+      'property-f': [u'1.000000000'],
+      'property-g': [u'10.000000000'],
+      'property-h': [u'100.000000000']
     }
 
     if self.Ordered:
@@ -253,7 +253,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.a', DataType='string:%d:cs' % self.PropertyStringLength)
     ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.b', DataType='number:bigint:signed')
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.c', DataType='number:decimal:10:9:signed')
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.c', DataType='number:decimal:12:9:signed')
 
     eventType = ontology.CreateEventType(self.EventTypeName)
     eventType.CreateProperty('property-a', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrMatch)
