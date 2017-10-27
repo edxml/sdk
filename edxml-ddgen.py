@@ -221,7 +221,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       # Abort event generation.
       return
 
-  def WriteDefinitions(self):
+    def WriteDefinitions(self):
 
     # In case event collisions will be generated, we will adjust
     # the merge strategies of all properties to cause collisions
@@ -251,22 +251,22 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     ontology = edxml.ontology.Ontology()
 
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-a', DataType='string:%d:cs' % self.PropertyStringLength)
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-b', DataType='number:bigint:signed')
-    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '-c', DataType='number:decimal:10:9:signed')
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.a', DataType='string:%d:cs' % self.PropertyStringLength)
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.b', DataType='number:bigint:signed')
+    ontology.CreateObjectType(self.ObjectTypeNamePrefix + '.c', DataType='number:decimal:10:9:signed')
 
     eventType = ontology.CreateEventType(self.EventTypeName)
-    eventType.CreateProperty('property-a', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrMatch)
+    eventType.CreateProperty('property-a', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrMatch)
 
     if self.Ordered:
-      eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrReplace)
+      eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrReplace)
 
-    eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '-a').SetMergeStrategy(DropOrAdd)
-    eventType.CreateProperty('property-d', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrSum)
-    eventType.CreateProperty('property-e', self.ObjectTypeNamePrefix + '-b').SetMergeStrategy(DropOrInc)
-    eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMultiply)
-    eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMin)
-    eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '-c').SetMergeStrategy(DropOrMax)
+    eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrAdd)
+    eventType.CreateProperty('property-d', self.ObjectTypeNamePrefix + '.b').SetMergeStrategy(DropOrSum)
+    eventType.CreateProperty('property-e', self.ObjectTypeNamePrefix + '.b').SetMergeStrategy(DropOrInc)
+    eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMultiply)
+    eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMin)
+    eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMax)
 
     for uri in self.EventSourceUriList:
       ontology.CreateEventSource(uri)
@@ -332,7 +332,7 @@ def PrintHelp():
                        desired name as its argument.
 
      --objecttype-name By default, all generated objects are of object types that have names
-                       prefixed with 'objecttype' (for instance 'objecttype-a'). This option allows
+                       prefixed with 'objecttype' (for instance 'objecttype.a'). This option allows
                        the default object type name prefix to be overridden, which may be
                        useful when running multiple instances in parallel. The option expects the
                        desired object type name prefix as its argument.
@@ -349,9 +349,10 @@ def PrintHelp():
 
    Example:
 
-     edxml-ddgen.py -r 1000 -c 25 --with-content 1024 --eventtype-name 'my-custom-eventtype'
+     edxml-ddgen.py -r 1000 -c 25 --with-content 1024 --eventtype-name 'my.custom.eventtype'
 
 """
+
 
 CurrOption = 1
 EventGroupSize = 0
