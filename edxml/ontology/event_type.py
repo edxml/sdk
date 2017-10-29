@@ -765,6 +765,16 @@ class EventType(MutableMapping):
       # placeholders themselves, with and without brackets included.
       placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
 
+      # Format object values based on their data type to make them
+      # more human friendly.
+      for propertyName, values in eventObjectValues.items():
+        if self[propertyName].GetDataType().GetFamily() == 'number':
+          if self[propertyName].GetDataType().GetSplit()[1] in ('float', 'double'):
+            # Floating point numbers are normalized in scientific notation,
+            # here we format it to whatever is the most suitable for the value.
+            for index, value in enumerate(values):
+              eventObjectValues[propertyName][index] = '%f' % float(value)
+
       for placeholder in placeholders:
 
         objectStrings = []
