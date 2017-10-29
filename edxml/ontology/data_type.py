@@ -283,7 +283,7 @@ class DataType(object):
     Returns:
       List[str]:
     """
-    return self.type.split(':')[0]
+    return self.type.split(':')
 
   def IsNumerical(self):
     """
