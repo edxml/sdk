@@ -552,7 +552,7 @@ class EDXMLParserBase(object):
           # EventType validation did not find the issue. We have
           # no other option than to raise a RelaxNG error containing
           # a undoubtedly cryptic error message.
-          raise EDXMLValidationError(self.__eventTypeSchema.error_log.last_error.message)
+          raise EDXMLValidationError(self.__eventTypeSchema.error_log)
 
         except EDXMLValidationError as exception:
           schema = self._ontology.GetEventType(self.__currentEventType).generateRelaxNG(self._ontology)
