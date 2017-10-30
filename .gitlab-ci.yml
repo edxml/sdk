@@ -1,0 +1,11 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - test
+
+test1:
+  stage: test
+  script:
+  - pip install .
+  - pytest
