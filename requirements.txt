@@ -5,3 +5,4 @@ iso3166
 pytz
 termcolor
 typing
+pytest
