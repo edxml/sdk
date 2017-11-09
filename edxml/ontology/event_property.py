@@ -103,7 +103,7 @@ class EventProperty(object):
     """
     return self._attr['merge']
 
-  def GetEntityConfidence(self):
+  def GetConceptConfidence(self):
     """
 
     Returns the concept identification confidence.
