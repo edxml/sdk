@@ -4,7 +4,7 @@ import edxml
 import io
 
 from lxml import etree
-from typing import Union, List
+from typing import Union, List, Type
 
 
 class EDXMLParserBase(object):
@@ -22,7 +22,7 @@ class EDXMLParserBase(object):
 
   def setEventSourceHandler(self, eventSourcePatterns: List[str], handler: callable) -> 'EDXMLParserBase': ...
 
-  def setCustomEventClass(self, eventClass: etree.ElementBase) -> 'EDXMLParserBase': ...
+  def setCustomEventClass(self, eventClass: Type[etree.ElementBase]) -> 'EDXMLParserBase': ...
 
   def getEventCounter(self) -> int: ...
 
