@@ -100,7 +100,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       'property-a': [u'value'],
       'property-c': [u'value'],
       'property-d': [u'10'],
-      'property-e': [u'1'],
       'property-f': [u'1.000000000'],
       'property-g': [u'10.000000000'],
       'property-h': [u'100.000000000']
@@ -221,7 +220,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       # Abort event generation.
       return
 
-    def WriteDefinitions(self):
+  def WriteDefinitions(self):
 
     # In case event collisions will be generated, we will adjust
     # the merge strategies of all properties to cause collisions
@@ -238,7 +237,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrMultiply = 'multiply'
       DropOrMin      = 'min'
       DropOrMax      = 'max'
-      DropOrInc      = 'increment'
     else:
       DropOrMatch    = 'drop'
       DropOrReplace  = 'drop'
@@ -247,7 +245,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrMultiply = 'drop'
       DropOrMin      = 'drop'
       DropOrMax      = 'drop'
-      DropOrInc      = 'drop'
 
     ontology = edxml.ontology.Ontology()
 
@@ -263,7 +260,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrAdd)
     eventType.CreateProperty('property-d', self.ObjectTypeNamePrefix + '.b').SetMergeStrategy(DropOrSum)
-    eventType.CreateProperty('property-e', self.ObjectTypeNamePrefix + '.b').SetMergeStrategy(DropOrInc)
     eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMultiply)
     eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMin)
     eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMax)
@@ -352,7 +348,6 @@ def PrintHelp():
      edxml-ddgen.py -r 1000 -c 25 --with-content 1024 --eventtype-name 'my.custom.eventtype'
 
 """
-
 
 CurrOption = 1
 EventGroupSize = 0

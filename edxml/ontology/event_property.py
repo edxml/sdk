@@ -22,8 +22,6 @@ class EventProperty(object):
   """Merge strategy 'add'"""
   MERGE_REPLACE = 'replace'
   """Merge strategy 'replace'"""
-  MERGE_INC = 'increment'
-  """Merge strategy 'increment'"""
   MERGE_SUM = 'sum'
   """Merge strategy 'sum'"""
   MERGE_MULTIPLY = 'multiply'
@@ -415,17 +413,6 @@ class EventProperty(object):
     self._setAttr('merge', 'max')
     return self
 
-  def MergeIncrement(self):
-    """
-
-    Set merge strategy to 'increment'.
-
-    Returns:
-      edxml.ontology.EventProperty: The EventProperty instance
-    """
-    self._attr['merge'] = 'increment'
-    return self
-
   def MergeSum(self):
     """
 
@@ -480,7 +467,7 @@ class EventProperty(object):
         'Property "%s" has an invalid concept naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
       )
 
-    if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'increment', 'sum', 'multiply', 'match'):
+    if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'sum', 'multiply', 'match'):
       raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self._attr['merge'])
 
     return self

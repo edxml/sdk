@@ -461,7 +461,7 @@ class EDXMLEvent(MutableMapping):
 
       MergeStrategy = properties[PropertyName].GetMergeStrategy()
 
-      if MergeStrategy in ('min', 'max', 'increment', 'sum', 'multiply'):
+      if MergeStrategy in ('min', 'max', 'sum', 'multiply'):
         # We have a merge strategy that requires us to cast
         # the object values into numbers.
         SplitDataType = properties[PropertyName].GetDataType().GetSplit()
