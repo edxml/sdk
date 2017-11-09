@@ -365,7 +365,9 @@ class EDXMLParserBase(object):
   def _parsedOntology(self, edxmlOntology):
     """
     Callback that is invoked when the ontology has
-    been parsed.
+    been updated from input data. The passed ontology
+    contains the result of merging all ontology information
+    that has been parsed so far.
 
     Args:
       edxmlOntology (edxml.ontology.Ontology): The parsed ontology
