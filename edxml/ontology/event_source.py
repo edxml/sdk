@@ -45,6 +45,16 @@ class EventSource(object):
     """
     return self._attr['uri']
 
+  def GetDescription(self):
+    """
+
+    Returns the source description
+
+    Returns:
+      str:
+    """
+    return self._attr['description']
+
   def GetAcquisitionDateString(self):
     """
 
