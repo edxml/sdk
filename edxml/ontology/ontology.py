@@ -789,7 +789,7 @@ class Ontology(object):
       otherOntology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
       validate (bool): Validate the resulting ontology
 
-    Raises;
+    Raises:
       EDXMLValidationError
 
     Returns:
