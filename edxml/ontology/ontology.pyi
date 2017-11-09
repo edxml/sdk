@@ -3,7 +3,7 @@ import lxml
 import edxml
 
 from lxml import etree
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Type
 
 
 class Ontology(object):
@@ -28,7 +28,11 @@ class Ontology(object):
   def IsModifiedSince(self, version: int) -> bool: ...
 
   @classmethod
-  def RegisterBrick(cls, ontologyBrick: edxml.ontology.Brick): ...
+  def RegisterBrick(cls, ontologyBrick: Type[edxml.ontology.Brick]): ...
+
+  def _importObjectTypeFromBrick(self, ObjectTypeName: str): ...
+
+  def _importConceptFromBrick(self, ConceptName: str): ...
 
   def CreateObjectType(self, Name: str, DisplayNameSingular: str = None, DisplayNamePlural: str = None, Description: str = None, DataType: str ='string:0:cs:u') -> edxml.ontology.ObjectType: ...
 
