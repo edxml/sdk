@@ -461,7 +461,7 @@ class EDXMLEvent(MutableMapping):
 
       MergeStrategy = properties[PropertyName].GetMergeStrategy()
 
-      if MergeStrategy in ('min', 'max', 'sum', 'multiply'):
+      if MergeStrategy in ('min', 'max', 'multiply'):
         # We have a merge strategy that requires us to cast
         # the object values into numbers.
         SplitDataType = properties[PropertyName].GetDataType().GetSplit()
@@ -497,21 +497,6 @@ class EDXMLEvent(MutableMapping):
               Target[PropertyName] = {str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
             elif SplitDataType[1] != 'hex':
               Target[PropertyName] = {str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
-
-          elif MergeStrategy == 'sum':
-            # When hex is not in number family anymore, replace the below line with elif SplitDataType[0] == 'number':
-            if SplitDataType[1] in ['float', 'double']:
-              Target[PropertyName] = {
-                str(float(next(iter(Target[PropertyName]))) + sum(float(Value) for Value in Source[PropertyName]))
-              }
-            elif SplitDataType[1] == 'decimal':
-              Target[PropertyName] = {
-                str(Decimal(next(iter(Target[PropertyName]))) + sum(Decimal(Value) for Value in Source[PropertyName]))
-              }
-            elif SplitDataType[1] != 'hex':
-              Target[PropertyName] = {
-                str(int(next(iter(Target[PropertyName]))) + sum(int(Value) for Value in Source[PropertyName]))
-              }
 
           elif MergeStrategy == 'multiply':
             if SplitDataType[1] in ('float', 'double'):

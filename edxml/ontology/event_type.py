@@ -1429,7 +1429,7 @@ class EventType(MutableMapping):
     """
     Singular = {}
     for PropertyName, Property in self._properties.items():
-      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'sum', 'multiply', 'replace'):
+      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'multiply', 'replace'):
         Singular[PropertyName] = True
 
     if self._parent:
@@ -1446,7 +1446,7 @@ class EventType(MutableMapping):
     """
     Singular = {}
     for PropertyName, Property in self._properties.items():
-      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'sum', 'multiply'):
+      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'multiply'):
         Singular[PropertyName] = True
 
     return Singular.keys()

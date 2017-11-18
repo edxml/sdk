@@ -99,7 +99,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     PropertyObjects = {
       'property-a': [u'value'],
       'property-c': [u'value'],
-      'property-d': [u'10'],
       'property-f': [u'1.000000000'],
       'property-g': [u'10.000000000'],
       'property-h': [u'100.000000000']
@@ -154,9 +153,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
           # A random string from a fixed set
           PropertyObjects['property-c'] = [random.choice(AddPropertyValues)]
-
-          # Random values in range [-10,10]
-          PropertyObjects['property-d'] = [unicode(random.randint(-100, 100))]
 
           # Random values near 1.0
           PropertyObjects['property-f'] = [u'%1.9f' % (1 + (random.random() - 0.5)/1000)]
@@ -226,14 +222,13 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     # the merge strategies of all properties to cause collisions
     # requiring all possible merge strategies to be applied in
     # order to merge them. The event merges effectively compute
-    # the sum, product, minimum value, maximum value etc from
+    # the product, minimum value, maximum value etc from
     # the individual objects in all input events.
 
     if self.GenerateCollisions:
       DropOrMatch    = 'match'
       DropOrReplace  = 'replace'
       DropOrAdd      = 'add'
-      DropOrSum      = 'sum'
       DropOrMultiply = 'multiply'
       DropOrMin      = 'min'
       DropOrMax      = 'max'
@@ -241,7 +236,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrMatch    = 'drop'
       DropOrReplace  = 'drop'
       DropOrAdd      = 'drop'
-      DropOrSum      = 'drop'
       DropOrMultiply = 'drop'
       DropOrMin      = 'drop'
       DropOrMax      = 'drop'
@@ -259,7 +253,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrReplace)
 
     eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrAdd)
-    eventType.CreateProperty('property-d', self.ObjectTypeNamePrefix + '.b').SetMergeStrategy(DropOrSum)
     eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMultiply)
     eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMin)
     eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMax)
