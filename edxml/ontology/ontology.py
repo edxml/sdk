@@ -627,9 +627,9 @@ class Ontology(object):
     # configured property merge strategies
     for eventTypeName, eventType in self._event_types.iteritems():
       for propertyName, eventProperty in eventType.iteritems():
-        if eventProperty.GetMergeStrategy() in ('min', 'max', 'multiply'):
+        if eventProperty.GetMergeStrategy() in ('min', 'max'):
           if not eventProperty.GetDataType().IsNumerical():
-            if eventProperty.GetMergeStrategy() not in ('min', 'max') or not eventProperty.GetDataType().IsDateTime():
+            if not eventProperty.GetDataType().IsDateTime():
               raise EDXMLValidationError(
                   'Property "%s" of event type "%s" has data type %s, which cannot be used with merge strategy %s.'
                   % (propertyName, eventTypeName, eventProperty.GetDataType(), eventProperty.GetMergeStrategy())

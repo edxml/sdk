@@ -99,7 +99,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     PropertyObjects = {
       'property-a': [u'value'],
       'property-c': [u'value'],
-      'property-f': [u'1.000000000'],
       'property-g': [u'10.000000000'],
       'property-h': [u'100.000000000']
     }
@@ -153,9 +152,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
           # A random string from a fixed set
           PropertyObjects['property-c'] = [random.choice(AddPropertyValues)]
-
-          # Random values near 1.0
-          PropertyObjects['property-f'] = [u'%1.9f' % (1 + (random.random() - 0.5)/1000)]
 
           for Property in ['g', 'h']:
             # Random values in range [-0.5,0.5]
@@ -229,14 +225,12 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       DropOrMatch    = 'match'
       DropOrReplace  = 'replace'
       DropOrAdd      = 'add'
-      DropOrMultiply = 'multiply'
       DropOrMin      = 'min'
       DropOrMax      = 'max'
     else:
       DropOrMatch    = 'drop'
       DropOrReplace  = 'drop'
       DropOrAdd      = 'drop'
-      DropOrMultiply = 'drop'
       DropOrMin      = 'drop'
       DropOrMax      = 'drop'
 
@@ -253,7 +247,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
       eventType.CreateProperty('property-b', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrReplace)
 
     eventType.CreateProperty('property-c', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrAdd)
-    eventType.CreateProperty('property-f', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMultiply)
     eventType.CreateProperty('property-g', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMin)
     eventType.CreateProperty('property-h', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMax)
 
