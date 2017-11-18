@@ -751,7 +751,10 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
       return self.__properties
 
   def GetContent(self):
-    return self.text
+    try:
+      return self.find('content').text
+    except AttributeError:
+      return ''
 
   def GetExplicitParents(self):
     try:
