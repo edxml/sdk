@@ -15,9 +15,13 @@ class ObjectType(object):
   def __init__(self, Ontology: edxml.ontology.Ontology, Name: str, DisplayName: str = None, Description: str = None,
                DataType: str ='string:0:cs:u', Compress: bool = False, FuzzyMatching: str ='none',
                Regexp: str ='[\s\S]*') -> None:
-    self._attr = ... # type: Dict[str, Any]
 
-  def _childModifiedCallback(self, child) -> 'ObjectType': ...
+    self._attr =     ... # type: Dict[str, Any]
+    self._ontology = ... # type: edxml.ontology.Ontology
+
+  def _childModifiedCallback(self) -> 'ObjectType': ...
+
+  def _setAttr(self, key: str, value): ...
 
   def GetName(self) -> str: ...
 

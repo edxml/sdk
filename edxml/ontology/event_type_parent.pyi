@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import edxml
 from lxml import etree
 from typing import Dict
 
@@ -8,14 +8,19 @@ class EventTypeParent(object):
 
   PROPERTY_MAP_PATTERN = ...
 
-  def __init__(self, ParentEventTypeName: str, PropertyMap: str, ParentDescription: str = None,
-               SiblingsDescription: str = None) -> None:
+  def __init__(self, ChildEventType: edxml.ontology.EventType, ParentEventTypeName: str, PropertyMap: str,
+               ParentDescription: str = None, SiblingsDescription: str = None) -> None:
 
     self._attr = ...
+    self._childEventType = ... # type: edxml.ontology.EventType
 
   @classmethod
-  def Create(cls, ParentEventTypeName: str, PropertyMap: Dict[str, str], ParentDescription: str = None,
-               SiblingsDescription: str = None) -> 'EventTypeParent': ...
+  def Create(cls, ChildEventType: edxml.ontology.EventType, ParentEventTypeName: str, PropertyMap: Dict[str, str],
+             ParentDescription: str = None, SiblingsDescription: str = None) -> 'EventTypeParent': ...
+
+  def _childModifiedCallback(self) -> 'EventTypeParent': ...
+
+  def _setAttr(self, key: str, value): ...
 
   def SetParentDescription(self, Description: str) -> 'EventTypeParent': ...
 
@@ -34,7 +39,7 @@ class EventTypeParent(object):
   def Validate(self) -> 'EventTypeParent': ...
 
   @classmethod
-  def Read(cls, parentElement: etree.Element) -> 'EventTypeParent': ...
+  def Read(cls, parentElement: etree.Element, childEventType: edxml.ontology.EventType) -> 'EventTypeParent': ...
 
   def Update(self, parent: 'EventTypeParent') -> 'EventTypeParent': ...
 

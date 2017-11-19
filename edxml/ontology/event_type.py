@@ -59,11 +59,14 @@ class EventType(MutableMapping):
     self.__cachedHashProperties = None    # type: Dict[str, edxml.ontology.EventProperty]
 
   def __delitem__(self, propertyName):
-    self._properties.pop(propertyName, None)
+    if propertyName in self._properties:
+      del self._properties[propertyName]
+      self._childModifiedCallback()
 
   def __setitem__(self, propertyName, propertyInstance):
     if isinstance(propertyInstance, edxml.ontology.EventProperty):
       self._properties[propertyName] = propertyInstance
+      self._childModifiedCallback()
     else:
       raise TypeError('Not an event property: %s' % repr(propertyInstance))
 
@@ -107,6 +110,11 @@ class EventType(MutableMapping):
     self.__cachedHashProperties = None
     self._ontology._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetName(self):
     """
@@ -339,7 +347,6 @@ class EventType(MutableMapping):
       edxml.ontology.EventType: The EventType instance
     """
     self._properties[Property.GetName()] = Property.Validate()
-
     self._childModifiedCallback()
     return self
 
@@ -360,7 +367,10 @@ class EventType(MutableMapping):
       edxml.ontology.EventType: The EventType instance
 
     """
-    self._properties.pop(propertyName, None)
+    if propertyName in self._properties:
+      del self._properties[propertyName]
+      self._childModifiedCallback()
+
     return self
 
   def CreateRelation(self, Source, Target, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
@@ -431,7 +441,7 @@ class EventType(MutableMapping):
     """
 
     if self._parentDescription:
-      self._parent = edxml.ontology.EventTypeParent(Parent.GetName(), '', self._parentDescription, SiblingsDescription)
+      self._parent = edxml.ontology.EventTypeParent(self, Parent.GetName(), '', self._parentDescription, SiblingsDescription)
     else:
       raise Exception('You must call IsParent() on the parent before calling MakeChildren().')
 
@@ -485,9 +495,7 @@ class EventType(MutableMapping):
       edxml.ontology.EventType: The EventType instance
     """
 
-    self._attr['description'] = str(Description)
-
-    self._childModifiedCallback()
+    self._setAttr('description', str(Description))
     return self
 
   def SetParent(self, Parent):
@@ -524,11 +532,9 @@ class EventType(MutableMapping):
     """
     if ClassName:
       if self._attr['classlist'] == '':
-        self._attr['classlist'] = ClassName
+        self._setAttr('classlist', ClassName)
       else:
-        self._attr['classlist'] = ','.join(list(set(self._attr['classlist'].split(',') + [ClassName])))
-
-    self._childModifiedCallback()
+        self._setAttr('classlist', ','.join(list(set(self._attr['classlist'].split(',') + [ClassName]))))
     return self
 
   def SetClasses(self, ClassNames):
@@ -544,9 +550,7 @@ class EventType(MutableMapping):
     Returns:
       edxml.ontology.EventType: The EventType instance
     """
-    self._attr['classlist'] = ','.join(list(set(ClassNames)))
-
-    self._childModifiedCallback()
+    self._setAttr('classlist', ','.join(list(set(ClassNames))))
     return self
 
   def SetName(self, EventTypeName):
@@ -560,9 +564,7 @@ class EventType(MutableMapping):
     Returns:
       edxml.ontology.EventType: The EventType instance
     """
-    self._attr['name'] = EventTypeName
-
-    self._childModifiedCallback()
+    self._setAttr('name', EventTypeName)
     return self
 
   def SetDisplayName(self, Singular, Plural = None):
@@ -582,9 +584,7 @@ class EventType(MutableMapping):
 
     if Plural is None:
       Plural = '%ss' % Singular
-    self._attr['display-name'] = '%s/%s' % (Singular, Plural)
-
-    self._childModifiedCallback()
+    self._setAttr('display-name', '%s/%s' % (Singular, Plural))
     return self
 
   def SetReporterShort(self, Reporter):
@@ -600,9 +600,7 @@ class EventType(MutableMapping):
     """
 
     if Reporter:
-      self._attr['reporter-short'] = Reporter
-
-    self._childModifiedCallback()
+      self._setAttr('reporter-short', Reporter)
     return self
 
   def SetReporterLong(self, Reporter):
@@ -619,9 +617,7 @@ class EventType(MutableMapping):
     """
 
     if Reporter:
-      self._attr['reporter-long'] = Reporter.replace('\n', '[[NEWPAR:]]')
-
-    self._childModifiedCallback()
+      self._setAttr('reporter-long', Reporter.replace('\n', '[[NEWPAR:]]'))
     return self
 
   def EvaluateReporterString(self, edxmlEvent, short=False, capitalize=True, colorize=False):
@@ -1337,7 +1333,7 @@ class EventType(MutableMapping):
 
     for element in typeElement:
       if element.tag == 'parent':
-        eventType.SetParent(edxml.ontology.EventTypeParent.Read(element))
+        eventType.SetParent(edxml.ontology.EventTypeParent.Read(element, eventType))
       elif element.tag == 'properties':
         for propertyElement in element:
           eventType.AddProperty(edxml.ontology.EventProperty.Read(propertyElement, eventType))
@@ -1393,7 +1389,6 @@ class EventType(MutableMapping):
     for propertyName, eventProperty in self.GetProperties().items():
       eventProperty.Update(eventType[propertyName])
 
-    self._childModifiedCallback()
     self.Validate()
 
     return self

@@ -15,9 +15,12 @@ class EventSource(object):
 
   def __init__(self, Ontology: edxml.ontology.Ontology, Uri: str, Description: str = 'no description available', AcquisitionDate: str = '00000000') -> None:
 
-    self._attr = ... # type: Dict[str, Any]
+    self._attr = ...     # type: Dict[str, Any]
+    self._ontology = ... # type: edxml.ontology.Ontology
 
-  def _childModifiedCallback(self, child) -> 'EventSource': ...
+  def _childModifiedCallback(self) -> 'EventSource': ...
+
+  def _setAttr(self, key: str, value): ...
 
   def GetUri(self) -> str: ...
 

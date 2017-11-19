@@ -13,9 +13,12 @@ class PropertyRelation(object):
                Dest: edxml.ontology.EventProperty, Description: str, TypeClass: str,
                TypePredicate: str, Confidence: float = 1.0, Directed: bool = True) -> None:
 
-    self._attr = ... # type: Dict[str, Any]
+    self._attr = ...      # type: Dict[str, Any]
+    self._eventType = ... # type: edxml.ontology.EventType
 
-  def _childModifiedCallback(self, child) -> 'PropertyRelation': ...
+  def _childModifiedCallback(self) -> 'PropertyRelation': ...
+
+  def _setAttr(self, key: str, value): ...
 
   def GetSource(self) -> str: ...
 

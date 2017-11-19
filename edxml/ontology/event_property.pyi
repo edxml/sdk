@@ -34,11 +34,13 @@ class EventProperty(object):
                Description: str = None, DefinesEntity: bool = False,
                EntityConfidence: float = 0, Enp: int = 128, Unique: bool = False, Merge: str ='drop', Similar: str ='') -> None:
 
-    self._attr = ... # type: Dict[str, Any]
-    self._eventType = eventType  # type: edxml.ontology.EventType
-    self._objectType = ObjectType  # type: edxml.ontology.ObjectType
+    self._attr = ...       # type: Dict[str, Any]
+    self._eventType = ...  # type: edxml.ontology.EventType
+    self._objectType = ... # type: edxml.ontology.ObjectType
 
-  #def _childModifiedCallback(self, child) -> 'EventProperty': ...
+  def _childModifiedCallback(self) -> 'EventProperty': ...
+
+  def _setAttr(self, key: str, value): ...
 
   def GetName(self) -> str: ...
 

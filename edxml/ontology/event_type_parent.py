@@ -14,7 +14,7 @@ class EventTypeParent(object):
 
   PROPERTY_MAP_PATTERN = re.compile("^[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*$")
 
-  def __init__(self, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
+  def __init__(self, ChildEventType, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
 
     self._attr = {
       'eventtype':          ParentEventTypeName,
@@ -23,12 +23,20 @@ class EventTypeParent(object):
       'siblings-description': SiblingsDescription or 'sharing'
     }
 
+    self._childEventType = ChildEventType
+
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._childEventType._childModifiedCallback()
     return self
 
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
+
   @classmethod
-  def Create(cls, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
+  def Create(cls, ChildEventType, ParentEventTypeName, PropertyMap, ParentDescription = None, SiblingsDescription = None):
     """
 
     Creates a new event type parent. The PropertyMap argument is a dictionary
@@ -47,6 +55,7 @@ class EventTypeParent(object):
        as the child.
 
     Args:
+      ChildEventType (EventType): The child event type
       ParentEventTypeName (str): Name of the parent event type
       PropertyMap (Dict[str, str]): Property map
       ParentDescription (Optional[str]): The EDXML parent-description attribute
@@ -56,6 +65,7 @@ class EventTypeParent(object):
       edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
     return cls(
+      ChildEventType,
       ParentEventTypeName,
       ','.join(['%s:%s' % (Child, Parent) for Child, Parent in PropertyMap.items()]),
       ParentDescription,
@@ -72,7 +82,7 @@ class EventTypeParent(object):
     Returns:
       edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
-    self._attr['parent-description'] = Description
+    self._setAttr('parent-description', Description)
 
     return self
 
@@ -87,7 +97,7 @@ class EventTypeParent(object):
     Returns:
       edxml.ontology.EventTypeParent: The EventTypeParent instance
     """
-    self._attr['siblings-description'] = Description
+    self._setAttr('siblings-description', Description)
 
     return self
 
@@ -114,7 +124,7 @@ class EventTypeParent(object):
       current = {}
 
     current[ChildPropertyName] = ParentPropertyName
-    self._attr['propertymap'] = ','.join(['%s:%s' % (Child, Parent) for Child, Parent in current.items()])
+    self._setAttr('propertymap', ','.join(['%s:%s' % (Child, Parent) for Child, Parent in current.items()]))
     return self
 
   def GetEventType(self):
@@ -206,8 +216,9 @@ class EventTypeParent(object):
     return self
 
   @classmethod
-  def Read(cls, parentElement):
+  def Read(cls, parentElement, childEventType):
     return cls(
+      childEventType,
       parentElement.attrib['eventtype'],
       parentElement.attrib['propertymap'],
       parentElement.attrib['parent-description'],

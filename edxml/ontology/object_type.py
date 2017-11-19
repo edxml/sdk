@@ -34,7 +34,13 @@ class ObjectType(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._ontology._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetName(self):
     """
@@ -148,7 +154,7 @@ class ObjectType(object):
       edxml.ontology.ObjectType: The ObjectType instance
     """
 
-    self._attr['description'] = str(Description)
+    self._setAttr('description', str(Description))
     return self
 
   def SetDataType(self, dataType):
@@ -162,8 +168,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['data-type'] = str(dataType)
-
+    self._setAttr('data-type', str(dataType))
     return self
 
   def SetDisplayName(self, Singular, Plural = None):
@@ -183,8 +188,8 @@ class ObjectType(object):
 
     if Plural is None:
       Plural = '%ss' % Singular
-    self._attr['display-name'] = '%s/%s' % (Singular, Plural)
 
+    self._setAttr('display-name', '%s/%s' % (Singular, Plural))
     return self
 
   def SetRegexp(self, Pattern):
@@ -199,8 +204,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['regexp'] = str(Pattern)
-
+    self._setAttr('regexp', str(Pattern))
     return self
 
   def SetFuzzyMatchingAttribute(self, attribute):
@@ -218,7 +222,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['fuzzy-matching'] = attribute
+    self._setAttr('fuzzy-matching', attribute)
     return self
 
   def FuzzyMatchHead(self, Length):
@@ -233,8 +237,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['fuzzy-matching'] = '[%d:]' % int(Length)
-
+    self._setAttr('fuzzy-matching', '[%d:]' % int(Length))
     return self
 
   def FuzzyMatchTail(self, Length):
@@ -249,8 +252,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['fuzzy-matching'] = '[:%d]' % int(Length)
-
+    self._setAttr('fuzzy-matching', '[:%d]' % int(Length))
     return self
 
   def FuzzyMatchSubstring(self, Pattern):
@@ -265,8 +267,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['fuzzy-matching'] = 'substring:%s' % str(Pattern)
-
+    self._setAttr('fuzzy-matching', 'substring:%s' % str(Pattern))
     return self
 
   def FuzzyMatchPhonetic(self):
@@ -278,8 +279,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['fuzzy-matching'] = 'phonetic'
-
+    self._setAttr('fuzzy-matching', 'phonetic')
     return self
 
   def Compress(self):
@@ -290,8 +290,7 @@ class ObjectType(object):
     Returns:
       edxml.ontology.ObjectType: The ObjectType instance
     """
-    self._attr['compress'] = True
-
+    self._setAttr('compress', True)
     return self
 
   def GenerateRelaxNG(self):

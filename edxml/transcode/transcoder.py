@@ -350,7 +350,7 @@ class Transcoder(EDXMLBase):
             break
 
         if ParentEventTypeName:
-          Type.SetParent(EventTypeParent.Create(ParentEventTypeName, PropertyMap, ParentDescription, SiblingsDescription))
+          Type.SetParent(EventTypeParent.Create(Type, ParentEventTypeName, PropertyMap, ParentDescription, SiblingsDescription))
         else:
           self.Error('Output event type "%s" has an entry in the PARENT_MAPPINGS class attribute, but not in the PARENTS_CHILDREN attribute.' % EventTypeName)
 

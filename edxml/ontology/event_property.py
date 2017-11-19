@@ -57,7 +57,13 @@ class EventProperty(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._eventType._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetName(self):
     """
@@ -249,10 +255,10 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = MergeStrategy
+    self._setAttr('merge', MergeStrategy)
 
     if MergeStrategy == 'match':
-      self._attr['unique'] = True
+      self._setAttr('unique', True)
 
     return self
 
@@ -269,7 +275,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['description'] = Description
+    self._setAttr('description', Description)
     return self
 
   def Unique(self):
@@ -281,8 +287,8 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['unique'] = True
-    self._attr['merge'] = 'match'
+    self._setAttr('unique', True)
+    self._setAttr('merge', 'match')
     return self
 
   def IsUnique(self):
@@ -308,8 +314,8 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['concept'] = ConceptName
-    self._attr['concept-confidence'] = float(Confidence)
+    self._setAttr('concept', ConceptName)
+    self._setAttr('concept-confidence', float(Confidence))
     return self
 
   def SetConceptNamingPriority(self, Priority):
@@ -325,8 +331,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['enp'] = int(Priority)
-
+    self._setAttr('enp', int(Priority))
     return self
 
   def GetConceptName(self):
@@ -351,7 +356,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['similar'] = Similarity
+    self._setAttr('similar', Similarity)
     return self
 
   def MergeAdd(self):
@@ -362,7 +367,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = 'add'
+    self._setAttr('merge', 'add')
     return self
 
   def MergeReplace(self):
@@ -373,7 +378,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = 'replace'
+    self._setAttr('merge', 'replace')
     return self
 
   def MergeDrop(self):
@@ -385,7 +390,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = 'drop'
+    self._setAttr('merge', 'drop')
     return self
 
   def MergeMin(self):
@@ -396,7 +401,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = 'min'
+    self._setAttr('merge', 'min')
     return self
 
   def MergeMax(self):
@@ -407,7 +412,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._attr['merge'] = 'max'
+    self._setAttr('merge', 'max')
     return self
 
   def MergeIncrement(self):

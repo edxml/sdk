@@ -26,7 +26,13 @@ class Concept(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._ontology._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetName(self):
     """
@@ -95,7 +101,7 @@ class Concept(object):
       edxml.ontology.Concept: The Concept instance
     """
 
-    self._attr['description'] = str(Description)
+    self._setAttr('description', str(Description))
     return self
 
   def SetDisplayName(self, Singular, Plural = None):
@@ -115,8 +121,8 @@ class Concept(object):
 
     if Plural is None:
       Plural = '%ss' % Singular
-    self._attr['display-name'] = '%s/%s' % (Singular, Plural)
 
+    self._setAttr('display-name', '%s/%s' % (Singular, Plural))
     return self
 
   def Validate(self):

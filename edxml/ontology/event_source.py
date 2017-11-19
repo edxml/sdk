@@ -27,7 +27,13 @@ class EventSource(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._ontology._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetUri(self):
     """
@@ -62,7 +68,7 @@ class EventSource(object):
       edxml.ontology.EventSource: The EventSource instance
     """
 
-    self._attr['description'] = str(Description)
+    self._setAttr('description', str(Description))
     return self
 
   def SetAcquisitionDate(self, dateTime):
@@ -77,7 +83,7 @@ class EventSource(object):
       edxml.ontology.EventSource: The EventSource instance
     """
 
-    self._attr['date-acquired'] = dateTime.strftime('%Y%m01')
+    self._setAttr('date-acquired', dateTime.strftime('%Y%m01'))
     return self
 
   def Validate(self):

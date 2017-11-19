@@ -28,7 +28,13 @@ class PropertyRelation(object):
 
   def _childModifiedCallback(self):
     """Callback for change tracking"""
+    self._eventType._childModifiedCallback()
     return self
+
+  def _setAttr(self, key, value):
+    if self._attr[key] != value:
+      self._attr[key] = value
+      self._childModifiedCallback()
 
   def GetSource(self):
     """
@@ -125,7 +131,7 @@ class PropertyRelation(object):
       edxml.ontology.PropertyRelation: The PropertyRelation instance
 
     """
-    self._attr['description'] = Reason
+    self._setAttr('description', Reason)
     return self
 
   def SetConfidence(self, Confidence):
@@ -140,7 +146,7 @@ class PropertyRelation(object):
       edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
 
-    self._attr['confidence'] = float(Confidence)
+    self._setAttr('confidence', float(Confidence))
     return self
 
   def Directed(self):
@@ -151,7 +157,7 @@ class PropertyRelation(object):
     Returns:
       edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
-    self._attr['directed'] = True
+    self._setAttr('directed', True)
     return self
 
   def Undirected(self):
@@ -162,7 +168,7 @@ class PropertyRelation(object):
     Returns:
       edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
-    self._attr['directed'] = False
+    self._setAttr('directed', False)
     return self
 
   def Validate(self):
