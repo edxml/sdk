@@ -17,6 +17,9 @@ class SimpleEDXMLWriter(object):
   like buffering, post-processing, automatic merging
   of output events and latency control.
 
+  The class is a Python context manager which will
+  automatically flush the output buffer as soon as it
+  goes out of scope.
   """
 
   def __init__(self, Output, Validate=True):
@@ -472,8 +475,9 @@ class SimpleEDXMLWriter(object):
   def Close(self, flush=True):
     """
 
-    Finalizes the output stream generation process. This method
-    must be called to yield a complete, valid output stream.
+    Finalizes the output stream generation process. When this
+    class is not used as a context manager, this method
+    must be called to obtain a complete, valid output stream.
 
     By default, any remaining events in the output buffer will
     be written, unless flush is set to False.

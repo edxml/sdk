@@ -167,6 +167,8 @@ class Concept(object):
 
   def Update(self, concept):
     """
+    Update the concept using information from the provided
+    concept and validate the result.
 
     Args:
       concept (edxml.ontology.Concept): The new Concept instance
