@@ -2,7 +2,7 @@
 
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
-from edxml.EDXMLBase import EDXMLBase
+from edxml.EDXMLBase import EDXMLBase, EDXMLValidationError
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 from edxml.ontology import EventSource
 
@@ -16,6 +16,9 @@ class TranscoderMediator(EDXMLBase):
   Sources can instantiate the mediator and feed it input data records, while
   transcoders can register themselves with the mediator in order to
   transcode the types of input record that they support.
+
+  The class is a Python context manager which will automatically flush the
+  output buffer when the mediator goes out of scope.
   """
 
   _record_transcoders = {}
@@ -50,6 +53,17 @@ class TranscoderMediator(EDXMLBase):
     self._writer = None   # var: edxml.SimpleEDXMLWriter
     self._ontology = Ontology()
     self._last_written_ontology_version = self._ontology.GetVersion()
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    # If mediator exits due to an EDXML validation exception
+    # triggered by the EDXML writer, we will not flush the event
+    # output buffer. We do that to prevent us from outputting
+    # invalid EDXML data. For other kinds of exceptions, like
+    # KeyboardInterrupt, flushing the# output buffers is fine.
+    self.Close(flush=exc_type != EDXMLValidationError)
 
   @staticmethod
   def _transcoderIsPostprocessor(transcoder):
@@ -333,10 +347,18 @@ class TranscoderMediator(EDXMLBase):
     """
     return
 
-  def Close(self):
+  def Close(self, flush=True):
     """
     Finalizes the transcoding process by flushing
-    the output buffer.
+    the output buffer. When the mediator is not used
+    as a context manager, this method must be called
+    explicitly to properly close the mediator.
+
+    By default, any remaining events in the output buffer will
+    be written to the output, unless flush is set to False.
+
+    Args:
+      flush (bool): Flush output buffer
     """
     if self._writer:
-      self._writer.Close()
+      self._writer.Close(flush)
