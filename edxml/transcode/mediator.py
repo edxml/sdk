@@ -300,14 +300,14 @@ class TranscoderMediator(EDXMLBase):
     # from their parent, adjust the event type and finally rename it.
     for transcoder in self._transcoders.values():
       transcoder.SetOntology(Ontology())
-      transcoder._ontology.Update(objectTypes, validate=False)
-      transcoder._ontology.Update(concepts, validate=False)
+      transcoder.UpdateOntology(objectTypes, validate=False)
+      transcoder.UpdateOntology(concepts, validate=False)
       for _, _ in transcoder.GenerateEventTypes():
         # Here, we only populate the ontology, we
         # don't do anything with the ontology elements.
         self._ontology.Update(transcoder._ontology, validate=False)
-        transcoder._ontology.Update(objectTypes, validate=False)
-        transcoder._ontology.Update(concepts, validate=False)
+        transcoder.UpdateOntology(objectTypes, validate=False)
+        transcoder.UpdateOntology(concepts, validate=False)
         transcoder.SetOntology(Ontology())
 
     if len(self._sources) == 0:

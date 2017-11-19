@@ -226,6 +226,9 @@ class Transcoder(EDXMLBase):
     self._ontology = ontology
     return self
 
+  def UpdateOntology(self, ontology, validate=True):
+    self._ontology.Update(ontology, validate)
+
   def Generate(self, Json, RecordSelector, **kwargs):
     """
 
