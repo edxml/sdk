@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from typing import Dict
+
+import edxml
 
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
@@ -22,7 +25,7 @@ class TranscoderMediator(EDXMLBase):
   """
 
   _record_transcoders = {}
-  _transcoders = {}
+  _transcoders = {}  # type: Dict[any, edxml.transcode.Transcoder]
   _sources = []
 
   _debug = False
