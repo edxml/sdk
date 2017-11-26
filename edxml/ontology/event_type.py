@@ -1382,9 +1382,9 @@ class EventType(MutableMapping):
     propertiesRemoved = existingPropertyNames - updatePropertyNames
 
     if len(propertiesAdded) > 0:
-      raise Exception('Event type update added properties.')
+      raise Exception('Attempt to add properties to existing definition of event type ' + self._attr['name'])
     if len(propertiesRemoved) > 0:
-      raise Exception('Event type update removed properties.')
+      raise Exception('Attempt to remove properties from existing definition of event type ' + self._attr['name'])
 
     for propertyName, eventProperty in self.GetProperties().items():
       eventProperty.Update(eventType[propertyName])
