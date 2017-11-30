@@ -24,6 +24,15 @@ class DataType(object):
   # Expression used for matching binstring datatypes
   BINSTRING_PATTERN = re.compile("binstring:[0-9]+(:r)?")
 
+  FAMILY_DATETIME = 'datetime'
+  FAMILY_NUMBER   = 'number'
+  FAMILY_BOOLEAN  = 'boolean'
+  FAMILY_STRING   = 'string'
+  FAMILY_ENUM     = 'enum'
+  FAMILY_GEO      = 'geo'
+  FAMILY_IP       = 'ip'
+  FAMILY_HASHLINK = 'hashlink'
+
   def __init__(self, data_type):
 
     self.type = data_type
