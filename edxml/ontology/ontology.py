@@ -828,7 +828,7 @@ class Ontology(object):
       edxml.ontology.Ontology: The ontology
     """
 
-    if type(otherOntology) == Ontology:
+    if isinstance(otherOntology, Ontology):
       if validate:
         otherOntology.Validate()
       for ObjectTypeName, objectType in otherOntology.GetObjectTypes().items():
