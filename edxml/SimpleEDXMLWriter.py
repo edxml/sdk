@@ -88,9 +88,7 @@ class SimpleEDXMLWriter(object):
     an event is submitted through the AddEvent() method, the supplied
     callback method will be invoked before the event is output. The
     callback must have the the same call signature as the AddEvent()
-    method. The two optional arguments Type and Source will always
-    be specified when the callback is invoked. The callback should
-    not return anything.
+    method. The callback should not return anything.
 
     Apart from generating events, callbacks can also modify the event
     that is about to be outputted, by editing its call arguments.
@@ -332,7 +330,7 @@ class SimpleEDXMLWriter(object):
           raise EDXMLError('An output event did not have a configured event type, no default output event type has been configured and the ontology contains multiple event type definitions. You do not want me to just pick one, do you?')
 
     if EventTypeName in self._event_type_postprocessors:
-      self._event_type_postprocessors[EventTypeName](Properties, Content, Parents, EventTypeName, EventSourceUri)
+      self._event_type_postprocessors[EventTypeName](EDXMLEvent.Create(Properties, EventTypeName, EventSourceUri, Parents, Content))
 
     Event = EDXMLEvent.Create(Properties, EventTypeName, EventSourceUri, Parents, Content)
 
