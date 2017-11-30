@@ -262,77 +262,55 @@ class SimpleEDXMLWriter(object):
 
     return self
 
-  def AddEvent(self, Event):
+  def AddEvent(self, Event, AutoSource=True, AutoType=True):
     """
 
-    Add the specified event to the output stream. If the event type or
-    event source are not specified, the default type and source that
-    have been set using SetEventType() and SetEventSource() will be used.
+    Add the specified event to the output stream. When the event source URI is
+    not set and AutoSource is True, the default source URI that has been set
+    using SetEventSource() will be used. When the event type is not set and
+    AutoType is True, the default event type that has been set using SetEventType()
+    will be used.
 
     Args:
       Event (EDXMLEvent): An EDXMLEvent instance
+      AutoSource (bool):
+      AutoType (bool):
 
     Returns:
       SimpleEDXMLWriter: The SimpleEDXMLWriter instance
 
     """
 
-    return self.GenerateEvent(
-      Event.GetProperties(),
-      Event.GetContent(),
-      Event.GetExplicitParents(),
-      Event.GetTypeName(),
-      Event.GetSourceUri()
-    )
-
-  def GenerateEvent(self, Properties, Content=u'', Parents=None, Type=None, Source=None):
-    """
-
-    Generate a new event and write to the output stream. If the event type or
-    event source are not specified, the default type and source that
-    have been set using SetEventType() and SetEventSource() will be used.
-
-    The Properties dictionary must have keys containing the property names. The values
-    of the dictionary must be object values or lists of object values. Object values
-    can be anything can be cast to a unicode object.
-
-    Args:
-      Properties (dict[str]): The event properties
-      Content (unicode): Event content string
-      Parents (list[str], Optional): List of sticky hashes, as hex strings
-      Type (str, Optional): Event type name
-      Source (str, Optional): EDXML event source URI
-
-    Returns:
-      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-    """
-
-    EventSourceUri = Source or self._currentSourceUri
-    EventTypeName = Type or self._current_event_type
-    if EventSourceUri is None:
-      if len(self._ontology.GetEventSources()) == 1:
-        # The ontology contains only one source, so we just pick that one.
-        EventSourceUri = self._ontology.GetEventSources().keys()[0]
-      else:
-        if len(self._ontology.GetEventSources()) == 0:
-          raise EDXMLError('Failed to output an event, no sources have been defined in the output ontology.')
+    if AutoSource:
+      EventSourceUri = Event.GetSourceUri() or self._currentSourceUri
+      if EventSourceUri is None:
+        if len(self._ontology.GetEventSources()) == 1:
+          # The ontology contains only one source, so we just pick that one.
+          EventSourceUri = self._ontology.GetEventSources().keys()[0]
         else:
-          raise EDXMLError('An output event did not have a configured source, no default output source has been configured and the ontology contains multiple sources. You do not want me to just pick one, do you?')
+          if len(self._ontology.GetEventSources()) == 0:
+            raise EDXMLError('Failed to output an event, no sources have been defined in the output ontology.')
+          else:
+            raise EDXMLError('An output event did not have a configured source, no default output source has been configured and the ontology contains multiple sources. You do not want me to just pick one, do you?')
+    else:
+      EventSourceUri = Event.GetSourceUri()
 
-    if EventTypeName is None:
-      if len(self._ontology.GetEventTypeNames()) == 1:
-        # The ontology contains only one event type, so we just pick that one.
-        EventTypeName = self._ontology.GetEventTypeNames()[0]
-      else:
-        if len(self._ontology.GetEventTypeNames()) == 0:
-          raise EDXMLError('Failed to output an event, no event types have been defined in the output ontology.')
+    if AutoType:
+      EventTypeName = Event.GetTypeName() or self._current_event_type
+      if EventTypeName is None:
+        if len(self._ontology.GetEventTypeNames()) == 1:
+          # The ontology contains only one event type, so we just pick that one.
+          EventTypeName = self._ontology.GetEventTypeNames()[0]
         else:
-          raise EDXMLError('An output event did not have a configured event type, no default output event type has been configured and the ontology contains multiple event type definitions. You do not want me to just pick one, do you?')
+          if len(self._ontology.GetEventTypeNames()) == 0:
+            raise EDXMLError('Failed to output an event, no event types have been defined in the output ontology.')
+          else:
+            raise EDXMLError('An output event did not have a configured event type, no default output event type has been configured and the ontology contains multiple event type definitions. You do not want me to just pick one, do you?')
+    else:
+      EventTypeName = Event.GetTypeName()
 
     if EventTypeName in self._event_type_postprocessors:
-      self._event_type_postprocessors[EventTypeName](EDXMLEvent.Create(Properties, EventTypeName, EventSourceUri, Parents, Content))
-
-    Event = EDXMLEvent.Create(Properties, EventTypeName, EventSourceUri, Parents, Content)
+      self._event_type_postprocessors[EventTypeName](Event)
 
     EventGroup = '%s:%s' % (EventTypeName, EventSourceUri)
     if not EventGroup in self._event_buffers:
