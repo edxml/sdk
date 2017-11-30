@@ -535,18 +535,24 @@ class EDXMLEvent(MutableMapping):
     else:
       return False
 
-  def ComputeStickyHash(self, edxmlOntology):
-    """Computes the sticky hash of the event.
+  def ComputeStickyHash(self, edxmlOntology, encoding='hex'):
+    """
+
+    Computes the sticky hash of the event. By default, the hash
+    will be encoded into a hexadecimal string. The encoding can
+    be adjusted by setting the encoding argument to any string
+    encoding that is supported by the str.encode() method.
 
     Args:
       edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
+      encoding (str): Desired output encoding
 
     Note:
       The object values of the event must be valid EDXML object value strings or
       values that can be cast to valid EDXML object value strings.
 
     Returns:
-      str: A hexadecimal string representation of the hash.
+      str: String representation of the hash.
 
     """
 
@@ -562,11 +568,11 @@ class EDXMLEvent(MutableMapping):
     if eventType.IsUnique():
       return hashlib.sha1(
         '%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(objectStrings)))
-      ).hexdigest()
+      ).digest().encode(encoding)
     else:
       return hashlib.sha1(
         '%s\n%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(sorted(objectStrings)), self.Content)
-      ).hexdigest()
+      ).digest().encode(encoding)
 
 
 class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
