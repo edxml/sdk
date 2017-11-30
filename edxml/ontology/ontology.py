@@ -25,6 +25,23 @@ class Ontology(object):
     self._sources = {}        # type: Dict[str, edxml.ontology.EventSource]
     self._concepts = {}       # type: Dict[str, edxml.ontology.Concept]
 
+  def Clear(self):
+    """
+
+    Removes all event types, object types, concepts
+    and event source definitions from the ontology.
+
+    Returns:
+      edxml.ontology.Ontology: The ontology
+    """
+    self._version = 0
+    self._event_types = {}
+    self._object_types = {}
+    self._sources = {}
+    self._concepts = {}
+
+    return self
+
   def GetVersion(self):
     """
 
