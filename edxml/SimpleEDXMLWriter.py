@@ -331,12 +331,7 @@ class SimpleEDXMLWriter(object):
 
     self.__currBufSize += 1
 
-    if self.__currBufSize > self.__maxBufSize or \
-       0 < self._max_latency <= (time.time() - self._last_write_time):
-      for GroupId in self._event_buffers:
-        EventTypeName, EventSourceUri = GroupId.split(':')
-        for Merge in self._event_buffers[GroupId]:
-          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
+    self.Flush()
 
     return self
 
@@ -394,6 +389,12 @@ class SimpleEDXMLWriter(object):
         for Merge in self._event_buffers[GroupId]:
           self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
 
+      self.__currBufSize = 0
+      self._event_buffers = {}
+
+      if self._max_latency > 0:
+        self._last_write_time = time.time()
+
   def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
     if len(self._event_buffers[EventGroupId][Merge]) == 0:
@@ -444,8 +445,6 @@ class SimpleEDXMLWriter(object):
         else:
           raise
 
-    self._last_write_time = time.time()
-    self.__currBufSize = 0
     self._event_buffers[EventGroupId][Merge] = {} if Merge else []
 
   def Close(self, flush=True):
@@ -477,11 +476,8 @@ class SimpleEDXMLWriter(object):
       self._writer.AddOntology(self._ontology)
       self._last_written_ontology_version = self._ontology.GetVersion()
 
-    for GroupId in self._event_buffers:
-      EventTypeName, EventSourceUri = GroupId.split(':')
-      for Merge in self._event_buffers[GroupId]:
-        if flush and len(self._event_buffers[GroupId][Merge]) > 0:
-          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
+    if flush:
+      self.Flush(force=True)
 
     if self._current_event_group_type is not None:
       self._writer.CloseEventGroup()
