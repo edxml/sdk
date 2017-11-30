@@ -1623,7 +1623,7 @@ class EventType(MutableMapping):
       e.element(
         e.interleave(*properties),
         name='properties'
-      ),
+      ) if len(properties) > 0 else e.element('', name='properties'),
       e.optional(e.element(e.text(), name='content')),
       name='event',
       xmlns='http://relaxng.org/ns/structure/1.0',
