@@ -26,7 +26,7 @@ class EventProperty(object):
 
   def __init__(self, eventType: edxml.ontology.EventType, Name: str, ObjectType: edxml.ontology.ObjectType,
                Description: str = None, DefinesEntity: bool = False,
-               EntityConfidence: float = 0, Enp: int = 128, Unique: bool = False, Merge: str ='drop', Similar: str ='') -> None:
+               EntityConfidence: float = 0, Cnp: int = 128, Unique: bool = False, Merge: str ='drop', Similar: str ='') -> None:
 
     self._attr = ...       # type: Dict[str, Any]
     self._eventType = ...  # type: edxml.ontology.EventType

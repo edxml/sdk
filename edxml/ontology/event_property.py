@@ -27,7 +27,7 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, eventType, Name, ObjectType, Description = None, ConceptName = None, ConceptConfidence = 0, Enp = 128, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectType, Description = None, ConceptName = None, ConceptConfidence = 0, Cnp = 128, Unique = False, Merge ='drop', Similar =''):
 
     self._attr = {
       'name':               Name,
@@ -36,7 +36,7 @@ class EventProperty(object):
       'concept':            ConceptName,
       'concept-confidence': float(ConceptConfidence),
       'unique':             bool(Unique),
-      'enp':                int(Enp),
+      'cnp':                int(Cnp),
       'merge':              Merge,
       'similar':            Similar
     }
@@ -150,7 +150,7 @@ class EventProperty(object):
       int:
     """
 
-    return self._attr['enp']
+    return self._attr['cnp']
 
   def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
     """
@@ -320,12 +320,12 @@ class EventProperty(object):
     specified using this method, it's value is 128.
 
     Args:
-      Priority (int): The EDXML enp attribute
+      Priority (int): The EDXML cnp attribute
 
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('enp', int(Priority))
+    self._setAttr('cnp', int(Priority))
     return self
 
   def GetConceptName(self):
@@ -436,9 +436,9 @@ class EventProperty(object):
     if not len(self._attr['similar']) <= 64:
       raise EDXMLValidationError('Property attribute is too long: similar="%s"' % self._attr['similar'])
 
-    if not 0 <= int(self._attr['enp']) < 256:
+    if not 0 <= int(self._attr['cnp']) < 256:
       raise EDXMLValidationError(
-        'Property "%s" has an invalid concept naming priority: "%d"' % (self._attr['name'], self._attr['enp'])
+        'Property "%s" has an invalid concept naming priority: "%d"' % (self._attr['name'], self._attr['cnp'])
       )
 
     if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
@@ -465,7 +465,7 @@ class EventProperty(object):
       propertyElement.attrib['description'],
       propertyElement.get('concept'),
       propertyElement.get('concept-confidence', 0),
-      int(propertyElement.get('enp', 0)),
+      int(propertyElement.get('cnp', 0)),
       propertyElement.get('unique', 'false') == 'true',
       propertyElement.get('merge', 'drop'),
       propertyElement.get('similar', '')
@@ -493,9 +493,9 @@ class EventProperty(object):
       raise Exception('Attempt to update event property "%s", but descriptions do not match.' % self._attr['name'],
                       (self._attr['description'], eventProperty.GetName()))
 
-    if int(self._attr['enp']) != eventProperty.GetConceptNamingPriority():
+    if int(self._attr['cnp']) != eventProperty.GetConceptNamingPriority():
       raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.' % self._attr['name'],
-                      (self._attr['enp'], eventProperty.GetName()))
+                      (self._attr['cnp'], eventProperty.GetName()))
 
     self.Validate()
 
@@ -516,11 +516,11 @@ class EventProperty(object):
 
     attribs['concept-confidence'] = '%1.2f' % self._attr['concept-confidence']
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
-    attribs['enp'] = '%d' % attribs['enp']
+    attribs['cnp'] = '%d' % attribs['cnp']
 
     if attribs['concept'] is None:
       del attribs['concept']
       del attribs['concept-confidence']
-      del attribs['enp']
+      del attribs['cnp']
 
     return etree.Element('property', attribs)
