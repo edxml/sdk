@@ -25,6 +25,7 @@ class DataType(object):
   BINSTRING_PATTERN = re.compile("binstring:[0-9]+(:r)?")
 
   FAMILY_DATETIME = 'datetime'
+  FAMILY_SEQUENCE = 'sequence'
   FAMILY_NUMBER   = 'number'
   FAMILY_BOOLEAN  = 'boolean'
   FAMILY_STRING   = 'string'
@@ -51,6 +52,18 @@ class DataType(object):
     """
 
     return cls('datetime')
+
+  @classmethod
+  def Sequence(cls):
+    """
+
+    Create a sequence DataType instance.
+
+    Returns:
+      DataType:
+    """
+
+    return cls('sequence')
 
   @classmethod
   def Boolean(cls):
@@ -342,6 +355,9 @@ class DataType(object):
           e.param('(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z', name='pattern'),
           type='dateTime'
         )
+
+    elif splitDataType[0] == 'sequence':
+      element = e.data(type='unsignedLong')
 
     elif splitDataType[0] == 'number':
       if splitDataType[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint'):
@@ -678,6 +694,11 @@ class DataType(object):
     if splitDataType[0] == 'datetime':
       if not re.match('^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$', value):
         raise EDXMLValidationError("Invalid value for data type %s: '%s'." % (self.type, value))
+    elif splitDataType[0] == 'sequence':
+      try:
+        int(value)
+      except:
+        raise EDXMLValidationError("Invalid sequence value '%s'." % value)
     elif splitDataType[0] == 'number':
       if splitDataType[1] == 'decimal':
         if len(splitDataType) < 5:
@@ -798,6 +819,9 @@ class DataType(object):
       if len(splitDataType) > 1:
         return self
     elif splitDataType[0] == 'datetime':
+      if len(splitDataType) == 1:
+        return self
+    elif splitDataType[0] == 'sequence':
       if len(splitDataType) == 1:
         return self
     elif splitDataType[0] == 'ip':
