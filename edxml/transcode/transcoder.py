@@ -72,16 +72,16 @@ class Transcoder(EDXMLBase):
   to be the singular form with an additional 's' appended.
   """
 
-  TYPE_REPORTERS_SHORT = {}
+  TYPE_SUMMARIES = {}
   """
-  The TYPE_REPORTERS_SHORT attribute is a dictionary mapping EDXML event type names to
-  short EDXML reporter strings.
+  The TYPE_SUMMARIES attribute is a dictionary mapping EDXML event type names to
+  event summary templates.
   """
 
-  TYPE_REPORTERS_LONG = {}
+  TYPE_STORIES = {}
   """
-  The TYPE_REPORTERS_LONG attribute is a dictionary mapping EDXML event type names to
-  long EDXML reporter strings.
+  The TYPE_STORIES attribute is a dictionary mapping EDXML event type names to
+  event story templates.
   """
 
   TYPE_PROPERTIES = {}
@@ -217,10 +217,6 @@ class Transcoder(EDXMLBase):
     super(Transcoder, self).__init__()
 
     self._ontology = None  # type: edxml.ontology.Ontology
-    self.reporter_strings = [
-      'short',
-      'long'
-    ]
 
   def SetOntology(self, ontology):
     self._ontology = ontology
@@ -320,8 +316,8 @@ class Transcoder(EDXMLBase):
     for EventTypeName in self.TYPES:
       Type = self._ontology.CreateEventType(EventTypeName, Description=self.TYPE_DESCRIPTIONS.get(EventTypeName))\
         .SetDisplayName(*self.TYPE_DISPLAY_NAMES.get(EventTypeName, [None, None]))\
-        .SetReporterShort(self.TYPE_REPORTERS_SHORT.get(EventTypeName))\
-        .SetReporterLong(self.TYPE_REPORTERS_LONG.get(EventTypeName))
+        .SetSummaryTemplate(self.TYPE_SUMMARIES.get(EventTypeName))\
+        .SetStoryTemplate(self.TYPE_STORIES.get(EventTypeName))
 
       if EventTypeName in self.TYPE_PROPERTIES:
         for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():

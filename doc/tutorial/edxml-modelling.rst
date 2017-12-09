@@ -63,23 +63,23 @@ Back to our event story. As you can see, we decided not to tell anything about t
 
 There is more to say about the JSON record, but we will get to that later. At this point, we know the story we want to tell and we verified that all the required information is available in the original data.
 
-Step 3: Write the Reporter String
+Step 3: Write the Story Template
 ---------------------------------
 
-Event stories like the one above are closely related to *reporter strings* in EDXML. For this reason, we will use reporter strings as the first step towards an EDXML data model for our FTP events. As detailed in the EDXML specification, reporter strings are templates that transform the various event properties into human readable text. The resulting text explains the exact meaning of the event data, in terms of the event properties. Especially if you are just getting started with EDXML data modelling, it is advisable to begin a modelling task by writing down the reporter string that yields event stories like the one above. Once a satisfactory reporter string has been established, this will also result in a list of required properties, as these are part of the reporter string. Let us convert the above event story into an EDXML reporter string by replacing the variable bits with place holders:
+Event stories like the one above are closely related to *story templates* in EDXML. For this reason, we will use story templates as the first step towards an EDXML data model for our FTP events. In the EDXML specification, event stories are templates that transform the various event properties into human readable text. The resulting text explains the exact meaning of the event data, in terms of the event properties. Especially if you are just getting started with EDXML data modelling, it is advisable to begin a modelling task by writing down the story template that yields event stories like the one above. Once a satisfactory template has been established, this will also result in a list of required properties, as these are part of the template. Let us convert the above event story into a story template by replacing the variable bits with place holders:
 
 .. epigraph::
 
   *On [[FULLDATETIME:time]], a user named '[[user]]' issued command '[[command]]' on FTP server [[server]]. The command was issued from a device having IP address [[client]].*
 
-In the above reporter string, we used event properties that have exactly the same names as the fields in the JSON record. This is possible because the JSON records are flat, like EDXML events, and the JSON field names just happen to be valid EDXML property names. In order to convert the date into something slightly more human friendly, we used a formatter for the time field.
+In the above template, we used event properties that have exactly the same names as the fields in the JSON record. We can do that in this case because the JSON records are flat, like EDXML events, and the JSON field names just happen to be valid EDXML property names. In order to convert the date into something slightly more human friendly, we used a formatter for the time field.
 
-In our example, we assume that all JSON fields are present in every input JSON record. This makes writing down a reporter string quite straight forward. When the input data contains optional data elements, things will be more complicated.
+In our example, we assume that all JSON fields are present in every input JSON record. This makes writing down a template quite straight forward. When the input data contains optional data elements, things will be more complicated.
 
 Step 4: Define the Event Type
 -----------------------------
 
-At this point, we have our event story, a reporter string and we know which properties our EDXML event type will have. Time to write some code! Let us begin by creating a new, empty EDXML ontology:
+At this point, we have our event story, a story template and we know which properties our EDXML event type will have. Time to write some code! Let us begin by creating a new, empty EDXML ontology:
 
 .. literalinclude:: example1.py
    :lines: 1-3
@@ -89,7 +89,7 @@ Now we can use this ontology to define our own event type, which represents the 
 .. literalinclude:: example1.py
    :lines: 28-35
 
-There are a few things to note about the event type definition. First of all, the SDK offers what is called a *fluid interface*, allowing to write short code that is easy to read. Then the even type name. For reasons pointed out in the EDXML specification, we use the dotted structure to create a private namespace for ourselves. We added the reporter string that we wrote down earlier, as well as a short variant.
+There are a few things to note about the event type definition. First of all, the SDK offers what is called a *fluid interface*, allowing to write short code that is easy to read. Then the even type name. For reasons pointed out in the EDXML specification, we use the dotted structure to create a private namespace for ourselves. We added the story template that we wrote down earlier, as well as a summary template, which is just a shortened variant of the story template.
 
 Next, let's add the event properties:
 
@@ -225,7 +225,7 @@ Having said that, let us now have a look at defining property relations. Remembe
   myEventType['user'].RelateTo('has access to', 'server')\
     .Because('a user named [[user]] issued a command on FTP server [[server]]')
 
-There you have it. You can almost read it like a normal English sentence. The ``RelateTo()`` method creates and returns the actual relation between properties ``user`` and ``server``, using predicate ``has access to``. Then, the reason of the relation is set. This string is a placeholder string, similar to the reporter strings we started out with. It is another little story, answering the question:
+There you have it. You can almost read it like a normal English sentence. The ``RelateTo()`` method creates and returns the actual relation between properties ``user`` and ``server``, using predicate ``has access to``. Then, the reason of the relation is set. This string is a template string, similar to the event story templates we started out with. It is another little story, answering the question:
 
   `Why are these two values related?`
 
@@ -287,7 +287,7 @@ The only difference between a 'regular' property relation and an intra-concept o
 Step 10: Adding Event Content
 -----------------------------
 
-Besides property objects, events may also contain event content. Event content is basically just a free form UTF-8 text string that is devoid of the limitations that apply to event properties. It can be used to store potentially long strings that could otherwise 'blow up' the reporter string when it is evaluated.
+Besides property objects, events may also contain event content. Event content is basically just a free form UTF-8 text string that is devoid of the limitations that apply to event properties. It can be used to store potentially long strings that could otherwise 'blow up' the event story template when it is evaluated.
 
 Event content is also frequently used to store the original input data that was used to produce the event. Besides its obvious use for reproducing the original data set from the EDXML data, there is another interesting use case This allows for for re-generating an EDXML data set using an updated version of the transcoder. When an EDXML transcoder supports reading input data from, say, a logging file *or* from a previously generated EDXML data file, the transcoder will be able to upgrade EDXML data sets that were produced by older versions of itself. This is particularly useful when :doc:`transcoding composed data sources <../patterns/composed-sources>` using a transcoder that gradually supports a greater set of input record types with each new version.
 

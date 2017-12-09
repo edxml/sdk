@@ -28,7 +28,7 @@ class EventType(MutableMapping):
   NAME_PATTERN = re.compile("^[a-z0-9.]*$")
   DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
   CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
-  REPORTER_PLACEHOLDER_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
+  TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
   KNOWN_FORMATTERS = (
     'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
     'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'FILESERVER', 'MERGE',
@@ -36,15 +36,15 @@ class EventType(MutableMapping):
   )
 
   def __init__(self, Ontology, Name, DisplayName = None, Description = None, ClassList ='',
-               ReporterShort ='no description available', ReporterLong ='no description available', Parent = None):
+               Summary='no description available', Story='no description available', Parent = None):
 
     self._attr = {
-      'name': Name,
+      'name':            Name,
       'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
       'description'    : Description or Name,
       'classlist'      : ClassList,
-      'reporter-short' : ReporterShort,
-      'reporter-long'  : ReporterLong.replace('\n', '[[NEWPAR:]]')
+      'summary':         Summary,
+      'story':           Story.replace('\n', '[[NEWPAR:]]')
     }
 
     self._properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
@@ -264,25 +264,25 @@ class EventType(MutableMapping):
 
     return len(self.__cachedUniqueProperties) > 0
 
-  def GetReporterShort(self):
+  def GetSummaryTemplate(self):
     """
 
-    Returns the short reporter string.
+    Returns the event summary template.
 
     Returns:
       str:
     """
-    return self._attr['reporter-short']
+    return self._attr['summary']
 
-  def GetReporterLong(self):
+  def GetStoryTemplate(self):
     """
 
-    Returns the long reporter string.
+    Returns the event story template.
 
     Returns:
       str:
     """
-    return self._attr['reporter-long']
+    return self._attr['story']
 
   def GetParent(self):
     """
@@ -587,47 +587,47 @@ class EventType(MutableMapping):
     self._setAttr('display-name', '%s/%s' % (Singular, Plural))
     return self
 
-  def SetReporterShort(self, Reporter):
+  def SetSummaryTemplate(self, Summary):
     """
 
-    Set the short reporter string
+    Set the event summary template
 
     Args:
-      Reporter (str): The short reporter string
+      Summary (str): The event summary template
 
     Returns:
       edxml.ontology.EventType: The EventType instance
     """
 
-    if Reporter:
-      self._setAttr('reporter-short', Reporter)
+    if Summary:
+      self._setAttr('summary', Summary)
     return self
 
-  def SetReporterLong(self, Reporter):
+  def SetStoryTemplate(self, Story):
     """
 
-    Set the long reporter string. Newline characters are automatically
+    Set the event story template. Newline characters are automatically
     replaced with [[NEWPAR:]] place holders.
 
     Args:
-      Reporter (str): The long reporter string
+      Story (str): The event story template
 
     Returns:
       edxml.ontology.EventType: The EventType instance
     """
 
-    if Reporter:
-      self._setAttr('reporter-long', Reporter.replace('\n', '[[NEWPAR:]]'))
+    if Story:
+      self._setAttr('story', Story.replace('\n', '[[NEWPAR:]]'))
     return self
 
-  def EvaluateReporterString(self, edxmlEvent, short=False, capitalize=True, colorize=False):
+  def EvaluateTemplate(self, edxmlEvent, which='story', capitalize=True, colorize=False):
     """
 
-    Evaluates the short or long reporter string of an event type using
+    Evaluates the event story or summary template of an event type using
     specified event, returning the result.
 
-    By default, the long reporter string is evaluated, unless short is
-    set to True.
+    By default, the story template is evaluated, unless which is
+    set to 'summary'.
 
     By default, we will try to capitalize the first letter of the resulting
     string, unless capitalize is set to False.
@@ -638,7 +638,7 @@ class EventType(MutableMapping):
 
     Args:
       edxmlEvent (edxml.EDXMLEvent): the EDXML event to use
-      short (bool): use short or long reporter string
+      which (bool): which template to evaluate
       capitalize (bool): Capitalize output or not
       colorize (bool): Colorize output or not
 
@@ -647,7 +647,7 @@ class EventType(MutableMapping):
     """
 
     # Recursively split a placeholder string at '{' and '}'
-    def __splitPlaceholderString(String, offset=0):
+    def __splitTemplate(String, offset=0):
 
       elements = []
       length = len(String)
@@ -688,7 +688,7 @@ class EventType(MutableMapping):
               offset = pos1 + 1
 
               elements.append(substring)
-              offset, Parsed = __splitPlaceholderString(String, offset)
+              offset, Parsed = __splitTemplate(String, offset)
               elements.append(Parsed)
             else:
               # closing bracket comes first, which means we found
@@ -1054,7 +1054,7 @@ class EventType(MutableMapping):
 
         replacements[placeholder[0]] = ObjectString
 
-      # Return ReporterString where all placeholders are replaced
+      # Return template where all placeholders are replaced
       # by the actual (formatted) object values
 
       for placeholder, replacement in replacements.items():
@@ -1066,12 +1066,12 @@ class EventType(MutableMapping):
 
       return string
 
-    def __processSplitPlaceholderString(Elements, Event, Capitalize, IterationLevel=0):
+    def __processSplitTemplate(Elements, Event, Capitalize, IterationLevel=0):
       Result = ''
 
       for Element in Elements:
         if type(Element) == list:
-          Processed = __processSplitPlaceholderString(Element, Event, Capitalize, IterationLevel + 1)
+          Processed = __processSplitTemplate(Element, Event, Capitalize, IterationLevel + 1)
           Capitalize = False
         else:
           if Element != '':
@@ -1083,20 +1083,15 @@ class EventType(MutableMapping):
 
       return Result
 
-    if short:
-      ReporterString = unicode(self._attr['reporter-short'])
-    else:
-      ReporterString = unicode(self._attr['reporter-long'])
-
-    return __processSplitPlaceholderString(
-      __splitPlaceholderString(ReporterString)[1], edxmlEvent.GetProperties(), capitalize
+    return __processSplitTemplate(
+      __splitTemplate(unicode(self._attr[which]))[1], edxmlEvent.GetProperties(), capitalize
     )
 
-  def ValidateReporterString(self, string, ontology):
-    """Checks if given reporter string makes sense.
+  def ValidateTemplate(self, template, ontology):
+    """Checks if given template makes sense.
 
     Args:
-      string (unicode): The reporter string
+      template (unicode): The template
       ontology (edxml.ontology.Ontology): The corresponding ontology
 
     Raises:
@@ -1112,31 +1107,34 @@ class EventType(MutableMapping):
       'BOOLEAN_IS_ISNOT', 'UPPERCASE'
     ]
 
-    # Test if reporter string grammar is correct, by
+    # Test if template grammar is correct, by
     # checking that curly brackets are balanced.
     curlyNestings = {u'{': 1, u'}': -1}
     nesting = 0
-    for curly in [c for c in string if c in [u'{', u'}']]:
+    for curly in [c for c in template if c in [u'{', u'}']]:
       nesting += curlyNestings[curly]
       if nesting < 0:
-        raise EDXMLValidationError('The following reporter string contains unbalanced curly brackets:\n%s\n' % string)
+        raise EDXMLValidationError('The following EDXML template contains unbalanced curly brackets:\n%s\n' % template)
     if nesting != 0:
-      raise EDXMLValidationError('The following reporter string contains unbalanced curly brackets:\n%s\n' % string)
+      raise EDXMLValidationError('The following EDXML template contains unbalanced curly brackets:\n%s\n' % template)
 
-    placeholderStrings = re.findall(self.REPORTER_PLACEHOLDER_PATTERN, string)
+    placeholderStrings = re.findall(self.TEMPLATE_PATTERN, template)
 
-    for string in placeholderStrings:
+    for template in placeholderStrings:
+      # TODO: Write one generic check for existing properties by creating a table of
+      # formatters, mapping formatter names to the indexes into the argument list of
+      # arguments that are property names.
       try:
-        formatter, argumentString = str(string).split(':', 1)
+        formatter, argumentString = str(template).split(':', 1)
         arguments = argumentString.split(',')
       except ValueError:
         # Placeholder does not contain a formatter.
-        if str(string) in self._properties.keys():
+        if str(template) in self._properties.keys():
           continue
         else:
           raise EDXMLValidationError(
-            'Event type %s contains a reporter string which refers to one or more nonexistent properties: %s' %
-            (self._attr['name'], string)
+            'Event type %s contains a story or summary template which refers to one or more nonexistent properties: %s' %
+            (self._attr['name'], template)
           )
 
       # Some kind of string formatter was used.
@@ -1146,7 +1144,7 @@ class EventType(MutableMapping):
 
         if len(arguments) != 2:
           raise EDXMLValidationError(
-            ('Event type %s contains a reporter string containing a string formatter (%s) '
+            ('Event type %s contains a story or summary template containing a string formatter (%s) '
              'which requires two properties, but %d properties were specified.') %
             (self._attr['name'], formatter, len(arguments))
           )
@@ -1160,7 +1158,7 @@ class EventType(MutableMapping):
               raise EDXMLValidationError('Invalid property name in %s formatter: "%s"' % (propertyName, formatter))
             if str(self._properties[propertyName].GetDataType()) != 'datetime':
               raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses a time related formatter, '
+                ('Event type %s contains a story or summary template which uses a time related formatter, '
                  'but the used property (%s) is not a datetime value.') % (self._attr['name'], propertyName)
               )
 
@@ -1168,7 +1166,7 @@ class EventType(MutableMapping):
       else:
         if formatter not in self.KNOWN_FORMATTERS:
           raise EDXMLValidationError(
-            'Event type %s contains a reporter string which refers to an unknown formatter: %s' %
+            'Event type %s contains a story or summary template which refers to an unknown formatter: %s' %
             (self._attr['name'], formatter)
           )
 
@@ -1176,8 +1174,8 @@ class EventType(MutableMapping):
           # Check that only one property is specified after the formatter
           if len(arguments) > 1:
             raise EDXMLValidationError(
-              ('Event type %s contains a reporter string which uses the %s formatter, which accepts just one property. '
-               'Multiple properties were specified: %s') % (self._attr['name'], formatter, argumentString)
+              ('Event type %s contains a story or summary template which uses the %s formatter, which accepts just one '
+               'property. Multiple properties were specified: %s') % (self._attr['name'], formatter, argumentString)
             )
           # Check that property is a datetime value
           if argumentString == '':
@@ -1186,7 +1184,7 @@ class EventType(MutableMapping):
             )
           if str(self._properties[argumentString].GetDataType()) != 'datetime':
             raise EDXMLValidationError(
-              ('Event type %s contains a reporter string which uses the %s formatter. '
+              ('Event type %s contains a template which uses the %s formatter. '
                'The used property (%s) is not a datetime value, though.') % (self._attr['name'], formatter, argumentString)
             )
 
@@ -1194,14 +1192,14 @@ class EventType(MutableMapping):
           # Check that no additional arguments are present
           if len(arguments) > 1:
             raise EDXMLValidationError(
-              ('Event type %s contains a reporter string which uses the %s formatter. '
+              ('Event type %s contains a story or summary template which uses the %s formatter. '
                'This formatter accepts no arguments, but they were specified: %s') %
-              (self._attr['name'], formatter, string)
+              (self._attr['name'], formatter, template)
             )
           # Check that only one property is specified after the formatter
           if len(arguments) > 1:
             raise EDXMLValidationError(
-              ('Event type %s contains a reporter string which uses the %s formatter. '
+              ('Event type %s contains a story or summary template which uses the %s formatter. '
                'This formatter accepts just one property. Multiple properties were given though: %s')
               % (self._attr['name'], formatter, argumentString)
             )
@@ -1213,7 +1211,7 @@ class EventType(MutableMapping):
               )
             if str(self._properties[argumentString].GetDataType()) != 'boolean':
               raise EDXMLValidationError(
-                ('Event type %s contains a reporter string which uses the %s formatter. '
+                ('Event type %s contains a story or summary template which uses the %s formatter. '
                  'The used property (%s) is not a boolean, though.') %
                 (self._attr['name'], formatter, argumentString)
               )
@@ -1221,36 +1219,36 @@ class EventType(MutableMapping):
         elif formatter == 'CURRENCY':
           if len(arguments) != 2:
             raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-              (self._attr['name'], formatter, string)
+              'Event type %s contains a story or summary template which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, template)
             )
 
         elif formatter == 'URL':
           if len(arguments) != 2:
             raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-              (self._attr['name'], formatter, string)
+              'Event type %s contains a story or summary template which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, template)
             )
 
         elif formatter == 'EMPTY':
           if len(arguments) != 2:
             raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-              (self._attr['name'], formatter, string)
+              'Event type %s contains a story or summary template which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, template)
             )
 
         elif formatter == 'NEWPAR':
           if len(arguments) != 1 or arguments[0] != '':
             raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-              (self._attr['name'], formatter, string)
+              'Event type %s contains a story or summary template which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, template)
             )
 
         elif formatter == 'BOOLEAN_STRINGCHOICE':
           if len(arguments) != 3:
             raise EDXMLValidationError(
-              'Event type %s contains a reporter string which uses a malformed %s formatter: %s' %
-              (self._attr['name'], formatter, string)
+              'Event type %s contains a story or summary template which uses a malformed %s formatter: %s' %
+              (self._attr['name'], formatter, template)
             )
           # Check that property is a boolean
           if argumentString == '':
@@ -1259,7 +1257,7 @@ class EventType(MutableMapping):
             )
           if str(self._properties[arguments[0]].GetDataType()) != 'boolean':
             raise EDXMLValidationError(
-              ('Event type %s contains a reporter string which uses the %s formatter. '
+              ('Event type %s contains a story or summary template which uses the %s formatter. '
                'The used property (%s) is not a boolean, though.') %
               (self._attr['name'], formatter, argumentString)
             )
@@ -1270,7 +1268,7 @@ class EventType(MutableMapping):
 
         else:
           raise EDXMLValidationError(
-            'Event type %s contains a reporter string which uses an unknown formatter: %s' %
+            'Event type %s contains a story or summary template which uses an unknown formatter: %s' %
             (self._attr['name'], formatter)
           )
 
@@ -1283,8 +1281,7 @@ class EventType(MutableMapping):
     not have access to the full ontology, the context of
     the event type is not considered. For example, it does not
     check if the event type definition refers to a parent event
-    type that actually exists. Also, reporter strings are not
-    validated.
+    type that actually exists. Also, templates are not validated.
 
     Raises:
       EDXMLValidationError
@@ -1329,7 +1326,7 @@ class EventType(MutableMapping):
   def Read(cls, typeElement, ontology):
     eventType = cls(ontology, typeElement.attrib['name'], typeElement.attrib['display-name'],
                     typeElement.attrib['description'], typeElement.attrib['classlist'],
-                    typeElement.attrib['reporter-short'], typeElement.attrib['reporter-long'])
+                    typeElement.attrib['summary'], typeElement.attrib['story'])
 
     for element in typeElement:
       if element.tag == 'parent':

@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                           EDXML String Printer
 #
 #                            EXAMPLE APPLICATION
@@ -30,8 +30,8 @@
 #
 #  ===========================================================================
 #
-# 
-#  This script prints an evaluated EDXML reporter string for each event in a given
+#
+#  This script prints an evaluated event story or summary for each event in a given
 #  EDXML file or input stream. The strings are printed to standard output.
 
 import sys
@@ -41,16 +41,16 @@ from edxml.EDXMLParser import EDXMLPullParser
 
 class EDXMLEventPrinter(EDXMLPullParser):
 
-  def __init__(self, PrintShort=False, PrintColorized=False):
+  def __init__(self, Which='story', PrintColorized=False):
 
     super(EDXMLEventPrinter, self).__init__()
-    self.Short = PrintShort
+    self.Which = Which
     self.Colorize = PrintColorized
 
   def _parsedEvent(self, edxmlEvent):
 
-    print self.getOntology().GetEventType(edxmlEvent.GetTypeName()).EvaluateReporterString(
-      edxmlEvent, short=self.Short, colorize=self.Colorize
+    print self.getOntology().GetEventType(edxmlEvent.GetTypeName()).EvaluateTemplate(
+      edxmlEvent, which=self.Which == 'summary', colorize=self.Colorize
     )
 
 
@@ -58,7 +58,7 @@ def PrintHelp():
 
   print """
 
-   This utility outputs evaluated EDXML reporter strings for every event in a given
+   This utility outputs evaluated event story or summary templates for every event in a given
    EDXML file or input stream. The strings are printed to standard output.
 
    Options:
@@ -69,12 +69,11 @@ def PrintHelp():
                        will be used as input. If this option is not specified,
                        input will be read from standard input.
 
-     -s                By default, the long reporter string will be printed. When
-                       this switch is added, the short reporter string will be
-                       printed in stead.
+     --summary         By default, the event story will be printed. When
+                       this switch is added, the summary will be printed in stead.
 
      -c                Adding this switch will cause the object values in the
-                       printed reporter strings to be highlighted.
+                       printed stories and summaries to be highlighted.
 
    Example:
 
@@ -82,12 +81,12 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
 Input = sys.stdin
-Short = False
+Which = 'story'
 Colorize = False
 
 # Parse commandline arguments
@@ -102,8 +101,8 @@ while CurrentArgument < ArgumentCount:
     CurrentArgument += 1
     Input = open(sys.argv[CurrentArgument])
 
-  elif sys.argv[CurrentArgument] == '-s':
-    Short = True
+  elif sys.argv[CurrentArgument] == '--summary':
+    Which = 'summary'
 
   elif sys.argv[CurrentArgument] == '-c':
     Colorize = True
@@ -118,6 +117,6 @@ if Input == sys.stdin:
   sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  EDXMLEventPrinter(PrintShort=Short, PrintColorized=Colorize).parse(Input)
+  EDXMLEventPrinter(Which=Which, PrintColorized=Colorize).parse(Input)
 except KeyboardInterrupt:
   pass

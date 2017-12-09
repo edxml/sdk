@@ -28,8 +28,8 @@ myOntology.CreateObjectType('computing.ftp.command')\
 myEventType = myOntology.CreateEventType('org.myorganization.logs.ftp')\
   .SetDisplayName('FTP command')\
   .SetDescription('a logged FTP command')\
-  .SetReporterShort('FTP command issued to [[server]]')\
-  .SetReporterLong(
+  .SetSummaryTemplate('FTP command issued to [[server]]')\
+  .SetStoryTemplate(
     'On [[FULLDATETIME:time]], a user named "[[user]]" issued '
     'command "[[command]]" on FTP server [[server]]. The command '
     'was issued from a device having IP address [[client]].')

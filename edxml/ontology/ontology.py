@@ -629,11 +629,11 @@ class Ontology(object):
       objectType.Validate()
 
     # Validate all event types and their
-    # reporter strings
+    # story / summary templates
     for eventTypeName, eventType in self._event_types.items():
       eventType.Validate()
-      eventType.ValidateReporterString(eventType.GetReporterShort(), self)
-      eventType.ValidateReporterString(eventType.GetReporterLong(), self)
+      eventType.ValidateTemplate(eventType.GetSummaryTemplate(), self)
+      eventType.ValidateTemplate(eventType.GetStoryTemplate(), self)
 
     # Check if all event type parents are defined
     for eventTypeName, eventType in self._event_types.items():

@@ -7,7 +7,7 @@
   </objecttypes>
   <concepts/>
   <eventtypes>
-    <eventtype classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" reporter-long="no description available" reporter-short="no description available">
+    <eventtype classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" story="no description available" summary="no description available">
       <properties>
         <property description="property f" merge="drop" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
         <property description="property g" merge="drop" name="property-g" object-type="objecttype.c" similar="" unique="false"/>

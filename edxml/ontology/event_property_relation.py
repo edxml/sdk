@@ -198,7 +198,7 @@ class PropertyRelation(object):
     if not re.match('^(intra|inter|parent|child|other):.+', self._attr['type']):
       raise EDXMLValidationError('Invalid property relation type: "%s"' % self._attr['type'])
 
-    placeholders = re.findall(edxml.ontology.EventType.REPORTER_PLACEHOLDER_PATTERN, self._attr['description'])
+    placeholders = re.findall(edxml.ontology.EventType.TEMPLATE_PATTERN, self._attr['description'])
 
     if not self._attr['property1'] in placeholders:
       raise EDXMLValidationError(

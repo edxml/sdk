@@ -70,7 +70,7 @@ Most use cases involve overriding either or both of the methods of the Transcode
 Generating Ontology Elements
 ----------------------------
 
-Each transcoder is responsible for generating the event types, object types and concepts for the events that it generates. Generating these can be done by overriding three methods from the Transcoder class. Of these three methods, the method that is responsible for generating the event type is a bit special because the parent class provides an implementation for it that generates event types from class constants. Using this implementation in stead of implementing your own allows a transcoder to specify event type name, properties, reporter strings, etc by setting class constants in stead of writing code. This may yield a simpler transcoder implementation, so be sure to check that out. Please refer to the documentation of the :class:`edxml.transcode.Transcoder` class for full details.
+Each transcoder is responsible for generating the event types, object types and concepts for the events that it generates. Generating these can be done by overriding three methods from the Transcoder class. Of these three methods, the method that is responsible for generating the event type is a bit special because the parent class provides an implementation for it that generates event types from class constants. Using this implementation in stead of implementing your own allows a transcoder to specify event type name, properties, event story templates, etc by setting class constants in stead of writing code. This may yield a simpler transcoder implementation, so be sure to check that out. Please refer to the documentation of the :class:`edxml.transcode.Transcoder` class for full details.
 
 The class methods for generating object types and concepts need not be overridden if you use ontology bricks. Should you prefer to define an object type or concept using the generator methods, your override will look something like this example:
 
@@ -102,7 +102,7 @@ Some data sources may produce too many types of events to fully model in EDXML. 
      "user5":       "",
    }
 
-the reporter string for the fallback event type might look like this:
+the event story template for the fallback event type might look like this:
 
 .. epigraph::
 
