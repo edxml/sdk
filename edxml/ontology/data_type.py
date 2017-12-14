@@ -21,8 +21,6 @@ class DataType(object):
   HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
   # Expression used for matching string datatypes
   STRING_PATTERN = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
-  # Expression used for matching binstring datatypes
-  BINSTRING_PATTERN = re.compile("binstring:[0-9]+(:r)?")
 
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
@@ -485,15 +483,6 @@ class DataType(object):
       if RegExp != '[\s\S]*':
         etree.SubElement(element, 'param', name='pattern').text = RegExp
 
-    elif splitDataType[0] == 'binstring':
-      length = int(splitDataType[1])
-      element = e.data(type='string')
-      etree.SubElement(element, 'param', name='minLength').text = '1'
-      if length > 0:
-        etree.SubElement(element, 'param', name='maxLength').text = str(length)
-      if RegExp != '[\s\S]*':
-        etree.SubElement(element, 'param', name='pattern').text = RegExp
-
     elif splitDataType[0] == 'boolean':
       # Because we do not allow the value strings '0' and '1'
       # while the RelaxNG data type does, we need to add
@@ -765,9 +754,6 @@ class DataType(object):
           unicode(value).encode('latin1')
         except:
           raise EDXMLValidationError("string of data type %s contains unicode characters: %s" % (self.type, value))
-    elif splitDataType[0] == 'binstring':
-      if 0 < splitDataType[1] < len(value):
-          raise EDXMLValidationError("string of data type %s too long: '%s'" % (self.type, value))
     elif splitDataType[0] == 'hashlink':
       if not re.match(self.HASHLINK_PATTERN, value):
         raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
@@ -881,9 +867,6 @@ class DataType(object):
         return self
     elif splitDataType[0] == 'string':
       if re.match(self.STRING_PATTERN, self.type):
-        return self
-    elif splitDataType[0] == 'binstring':
-      if re.match(self.BINSTRING_PATTERN, self.type):
         return self
 
     raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
