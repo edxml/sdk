@@ -195,7 +195,7 @@ class PropertyRelation(object):
     if not len(self._attr['description']) <= 255:
       raise EDXMLValidationError('Property relation description is too long: "%s"' % self._attr['description'])
 
-    if not re.match('^(intra|inter|parent|child|other):.+', self._attr['type']):
+    if not re.match('^(intra|inter|other):.+', self._attr['type']):
       raise EDXMLValidationError('Invalid property relation type: "%s"' % self._attr['type'])
 
     placeholders = re.findall(edxml.ontology.EventType.TEMPLATE_PATTERN, self._attr['description'])
