@@ -27,6 +27,7 @@ class DataType(object):
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
   FAMILY_NUMBER   = 'number'
+  FAMILY_HEX      = 'hex'
   FAMILY_BOOLEAN  = 'boolean'
   FAMILY_STRING   = 'string'
   FAMILY_ENUM     = 'enum'
@@ -239,7 +240,7 @@ class DataType(object):
     Returns:
       edxml.ontology.DataType:
     """
-    return cls('number:hex:%d%s' % (Length, ':%d:%s' % (GroupSize, Separator) if Separator and GroupSize else ''))
+    return cls('hex:%d%s' % (Length, ':%d:%s' % (GroupSize, Separator) if Separator and GroupSize else ''))
 
   @classmethod
   def GeoPoint(cls):
@@ -311,23 +312,13 @@ class DataType(object):
     """
 
     Returns True if the data type is of data type
-    family 'number', but not 'number:hex'. Returns
-    False for all other data types.
+    family 'number'. Returns False for all other data types.
 
     Returns:
       boolean:
     """
 
-    splitDataType = self.type.split(':')
-    if splitDataType[0] == 'number':
-      # TODO: Remove this check for hex once it has
-      # been removed from number family
-      if splitDataType[1] != 'hex':
-        return True
-    elif splitDataType[0] == 'datetime':
-      return True
-
-    return False
+    return self.type.split(':')[0] == 'number'
 
   def IsDateTime(self):
     """
@@ -441,42 +432,42 @@ class DataType(object):
           etree.SubElement(element, 'param', name='pattern').text = \
             '(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
             (int(fractional), int(fractional))
-
-      elif splitDataType[1] == 'hex':
-        digits = int(splitDataType[2])
-        if len(splitDataType) > 3:
-          # We have separated digit groups.
-          groupLength = int(splitDataType[3])
-          groupSeparator = splitDataType[4]
-          numGroups = digits / groupLength
-          if len(groupSeparator) == 0:
-            if len(splitDataType) == 6:
-              # This happens if the colon ':' is used as separator
-              groupSeparator = ':'
-          if numGroups > 0:
-            if numGroups > 1:
-              element = e.data(
-                e.param(
-                  '[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (groupLength, groupSeparator, groupLength, numGroups - 1),
-                  name='pattern'
-                ), type='string'
-              )
-            else:
-              element = e.data(
-                e.param(
-                  '[a-f\d]{%d}' % groupLength,
-                  name='pattern'
-                ), type='string'
-              )
-          else:
-            # zero groups means empty string.
-            element = e.value(type='string')
-        else:
-          # Simple hexadecimal value. Note that the length of
-          # the RelaxNG datatype is given in bytes.
-          element = e.data(e.param(str(int(digits) / 2), name='length'), type='hexBinary')
       else:
         raise TypeError
+
+    elif splitDataType[0] == 'hex':
+      digits = int(splitDataType[1])
+      if len(splitDataType) > 2:
+        # We have separated digit groups.
+        groupLength = int(splitDataType[2])
+        groupSeparator = splitDataType[3]
+        numGroups = digits / groupLength
+        if len(groupSeparator) == 0:
+          if len(splitDataType) == 5:
+            # This happens if the colon ':' is used as separator
+            groupSeparator = ':'
+        if numGroups > 0:
+          if numGroups > 1:
+            element = e.data(
+              e.param(
+                '[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (groupLength, groupSeparator, groupLength, numGroups - 1),
+                name='pattern'
+              ), type='string'
+            )
+          else:
+            element = e.data(
+              e.param(
+                '[a-f\d]{%d}' % groupLength,
+                name='pattern'
+              ), type='string'
+            )
+        else:
+          # zero groups means empty string.
+          element = e.value(type='string')
+      else:
+        # Simple hexadecimal value. Note that the length of
+        # the RelaxNG datatype is given in bytes.
+        element = e.data(e.param(str(int(digits) / 2), name='length'), type='hexBinary')
 
     elif splitDataType[0] == 'string':
       length = int(splitDataType[1])
@@ -624,14 +615,14 @@ class DataType(object):
           )
         else:
           return values
-      else:
-        # Must be hexadecimal
-        try:
-          return [unicode(value.lower()) for value in values]
-        except AttributeError:
-          raise EDXMLValidationError(
-            'Invalid hexadecimal value in list: "%s"' % '","'.join([repr(value) for value in values])
-          )
+
+    elif splitDataType[0] == 'hex':
+      try:
+        return [unicode(value.lower()) for value in values]
+      except AttributeError:
+        raise EDXMLValidationError(
+          'Invalid hexadecimal value in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
     elif splitDataType[0] == 'ip':
       try:
         return [u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values]
@@ -705,18 +696,6 @@ class DataType(object):
           # Decimal is unsigned.
           if Decimal(value) < 0:
             raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
-      elif splitDataType[1] == 'hex':
-        if value.lower() != value:
-          raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
-        if len(splitDataType) > 3:
-          HexSeparator = splitDataType[4]
-          if len(HexSeparator) == 0 and len(splitDataType) == 6:
-            HexSeparator = ':'
-          value = ''.join(c for c in str(value) if c != HexSeparator)
-        try:
-          value.decode("hex")
-        except ValueError:
-          raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
       elif splitDataType[1] == 'float' or splitDataType[1] == 'double':
         try:
           float(value)
@@ -735,6 +714,19 @@ class DataType(object):
           # number is unsigned.
           if value < 0:
             raise EDXMLValidationError("Unsigned integer value is negative: '%s'." % value)
+    elif splitDataType[0] == 'hex':
+      if value.lower() != value:
+        raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+      if len(splitDataType) > 2:
+        # TODO: Also check for empty groups, or more generically: group size.
+        HexSeparator = splitDataType[3]
+        if len(HexSeparator) == 0 and len(splitDataType) == 5:
+          HexSeparator = ':'
+        value = ''.join(c for c in str(value) if c != HexSeparator)
+      try:
+        value.decode("hex")
+      except ValueError:
+        raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
     elif splitDataType[0] == 'geo':
       if splitDataType[1] == 'point':
         # This is the only option at the moment.
@@ -861,31 +853,32 @@ class DataType(object):
                     return self
               else:
                 return self
-        elif splitDataType[1] == 'hex':
-          try:
-            hexLength = int(splitDataType[2])
-          except (KeyError, ValueError):
-            raise EDXMLValidationError("Hex datatype does not specify a valid length: " + self.type)
-          if hexLength == 0:
-            raise EDXMLValidationError("Length of hex datatype must be greater than zero: " + self.type)
-          if len(splitDataType) > 3:
-            try:
-              digitGroupLength = int(splitDataType[3])
-            except ValueError:
-              pass
-            else:
-              if digitGroupLength == 0:
-                raise EDXMLValidationError("Group length in hex datatype must be greater than zero: " + self.type)
-              if hexLength % digitGroupLength != 0:
-                raise EDXMLValidationError("Length of hex datatype is not a multiple of separator distance: " + self.type)
-              if len(splitDataType[4]) == 0:
-                if len(splitDataType) == 6:
-                  # This happens if the colon ':' is used as separator
-                  return self
-              else:
-                return self
+    elif splitDataType[0] == 'hex':
+      try:
+        hexLength = int(splitDataType[1])
+      except (KeyError, ValueError):
+        raise EDXMLValidationError("Hex datatype does not specify a valid length: " + self.type)
+      if hexLength == 0:
+        raise EDXMLValidationError("Length of hex datatype must be greater than zero: " + self.type)
+      if len(splitDataType) > 2:
+        try:
+          digitGroupLength = int(splitDataType[2])
+        except ValueError:
+          pass
+        else:
+          if digitGroupLength == 0:
+            raise EDXMLValidationError("Group length in hex datatype must be greater than zero: " + self.type)
+          if hexLength % digitGroupLength != 0:
+            raise EDXMLValidationError(
+              "Length of hex datatype is not a multiple of separator distance: " + self.type)
+          if len(splitDataType[3]) == 0:
+            if len(splitDataType) == 5:
+              # This happens if the colon ':' is used as separator
+              return self
           else:
             return self
+      else:
+        return self
     elif splitDataType[0] == 'string':
       if re.match(self.STRING_PATTERN, self.type):
         return self

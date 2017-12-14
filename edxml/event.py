@@ -482,7 +482,7 @@ class EDXMLEvent(MutableMapping):
               elif SplitDataType[1] == 'decimal':
                 Values.update(Decimal(Value) for Value in Source[PropertyName])
                 Values.update(Decimal(Value) for Value in Target[PropertyName])
-              elif SplitDataType[1] != 'hex':
+              else:
                 Values.update(int(Value) for Value in Source[PropertyName])
                 Values.update(int(Value) for Value in Target[PropertyName])
 
@@ -495,7 +495,7 @@ class EDXMLEvent(MutableMapping):
               Target[PropertyName] = {str(float(next(iter(Target[PropertyName]))) + len(collidingEvents))}
             elif SplitDataType[1] == 'decimal':
               Target[PropertyName] = {str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
-            elif SplitDataType[1] != 'hex':
+            else:
               Target[PropertyName] = {str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
 
       elif MergeStrategy == 'add':
