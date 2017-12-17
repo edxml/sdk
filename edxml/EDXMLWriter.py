@@ -35,6 +35,7 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
+from collections import deque
 
 import edxml
 
@@ -45,23 +46,36 @@ from EDXMLBase import *
 
 
 class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
+
+  class OutputBuffer(object):
+    """
+    A buffer for collecting the output of the lxml xml writer.
+    """
+
+    def __init__(self):
+      self.buffer = deque()
+
+      self.mode = 'a'
+
+    def write(self, data):
+      self.buffer.append(data)
+
   """Class for generating EDXML streams
 
-  The Output parameter is a file-like object
-  that will be used to send the XML data to.
-  This file-like object can be pretty much
-  anything, as long as it has a write() method.
+  The Output parameter is a file-like object that will be used to send the XML data to.
+  This file-like object can be pretty much anything, as long as it has a write() method
+  and a mode containing 'a' (opened for appending). When the Output parameter is omitted,
+  the generated XML data will be returned by the methods that generate output.
 
-  The optional Validate parameter controls if
-  the generated EDXML stream should be auto-validated
+  The optional Validate parameter controls if the generated EDXML stream should be auto-validated
   or not. Automatic validation is enabled by default.
 
   Args:
-    Output (file): File-like output object
+    Output (file, optional): File-like output object
     Validate (bool, optional): Enable output validation (True) or not (False)
     LogRepairedEvents (bool, optional): Log repaired events (True) or not (False)
   """
-  def __init__(self, Output, Validate=True, LogRepairedEvents=False):
+  def __init__(self, Output=None, Validate=True, LogRepairedEvents=False):
 
     super(EDXMLWriter, self).__init__()
 
@@ -80,6 +94,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     self._numEventsRepaired = 0
     self._numEventsProduced = 0
+
+    if self.Output is None:
+      # Create an output buffer to capture XML data
+      self.Output = self.OutputBuffer()
 
     # Passing a file name as output will make lxml open the file, and it will open it with mode 'w'. Since
     # we use multiple lxml file writers to produce output, the output will be truncated mid stream. Therefore,
@@ -200,11 +218,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     will automatically close and reopen the current eventgroup and
     eventgroups elements if necessary.
 
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
     Args:
       edxmlOntology (edxml.ontology.Ontology): The ontology
 
     Returns:
-      EDXMLWriter: The writer
+      unicode: Generated output XML data
 
     """
     reOpenEventGroups = False
@@ -239,10 +260,23 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     self.__justWroteOntology = True
 
-    return self
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
 
   def OpenEventGroups(self):
-    """Opens the <eventgroups> section, containing all eventgroups"""
+    """
+    Opens the <eventgroups> element, containing all eventgroups
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
+    Returns:
+      unicode: Generated output XML data
+    """
     if len(self.ElementStack) > 0: self.Error('An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
 
     if not self.__justWroteOntology:
@@ -257,13 +291,26 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
     self.ElementStack.append('eventgroups')
 
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
+
   def OpenEventGroup(self, EventTypeName, SourceUri):
-    """Opens an event group.
+    """
+    Opens an event group.
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
 
     Args:
       EventTypeName (str): Name of the eventtype
-
       SourceUri (str): EDXML event source URI
+
+    Returns:
+      unicode: Generated output XML data
 
     """
 
@@ -285,7 +332,24 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(self.CurrentEventTypeName, SourceUri)
     self.EventGroupXMLWriter.next()
 
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
+
   def Close(self):
+    """
+
+    Finalizes the output data stream.
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
+    Returns:
+      unicode: Generated output XML data
+    """
     if self.__justWroteOntology:
       # EDXML data streams must contain sequences of pairs of
       # an <ontology> element followed by an <eventgroups>
@@ -305,22 +369,50 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         (self._numEventsRepaired, self._numEventsProduced)
       )
 
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
+
   def CloseEventGroup(self):
-    """Closes a previously opened event group"""
+    """
+
+    Closes a previously opened event group.
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
+    Returns:
+      unicode: Generated output XML data
+    """
     if self.ElementStack[-1] != 'eventgroup': self.Error('Unbalanced <eventgroup> tag. Did you forget to call CloseEvent()?')
     self.ElementStack.pop()
 
     # This closes the generator, writing the closing eventgroup tag.
     self.EventGroupXMLWriter.close()
 
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
+
   def AddEvent(self, event):
     """
+
+    Adds specified event to the output data stream.
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
 
     Args:
       event (edxml.EDXMLEvent): The event
 
     Returns:
-      EDXMLWriter:
+      unicode: Generated output XML data
 
     """
     if self.ElementStack[-1] != 'eventgroup':
@@ -371,10 +463,25 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self._numEventsProduced += 1
     self.EventGroupXMLWriter.send(eventElement)
 
-    return self
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''
 
   def CloseEventGroups(self):
-    """Closes a previously opened <eventgroups> section"""
+    """
+
+    Closes a previously opened <eventgroups> element.
+
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
+    Returns:
+      unicode: Generated output XML data
+
+    """
     if self.ElementStack[-1] != 'eventgroups': self.Error('Unbalanced <eventgroups> tag. Did you forget to call CloseEventGroup()?')
     self.ElementStack.pop()
     # We send None to the outer XML generator, to
@@ -382,3 +489,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # completed and we want it to generate the
     # eventgroups closing tag.
     self.XMLWriter.send(None)
+
+    if isinstance(self.Output, self.OutputBuffer):
+      output = u''.join(self.Output.buffer)
+      self.Output.buffer.clear()
+      return output
+    else:
+      return u''

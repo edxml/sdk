@@ -22,27 +22,24 @@ class SimpleEDXMLWriter(object):
   goes out of scope.
   """
 
-  def __init__(self, Output, Validate=True):
+  def __init__(self, Output=None, Validate=True):
     """
 
-    Create a new SimpleEDXMLWriter, outputting
-    an EDXML stream to specified output.
+    Create a new SimpleEDXMLWriter, generating an EDXML data stream.
 
-    By default, the output will be fully validated.
-    Optionally, validating the event objects can
-    be disabled, or output validation can be completely
-    disabled by setting Validate to True. This may be
-    used to boost performance in case you know that
-    the data will be validated at the receiving end,
-    or in case you know that your generator is perfect. :)
+    By default, the output will be fully validated. Optionally, validating the event
+    objects can be disabled, or output validation can be completely disabled by setting
+    Validate to True. This may be used to boost performance in case you know that
+    the data will be validated at the receiving end, or in case you know that your
+    generator is perfect. :)
 
-    The Output parameter is a file-like object
-    that will be used to send the XML data to.
-    This file-like object can be pretty much
-    anything, as long as it has a write() method.
+    The Output parameter is a file-like object that will be used to send the XML data to.
+    This file-like object can be pretty much anything, as long as it has a write() method
+    and a mode containing 'a' (opened for appending). When the Output parameter is omitted,
+    the generated XML data will be returned by the methods that generate output.
 
     Args:
-     Output (file): a file-like object
+     Output (file, optional): a file-like object
      Validate (bool`, optional): Validate the output (True) or not (False)
 
     Returns:
@@ -271,13 +268,16 @@ class SimpleEDXMLWriter(object):
     AutoType is True, the default event type that has been set using SetEventType()
     will be used.
 
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
     Args:
       Event (EDXMLEvent): An EDXMLEvent instance
       AutoSource (bool):
       AutoType (bool):
 
     Returns:
-      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+      unicode: Generated output XML data
 
     """
 
@@ -331,9 +331,7 @@ class SimpleEDXMLWriter(object):
 
     self.__currBufSize += 1
 
-    self.Flush()
-
-    return self
+    return self.Flush()
 
   def SetBufferSize(self, EventCount):
     """
@@ -378,16 +376,25 @@ class SimpleEDXMLWriter(object):
     Flushing is needed when either the buffer is full or the configured
     output latency is exceeded.
 
+    If no output was specified while instantiating this class,
+    the generated XML data will be returned as unicode string.
+
     Args:
       force (bool): Force flushing or not
 
+    Returns:
+      unicode: Generated output XML data
+
     """
+
+    output = u''
+
     if self.__currBufSize > self.__maxBufSize or \
        0 < self._max_latency <= (time.time() - self._last_write_time) or force:
       for GroupId in self._event_buffers:
         EventTypeName, EventSourceUri = GroupId.split(':')
         for Merge in self._event_buffers[GroupId]:
-          self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
+          output += self._flush_buffer(EventTypeName, EventSourceUri, GroupId, Merge)
 
       self.__currBufSize = 0
       self._event_buffers = {}
@@ -395,33 +402,37 @@ class SimpleEDXMLWriter(object):
       if self._max_latency > 0:
         self._last_write_time = time.time()
 
+    return output
+
   def _flush_buffer(self, EventTypeName, EventSourceUri, EventGroupId, Merge):
 
     if len(self._event_buffers[EventGroupId][Merge]) == 0:
-      return
+      return u''
+
+    outputs = []
 
     if not self._writer:
       # We did not create the EDXMLWriter yet.
       self._writer = EDXMLWriter(self._output, self._validate, self._log_repaired_events)
-      self._writer.AddOntology(self._ontology)
+      outputs.append(self._writer.AddOntology(self._ontology))
       self._last_written_ontology_version = self._ontology.GetVersion()
-      self._writer.OpenEventGroups()
+      outputs.append(self._writer.OpenEventGroups())
 
     if self._ontology.IsModifiedSince(self._last_written_ontology_version):
       # TODO: Rather than outputting a complete, new
       # ontology, we should only output the ontology
       # elements that are new or updated.
       if self._current_event_group_type is not None:
-        self._writer.CloseEventGroup()
+        outputs.append(self._writer.CloseEventGroup())
         self._current_event_group_type = None
-      self._writer.CloseEventGroups()
-      self._writer.AddOntology(self._ontology)
+      outputs.append(self._writer.CloseEventGroups())
+      outputs.append(self._writer.AddOntology(self._ontology))
       self._last_written_ontology_version = self._ontology.GetVersion()
-      self._writer.OpenEventGroups()
+      outputs.append(self._writer.OpenEventGroups())
     if self._current_event_group_type != EventTypeName or self._current_event_group_source != EventSourceUri:
       if self._current_event_group_type is not None:
-        self._writer.CloseEventGroup()
-      self._writer.OpenEventGroup(EventTypeName, EventSourceUri)
+        outputs.append(self._writer.CloseEventGroup())
+      outputs.append(self._writer.OpenEventGroup(EventTypeName, EventSourceUri))
       self._current_event_group_type = EventTypeName
       self._current_event_group_source = EventSourceUri
 
@@ -437,7 +448,7 @@ class SimpleEDXMLWriter(object):
 
     for Event in Events:
       try:
-        self._writer.AddEvent(Event)
+        outputs.append(self._writer.AddEvent(Event))
       except EDXMLValidationError as Error:
         if self._ignore_invalid_events:
           if self._log_invalid_events:
@@ -446,6 +457,8 @@ class SimpleEDXMLWriter(object):
           raise
 
     self._event_buffers[EventGroupId][Merge] = {} if Merge else []
+
+    return u''.join(outputs)
 
   def Close(self, flush=True):
     """
@@ -457,31 +470,40 @@ class SimpleEDXMLWriter(object):
     By default, any remaining events in the output buffer will
     be written, unless flush is set to False.
 
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
+
     Args:
       flush (bool): Flush output buffer
 
     Returns:
-      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+      unicode: Generated output XML data
+
     """
+
+    outputs = []
 
     if not self._writer:
       # We did not create the EDXMLWriter yet.
       self._writer = EDXMLWriter(self._output, self._validate, self._log_repaired_events)
+      outputs.append(self._writer.AddOntology(self._ontology))
+      self._last_written_ontology_version = self._ontology.GetVersion()
+      outputs.append(self._writer.OpenEventGroups())
 
     if flush and self._ontology.IsModifiedSince(self._last_written_ontology_version):
       if self._current_event_group_type is not None:
-        self._writer.CloseEventGroup()
-        self._writer.CloseEventGroups()
+        outputs.append(self._writer.CloseEventGroup())
+        outputs.append(self._writer.CloseEventGroups())
         self._current_event_group_type = None
-      self._writer.AddOntology(self._ontology)
+      outputs.append(self._writer.AddOntology(self._ontology))
       self._last_written_ontology_version = self._ontology.GetVersion()
 
     if flush:
-      self.Flush(force=True)
+      outputs.append(self.Flush(force=True))
 
     if self._current_event_group_type is not None:
-      self._writer.CloseEventGroup()
+      outputs.append(self._writer.CloseEventGroup())
       self._current_event_group_type = None
 
-    self._writer.Close()
-    return self
+    outputs.append(self._writer.Close())
+    return u''.join(outputs)
