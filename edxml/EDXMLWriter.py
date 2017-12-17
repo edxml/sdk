@@ -81,17 +81,22 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     self._numEventsRepaired = 0
     self._numEventsProduced = 0
 
-    # Since we use multiple lxml file writers to produce output, passing a file name
-    # as output will truncate the output while writing data. Therefore, we only accept
-    # files, file-like objects as output.
+    # Passing a file name as output will make lxml open the file, and it will open it with mode 'w'. Since
+    # we use multiple lxml file writers to produce output, the output will be truncated mid stream. Therefore,
+    # we only accept files and file-like objects as output, allowing us to verify if we can append to the file.
     if not hasattr(self.Output, 'write'):
       raise IOError('The output of the EDXML writer does not look like an open file: ' + repr(self.Output))
 
-    # The lxml file writer will raise rather cryptic exceptions when the output is
-    # open file that is opened for reading, which is the default in Python. Check
-    # and raise an exception if needed.
-    if 'w' not in self.Output.mode and 'a' not in self.Output.mode:
-      raise IOError('The output of the EDXML writer does not appear to be writable.')
+    # If the output is not opened for appending,
+    # we raise an error for the reason outlined above.
+    if 'a' not in self.Output.mode:
+      if self.Output == sys.stdout:
+        # Unless the output is standard output, which cannot
+        # be truncated. We make this exception because sys.stdout
+        # object has mode 'w', which would normally qualify as unsafe.
+        pass
+      else:
+        raise IOError('The mode attribute of the output of the EDXML writer must contain "a" (opened for appending).')
 
     # Initialize lxml.etree based XML generators. This
     # will write the XML declaration and open the
