@@ -146,6 +146,80 @@ class XmlTranscoderMediator(TranscoderMediator):
     if self._writer:
       self._writer.Close()
 
+  def Generate(self, inputFile, tags, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True,
+            remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, recover=None,
+            huge_tree=False, schema=None, resolve_entities=False):
+    """
+
+    Parses the specified file, yielding unicode strings containing the
+    resulting EDXML data while parsing. The file can be any file-like
+    object, or the name of a file that should be opened and parsed.
+
+    If an output was specified when instantiating this class, the EDXML
+    data will be written into the output and this generator will yield
+    empty strings.
+
+    The tags argument is a list of tag names. Only the tags in the input
+    XML data that are included in this list will be matched against the
+    XPath expressions associated with registered transcoders. So, all
+    tags of XML elements that should be provided to transcoders must be
+    included in this list. Other XML elements cannot be transcoded into
+    EDXML events, even though they can still be addressed by traversing
+    the XML tree. However, do note that the mediator uses etree.iterparse
+    to parse the input XML data, so the XML tree will be incomplete while
+    parsing. Namespaced tags can be specified by inclusing the namespace
+    like this:
+
+      {http://www.w3.org/1999/xhtml}html
+
+    The other keyword arguments are passed directly to :class:`lxml.etree.iterparse`,
+    please refer to the lxml documentation for details.
+
+    Notes:
+      Passing a file name rather than a file-like object
+      is preferred and may result in a small performance gain.
+
+    Args:
+      schema: an XMLSchema to validate against
+      huge_tree (bool): disable security restrictions and support very deep trees and very long text content (only affects libxml2 2.7+)
+      recover (bool): try hard to parse through broken input (default: True for HTML, False otherwise)
+      html (bool): parse input as HTML (default: XML)
+      encoding: override the document encoding
+      remove_pis (bool): discard processing instructions
+      remove_comments (bool): discard comments
+      remove_blank_text (bool): discard blank text nodes
+      no_network (bool): prevent network access for related files
+      load_dtd (bool): use DTD for parsing
+      dtd_validation (bool): validate (if DTD is available)
+      attribute_defaults (bool): read default attributes from DTD
+      resolve_entities (bool): replace entities by their text value (default: True)
+      tags (List[str]): List of filtered tag names
+      inputFile (Union[io.TextIOBase, file, str]):
+
+    """
+    elementIterator = etree.iterparse(
+      inputFile, events=['end'], tag=tags, attribute_defaults=attribute_defaults, dtd_validation=dtd_validation, load_dtd=load_dtd,
+      no_network=no_network, remove_blank_text=remove_blank_text, remove_comments=remove_comments, remove_pis=remove_pis, encoding=encoding, html=html,
+      recover=recover, huge_tree=huge_tree, schema=schema, resolve_entities=resolve_entities
+    )
+
+    root = None
+
+    for action, elem in elementIterator:
+      if root is None:
+        root = elem
+        while root.getparent() is not None:
+          root = root.getparent()
+
+      Tree = etree.ElementTree(root)
+      yield self.Process(elem, Tree)
+
+      # Delete previously parsed elements
+      while elem.getprevious() is not None:
+        del elem.getparent()[0]
+
+    yield self.Close()
+
   def Process(self, Element, Tree=None):
     """
     Processes a single XML element, invoking the correct
