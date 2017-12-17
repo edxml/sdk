@@ -77,9 +77,9 @@ class XmlTranscoderMediator(TranscoderMediator):
             huge_tree=False, schema=None, resolve_entities=False):
     """
 
-    Parses the specified file. The file can be any
-    file-like object, or the name of a file that should
-    be opened and parsed.
+    Parses the specified file, writing the resulting EDXML data into the
+    output. The file can be any file-like object, or the name of a file
+    that should be opened and parsed.
 
     The tags argument is a list of tag names. Only the tags in the input
     XML data that are included in this list will be matched against the
@@ -96,6 +96,9 @@ class XmlTranscoderMediator(TranscoderMediator):
 
     The other keyword arguments are passed directly to :class:`lxml.etree.iterparse`,
     please refer to the lxml documentation for details.
+
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
 
     Notes:
       Passing a file name rather than a file-like object
@@ -149,9 +152,18 @@ class XmlTranscoderMediator(TranscoderMediator):
     transcoder to generate an EDXML event and writing the
     event into the output.
 
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
+
     Args:
       Element (etree.Element): XML element
+      Tree (etree.ElementTree): Root of XML document being parsed
+
+    Returns:
+      unicode: Generated output XML data
     """
+
+    outputs = []
 
     # Get the XPath expression that matches the element. Note that this
     # is an XPath that matches only this one element, while transcoders are
@@ -202,7 +214,9 @@ class XmlTranscoderMediator(TranscoderMediator):
           try:
             for PostProcessedEvent in Transcoder.PostProcess(Event):
               try:
-                self._writer.AddEvent(PostProcessedEvent)
+                outputs.append(self._writer.AddEvent(PostProcessedEvent))
+              except StopIteration:
+                outputs.append(self._writer.Close())
               except EDXMLError as Except:
                 if not self._ignore_invalid_events:
                   raise
@@ -218,7 +232,9 @@ class XmlTranscoderMediator(TranscoderMediator):
                          )
         else:
           try:
-            self._writer.AddEvent(Event)
+            outputs.append(self._writer.AddEvent(Event))
+          except StopIteration:
+            outputs.append(self._writer.Close())
           except EDXMLError as Except:
             if not self._ignore_invalid_events:
               raise
@@ -239,3 +255,5 @@ class XmlTranscoderMediator(TranscoderMediator):
           % ElementXPath
         )
         self.Warning('XML element was: %s' % etree.tostring(Element, pretty_print=True))
+
+    return u''.join(outputs)

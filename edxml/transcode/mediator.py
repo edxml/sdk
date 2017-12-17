@@ -41,14 +41,20 @@ class TranscoderMediator(EDXMLBase):
   _warn_invalid_events = False
   _defaultSourceUri = None
 
-  def __init__(self, Output):
+  def __init__(self, Output=None):
     """
 
     Create a new transcoder mediator which will output streaming
-    EDXML data using specified output.
+    EDXML data using specified output. The Output parameter is a
+    file-like object that will be used to send the XML data to.
+    This file-like object can be pretty much anything, as long
+    as it has a write() method and a mode containing 'a' (opened
+    for appending). When the Output parameter is omitted, the
+    generated XML data will be returned or yielded by the methods
+    that generate output.
 
     Args:
-      Output (file): a file-like object
+      Output (file, optional): a file-like object
     """
 
     super(TranscoderMediator, self).__init__()
@@ -322,7 +328,7 @@ class TranscoderMediator(EDXMLBase):
     # from adding new ontology elements while
     # generating events. Currently, this is limited
     # to event source definitions.
-    self._writer.AddOntology(self._ontology)
+    return self._writer.AddOntology(self._ontology)
 
   def _create_writer(self):
     self._writer = SimpleEDXMLWriter(self._output, self._validate_events)
@@ -345,10 +351,17 @@ class TranscoderMediator(EDXMLBase):
     transcoder to generate an EDXML event and writing the
     event into the output.
 
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
+
     Args:
       DataRecord: Input data record
+
+    Returns:
+      unicode: Generated output XML data
+
     """
-    return
+    return u''
 
   def Close(self, flush=True):
     """
@@ -360,8 +373,17 @@ class TranscoderMediator(EDXMLBase):
     By default, any remaining events in the output buffer will
     be written to the output, unless flush is set to False.
 
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
+
     Args:
       flush (bool): Flush output buffer
+
+    Returns:
+      unicode: Generated output XML data
+
     """
     if self._writer:
-      self._writer.Close(flush)
+      return self._writer.Close(flush)
+    else:
+      return u''

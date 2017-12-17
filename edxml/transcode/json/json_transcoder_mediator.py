@@ -75,6 +75,9 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     transcoder to generate an EDXML event and writing the
     event into the output.
 
+    If no output was specified while instantiating this class,
+    any generated XML data will be returned as unicode string.
+
     The JSON record must be represented as either a dictionary
     or an object. When an object is passed, it will attempt to
     read any attributes listed in the ATTRIBUTE_MAP of the matching
@@ -85,7 +88,14 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
     Args:
       JsonData (dict,object): Json dictionary
+
+    Returns:
+      unicode: Generated output XML data
+
     """
+
+    outputs = []
+
     if self.TYPE_FIELD is None:
       # Type field is not set, which means we must use the
       # fallback transcoder.
@@ -115,21 +125,20 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           # is generated. Create an EDXML writer and
           # write the initial ontology.
           self._create_writer()
-          self._write_initial_ontology()
+          outputs.append(self._write_initial_ontology())
         if self._ontology.IsModifiedSince(self._last_written_ontology_version):
           # Ontology was changed since we wrote the last ontology update,
           # so we need to write another update.
-          self._write_ontology_update()
+          outputs.append(self._write_ontology_update())
           self._last_written_ontology_version = self._ontology.GetVersion()
 
         if self._transcoderIsPostprocessor(Transcoder):
           try:
             for PostProcessedEvent in Transcoder.PostProcess(Event):
               try:
-                self._writer.AddEvent(PostProcessedEvent)
+                outputs.append(self._writer.AddEvent(PostProcessedEvent))
               except StopIteration:
-                self._writer.Close()
-                pass
+                outputs.append(self._writer.Close())
               except EDXMLError as Except:
                 if not self._ignore_invalid_events:
                   raise
@@ -146,10 +155,9 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                            )
         else:
           try:
-            self._writer.AddEvent(Event)
+            outputs.append(self._writer.AddEvent(Event))
           except StopIteration:
-            self._writer.Close()
-            pass
+            outputs.append(self._writer.Close())
           except EDXMLError as Except:
             if not self._ignore_invalid_events:
               raise
@@ -171,3 +179,5 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                         'no %s event generated.') % RecordType
                        )
         self.Warning('Record was: %s' % JsonData)
+
+    return u''.join(outputs)
