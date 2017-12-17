@@ -307,6 +307,18 @@ class DataType(object):
 
     return False
 
+  def IsDateTime(self):
+    """
+
+    Returns True if the data type is 'datetime'. Returns
+    False for all other data types.
+
+    Returns:
+      boolean:
+    """
+
+    return self.type.split(':')[0] == 'datetime'
+
   def GenerateRelaxNG(self, RegExp):
 
     e = ElementMaker()
