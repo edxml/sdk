@@ -125,11 +125,11 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           # is generated. Create an EDXML writer and
           # write the initial ontology.
           self._create_writer()
-          outputs.append(self._write_initial_ontology())
+          self._write_initial_ontology()
         if self._ontology.IsModifiedSince(self._last_written_ontology_version):
           # Ontology was changed since we wrote the last ontology update,
           # so we need to write another update.
-          outputs.append(self._write_ontology_update())
+          self._write_ontology_update()
           self._last_written_ontology_version = self._ontology.GetVersion()
 
         if self._transcoderIsPostprocessor(Transcoder):
