@@ -21,5 +21,5 @@ class SocketEDXMLWriter(SimpleEDXMLWriter):
         # open a socket in write mode because EDXMLWriter requires this
         # set the buffer to 0 because however much lxml flushes, the data is not sent
         # also tried TCP_NODELAY to no effect
-        socketfile = client_socket.makefile('wb', 0)
+        socketfile = client_socket.makefile('ab', 0)
         super(self.__class__, self).__init__(socketfile, Validate=validate)
