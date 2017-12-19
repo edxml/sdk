@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import copy
 import time
 
 from edxml import EDXMLWriter
@@ -61,6 +61,7 @@ class SimpleEDXMLWriter(object):
     self._current_event_group_source = None
     self._current_event_group_type = None
     self._event_buffers = {}
+    self._previous_event_buffers = {}
     self._ontology = Ontology()
     self._last_written_ontology_version = self._ontology.GetVersion()
     self._event_type_postprocessors = {}
@@ -222,6 +223,69 @@ class SimpleEDXMLWriter(object):
     edxmlOntology.Update(self._ontology)
     self._ontology = edxmlOntology
     self._last_written_ontology_version = -1
+
+    return self
+
+  def ResetOutput(self, recover=False):
+    """
+
+    Starts writing a new EDXML data stream. The existing data stream
+    is not closed before starting a new one. When the recover argument is
+    set to True, the events that were last flushed to the output can be
+    used to seed the new output buffer.
+
+    This method can be used to recover when data gets lost while flushing
+    the output.
+
+    Args:
+      recover (bool): Recover last flushed events
+
+    Returns:
+      SimpleEDXMLWriter: The SimpleEDXMLWriter instance
+
+    """
+
+    output = u''
+
+    self._writer = EDXMLWriter(self._output, self._validate, self._log_repaired_events)
+    output += self._writer.AddOntology(self._ontology)
+    output += self._writer.OpenEventGroups()
+
+    if isinstance(self._writer.Output, self._writer.OutputBuffer):
+      # The writer is writing into a memory buffer. Since this method is
+      # typically used in error handling, and it is not very convenient
+      # to have to process generated output in the error handler, we
+      # will store the generated output in the output buffer. This way,
+      # the data will be returned by the first regular data generation
+      # method that gets called after us.
+      self._writer.Output.write(output)
+
+    # Reset state to reflect starting from scratch
+    self._last_written_ontology_version = self._ontology.GetVersion()
+    self._current_event_group_type = None
+    self._current_event_group_source = None
+
+    if self._previous_event_buffers is None or recover is False:
+      # Nothing to do
+      return self
+
+    # Seed the output buffer using the previously
+    # flushed output buffer.
+    for GroupId in self._previous_event_buffers:
+      if GroupId not in self._event_buffers:
+        self._event_buffers[GroupId] = {}
+      for Merge in self._previous_event_buffers[GroupId]:
+        if Merge:
+          if Merge not in self._event_buffers[GroupId]:
+            self._event_buffers[GroupId][Merge] = {}
+          for Hash, Events in self._previous_event_buffers[GroupId][Merge].items():
+            self._event_buffers[GroupId][Merge][Hash] = Events
+        else:
+          if Merge not in self._event_buffers[GroupId]:
+            self._event_buffers[GroupId][Merge] = []
+          self._event_buffers[GroupId][Merge].extend(self._previous_event_buffers[GroupId][Merge])
+
+    self._previous_event_buffers = None
 
     return self
 
@@ -456,6 +520,9 @@ class SimpleEDXMLWriter(object):
         else:
           raise
 
+    # Below, we store a copy of the events we just serialized to EDXML and
+    # clear the output buffer. We do that to allow implementing recovery.
+    self._previous_event_buffers = copy.deepcopy(self._event_buffers)
     self._event_buffers[EventGroupId][Merge] = {} if Merge else []
 
     return u''.join(outputs)
