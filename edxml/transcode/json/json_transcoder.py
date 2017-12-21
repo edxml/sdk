@@ -24,6 +24,22 @@ class JsonTranscoder(edxml.transcode.Transcoder):
   event into multiple output events.
   """
 
+  EMPTY_VALUES = {}
+  """
+  The EMPTY_VALUES attribute is a dictionary mapping input record fields to
+  values of the associated property that should be considered empty. As an example,
+  the data source might use a specific string to indicate a value that is absent
+  or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the field
+  associated with an output event property, the property will be automatically
+  omitted from the generated EDXML events. Example::
+
+      {'fieldname.0.subfieldname': ('none', '-')}
+
+  Note that empty values are *always* omitted, because empty values are not permitted
+  in EDXML event objects.
+
+  """
+
   def Generate(self, Json, RecordTypeName, **kwargs):
     """
 
@@ -100,11 +116,13 @@ class JsonTranscoder(edxml.transcode.Transcoder):
               break
 
         if Value is not None:
+          Empty = ['']
+          Empty.extend(self.EMPTY_VALUES.get(JsonField, ()))
           if type(Value) == list:
-            Properties[PropertyName] = [v for v in Value if v != '']
+            Properties[PropertyName] = [v for v in Value if v not in Empty]
           elif type(Value) == bool:
             Properties[PropertyName] = ['true' if Value else 'false']
           else:
-            Properties[PropertyName] = [Value] if Value != '' else []
+            Properties[PropertyName] = [Value] if Value not in Empty else []
 
     yield EDXMLEvent(Properties, EventTypeName)

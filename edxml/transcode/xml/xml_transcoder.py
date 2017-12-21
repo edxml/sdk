@@ -55,6 +55,22 @@ class XmlTranscoder(edxml.transcode.Transcoder):
   splitting the auto-generated event into multiple output events.
   """
 
+  EMPTY_VALUES = {}
+  """
+  The EMPTY_VALUES attribute is a dictionary mapping XPath expressions to
+  values of the associated property that should be considered empty. As an example,
+  the data source might use a specific string to indicate a value that is absent
+  or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the XPath
+  expression associated with an output event property, the property will be
+  automatically omitted from the generated EDXML events. Example::
+
+      {'./some/subtag[@attribute]': ('none', '-')}
+
+  Note that empty values are *always* omitted, because empty values are not permitted
+  in EDXML event objects.
+
+  """
+
   _XPATH_MATCHERS = {}   # type: Dict[str, etree.XPath]
 
   def __init__(self):
@@ -213,15 +229,22 @@ class XmlTranscoder(edxml.transcode.Transcoder):
           if len(Property.text) == 0:
             # Skip empty values
             continue
+          elif Property.text in self.EMPTY_VALUES.get(XPath, ()):
+            # Property should be regarded as empty.
+            continue
 
           Properties[PropertyName].append(unicode(Property.text))
         except AttributeError:
           # Oops, XPath did not select a tag, it might be
           # an attribute then.
-          if len(unicode(Property)) == 0:
+          Property = unicode(Property)
+          if len(Property) == 0:
             # Skip empty values
             continue
-          Properties[PropertyName].append(unicode(Property))
+          elif Property in self.EMPTY_VALUES.get(XPath, ()):
+            # Property should be regarded as empty.
+            continue
+          Properties[PropertyName].append(Property)
         except TypeError:
           # XPath returned None
           continue
