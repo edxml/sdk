@@ -22,7 +22,7 @@ class DataType(object):
   # Expression used for matching SHA1 hashlinks
   HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
   # Expression used for matching string datatypes
-  STRING_PATTERN = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
+  STRING_PATTERN = re.compile("^string:[0-9]+:((cs)|(ci))(:[ru]+)?$")
   # Expression used for matching base64 datatypes
   BASE64_PATTERN = re.compile("^base64:[0-9]+$")
   # Expression used for matching uri datatypes
