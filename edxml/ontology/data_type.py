@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import urllib
+from urlparse import urlsplit, urlunsplit
 
 import re
 
@@ -21,6 +23,8 @@ class DataType(object):
   HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
   # Expression used for matching string datatypes
   STRING_PATTERN = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
+  # Expression used for matching uri datatypes
+  URI_PATTERN = re.compile("^uri:.$")
 
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
@@ -28,6 +32,7 @@ class DataType(object):
   FAMILY_HEX      = 'hex'
   FAMILY_BOOLEAN  = 'boolean'
   FAMILY_STRING   = 'string'
+  FAMILY_URI      = 'uri'
   FAMILY_ENUM     = 'enum'
   FAMILY_GEO      = 'geo'
   FAMILY_IP       = 'ip'
@@ -223,6 +228,20 @@ class DataType(object):
       edxml.ontology.DataType:
     """
     return cls('enum:%s' % ':'.join(Choices))
+
+  @classmethod
+  def Uri(cls, pathSeparator='/'):
+    """
+
+    Create an URI DataType instance.
+
+    Args:
+      pathSeparator (str): URI path separator
+
+    Returns:
+      edxml.ontology.DataType:
+    """
+    return cls('uri:%s' % pathSeparator)
 
   @classmethod
   def Hexadecimal(cls, Length, Separator=None, GroupSize=None):
@@ -433,6 +452,12 @@ class DataType(object):
       else:
         raise TypeError
 
+    elif splitDataType[0] == 'uri':
+      # Note that anyURI XML data type allows virtually anything,
+      # we need to use a regular expression to restrict it to the
+      # set of characters allowed in an URI.
+      element = e.data(e.param('[a-zA-Z#-;_~?\[\]!=@]+', name='pattern'), type='anyURI')
+
     elif splitDataType[0] == 'hex':
       digits = int(splitDataType[1])
       if len(splitDataType) > 2:
@@ -612,6 +637,33 @@ class DataType(object):
         raise EDXMLValidationError(
           'Invalid hexadecimal value in list: "%s"' % '","'.join([repr(value) for value in values])
         )
+
+    elif splitDataType[0] == 'uri':
+      pathSeparator = ':' if splitDataType[1] == '' else splitDataType[1]
+      for i, value in enumerate(values):
+        # Note that we cannot safely re-quote URIs in case there
+        # is a problem with quoting of special characters. For example,
+        # the path may contain both literal slashes and escaped ones. The
+        # server may interpret the literal slashes as path separators but not
+        # the quoted ones. When unquoting and requoting, this difference is
+        # lost. So we will not attempt to do that here. We will only apply
+        # quoting in case there are illegal characters in the URI and no percent
+        # encoding is present, which implies that the URI has not been quoted at all.
+        if not re.match(r'^[a-zA-Z#-;_~?\[\]!=@]+$', value):
+          if not re.match(r'&[a-fA-F\d]{2}', value):
+            scheme, netloc, path, qs, anchor = urlsplit(value)
+            # Note that a path may start with a slash irrespective of the actual path separator.
+            path = urllib.quote(path, '/' + pathSeparator)
+            # Quote the query part.
+            qs = urllib.quote_plus(qs, ':&=')
+            # Reconstruct normalized value.
+            values[i] = urlunsplit((scheme, netloc, path, qs, anchor))
+          else:
+            raise EDXMLValidationError(
+              'Invalid uri value: "%s" appears to be percent-encoded but also contains illegal characters.' % repr(value)
+            )
+      return values
+
     elif splitDataType[0] == 'ip':
       try:
         return [u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values]
@@ -867,6 +919,9 @@ class DataType(object):
         return self
     elif splitDataType[0] == 'string':
       if re.match(self.STRING_PATTERN, self.type):
+        return self
+    elif splitDataType[0] == 'uri':
+      if re.match(self.URI_PATTERN, self.type):
         return self
 
     raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
