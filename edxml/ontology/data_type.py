@@ -794,7 +794,7 @@ class DataType(object):
             raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
       elif splitDataType[1] == 'float' or splitDataType[1] == 'double':
         try:
-          float(value)
+          value = float(value)
         except ValueError:
           raise EDXMLValidationError("Invalid floating point number '%s'." % value)
         if len(splitDataType) < 3:
@@ -803,7 +803,7 @@ class DataType(object):
             raise EDXMLValidationError("Unsigned floating point value is negative: '%s'." % value)
       else:
         try:
-          int(value)
+          value = int(value)
         except:
           raise EDXMLValidationError("Invalid number '%s'." % value)
         if len(splitDataType) < 3:
