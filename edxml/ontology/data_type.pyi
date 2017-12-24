@@ -55,6 +55,9 @@ class DataType(object):
   def String(cls, Length: int = 0, CaseSensitive: bool = True, RequireUnicode: bool = True, ReverseStorage: bool = False) -> 'DataType': ...
 
   @classmethod
+  def Base64(cls, Length: int = 0) -> 'DataType': ...
+
+  @classmethod
   def Enum(cls, *Choices: str) -> 'DataType': ...
 
   @classmethod

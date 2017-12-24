@@ -23,6 +23,8 @@ class DataType(object):
   HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
   # Expression used for matching string datatypes
   STRING_PATTERN = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
+  # Expression used for matching base64 datatypes
+  BASE64_PATTERN = re.compile("^base64:[0-9]+$")
   # Expression used for matching uri datatypes
   URI_PATTERN = re.compile("^uri:.$")
   # Expression used for matching uuid datatypes
@@ -35,6 +37,7 @@ class DataType(object):
   FAMILY_UUID     = 'uuid'
   FAMILY_BOOLEAN  = 'boolean'
   FAMILY_STRING   = 'string'
+  FAMILY_BASE64   = 'base64'
   FAMILY_URI      = 'uri'
   FAMILY_ENUM     = 'enum'
   FAMILY_GEO      = 'geo'
@@ -217,6 +220,21 @@ class DataType(object):
     Flags += 'r' if ReverseStorage else ''
 
     return cls('string:%d:%s%s' % (Length, 'cs' if CaseSensitive else 'ci', ':%s' % Flags if Flags else ''))
+
+  @classmethod
+  def Base64(cls, Length=0):
+    """
+
+    Create a base64 DataType instance.
+
+    Args:
+      Length (int): Max number of bytes (zero = unlimited)
+
+    Returns:
+      DataType:
+    """
+
+    return cls('base64')
 
   @classmethod
   def Enum(cls, *Choices):
@@ -527,6 +545,16 @@ class DataType(object):
       if RegExp != '[\s\S]*':
         etree.SubElement(element, 'param', name='pattern').text = RegExp
 
+    elif splitDataType[0] == 'base64':
+      # Because we do not allow whitespace in base64 values,
+      # we use a pattern to restrict the data type.
+      element = e.data(
+        e.param(1, name='minLength'),
+        e.param(splitDataType[1], name='maxLength'),
+        e.param('\S*', name='pattern'),
+        type='base64Binary'
+      )
+
     elif splitDataType[0] == 'boolean':
       # Because we do not allow the value strings '0' and '1'
       # while the RelaxNG data type does, we need to add
@@ -708,6 +736,14 @@ class DataType(object):
         raise EDXMLValidationError(
           'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
         )
+    elif splitDataType[0] == 'base64':
+      try:
+        [value.decode('base64') for value in values]
+      except (AttributeError, ValueError):
+        raise EDXMLValidationError(
+          'Invalid byte string value in list: "%s"' % '","'.join([repr(value) for value in values])
+        )
+      return values
     elif splitDataType[0] == 'boolean':
       try:
         return [unicode(value.lower() for value in values)]
@@ -828,6 +864,21 @@ class DataType(object):
           unicode(value).encode('latin1')
         except:
           raise EDXMLValidationError("string of data type %s contains unicode characters: %s" % (self.type, value))
+    elif splitDataType[0] == 'base64':
+
+      # Check length of object value
+      if value == '':
+        raise EDXMLValidationError("Value of %s object is empty." % self.type)
+      try:
+        Decoded = value.decode(encoding='base64')
+      except AttributeError:
+        raise EDXMLValidationError("Invalid base64 encoded string: '%s'" % value)
+
+      MaxStringLength = int(splitDataType[1])
+
+      if MaxStringLength > 0:
+        if len(Decoded) > MaxStringLength:
+          raise EDXMLValidationError("base64 encoded string too long for data type %s: '%s'" % (self.type, value))
     elif splitDataType[0] == 'hashlink':
       if not re.match(self.HASHLINK_PATTERN, value):
         raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
@@ -944,6 +995,9 @@ class DataType(object):
         return self
     elif splitDataType[0] == 'string':
       if re.match(self.STRING_PATTERN, self.type):
+        return self
+    elif splitDataType[0] == 'base64':
+      if re.match(self.BASE64_PATTERN, self.type):
         return self
     elif splitDataType[0] == 'uri':
       if re.match(self.URI_PATTERN, self.type):
