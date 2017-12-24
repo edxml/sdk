@@ -25,11 +25,14 @@ class DataType(object):
   STRING_PATTERN = re.compile("string:[0-9]+:((cs)|(ci))(:[ru]+)?")
   # Expression used for matching uri datatypes
   URI_PATTERN = re.compile("^uri:.$")
+  # Expression used for matching uuid datatypes
+  UUID_PATTERN = re.compile("^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
 
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
   FAMILY_NUMBER   = 'number'
   FAMILY_HEX      = 'hex'
+  FAMILY_UUID     = 'uuid'
   FAMILY_BOOLEAN  = 'boolean'
   FAMILY_STRING   = 'string'
   FAMILY_URI      = 'uri'
@@ -258,6 +261,18 @@ class DataType(object):
       edxml.ontology.DataType:
     """
     return cls('hex:%d%s' % (Length, ':%d:%s' % (GroupSize, Separator) if Separator and GroupSize else ''))
+
+  @classmethod
+  def Uuid(cls):
+    """
+
+    Create a uuid DataType instance.
+
+    Returns:
+      DataType:
+    """
+
+    return cls('uuid')
 
   @classmethod
   def GeoPoint(cls):
@@ -491,6 +506,10 @@ class DataType(object):
         # Simple hexadecimal value. Note that the length of
         # the RelaxNG datatype is given in bytes.
         element = e.data(e.param(str(int(digits) / 2), name='length'), type='hexBinary')
+
+    elif splitDataType[0] == 'uuid':
+      # Note that we restrict the character space to lowercase characters.
+      element = e.data(e.param('[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}', name='pattern'), type='string')
 
     elif splitDataType[0] == 'string':
       length = int(splitDataType[1])
@@ -768,6 +787,9 @@ class DataType(object):
         value.decode("hex")
       except ValueError:
         raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
+    elif splitDataType[0] == 'uuid':
+      if not re.match(self.UUID_PATTERN, value):
+        raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
     elif splitDataType[0] == 'geo':
       if splitDataType[1] == 'point':
         # This is the only option at the moment.
@@ -916,6 +938,9 @@ class DataType(object):
           else:
             return self
       else:
+        return self
+    elif splitDataType[0] == 'uuid':
+      if len(splitDataType) == 1:
         return self
     elif splitDataType[0] == 'string':
       if re.match(self.STRING_PATTERN, self.type):
