@@ -521,9 +521,9 @@ class DataType(object):
           # zero groups means empty string.
           element = e.value(type='string')
       else:
-        # Simple hexadecimal value. Note that the length of
-        # the RelaxNG datatype is given in bytes.
-        element = e.data(e.param(str(int(digits) / 2), name='length'), type='hexBinary')
+        # Simple hexadecimal value. Note that we restrict
+        # the character space to lowercase characters.
+        element = e.data(e.param('[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
 
     elif splitDataType[0] == 'uuid':
       # Note that we restrict the character space to lowercase characters.
