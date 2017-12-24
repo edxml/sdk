@@ -1036,8 +1036,6 @@ class DataType(object):
       # fractional part is omitted, yielding invalid EDXML. Also,
       # the UTC timezone is represented as '+00:00' rather than 'Z'.
       if dateTime[19] != '.':
-        dateTime[19:] = '.000000Z'
+        return dateTime[:19] + '.000000Z'
       else:
-        dateTime[25:].pad = 'Z'
-
-      return dateTime
+        return dateTime[:26] + 'Z'
