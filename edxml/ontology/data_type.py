@@ -745,12 +745,7 @@ class DataType(object):
         )
       return values
     elif splitDataType[0] == 'boolean':
-      try:
-        return [unicode(value.lower() for value in values)]
-      except AttributeError:
-        raise EDXMLValidationError(
-          'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
-        )
+      return ['true' if value in (True, 'true', 'True', 1) else 'false' for value in values]
     else:
       try:
         return [unicode(value) for value in values]
