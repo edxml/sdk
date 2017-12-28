@@ -58,7 +58,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       self.mode = 'a'
 
     def write(self, data):
-      self.buffer.append(data)
+      # For some reason, lxml write regular strings rather than
+      # unicode strings. We need to tell Python that it is
+      # actually unicode data.
+      self.buffer.append(unicode(data, encoding='utf-8'))
 
   """Class for generating EDXML streams
 
