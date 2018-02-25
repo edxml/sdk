@@ -343,9 +343,9 @@ class EDXMLParserBase(object):
       self._ontology.Update(ontologyElement)
       self.__eventTypeSchemaCache = {}
     except EDXMLValidationError as exception:
-      raise EDXMLValidationError(
-        "Invalid ontology definition detected: %s\n%s" % (etree.tostring(ontologyElement), str(exception))
-      )
+      exception.message = "Invalid ontology definition detected: %s\n%s" %\
+                          (etree.tostring(ontologyElement, pretty_print=True), exception.message)
+      raise
 
     for eventTypeName in self._ontology.GetEventTypeNames():
       self.__numParsedEventTypes[eventTypeName] = 0
