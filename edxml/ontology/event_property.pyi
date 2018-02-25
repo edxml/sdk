@@ -26,7 +26,8 @@ class EventProperty(object):
 
   def __init__(self, eventType: edxml.ontology.EventType, Name: str, ObjectType: edxml.ontology.ObjectType,
                Description: str = None, DefinesEntity: bool = False,
-               EntityConfidence: float = 0, Cnp: int = 128, Unique: bool = False, Merge: str ='drop', Similar: str ='') -> None:
+               EntityConfidence: float = 0, Cnp: int = 128, Unique: bool = False, Optional: bool = False,
+               Multivalued: bool = True, Merge: str ='drop', Similar: str ='') -> None:
 
     self._attr = ...       # type: Dict[str, Any]
     self._eventType = ...  # type: edxml.ontology.EventType
@@ -67,6 +68,14 @@ class EventProperty(object):
   def Unique(self) -> 'EventProperty': ...
 
   def IsUnique(self) -> bool: ...
+
+  def IsOptional(self) -> bool: ...
+
+  def IsMandatory(self) -> bool: ...
+
+  def IsMultiValued(self) -> bool: ...
+
+  def IsSingleValued(self) -> bool: ...
 
   def Identifies(self, ConceptName: str, Confidence: float) -> 'EventProperty': ...
 

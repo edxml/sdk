@@ -9,14 +9,14 @@
   <eventtypes>
     <eventtype classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" story="no description available" summary="no description available">
       <properties>
-        <property description="property f" merge="drop" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
-        <property description="property g" merge="drop" name="property-g" object-type="objecttype.c" similar="" unique="false"/>
-        <property description="property d" merge="drop" name="property-d" object-type="objecttype.b" similar="" unique="false"/>
-        <property description="property e" merge="drop" name="property-e" object-type="objecttype.b" similar="" unique="false"/>
-        <property description="property b" merge="drop" name="property-b" object-type="objecttype.a" similar="" unique="false"/>
-        <property description="property c" merge="drop" name="property-c" object-type="objecttype.a" similar="" unique="false"/>
-        <property description="property a" merge="drop" name="property-a" object-type="objecttype.a" similar="" unique="false"/>
-        <property description="property h" merge="drop" name="property-h" object-type="objecttype.c" similar="" unique="false"/>
+        <property description="property f" merge="drop" optional="true" multivalued="true" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
+        <property description="property g" merge="drop" optional="true" multivalued="true" name="property-g" object-type="objecttype.c" similar="" unique="false"/>
+        <property description="property d" merge="drop" optional="true" multivalued="true" name="property-d" object-type="objecttype.b" similar="" unique="false"/>
+        <property description="property e" merge="drop" optional="true" multivalued="true" name="property-e" object-type="objecttype.b" similar="" unique="false"/>
+        <property description="property b" merge="drop" optional="true" multivalued="true" name="property-b" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property c" merge="drop" optional="true" multivalued="true" name="property-c" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property a" merge="drop" optional="true" multivalued="true" name="property-a" object-type="objecttype.a" similar="" unique="false"/>
+        <property description="property h" merge="drop" optional="true" multivalued="true" name="property-h" object-type="objecttype.c" similar="" unique="false"/>
       </properties>
       <relations/>
     </eventtype>

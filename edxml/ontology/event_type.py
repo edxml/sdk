@@ -1424,14 +1424,7 @@ class EventType(MutableMapping):
     Returns:
        list(str): List of property names
     """
-    Singular = {}
-    for PropertyName, Property in self._properties.items():
-      if Property.GetMergeStrategy() in ('match', 'min', 'max', 'replace'):
-        Singular[PropertyName] = True
-
-    if self._parent:
-      Singular.update(self._parent.GetPropertyMap())
-    return Singular.keys()
+    return [PropertyName for PropertyName, Property in self._properties.items() if Property.IsSingleValued()]
 
   def GetMandatoryPropertyNames(self):
     """
@@ -1441,12 +1434,7 @@ class EventType(MutableMapping):
     Returns:
        list(str): List of property names
     """
-    Singular = {}
-    for PropertyName, Property in self._properties.items():
-      if Property.GetMergeStrategy() in ('match', 'min', 'max'):
-        Singular[PropertyName] = True
-
-    return Singular.keys()
+    return [PropertyName for PropertyName, Property in self._properties.items() if Property.IsMandatory()]
 
   def validateEventStructure(self, edxmlEvent):
     """

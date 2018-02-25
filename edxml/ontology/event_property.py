@@ -27,7 +27,7 @@ class EventProperty(object):
   MERGE_MAX = 'max'
   """Merge strategy 'max'"""
 
-  def __init__(self, eventType, Name, ObjectType, Description = None, ConceptName = None, ConceptConfidence = 0, Cnp = 128, Unique = False, Merge ='drop', Similar =''):
+  def __init__(self, eventType, Name, ObjectType, Description = None, ConceptName = None, ConceptConfidence = 0, Cnp = 128, Unique = False, Optional = True, Multivalued = True, Merge ='drop', Similar =''):
 
     self._attr = {
       'name':               Name,
@@ -36,6 +36,8 @@ class EventProperty(object):
       'concept':            ConceptName,
       'concept-confidence': float(ConceptConfidence),
       'unique':             bool(Unique),
+      'optional':           bool(Optional),
+      'multivalued':        bool(Multivalued),
       'cnp':                int(Cnp),
       'merge':              Merge,
       'similar':            Similar
@@ -243,6 +245,9 @@ class EventProperty(object):
     Set the merge strategy of the property. This should
     be one of the MERGE_* attributes of this class.
 
+    Automatically makes the property mandatory or single
+    valued when the merge strategy requires it.
+
     Args:
       MergeStrategy (str): The merge strategy
 
@@ -253,6 +258,12 @@ class EventProperty(object):
 
     if MergeStrategy == 'match':
       self._setAttr('unique', True)
+
+    if MergeStrategy in ('match', 'min', 'max', 'replace'):
+      self._setAttr('multivalued', False)
+
+    if MergeStrategy in ('match', 'min', 'max'):
+      self._setAttr('optional', False)
 
     return self
 
@@ -276,13 +287,16 @@ class EventProperty(object):
     """
 
     Mark property as a unique property, which also sets
-    the merge strategy to 'match'.
+    the merge strategy to 'match' and makes the property
+    both mandatory and single valued.
 
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
     self._setAttr('unique', True)
     self._setAttr('merge', 'match')
+    self._setAttr('optional', False)
+    self._setAttr('multivalued', False)
     return self
 
   def IsUnique(self):
@@ -294,6 +308,46 @@ class EventProperty(object):
       bool:
     """
     return self._attr['unique']
+
+  def IsOptional(self):
+    """
+
+    Returns True if property is optional, returns False otherwise
+
+    Returns:
+      bool:
+    """
+    return self._attr['optional']
+
+  def IsMandatory(self):
+    """
+
+    Returns True if property is mandatory, returns False otherwise
+
+    Returns:
+      bool:
+    """
+    return not self._attr['optional']
+
+  def IsMultiValued(self):
+    """
+
+    Returns True if property is multi-valued, returns False otherwise
+
+    Returns:
+      bool:
+    """
+    return self._attr['multivalued']
+
+  def IsSingleValued(self):
+    """
+
+    Returns True if property is single-valued, returns False otherwise
+
+    Returns:
+      bool:
+    """
+    return not self._attr['multivalued']
 
   def Identifies(self, ConceptName, Confidence):
     """
@@ -361,7 +415,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('merge', 'add')
+    self.SetMergeStrategy('add')
     return self
 
   def MergeReplace(self):
@@ -372,7 +426,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('merge', 'replace')
+    self.SetMergeStrategy('replace')
     return self
 
   def MergeDrop(self):
@@ -384,7 +438,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('merge', 'drop')
+    self.SetMergeStrategy('drop')
     return self
 
   def MergeMin(self):
@@ -395,7 +449,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('merge', 'min')
+    self.SetMergeStrategy('min')
     return self
 
   def MergeMax(self):
@@ -406,7 +460,7 @@ class EventProperty(object):
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
-    self._setAttr('merge', 'max')
+    self.SetMergeStrategy('max')
     return self
 
   def Validate(self):
@@ -441,6 +495,26 @@ class EventProperty(object):
         'Property "%s" has an invalid concept naming priority: "%d"' % (self._attr['name'], self._attr['cnp'])
       )
 
+    if self.IsUnique():
+      if self.IsOptional():
+        raise EDXMLValidationError(
+          'Property "%s" is unique and optional at the same time' % self._attr['name']
+        )
+      if self.IsMultiValued():
+        raise EDXMLValidationError(
+          'Property "%s" is unique and multivalued at the same time' % self._attr['name']
+        )
+
+    if self._attr['merge'] in ('match', 'min', 'max') and self.IsOptional():
+      raise EDXMLValidationError(
+        'Property "%s" cannot be optional due to its merge strategy' % self._attr['name']
+      )
+
+    if self._attr['merge'] in ('match', 'min', 'max', 'replace') and self.IsMultiValued():
+      raise EDXMLValidationError(
+        'Property "%s" cannot be multivalued due to its merge strategy' % self._attr['name']
+      )
+
     if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
       raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self._attr['merge'])
 
@@ -467,6 +541,8 @@ class EventProperty(object):
       propertyElement.get('concept-confidence', 0),
       int(propertyElement.get('cnp', 0)),
       propertyElement.get('unique', 'false') == 'true',
+      propertyElement.get('optional') == 'true',
+      propertyElement.get('multivalued') == 'true',
       propertyElement.get('merge', 'drop'),
       propertyElement.get('similar', '')
     )
@@ -497,6 +573,16 @@ class EventProperty(object):
       raise Exception('Attempt to update event property "%s", but Entity Naming Priorities do not match.' % self._attr['name'],
                       (self._attr['cnp'], eventProperty.GetName()))
 
+    if self._attr['optional'] != eventProperty.IsOptional():
+      raise Exception(
+        'Attempt to update event property "%s", but "optional" attributes do not match.' % self._attr['name']
+      )
+
+    if self._attr['multivalued'] != eventProperty.IsMultiValued():
+      raise Exception(
+        'Attempt to update event property "%s", but "multivalued" attributes do not match.' % self._attr['name']
+      )
+
     self.Validate()
 
     return self
@@ -516,6 +602,8 @@ class EventProperty(object):
 
     attribs['concept-confidence'] = '%1.2f' % self._attr['concept-confidence']
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
+    attribs['optional'] = 'true' if self._attr['optional'] else 'false'
+    attribs['multivalued'] = 'true' if self._attr['multivalued'] else 'false'
     attribs['cnp'] = '%d' % attribs['cnp']
 
     if attribs['concept'] is None:
