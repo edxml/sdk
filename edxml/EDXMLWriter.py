@@ -253,7 +253,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       # that both are compatible.
       self._ontology.Update(edxmlOntology)
 
-    self.XMLWriter.send(edxmlOntology.GenerateXml())
+    try:
+      self.XMLWriter.send(edxmlOntology.GenerateXml())
+    except StopIteration:
+      # When the co-routine dropped out of its wrote loop while
+      # processing data, the next attempt to send() anything
+      # raises this exception.
+      raise IOError('Failed to write EDXML data to output.')
+
     self.__eventTypeSchemaCache = {}
 
     if reOpenEventGroups:
@@ -290,7 +297,13 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # hint it that the ontology element has been
     # completed and we want it to generate the
     # eventgroups opening tag.
-    self.XMLWriter.send(None)
+    try:
+      self.XMLWriter.send(None)
+    except StopIteration:
+      # When the co-routine dropped out of its wrote loop while
+      # processing data, the next attempt to send() anything
+      # raises this exception.
+      raise IOError('Failed to write EDXML data to output.')
 
     self.ElementStack.append('eventgroups')
 
@@ -463,8 +476,15 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             self.__generateEventValidationException(event, eventElement)
           self._numEventsRepaired += 1
 
+    try:
+      self.EventGroupXMLWriter.send(eventElement)
+    except StopIteration:
+      # When the co-routine dropped out of its wrote loop while
+      # processing data, the next attempt to send() anything
+      # raises this exception.
+      raise IOError('Failed to write EDXML data to output.')
+
     self._numEventsProduced += 1
-    self.EventGroupXMLWriter.send(eventElement)
 
     if isinstance(self.Output, self.OutputBuffer):
       output = u''.join(self.Output.buffer)
@@ -491,7 +511,13 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     # hint it that the eventgroups element has been
     # completed and we want it to generate the
     # eventgroups closing tag.
-    self.XMLWriter.send(None)
+    try:
+      self.XMLWriter.send(None)
+    except StopIteration:
+      # When the co-routine dropped out of its wrote loop while
+      # processing data, the next attempt to send() anything
+      # raises this exception.
+      raise IOError('Failed to write EDXML data to output.')
 
     if isinstance(self.Output, self.OutputBuffer):
       output = u''.join(self.Output.buffer)
