@@ -264,7 +264,7 @@ class EDXMLParserBase(object):
     # find this way is the eventgroup tag that
     # contains the current event.
     self.__rootElement = eventElement.getparent()
-    while self.__rootElement and self.__rootElement.tag != 'edxml':
+    while self.__rootElement is not None and self.__rootElement.tag != 'edxml':
       self.__rootElement = self.__rootElement.getparent()
     if self.__rootElement is None or self.__rootElement.tag != 'edxml':
       raise EDXMLValidationError('Invalid EDXML structure detected: Could not find the edxml root tag.')
