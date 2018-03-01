@@ -262,13 +262,12 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
       raise IOError('Failed to write EDXML data to output.')
 
     self.__eventTypeSchemaCache = {}
+    self.__justWroteOntology = True
 
     if reOpenEventGroups:
       self.OpenEventGroups()
     if prevEventTypeName is not None and prevEventSource is not None:
       self.OpenEventGroup(prevEventTypeName, prevEventSource)
-
-    self.__justWroteOntology = True
 
     if isinstance(self.Output, self.OutputBuffer):
       output = u''.join(self.Output.buffer)
