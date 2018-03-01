@@ -13,14 +13,14 @@ class PropertyRelation(object):
   Class representing a relation between two EDXML properties
   """
 
-  def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 1.0, Directed = True):
+  def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 10, Directed = True):
 
     self._attr = {
       'property1':         Source.GetName(),
       'property2':         Dest.GetName(),
       'description':       Description,
       'type':              '%s:%s' % (TypeClass, TypePredicate),
-      'confidence':        float(Confidence),
+      'confidence':        int(Confidence),
       'directed':          bool(Directed),
     }
 
@@ -102,7 +102,7 @@ class PropertyRelation(object):
     Returns the relation confidence.
 
     Returns:
-      float:
+      int:
     """
     return self._attr['confidence']
 
@@ -140,13 +140,13 @@ class PropertyRelation(object):
     Configure the relation confidence
 
     Args:
-     Confidence (float): Relation confidence [0.0,1.0]
+     Confidence (int): Relation confidence [1,10]
 
     Returns:
       edxml.ontology.PropertyRelation: The PropertyRelation instance
     """
 
-    self._setAttr('confidence', float(Confidence))
+    self._setAttr('confidence', int(Confidence))
     return self
 
   def Directed(self):
@@ -198,6 +198,9 @@ class PropertyRelation(object):
     if not re.match('^(intra|inter|other):.+', self._attr['type']):
       raise EDXMLValidationError('Invalid property relation type: "%s"' % self._attr['type'])
 
+    if self._attr['confidence'] < 1 or self._attr['confidence'] > 10:
+      raise EDXMLValidationError('Invalid property relation confidence: "%d"' % self._attr['confidence'])
+
     placeholders = re.findall(edxml.ontology.EventType.TEMPLATE_PATTERN, self._attr['description'])
 
     if not self._attr['property1'] in placeholders:
@@ -239,7 +242,7 @@ class PropertyRelation(object):
       relationElement.attrib['description'],
       relationElement.attrib['type'].split(':')[0],
       relationElement.attrib['type'].split(':')[1],
-      float(relationElement.attrib.get('confidence', '1')),
+      relationElement.attrib['confidence'],
       relationElement.get('directed', 'true') == 'true'
     )
 
@@ -279,7 +282,7 @@ class PropertyRelation(object):
 
     attribs = dict(self._attr)
 
-    attribs['confidence'] = '%1.2f' % self._attr['confidence']
+    attribs['confidence'] = '%d' % self._attr['confidence']
     attribs['directed'] = 'true' if self._attr['directed'] else 'false'
 
     return etree.Element('relation', attribs)

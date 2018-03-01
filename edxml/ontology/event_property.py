@@ -34,7 +34,7 @@ class EventProperty(object):
       'object-type':        ObjectType.GetName(),
       'description':        Description or Name.replace('-', ' '),
       'concept':            ConceptName,
-      'concept-confidence': float(ConceptConfidence),
+      'concept-confidence': int(ConceptConfidence),
       'unique':             bool(Unique),
       'optional':           bool(Optional),
       'multivalued':        bool(Multivalued),
@@ -107,7 +107,7 @@ class EventProperty(object):
     Returns the concept identification confidence.
 
     Returns:
-      float:
+      int:
     """
     return self._attr['concept-confidence']
 
@@ -154,7 +154,7 @@ class EventProperty(object):
 
     return self._attr['cnp']
 
-  def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+  def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
     """
 
     Creates and returns a relation between this property and
@@ -168,7 +168,7 @@ class EventProperty(object):
       TypePredicate (str): free form predicate
       TargetPropertyName (str): Name of the related property
       Reason (str): Relation description, with property placeholders
-      Confidence (float): Relation confidence [0.0,1.0]
+      Confidence (int): Relation confidence [00,10]
       Directed (bool): Directed relation True / False
 
     Returns:
@@ -181,7 +181,7 @@ class EventProperty(object):
       'other', TypePredicate, Confidence, Directed
     )
 
-  def RelateInter(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+  def RelateInter(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
     """
 
     Creates and returns a relation between this property and
@@ -197,7 +197,7 @@ class EventProperty(object):
       TypePredicate (str): free form predicate
       TargetPropertyName (str): Name of the related property
       Reason (str): Relation description, with property placeholders
-      Confidence (float): Relation confidence [0.0,1.0]
+      Confidence (int): Relation confidence [0,10]
       Directed (bool): Directed relation True / False
 
     Returns:
@@ -210,7 +210,7 @@ class EventProperty(object):
       'inter', TypePredicate, Confidence, Directed
     )
 
-  def RelateIntra(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=1.0, Directed=True):
+  def RelateIntra(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
     """
 
     Creates and returns a relation between this property and
@@ -226,7 +226,7 @@ class EventProperty(object):
       TargetPropertyName (str): Name of the related property
       Reason (str): Relation description, with property placeholders
       TypePredicate (str): free form predicate
-      Confidence (float): Relation confidence [0.0,1.0]
+      Confidence (float): Relation confidence [0,10]
       Directed (bool): Directed relation True / False
 
     Returns:
@@ -357,13 +357,13 @@ class EventProperty(object):
 
     Args:
       ConceptName (str): concept name
-      Confidence (float): concept identification confidence [0.0, 1.0]
+      Confidence (int): concept identification confidence [0, 10]
 
     Returns:
       edxml.ontology.EventProperty: The EventProperty instance
     """
     self._setAttr('concept', ConceptName)
-    self._setAttr('concept-confidence', float(Confidence))
+    self._setAttr('concept-confidence', int(Confidence))
     return self
 
   def SetConceptNamingPriority(self, Priority):
@@ -518,6 +518,9 @@ class EventProperty(object):
     if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
       raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self._attr['merge'])
 
+    if self._attr['concept-confidence'] < 0 or self._attr['concept-confidence'] > 10:
+      raise EDXMLValidationError('Invalid property concept confidence: "%d"' % self._attr['concept-confidence'])
+
     return self
 
   @classmethod
@@ -600,7 +603,7 @@ class EventProperty(object):
 
     attribs = dict(self._attr)
 
-    attribs['concept-confidence'] = '%1.2f' % self._attr['concept-confidence']
+    attribs['concept-confidence'] = '%d' % self._attr['concept-confidence']
     attribs['unique'] = 'true' if self._attr['unique'] else 'false'
     attribs['optional'] = 'true' if self._attr['optional'] else 'false'
     attribs['multivalued'] = 'true' if self._attr['multivalued'] else 'false'

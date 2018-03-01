@@ -46,10 +46,10 @@ myEventType.CreateProperty('command', ObjectTypeName='computing.ftp.command')
 
 myEventType['user'].RelateTo('has access to', 'server') \
                    .Because('a user named [[user]] issued a command on FTP server [[server]]') \
-                   .SetConfidence(1.0)
+                   .SetConfidence(10)
 
-myEventType['client'].Identifies('computer', 0.9)
-myEventType['server'].Identifies('computer', 0.9)
+myEventType['client'].Identifies('computer', 9)
+myEventType['server'].Identifies('computer', 9)
 
 myEventType['client'].RelateIntra('communicates with', 'server') \
   .Because('[[client]] connected to FTP server [[server]]')

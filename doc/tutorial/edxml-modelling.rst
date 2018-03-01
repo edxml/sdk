@@ -235,11 +235,11 @@ These 'relation stories' are useful to analysts studying the structure of a data
 
   myEventType['user'].RelateTo('has access to', 'server')\
     .Because('a user named [[user]] issued a command on FTP server [[server]]')\
-    .SetConfidence(1.0)
+    .SetConfidence(10)
 
-In this case, we actually don't need to specify confidence, because confidence is set to ``1.0`` by default. In using this confidence value, we assumed that each input record represents a command that can only be issued by users that have access permission to the FTP server.
+In this case, we actually don't need to specify confidence, because confidence is set to ``10`` by default. In using this confidence value, we assumed that each input record represents a command that can only be issued by users that have access permission to the FTP server.
 
-The assigned confidence could have been different in case this assumption could not be made. For example, suppose that a failed login attempt would also result in a the same type of input record. In that case we could have used a slightly lower confidence, like ``0.9``, to indicate that the relation as stated might in fact not be true. This is important, because confidence is used both by human analysts and analysis algorithms to estimate the accuracy of analysis results.
+The assigned confidence could have been different in case this assumption could not be made. For example, suppose that a failed login attempt would also result in a the same type of input record. In that case we could have used a slightly lower confidence, like ``9``, to indicate that the relation as stated might in fact not be true. This is important, because confidence is used both by human analysts and analysis algorithms to estimate the accuracy of analysis results.
 
 Step 9: Define Concepts
 -----------------------
@@ -262,14 +262,14 @@ Pretty straight forward and similar to defining object types. Next, we adjust th
 
  .. code-block:: python
 
-    myEventType['client'].Identifies('computer', 0.9)
-    myEventType['server'].Identifies('computer', 0.9)
+    myEventType['client'].Identifies('computer', 9)
+    myEventType['server'].Identifies('computer', 9)
 
-In the above code, we assigned an identification confidence of ``0.9``. This confidence value indicates how strong of an identifier the property is for the concept. Since it is possible for two different computers to have the same IPv4 address, we chose not to stick with the default of ``1.0`` and set a slightly lower value. Similar to property relation confidences, this is a hint that both human analysts and computer algorithms can use to assess the accuracy of analysis results.
+In the above code, we assigned an identification confidence of ``9``. This confidence value indicates how strong of an identifier the property is for the concept. Since it is possible for two different computers to have the same IPv4 address, we chose not to stick with the default of ``10`` and set a slightly lower value. Similar to property relation confidences, this is a hint that both human analysts and computer algorithms can use to assess the accuracy of analysis results.
 
 .. epigraph::
 
-  *The exact value of the confidence is a bit arbitrary, it has no scientific base or anything. If we chose a value of 0.8 we would not have expected to obtain wildly different analysis results.*
+  *The exact value of the confidence is a bit arbitrary, it has no scientific base or anything. If we chose a value of 8 we would not have expected to obtain wildly different analysis results.*
 
 Lastly, concept properties can (and should!) be related using property relations. The EDXML specification mentions two different types of concept relations: inter-concept and intra-concept. Let us express the fact that the client and server IP addresses belong to two distinct computers that are related:
 
