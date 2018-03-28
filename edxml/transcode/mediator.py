@@ -383,7 +383,7 @@ class TranscoderMediator(EDXMLBase):
       unicode: Generated output XML data
 
     """
-    if self._writer:
-      return self._writer.Close(flush)
-    else:
-      return u''
+    if self._writer is None:
+      self._create_writer()
+
+    return self._writer.Close(flush)
