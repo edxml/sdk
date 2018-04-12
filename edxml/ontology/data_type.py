@@ -489,7 +489,7 @@ class DataType(object):
       # Note that anyURI XML data type allows virtually anything,
       # we need to use a regular expression to restrict it to the
       # set of characters allowed in an URI.
-      element = e.data(e.param('[a-zA-Z#-;_~?\[\]!=@]+', name='pattern'), type='anyURI')
+      element = e.data(type='anyURI')
 
     elif splitDataType[0] == 'hex':
       digits = int(splitDataType[1])
