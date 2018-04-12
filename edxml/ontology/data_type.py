@@ -859,6 +859,9 @@ class DataType(object):
           unicode(value).encode('latin1')
         except:
           raise EDXMLValidationError("string of data type %s contains unicode characters: %s" % (self.type, value))
+    elif splitDataType[0] == 'uri':
+      # URI values can be any string, nothing to validate.
+      pass
     elif splitDataType[0] == 'base64':
 
       # Check length of object value
