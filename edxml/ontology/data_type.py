@@ -28,7 +28,7 @@ class DataType(object):
   # Expression used for matching uri datatypes
   URI_PATTERN = re.compile("^uri:.$")
   # Expression used for matching uuid datatypes
-  UUID_PATTERN = re.compile("^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
+  UUID_PATTERN = re.compile("^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
 
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
