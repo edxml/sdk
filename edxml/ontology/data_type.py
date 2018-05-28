@@ -677,7 +677,7 @@ class DataType(object):
             elif split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
                 try:
                     return [u'%d' % int(value) for value in values]
-                except TypeError:
+                except (TypeError, ValueError):
                     raise EDXMLValidationError(
                         'Invalid integer value in list: "%s"' % '","'.join(
                             [repr(value) for value in values])
