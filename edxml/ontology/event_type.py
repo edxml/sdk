@@ -42,7 +42,8 @@ class EventType(MutableMapping):
             'description': description or name,
             'classlist': class_list,
             'summary': summary,
-            'story': story.replace('\n', '[[NEWPAR:]]')
+            'story': story.replace('\n', '[[NEWPAR:]]'),
+            'version': 1
         }
 
         # type: Dict[str, edxml.ontology.EventProperty]
@@ -297,6 +298,17 @@ class EventType(MutableMapping):
           EventTypeParent: The parent event type
         """
         return self.__parent
+
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self.__attr['version']
 
     def create_property(self, name, object_type_name, description=None):
         """
@@ -627,6 +639,21 @@ class EventType(MutableMapping):
 
         if story:
             self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def evaluate_template(self, edxml_event, which='story', capitalize=True, colorize=False):
@@ -1379,7 +1406,8 @@ class EventType(MutableMapping):
     def create_from_xml(cls, type_element, ontology):
         event_type = cls(ontology, type_element.attrib['name'], type_element.attrib['display-name'],
                          type_element.attrib['description'], type_element.attrib['classlist'],
-                         type_element.attrib['summary'], type_element.attrib['story'])
+                         type_element.attrib['summary'], type_element.attrib['story'])\
+            .set_version(type_element.attrib['version'])
 
         for element in type_element:
             if element.tag == 'parent':
@@ -1418,6 +1446,9 @@ class EventType(MutableMapping):
         if self.__attr['description'] != event_type.get_description():
             raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self.__attr['name'],
                             (self.__attr['description'], event_type.get_name()))
+
+        if self.__attr['version'] != event_type.get_version():
+            raise Exception('Attempt to update event type "%s", but versions do not match.' % self.__attr['name'])
 
         if self.get_parent() is not None:
             if event_type.get_parent() is not None:
@@ -1460,8 +1491,10 @@ class EventType(MutableMapping):
           etree.Element: The element
 
         """
+        attribs = dict(self.__attr)
+        attribs['version'] = unicode(attribs['version'])
 
-        element = etree.Element('eventtype', self.__attr)
+        element = etree.Element('eventtype', attribs)
         if self.__parent:
             element.append(self.__parent.generate_xml())
         properties = etree.Element('properties')

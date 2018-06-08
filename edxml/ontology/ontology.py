@@ -48,6 +48,11 @@ class Ontology(object):
         version of a newly created empty ontology is zero.
         On each change, the version is incremented.
 
+        Note that this has nothing to do with versioning, upgrading
+        and downgrading of EDXML ontologies. EDXML ontologies have no
+        global version. The version that we return here is for change
+        tracking.
+
         Returns:
           int: Ontology version
 

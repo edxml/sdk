@@ -19,7 +19,8 @@ class EventSource(object):
         self._attr = {
             'uri': '/' + str(uri).strip('/') + '/',
             'description': str(description),
-            'date-acquired': str(acquisition_date)
+            'date-acquired': str(acquisition_date),
+            'version': 1
         }
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
@@ -65,6 +66,17 @@ class EventSource(object):
 
         return self._attr['date-acquired']
 
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self._attr['version']
+
     def set_description(self, description):
         """
 
@@ -93,6 +105,21 @@ class EventSource(object):
         """
 
         self._set_attr('date-acquired', date_time.strftime('%Y%m01'))
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def validate(self):
@@ -129,7 +156,7 @@ class EventSource(object):
             source_element.attrib['uri'],
             source_element.attrib['description'],
             source_element.attrib['date-acquired']
-        )
+        ).set_version(source_element.attrib['version'])
 
     def update(self, source):
         """
@@ -149,6 +176,9 @@ class EventSource(object):
             raise Exception('Attempt to update event source "%s" with source "%s".' %
                             (self._attr['uri'], source.get_uri()))
 
+        if self._attr['version'] != source.get_version():
+            raise Exception('Attempt to update event source "%s", but versions do not match.' % self._attr['uri'])
+
         self.validate()
 
         return self
@@ -164,4 +194,7 @@ class EventSource(object):
 
         """
 
-        return etree.Element('source', self._attr)
+        attribs = dict(self._attr)
+        attribs['version'] = unicode(attribs['version'])
+
+        return etree.Element('source', attribs)

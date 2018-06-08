@@ -18,7 +18,8 @@ class Concept(object):
         self._attr = {
             'name': name,
             'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
-            'description': description or name
+            'description': description or name,
+            'version': 1
         }
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
@@ -88,6 +89,17 @@ class Concept(object):
 
         return self._attr['description']
 
+    def get_version(self):
+        """
+
+        Returns the version of the concept definition.
+
+        Returns:
+          int:
+        """
+
+        return self._attr['version']
+
     def set_description(self, description):
         """
 
@@ -122,6 +134,21 @@ class Concept(object):
             plural = '%ss' % singular
 
         self._set_attr('display-name', '%s/%s' % (singular, plural))
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def validate(self):
@@ -173,7 +200,7 @@ class Concept(object):
             type_element.attrib['name'],
             type_element.attrib['display-name'],
             type_element.attrib['description'],
-        )
+        ).set_version(type_element.attrib['version'])
 
     def update(self, concept):
         """
@@ -199,6 +226,10 @@ class Concept(object):
             raise Exception('Attempt to update concept "%s", but descriptions do not match.' % self._attr['name'],
                             (self._attr['description'], concept.get_name()))
 
+        if self._attr['version'] != concept.get_version():
+            raise Exception('Attempt to update concept "%s", but versions do not match.' % self._attr['name'],
+                            (self._attr['version'], concept.get_name()))
+
         self.validate()
 
         return self
@@ -213,5 +244,7 @@ class Concept(object):
           etree.Element: The element
 
         """
+        attribs = dict(self._attr)
+        attribs['version'] = unicode(attribs['version'])
 
-        return etree.Element('concept', self._attr)
+        return etree.Element('concept', attribs)

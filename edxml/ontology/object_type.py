@@ -28,7 +28,8 @@ class ObjectType(object):
             'data-type': data_type,
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
-            'regexp': regexp
+            'regexp': regexp,
+            'version': 1
         }
 
         self.__ontology = ontology  # type: edxml.ontology.Ontology
@@ -143,6 +144,17 @@ class ObjectType(object):
 
         return self.__attr['regexp']
 
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self.__attr['version']
+
     def set_description(self, description):
         """
 
@@ -224,6 +236,21 @@ class ObjectType(object):
           edxml.ontology.ObjectType: The ObjectType instance
         """
         self._set_attr('fuzzy-matching', attribute)
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def fuzzy_match_head(self, length):
@@ -414,7 +441,7 @@ class ObjectType(object):
             type_element.get('compress', 'false') == 'true',
             type_element.get('fuzzy-matching', 'none'),
             type_element.get('regexp', r'[\s\S]*')
-        )
+        ).set_version(type_element.attrib['version'])
 
     def update(self, object_type):
         """
@@ -457,6 +484,9 @@ class ObjectType(object):
                             'regular expressions do not match.' % self.__attr['name'],
                             (self.__attr['regexp'], object_type.get_name()))
 
+        if self.__attr['version'] != object_type.get_version():
+            raise Exception('Attempt to update object type "%s", but versions do not match.' % self.__attr['name'])
+
         self.validate()
 
         return self
@@ -475,5 +505,6 @@ class ObjectType(object):
         attribs = dict(self.__attr)
 
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
+        attribs['version'] = unicode(attribs['version'])
 
         return etree.Element('objecttype', attribs)

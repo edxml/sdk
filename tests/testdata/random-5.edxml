@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <edxml version="3.0.0"><ontology>
   <objecttypes>
-    <objecttype compress="false" data-type="number:decimal:12:9:signed" description="objecttype.c" display-name="objecttype c/objecttype c" fuzzy-matching="none" name="objecttype.c" regexp="[\s\S]*"/>
-    <objecttype compress="false" data-type="number:bigint:signed" description="objecttype.b" display-name="objecttype b/objecttype b" fuzzy-matching="none" name="objecttype.b" regexp="[\s\S]*"/>
-    <objecttype compress="false" data-type="string:16:cs" description="objecttype.a" display-name="objecttype a/objecttype a" fuzzy-matching="none" name="objecttype.a" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="number:decimal:12:9:signed" description="objecttype.c" display-name="objecttype c/objecttype c" fuzzy-matching="none" name="objecttype.c" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="number:bigint:signed" description="objecttype.b" display-name="objecttype b/objecttype b" fuzzy-matching="none" name="objecttype.b" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="string:16:cs" description="objecttype.a" display-name="objecttype a/objecttype a" fuzzy-matching="none" name="objecttype.a" regexp="[\s\S]*"/>
   </objecttypes>
   <concepts/>
   <eventtypes>
-    <eventtype classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" story="no description available" summary="no description available">
+    <eventtype version="1" classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" story="no description available" summary="no description available">
       <properties>
         <property description="property f" merge="drop" optional="true" multivalued="true" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
         <property description="property g" merge="drop" optional="true" multivalued="true" name="property-g" object-type="objecttype.c" similar="" unique="false"/>
@@ -22,8 +22,8 @@
     </eventtype>
   </eventtypes>
   <sources>
-    <source date-acquired="00000000" description="no description available" uri="/source-b/"/>
-    <source date-acquired="00000000" description="no description available" uri="/source-a/"/>
+    <source version="1" date-acquired="00000000" description="no description available" uri="/source-b/"/>
+    <source version="1" date-acquired="00000000" description="no description available" uri="/source-a/"/>
   </sources>
 </ontology>
 <eventgroups><eventgroup source-uri="/source-a/" event-type="eventtype.a"><event>
