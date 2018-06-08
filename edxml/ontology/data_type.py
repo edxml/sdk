@@ -28,7 +28,7 @@ class DataType(object):
   # Expression used for matching uri datatypes
   URI_PATTERN = re.compile("^uri:.$")
   # Expression used for matching uuid datatypes
-  UUID_PATTERN = re.compile("^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
+  UUID_PATTERN = re.compile("^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
 
   FAMILY_DATETIME = 'datetime'
   FAMILY_SEQUENCE = 'sequence'
@@ -489,7 +489,7 @@ class DataType(object):
       # Note that anyURI XML data type allows virtually anything,
       # we need to use a regular expression to restrict it to the
       # set of characters allowed in an URI.
-      element = e.data(e.param('[a-zA-Z#-;_~?\[\]!=@]+', name='pattern'), type='anyURI')
+      element = e.data(type='anyURI')
 
     elif splitDataType[0] == 'hex':
       digits = int(splitDataType[1])
@@ -859,6 +859,9 @@ class DataType(object):
           unicode(value).encode('latin1')
         except:
           raise EDXMLValidationError("string of data type %s contains unicode characters: %s" % (self.type, value))
+    elif splitDataType[0] == 'uri':
+      # URI values can be any string, nothing to validate.
+      pass
     elif splitDataType[0] == 'base64':
 
       # Check length of object value
