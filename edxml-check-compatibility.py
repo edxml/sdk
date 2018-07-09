@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                          Relative EDXML Validator
 #
 #                            EXAMPLE APPLICATION
@@ -31,7 +31,7 @@
 #  ===========================================================================
 #
 #
-# 
+#
 #  Python script that checks if the ontologies in de <ontology>
 #  sections in all specified EDXML files are compatible.
 
@@ -43,7 +43,7 @@ from edxml.EDXMLParser import EDXMLOntologyPullParser
 
 def PrintHelp():
 
-  print """
+    print """
 
    This utility checks if the ontologies in de <ontology>
    elements in all specified EDXML files are compatible or not.
@@ -64,6 +64,7 @@ def PrintHelp():
 
 """
 
+
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
 InputFileNames = []
@@ -72,43 +73,46 @@ InputFileNames = []
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        InputFileNames.append(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    InputFileNames.append(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 if len(InputFileNames) < 2:
-  sys.stderr.write("Please specify at least two EDXML files. Use the --help argument to get help.\n")
-  sys.exit()
+    sys.stderr.write(
+        "Please specify at least two EDXML files. Use the --help argument to get help.\n")
+    sys.exit()
 
 AllCompatible = True
 
 with EDXMLOntologyPullParser() as parser:
-  for FileName in InputFileNames:
-    print("Checking %s" % FileName)
+    for FileName in InputFileNames:
+        print("Checking %s" % FileName)
 
-    try:
-      parser.parse(open(FileName))
-    except EDXMLOntologyPullParser.ProcessingInterrupted:
-      pass
-    except KeyboardInterrupt:
-      sys.exit()
-    except EDXMLError as Error:
-      AllCompatible = False
-      print("EDXML file %s is incompatible with previous files:\n%s" % (FileName, unicode(Error)))
-    except:
-      raise
+        try:
+            parser.parse(open(FileName))
+        except EDXMLOntologyPullParser.ProcessingInterrupted:
+            pass
+        except KeyboardInterrupt:
+            sys.exit()
+        except EDXMLError as Error:
+            AllCompatible = False
+            print("EDXML file %s is incompatible with previous files:\n%s" %
+                  (FileName, unicode(Error)))
+        except Exception:
+            raise
 
 if AllCompatible:
-  print("Files are compatible.")
+    print("Files are compatible.")
 else:
-  sys.exit(255)
+    sys.exit(255)

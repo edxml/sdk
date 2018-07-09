@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                           EDXML to XSD Converter
 #
 #                            EXAMPLE APPLICATION
@@ -29,8 +29,8 @@
 #
 #
 #  ===========================================================================
-# 
-# 
+#
+#
 #  This utility reads EDXML from a file or from standard input, and prints
 #  an XSD schema to STDOUT. The XSD is constructed to match the definitions
 #  section of the input EDXML file *exactly*. Due to the limitations of XSD
@@ -44,9 +44,10 @@ from xml.sax import make_parser
 from edxml.EDXMLBase import EDXMLProcessingInterrupted
 from edxml.EDXMLParser import EDXMLParser
 
+
 def PrintHelp():
 
-  print """
+    print """
 
    This utility reads EDXML from a file or from standard input, and prints
    an XSD schema to STDOUT. The XSD is constructed to match the definitions
@@ -70,7 +71,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -80,26 +82,27 @@ Input = sys.stdin
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 # Create a SAX parser, and provide it with
 # an EDXMLParser instance as content handler.
 # This places the EDXMLParser instance in the
 # XML processing chain, just after SaxParser.
 
-SaxParser   = make_parser()
+SaxParser = make_parser()
 EDXMLParser = EDXMLParser(SaxParser, True)
 
 SaxParser.setContentHandler(EDXMLParser)
@@ -108,12 +111,13 @@ SaxParser.setContentHandler(EDXMLParser)
 # either from a file or from standard input.
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  SaxParser.parse(Input)
+    SaxParser.parse(Input)
 except EDXMLProcessingInterrupted:
-  pass
+    pass
 
 # Finally, we use the XSD functions of the
 # EDXMLDefinitions instance of EDXMLParser

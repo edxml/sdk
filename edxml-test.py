@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                              EDXML Validator
 #
 #                            EXAMPLE APPLICATION
@@ -29,7 +29,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #  This script checks EDXML data against the specification requirements. Its exit
 #  status will be zero if the provided data is valid EDXML. The utility accepts both
 #  regular files and EDXML data streams on standard input.
@@ -41,7 +41,7 @@ from edxml.EDXMLParser import EDXMLPullParser
 
 def PrintHelp():
 
-  print """
+    print """
 
    This utility checks EDXML data against the specification requirements. Its exit
    status will be zero if the provided data is valid EDXML. The utility accepts both
@@ -61,7 +61,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -71,26 +72,28 @@ Input = sys.stdin
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  EDXMLPullParser().parse(Input)
+    EDXMLPullParser().parse(Input)
 except KeyboardInterrupt:
-  sys.exit()
+    sys.exit()
 
 sys.stdout.write("Input data is valid.\n")
