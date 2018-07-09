@@ -41,3 +41,7 @@ from object_type import ObjectType
 from concept import Concept
 from ontology import Ontology
 from brick import Brick
+
+
+__all__ = ['DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource', 'EventTypeParent', 'ObjectType',
+           'Concept', 'Ontology', 'Brick']

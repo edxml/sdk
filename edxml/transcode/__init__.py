@@ -12,3 +12,6 @@ various types of input data (like JSON records) into EDXML output streams.
 """
 from transcoder import Transcoder
 from mediator import TranscoderMediator
+
+
+__all__ = ['Transcoder', 'TranscoderMediator']

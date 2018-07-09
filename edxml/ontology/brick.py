@@ -2,52 +2,52 @@
 
 
 class Brick(object):
-  """
-  Class representing an ontology brick. Ontology bricks contain definitions
-  of object types and concepts. By defining these in ontology bricks, the
-  definitions can be shared and installed using standard Python package
-  management tools.
+    """
+    Class representing an ontology brick. Ontology bricks contain definitions
+    of object types and concepts. By defining these in ontology bricks, the
+    definitions can be shared and installed using standard Python package
+    management tools.
 
-  Using ontology bricks simplifies the process of producing and maintaining
-  collections of tools that generate mutually compatible EDXML data streams,
-  by sharing ontology element definitions in the form of Python modules.
+    Using ontology bricks simplifies the process of producing and maintaining
+    collections of tools that generate mutually compatible EDXML data streams,
+    by sharing ontology element definitions in the form of Python modules.
 
-  Ontology bricks should extend this class and override the generate methods
-  that create the ontology elements.
-  """
-
-  @classmethod
-  def generateObjectTypes(cls, targetOntology):
+    Ontology bricks should extend this class and override the generate methods
+    that create the ontology elements.
     """
 
-    Creates any object types that are defined by the
-    brick using specified ontology, yielding each
-    of the created ObjectType instances.
+    @classmethod
+    def generateObjectTypes(cls, targetOntology):
+        """
 
-    Args:
-      targetOntology (edxml.ontology.Ontology): The ontology to add to
+        Creates any object types that are defined by the
+        brick using specified ontology, yielding each
+        of the created ObjectType instances.
 
-    Yields:
-      List[edxml.ontology.ObjectType]:
+        Args:
+          targetOntology (edxml.ontology.Ontology): The ontology to add to
 
-    """
-    return
-    yield
+        Yields:
+          List[edxml.ontology.ObjectType]:
 
-  @classmethod
-  def generateConcepts(cls, targetOntology):
-    """
+        """
+        return
+        yield
 
-    Creates any concepts that are defined by the
-    brick using specified ontology, yielding each
-    of the created Concept instances.
+    @classmethod
+    def generateConcepts(cls, targetOntology):
+        """
 
-    Args:
-      targetOntology (edxml.ontology.Ontology): The ontology to add to
+        Creates any concepts that are defined by the
+        brick using specified ontology, yielding each
+        of the created Concept instances.
 
-    Yields:
-      List[edxml.ontology.Concept]:
+        Args:
+          targetOntology (edxml.ontology.Ontology): The ontology to add to
 
-    """
-    return
-    yield
+        Yields:
+          List[edxml.ontology.Concept]:
+
+        """
+        return
+        yield

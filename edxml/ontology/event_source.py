@@ -1,167 +1,167 @@
 # -*- coding: utf-8 -*-
 
 import re
-import edxml
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
 
 
 class EventSource(object):
-  """
-  Class representing an EDXML event source
-  """
-
-  SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
-  ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
-
-  def __init__(self, Ontology, Uri, Description='no description available', AcquisitionDate='00000000'):
-
-    self._attr = {
-      'uri':           str(Uri).rstrip('/') + '/',
-      'description':   str(Description),
-      'date-acquired': str(AcquisitionDate)
-    }
-
-    self._ontology = Ontology  # type: edxml.ontology.Ontology
-
-  def _childModifiedCallback(self):
-    """Callback for change tracking"""
-    self._ontology._childModifiedCallback()
-    return self
-
-  def _setAttr(self, key, value):
-    if self._attr[key] != value:
-      self._attr[key] = value
-      self._childModifiedCallback()
-
-  def GetUri(self):
+    """
+    Class representing an EDXML event source
     """
 
-    Returns the source URI
+    SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
+    ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
-    Returns:
-      str:
-    """
-    return self._attr['uri']
+    def __init__(self, Ontology, Uri, Description='no description available', AcquisitionDate='00000000'):
 
-  def GetDescription(self):
-    """
+        self._attr = {
+            'uri':           str(Uri).rstrip('/') + '/',
+            'description':   str(Description),
+            'date-acquired': str(AcquisitionDate)
+        }
 
-    Returns the source description
+        self._ontology = Ontology  # type: edxml.ontology.Ontology
 
-    Returns:
-      str:
-    """
-    return self._attr['description']
+    def _childModifiedCallback(self):
+        """Callback for change tracking"""
+        self._ontology._childModifiedCallback()
+        return self
 
-  def GetAcquisitionDateString(self):
-    """
+    def _setAttr(self, key, value):
+        if self._attr[key] != value:
+            self._attr[key] = value
+            self._childModifiedCallback()
 
-    Returns the acquisition date
+    def GetUri(self):
+        """
 
-    Returns:
-      str: The date in yyyymmdd format
-    """
+        Returns the source URI
 
-    return self._attr['date-acquired']
+        Returns:
+          str:
+        """
+        return self._attr['uri']
 
-  def SetDescription(self, Description):
-    """
+    def GetDescription(self):
+        """
 
-    Sets the source description
+        Returns the source description
 
-    Args:
-      Description (str): Description
+        Returns:
+          str:
+        """
+        return self._attr['description']
 
-    Returns:
-      edxml.ontology.EventSource: The EventSource instance
-    """
+    def GetAcquisitionDateString(self):
+        """
 
-    self._setAttr('description', str(Description))
-    return self
+        Returns the acquisition date
 
-  def SetAcquisitionDate(self, dateTime):
-    """
+        Returns:
+          str: The date in yyyymmdd format
+        """
 
-    Sets the acquisition date
+        return self._attr['date-acquired']
 
-    Args:
-      dateTime (datetime.datetime): Acquisition date
+    def SetDescription(self, Description):
+        """
 
-    Returns:
-      edxml.ontology.EventSource: The EventSource instance
-    """
+        Sets the source description
 
-    self._setAttr('date-acquired', dateTime.strftime('%Y%m01'))
-    return self
+        Args:
+          Description (str): Description
 
-  def Validate(self):
-    """
+        Returns:
+          edxml.ontology.EventSource: The EventSource instance
+        """
 
-    Checks if the event source definition is valid.
+        self._setAttr('description', str(Description))
+        return self
 
-    Raises:
-      EDXMLValidationError
-    Returns:
-      edxml.ontology.EventSource: The EventSource instance
+    def SetAcquisitionDate(self, dateTime):
+        """
 
-    """
-    if not re.match(self.SOURCE_URI_PATTERN, self._attr['uri']):
-      raise EDXMLValidationError(
-        'Event source has an invalid URI: "%s"' % self._attr['uri']
-      )
+        Sets the acquisition date
 
-    if not 1 <= len(self._attr['description']) <= 128:
-      raise EDXMLValidationError('Event source has a description that is either empty or too long.')
+        Args:
+          dateTime (datetime.datetime): Acquisition date
 
-    if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
-      raise EDXMLValidationError(
-        'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
-      )
+        Returns:
+          edxml.ontology.EventSource: The EventSource instance
+        """
 
-    return self
+        self._setAttr('date-acquired', dateTime.strftime('%Y%m01'))
+        return self
 
-  @classmethod
-  def Read(cls, sourceElement, ontology):
-    return cls(
-      ontology,
-      sourceElement.attrib['uri'],
-      sourceElement.attrib['description'],
-      sourceElement.attrib['date-acquired']
-    )
+    def Validate(self):
+        """
 
-  def Update(self, source):
-    """
+        Checks if the event source definition is valid.
 
-    Updates the event source to match the EventSource
-    instance passed to this method, returning the
-    updated instance.
+        Raises:
+          EDXMLValidationError
+        Returns:
+          edxml.ontology.EventSource: The EventSource instance
 
-    Args:
-      source (edxml.ontology.EventSource): The new EventSource instance
+        """
+        if not re.match(self.SOURCE_URI_PATTERN, self._attr['uri']):
+            raise EDXMLValidationError(
+                'Event source has an invalid URI: "%s"' % self._attr['uri']
+            )
 
-    Returns:
-      edxml.ontology.EventSource: The updated EventSource instance
+        if not 1 <= len(self._attr['description']) <= 128:
+            raise EDXMLValidationError(
+                'Event source has a description that is either empty or too long.')
 
-    """
-    if self._attr['uri'] != source.GetUri():
-      raise Exception('Attempt to update event source "%s" with source "%s".' %
-                      (self._attr['uri'], source.GetUri()))
+        if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
+            raise EDXMLValidationError(
+                'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
+            )
 
-    self.Validate()
+        return self
 
-    return self
+    @classmethod
+    def Read(cls, sourceElement, ontology):
+        return cls(
+            ontology,
+            sourceElement.attrib['uri'],
+            sourceElement.attrib['description'],
+            sourceElement.attrib['date-acquired']
+        )
 
-  def GenerateXml(self):
-    """
+    def Update(self, source):
+        """
 
-    Generates an lxml etree Element representing
-    the EDXML <source> tag for this event source.
+        Updates the event source to match the EventSource
+        instance passed to this method, returning the
+        updated instance.
 
-    Returns:
-      etree.Element: The element
+        Args:
+          source (edxml.ontology.EventSource): The new EventSource instance
 
-    """
+        Returns:
+          edxml.ontology.EventSource: The updated EventSource instance
 
-    return etree.Element('source', self._attr)
+        """
+        if self._attr['uri'] != source.GetUri():
+            raise Exception('Attempt to update event source "%s" with source "%s".' %
+                            (self._attr['uri'], source.GetUri()))
+
+        self.Validate()
+
+        return self
+
+    def GenerateXml(self):
+        """
+
+        Generates an lxml etree Element representing
+        the EDXML <source> tag for this event source.
+
+        Returns:
+          etree.Element: The element
+
+        """
+
+        return etree.Element('source', self._attr)

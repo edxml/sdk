@@ -9,280 +9,291 @@ from edxml.ontology import EventProperty
 
 
 class PropertyRelation(object):
-  """
-  Class representing a relation between two EDXML properties
-  """
-
-  def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence = 10, Directed = True):
-
-    self._attr = {
-      'property1':         Source.GetName(),
-      'property2':         Dest.GetName(),
-      'description':       Description,
-      'type':              '%s:%s' % (TypeClass, TypePredicate),
-      'confidence':        int(Confidence),
-      'directed':          bool(Directed),
-    }
-
-    self._eventType = EventType  # type: edxml.ontology.EventType
-
-  def _childModifiedCallback(self):
-    """Callback for change tracking"""
-    self._eventType._childModifiedCallback()
-    return self
-
-  def _setAttr(self, key, value):
-    if self._attr[key] != value:
-      self._attr[key] = value
-      self._childModifiedCallback()
-
-  def GetSource(self):
+    """
+    Class representing a relation between two EDXML properties
     """
 
-    Returns the source property.
+    def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence=10, Directed=True):
 
-    Returns:
-      str:
-    """
-    return self._attr['property1']
+        self._attr = {
+            'property1':         Source.GetName(),
+            'property2':         Dest.GetName(),
+            'description':       Description,
+            'type':              '%s:%s' % (TypeClass, TypePredicate),
+            'confidence':        int(Confidence),
+            'directed':          bool(Directed),
+        }
 
-  def GetTarget(self):
-    """
+        self._eventType = EventType  # type: edxml.ontology.EventType
 
-    Returns the target property.
+    def _childModifiedCallback(self):
+        """Callback for change tracking"""
+        self._eventType._childModifiedCallback()
+        return self
 
-    Returns:
-      str:
-    """
-    return self._attr['property2']
+    def _setAttr(self, key, value):
+        if self._attr[key] != value:
+            self._attr[key] = value
+            self._childModifiedCallback()
 
-  def GetDescription(self):
-    """
+    def GetSource(self):
+        """
 
-    Returns the relation description.
+        Returns the source property.
 
-    Returns:
-      str:
-    """
-    return self._attr['description']
+        Returns:
+          str:
+        """
+        return self._attr['property1']
 
-  def GetType(self):
-    """
+    def GetTarget(self):
+        """
 
-    Returns the relation type.
+        Returns the target property.
 
-    Returns:
-      str:
-    """
-    return self._attr['type']
+        Returns:
+          str:
+        """
+        return self._attr['property2']
 
-  def GetTypeClass(self):
-    """
+    def GetDescription(self):
+        """
 
-    Returns the class part of the relation type.
+        Returns the relation description.
 
-    Returns:
-      str:
-    """
-    return self._attr['type'].split(':')[0]
+        Returns:
+          str:
+        """
+        return self._attr['description']
 
-  def GetTypePredicate(self):
-    """
+    def GetType(self):
+        """
 
-    Returns the predicate part of the relation type.
+        Returns the relation type.
 
-    Returns:
-      str:
-    """
-    return self._attr['type'].split(':')[1]
+        Returns:
+          str:
+        """
+        return self._attr['type']
 
-  def GetConfidence(self):
-    """
+    def GetTypeClass(self):
+        """
 
-    Returns the relation confidence.
+        Returns the class part of the relation type.
 
-    Returns:
-      int:
-    """
-    return self._attr['confidence']
+        Returns:
+          str:
+        """
+        return self._attr['type'].split(':')[0]
 
-  def IsDirected(self):
-    """
+    def GetTypePredicate(self):
+        """
 
-    Returns True when the relation is directed,
-    returns False otherwise.
+        Returns the predicate part of the relation type.
 
-    Returns:
-      bool:
-    """
-    return self._attr['directed']
+        Returns:
+          str:
+        """
+        return self._attr['type'].split(':')[1]
 
-  def Because(self, Reason):
-    """
+    def GetConfidence(self):
+        """
 
-    Sets the relation description to specified string,
-    which should contain placeholders for the values
-    of both related properties.
+        Returns the relation confidence.
 
-    Args:
-      Reason (str): Relation description
+        Returns:
+          int:
+        """
+        return self._attr['confidence']
 
-    Returns:
-      edxml.ontology.PropertyRelation: The PropertyRelation instance
+    def IsDirected(self):
+        """
 
-    """
-    self._setAttr('description', Reason)
-    return self
+        Returns True when the relation is directed,
+        returns False otherwise.
 
-  def SetConfidence(self, Confidence):
-    """
+        Returns:
+          bool:
+        """
+        return self._attr['directed']
 
-    Configure the relation confidence
+    def Because(self, Reason):
+        """
 
-    Args:
-     Confidence (int): Relation confidence [1,10]
+        Sets the relation description to specified string,
+        which should contain placeholders for the values
+        of both related properties.
 
-    Returns:
-      edxml.ontology.PropertyRelation: The PropertyRelation instance
-    """
+        Args:
+          Reason (str): Relation description
 
-    self._setAttr('confidence', int(Confidence))
-    return self
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
 
-  def Directed(self):
-    """
+        """
+        self._setAttr('description', Reason)
+        return self
 
-    Marks the property relation as directed
+    def SetConfidence(self, Confidence):
+        """
 
-    Returns:
-      edxml.ontology.PropertyRelation: The PropertyRelation instance
-    """
-    self._setAttr('directed', True)
-    return self
+        Configure the relation confidence
 
-  def Undirected(self):
-    """
+        Args:
+         Confidence (int): Relation confidence [1,10]
 
-    Marks the property relation as undirected
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
+        """
 
-    Returns:
-      edxml.ontology.PropertyRelation: The PropertyRelation instance
-    """
-    self._setAttr('directed', False)
-    return self
+        self._setAttr('confidence', int(Confidence))
+        return self
 
-  def Validate(self):
-    """
+    def Directed(self):
+        """
 
-    Checks if the property relation is valid. It only looks
-    at the attributes of the relation itself. Since it does
-    not have access to the full ontology, the context of
-    the relation is not considered. For example, it does not
-    check if the properties in the relation actually exist.
+        Marks the property relation as directed
 
-    Raises:
-      EDXMLValidationError
-    Returns:
-      edxml.ontology.PropertyRelation: The PropertyRelation instance
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
+        """
+        self._setAttr('directed', True)
+        return self
 
-    """
-    if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property1']):
-      raise EDXMLValidationError('Invalid property name in property relation: "%s"' % self._attr['property1'])
+    def Undirected(self):
+        """
 
-    if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property2']):
-      raise EDXMLValidationError('Invalid property name in property relation: "%s"' % self._attr['property2'])
+        Marks the property relation as undirected
 
-    if not len(self._attr['description']) <= 255:
-      raise EDXMLValidationError('Property relation description is too long: "%s"' % self._attr['description'])
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
+        """
+        self._setAttr('directed', False)
+        return self
 
-    if not re.match('^(intra|inter|other):.+', self._attr['type']):
-      raise EDXMLValidationError('Invalid property relation type: "%s"' % self._attr['type'])
+    def Validate(self):
+        """
 
-    if self._attr['confidence'] < 1 or self._attr['confidence'] > 10:
-      raise EDXMLValidationError('Invalid property relation confidence: "%d"' % self._attr['confidence'])
+        Checks if the property relation is valid. It only looks
+        at the attributes of the relation itself. Since it does
+        not have access to the full ontology, the context of
+        the relation is not considered. For example, it does not
+        check if the properties in the relation actually exist.
 
-    placeholders = re.findall(edxml.ontology.EventType.TEMPLATE_PATTERN, self._attr['description'])
+        Raises:
+          EDXMLValidationError
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
 
-    if not self._attr['property1'] in placeholders:
-      raise EDXMLValidationError(
-        'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
-        (self._attr['property1'], self._attr['property2'], self._attr['property1'], self._attr['description'])
-      )
+        """
+        if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property1']):
+            raise EDXMLValidationError(
+                'Invalid property name in property relation: "%s"' % self._attr['property1'])
 
-    if not self._attr['property2'] in placeholders:
-      raise EDXMLValidationError(
-        'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
-        (self._attr['property1'], self._attr['property2'], self._attr['property2'], self._attr['description'])
-      )
+        if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self._attr['property2']):
+            raise EDXMLValidationError(
+                'Invalid property name in property relation: "%s"' % self._attr['property2'])
 
-    for propertyName in placeholders:
-      if propertyName not in (self._attr['property1'], self._attr['property2']):
-        raise EDXMLValidationError(
-          'Relation between properties %s and %s has a description that refers to other properties: "%s"' %
-          (self._attr['property1'], self._attr['property2'], self._attr['description'])
+        if not len(self._attr['description']) <= 255:
+            raise EDXMLValidationError(
+                'Property relation description is too long: "%s"' % self._attr['description'])
+
+        if not re.match('^(intra|inter|other):.+', self._attr['type']):
+            raise EDXMLValidationError(
+                'Invalid property relation type: "%s"' % self._attr['type'])
+
+        if self._attr['confidence'] < 1 or self._attr['confidence'] > 10:
+            raise EDXMLValidationError(
+                'Invalid property relation confidence: "%d"' % self._attr['confidence'])
+
+        placeholders = re.findall(
+            edxml.ontology.EventType.TEMPLATE_PATTERN, self._attr['description'])
+
+        if not self._attr['property1'] in placeholders:
+            raise EDXMLValidationError(
+                'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
+                (self._attr['property1'], self._attr['property2'],
+                 self._attr['property1'], self._attr['description'])
+            )
+
+        if not self._attr['property2'] in placeholders:
+            raise EDXMLValidationError(
+                'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
+                (self._attr['property1'], self._attr['property2'],
+                 self._attr['property2'], self._attr['description'])
+            )
+
+        for propertyName in placeholders:
+            if propertyName not in (self._attr['property1'], self._attr['property2']):
+                raise EDXMLValidationError(
+                    'Relation between properties %s and %s has a description that refers to other properties: "%s"' %
+                    (self._attr['property1'], self._attr['property2'],
+                     self._attr['description'])
+                )
+
+        return self
+
+    @classmethod
+    def Read(cls, relationElement, eventType):
+        source = relationElement.attrib['property1']
+        target = relationElement.attrib['property2']
+
+        for propertyName in (source, target):
+            if propertyName not in eventType:
+                raise EDXMLValidationError(
+                    'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
+                    (eventType.GetName(), propertyName))
+
+        return cls(
+            eventType,
+            eventType[relationElement.attrib['property1']],
+            eventType[relationElement.attrib['property2']],
+            relationElement.attrib['description'],
+            relationElement.attrib['type'].split(':')[0],
+            relationElement.attrib['type'].split(':')[1],
+            relationElement.attrib['confidence'],
+            relationElement.get('directed', 'true') == 'true'
         )
 
-    return self
+    def Update(self, propertyRelation):
+        """
 
-  @classmethod
-  def Read(cls, relationElement, eventType):
-    source = relationElement.attrib['property1']
-    target = relationElement.attrib['property2']
+        Updates the property relation to match the PropertyRelation
+        instance passed to this method, returning the
+        updated instance.
 
-    for propertyName in (source, target):
-      if propertyName not in eventType:
-        raise EDXMLValidationError(
-          'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
-          (eventType.GetName(), propertyName))
+        Args:
+          propertyRelation (edxml.ontology.PropertyRelation): The new PropertyRelation instance
 
-    return cls(
-      eventType,
-      eventType[relationElement.attrib['property1']],
-      eventType[relationElement.attrib['property2']],
-      relationElement.attrib['description'],
-      relationElement.attrib['type'].split(':')[0],
-      relationElement.attrib['type'].split(':')[1],
-      relationElement.attrib['confidence'],
-      relationElement.get('directed', 'true') == 'true'
-    )
+        Returns:
+          edxml.ontology.PropertyRelation: The updated PropertyRelation instance
 
-  def Update(self, propertyRelation):
-    """
+        """
+        property1 = self._attr['property1'] != propertyRelation.GetSource()
+        property2 = self._attr['property2'] != propertyRelation.GetTarget()
+        if property1 or property2:
+            raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.' %
+                            (self._attr['property1'], self._attr['property2'],
+                             propertyRelation.GetSource(), propertyRelation.GetTarget()))
 
-    Updates the property relation to match the PropertyRelation
-    instance passed to this method, returning the
-    updated instance.
+        self.Validate()
 
-    Args:
-      propertyRelation (edxml.ontology.PropertyRelation): The new PropertyRelation instance
+        return self
 
-    Returns:
-      edxml.ontology.PropertyRelation: The updated PropertyRelation instance
+    def GenerateXml(self):
+        """
 
-    """
-    if self._attr['property1'] != propertyRelation.GetSource() or self._attr['property2'] != propertyRelation.GetTarget():
-      raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.' %
-                      (self._attr['property1'], self._attr['property2'],
-                       propertyRelation.GetSource(), propertyRelation.GetTarget()))
+        Generates an lxml etree Element representing
+        the EDXML <relation> tag for this event property.
 
-    self.Validate()
+        Returns:
+          etree.Element: The element
 
-    return self
+        """
 
-  def GenerateXml(self):
-    """
+        attribs = dict(self._attr)
 
-    Generates an lxml etree Element representing
-    the EDXML <relation> tag for this event property.
+        attribs['confidence'] = '%d' % self._attr['confidence']
+        attribs['directed'] = 'true' if self._attr['directed'] else 'false'
 
-    Returns:
-      etree.Element: The element
-
-    """
-
-    attribs = dict(self._attr)
-
-    attribs['confidence'] = '%d' % self._attr['confidence']
-    attribs['directed'] = 'true' if self._attr['directed'] else 'false'
-
-    return etree.Element('relation', attribs)
+        return etree.Element('relation', attribs)

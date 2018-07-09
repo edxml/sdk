@@ -2,7 +2,6 @@
 
 import re
 import sre_constants
-import edxml
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
@@ -10,458 +9,470 @@ from edxml.ontology import DataType
 
 
 class ObjectType(object):
-  """
-  Class representing an EDXML object type
-  """
-
-  NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
-  DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
-  FUZZY_MATCHING_PATTERN = re.compile("^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
-
-  def __init__(self, Ontology, Name, DisplayName = None, Description = None, DataType ='string:0:cs:u', Compress = False, FuzzyMatching ='none', Regexp ='[\s\S]*'):
-
-    self._attr = {
-      'name': Name,
-      'display-name'   : DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
-      'description'    : Description or Name,
-      'data-type'      : DataType,
-      'compress'       : bool(Compress),
-      'fuzzy-matching' : FuzzyMatching,
-      'regexp'         : Regexp
-    }
-
-    self._ontology = Ontology  # type: edxml.ontology.Ontology
-
-  def _childModifiedCallback(self):
-    """Callback for change tracking"""
-    self._ontology._childModifiedCallback()
-    return self
-
-  def _setAttr(self, key, value):
-    if self._attr[key] != value:
-      self._attr[key] = value
-      self._childModifiedCallback()
-
-  def GetName(self):
+    """
+    Class representing an EDXML object type
     """
 
-    Returns the name of the object type.
+    NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
+    DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
+    FUZZY_MATCHING_PATTERN = re.compile(
+        "^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
-    Returns:
-      str: The object type name
-    """
+    def __init__(self, Ontology, Name, DisplayName=None, Description=None, DataType='string:0:cs:u', Compress=False,
+                 FuzzyMatching='none', Regexp='[\s\S]*'):
 
-    return self._attr['name']
+        self._attr = {
+            'name': Name,
+            'display-name': DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
+            'description': Description or Name,
+            'data-type': DataType,
+            'compress': bool(Compress),
+            'fuzzy-matching': FuzzyMatching,
+            'regexp': Regexp
+        }
 
-  def GetDisplayName(self):
-    """
+        self._ontology = Ontology  # type: edxml.ontology.Ontology
 
-    Returns the display-name attribute of the object type.
+    def _childModifiedCallback(self):
+        """Callback for change tracking"""
+        self._ontology._childModifiedCallback()
+        return self
 
-    Returns:
-      str:
-    """
+    def _setAttr(self, key, value):
+        if self._attr[key] != value:
+            self._attr[key] = value
+            self._childModifiedCallback()
 
-    return self._attr['display-name']
+    def GetName(self):
+        """
 
-  def GetDisplayNameSingular(self):
-    """
+        Returns the name of the object type.
 
-    Returns the display name of the object type, in singular form.
+        Returns:
+          str: The object type name
+        """
 
-    Returns:
-      str:
-    """
+        return self._attr['name']
 
-    return self._attr['display-name'].split('/')[0]
+    def GetDisplayName(self):
+        """
 
-  def GetDisplayNamePlural(self):
-    """
+        Returns the display-name attribute of the object type.
 
-    Returns the display name of the object type, in plural form.
+        Returns:
+          str:
+        """
 
-    Returns:
-      str:
-    """
+        return self._attr['display-name']
 
-    return self._attr['display-name'].split('/')[1]
+    def GetDisplayNameSingular(self):
+        """
 
-  def GetDescription(self):
-    """
+        Returns the display name of the object type, in singular form.
 
-    Returns the description of the object type.
+        Returns:
+          str:
+        """
 
-    Returns:
-      str:
-    """
+        return self._attr['display-name'].split('/')[0]
 
-    return self._attr['description']
+    def GetDisplayNamePlural(self):
+        """
 
-  def GetDataType(self):
-    """
+        Returns the display name of the object type, in plural form.
 
-    Returns the data type of the object type.
+        Returns:
+          str:
+        """
 
-    Returns:
-      edxml.ontology.DataType: The data type
-    """
+        return self._attr['display-name'].split('/')[1]
 
-    return DataType(self._attr['data-type'])
+    def GetDescription(self):
+        """
 
-  def IsCompressible(self):
-    """
+        Returns the description of the object type.
 
-    Returns True if compression is advised for the object type,
-    returns False otherwise.
+        Returns:
+          str:
+        """
 
-    Returns:
-      bool:
-    """
+        return self._attr['description']
 
-    return self._attr['compress']
+    def GetDataType(self):
+        """
 
-  def GetFuzzyMatching(self):
-    """
+        Returns the data type of the object type.
 
-    Returns the EDXML fuzzy-matching attribute for the object type.
+        Returns:
+          edxml.ontology.DataType: The data type
+        """
 
-    Returns:
-      str:
-    """
+        return DataType(self._attr['data-type'])
 
-    return self._attr['fuzzy-matching']
+    def IsCompressible(self):
+        """
 
-  def GetRegexp(self):
-    """
+        Returns True if compression is advised for the object type,
+        returns False otherwise.
 
-    Returns the regular expression that object values must match.
+        Returns:
+          bool:
+        """
 
-    Returns:
-      str:
-    """
+        return self._attr['compress']
 
-    return self._attr['regexp']
+    def GetFuzzyMatching(self):
+        """
 
-  def SetDescription(self, Description):
-    """
+        Returns the EDXML fuzzy-matching attribute for the object type.
 
-    Sets the object type description
+        Returns:
+          str:
+        """
 
-    Args:
-      Description (str): Description
+        return self._attr['fuzzy-matching']
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
+    def GetRegexp(self):
+        """
 
-    self._setAttr('description', str(Description))
-    return self
+        Returns the regular expression that object values must match.
 
-  def SetDataType(self, dataType):
-    """
+        Returns:
+          str:
+        """
 
-    Configure the data type.
+        return self._attr['regexp']
 
-    Args:
-      dataType (edxml.ontology.DataType): DataType instance
+    def SetDescription(self, Description):
+        """
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('data-type', str(dataType))
-    return self
+        Sets the object type description
 
-  def SetDisplayName(self, Singular, Plural = None):
-    """
+        Args:
+          Description (str): Description
 
-    Configure the display name. If the plural form
-    is omitted, it will be auto-generated by
-    appending an 's' to the singular form.
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
 
-    Args:
-      Singular (str): display name (singular form)
-      Plural (str): display name (plural form)
+        self._setAttr('description', str(Description))
+        return self
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
+    def SetDataType(self, dataType):
+        """
 
-    if Plural is None:
-      Plural = '%ss' % Singular
+        Configure the data type.
 
-    self._setAttr('display-name', '%s/%s' % (Singular, Plural))
-    return self
+        Args:
+          dataType (edxml.ontology.DataType): DataType instance
 
-  def SetRegexp(self, Pattern):
-    """
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('data-type', str(dataType))
+        return self
 
-    Configure a regular expression that object
-    values must match.
+    def SetDisplayName(self, Singular, Plural=None):
+        """
 
-    Args:
-      Pattern (str): Regular expression
+        Configure the display name. If the plural form
+        is omitted, it will be auto-generated by
+        appending an 's' to the singular form.
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('regexp', str(Pattern))
-    return self
+        Args:
+          Singular (str): display name (singular form)
+          Plural (str): display name (plural form)
 
-  def SetFuzzyMatchingAttribute(self, attribute):
-    """
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
 
-    Sets the EDXML fuzzy-matching attribute.
+        if Plural is None:
+            Plural = '%ss' % Singular
 
-    Notes:
-      It is recommended to use the FuzzyMatch...() methods
-      in stead to configure fuzzy matching.
+        self._setAttr('display-name', '%s/%s' % (Singular, Plural))
+        return self
 
-    Args:
-      attribute (str): The attribute value
+    def SetRegexp(self, Pattern):
+        """
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('fuzzy-matching', attribute)
-    return self
+        Configure a regular expression that object
+        values must match.
 
-  def FuzzyMatchHead(self, Length):
-    """
+        Args:
+          Pattern (str): Regular expression
 
-    Configure fuzzy matching on the head of the string
-    (only for string data types).
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('regexp', str(Pattern))
+        return self
 
-    Args:
-      Length (int): Number of characters to match
+    def SetFuzzyMatchingAttribute(self, attribute):
+        """
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('fuzzy-matching', '[%d:]' % int(Length))
-    return self
+        Sets the EDXML fuzzy-matching attribute.
 
-  def FuzzyMatchTail(self, Length):
-    """
+        Notes:
+          It is recommended to use the FuzzyMatch...() methods
+          in stead to configure fuzzy matching.
 
-    Configure fuzzy matching on the tail of the string
-    (only for string data types).
+        Args:
+          attribute (str): The attribute value
 
-    Args:
-      Length (int): Number of characters to match
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('fuzzy-matching', attribute)
+        return self
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('fuzzy-matching', '[:%d]' % int(Length))
-    return self
+    def FuzzyMatchHead(self, Length):
+        """
 
-  def FuzzyMatchSubstring(self, Pattern):
-    """
+        Configure fuzzy matching on the head of the string
+        (only for string data types).
 
-    Configure fuzzy matching on a substring
-    (only for string data types).
+        Args:
+          Length (int): Number of characters to match
 
-    Args:
-      Pattern (str): Regular expression
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('fuzzy-matching', '[%d:]' % int(Length))
+        return self
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('fuzzy-matching', 'substring:%s' % str(Pattern))
-    return self
+    def FuzzyMatchTail(self, Length):
+        """
 
-  def FuzzyMatchPhonetic(self):
-    """
+        Configure fuzzy matching on the tail of the string
+        (only for string data types).
 
-    Configure fuzzy matching on the sound
-    of the string (phonetic fingerprinting).
+        Args:
+          Length (int): Number of characters to match
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('fuzzy-matching', 'phonetic')
-    return self
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('fuzzy-matching', '[:%d]' % int(Length))
+        return self
 
-  def Compress(self):
-    """
+    def FuzzyMatchSubstring(self, Pattern):
+        """
 
-    Enable compression for the object type.
+        Configure fuzzy matching on a substring
+        (only for string data types).
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
-    """
-    self._setAttr('compress', True)
-    return self
+        Args:
+          Pattern (str): Regular expression
 
-  def GenerateRelaxNG(self):
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('fuzzy-matching', 'substring:%s' % str(Pattern))
+        return self
 
-    return DataType(self._attr['data-type']).GenerateRelaxNG(self._attr['regexp'])
+    def FuzzyMatchPhonetic(self):
+        """
 
-  def ValidateObjectValue(self, value):
-    """
+        Configure fuzzy matching on the sound
+        of the string (phonetic fingerprinting).
 
-    Validates the provided object value against
-    the object type definition as well as its
-    data type, raising an EDXMLValidationException
-    when the value is invalid.
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('fuzzy-matching', 'phonetic')
+        return self
 
-    Args:
-      value (unicode): Object value
+    def Compress(self):
+        """
 
-    Raises:
-      EDXMLValidationError
+        Enable compression for the object type.
 
-    Returns:
-       edxml.ontology.ObjectType: The ObjectType instance
-    """
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._setAttr('compress', True)
+        return self
 
-    # First, validate against data type
-    self.GetDataType().ValidateObjectValue(value)
+    def GenerateRelaxNG(self):
 
-    # Validate against object type specific restrictions,
-    # like the regular expression.
-    splitDataType = self._attr['data-type'].split(':')
+        return DataType(self._attr['data-type']).GenerateRelaxNG(self._attr['regexp'])
 
-    if splitDataType[0] == 'string':
-      if len(splitDataType) >= 4 and 'i' in splitDataType[3]:
-        # Perform regex matching on lower case string
-        value = value.lower()
-      if not re.match(self._attr['regexp'], value):
-        raise EDXMLValidationError(
-          "Object value '%s' of object type %s does not match regexp '%s' of the object type."
-          % (value, self._attr['name'], self._attr['regexp'])
+    def ValidateObjectValue(self, value):
+        """
+
+        Validates the provided object value against
+        the object type definition as well as its
+        data type, raising an EDXMLValidationException
+        when the value is invalid.
+
+        Args:
+          value (unicode): Object value
+
+        Raises:
+          EDXMLValidationError
+
+        Returns:
+           edxml.ontology.ObjectType: The ObjectType instance
+        """
+
+        # First, validate against data type
+        self.GetDataType().ValidateObjectValue(value)
+
+        # Validate against object type specific restrictions,
+        # like the regular expression.
+        splitDataType = self._attr['data-type'].split(':')
+
+        if splitDataType[0] == 'string':
+            if len(splitDataType) >= 4 and 'i' in splitDataType[3]:
+                # Perform regex matching on lower case string
+                value = value.lower()
+            if not re.match(self._attr['regexp'], value):
+                raise EDXMLValidationError(
+                    "Object value '%s' of object type %s does not match regexp '%s' of the object type."
+                    % (value, self._attr['name'], self._attr['regexp'])
+                )
+
+    def Validate(self):
+        """
+
+        Checks if the object type is valid. It only looks
+        at the attributes of the definition itself. Since it does
+        not have access to the full ontology, the context of
+        the event type is not considered. For example, it does not
+        check if other, conflicting object type definitions exist.
+
+        Raises:
+          EDXMLValidationError
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+
+        """
+        if not len(self._attr['name']) <= 64:
+            raise EDXMLValidationError(
+                'The name of object type "%s" is too long.' % self._attr['name'])
+        if not re.match(self.NAME_PATTERN, self._attr['name']):
+            raise EDXMLValidationError(
+                'Object type "%s" has an invalid name.' % self._attr['name'])
+
+        if not len(self._attr['display-name']) <= 64:
+            raise EDXMLValidationError(
+                'The display name of object type "%s" is too long: "%s".' % (
+                    self._attr['name'], self._attr['display-name'])
+            )
+        if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+            raise EDXMLValidationError(
+                'Object type "%s" has an invalid display name: "%s"' % (
+                    self._attr['name'], self._attr['display-name'])
+            )
+
+        if not len(self._attr['description']) <= 128:
+            raise EDXMLValidationError(
+                'The description of object type "%s" is too long: "%s"' % (
+                    self._attr['name'], self._attr['description'])
+            )
+
+        if not re.match(self.FUZZY_MATCHING_PATTERN, self._attr['fuzzy-matching']):
+            raise EDXMLValidationError(
+                'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' % (
+                    self._attr['name'], self._attr['fuzzy-matching'])
+            )
+        if self._attr['fuzzy-matching'][:10] == 'substring:':
+            try:
+                re.compile('%s' % self._attr['fuzzy-matching'][10:])
+            except sre_constants.error:
+                raise EDXMLValidationError(
+                    'Definition of object type %s has an invalid regular expression in its '
+                    'fuzzy-matching attribute: "%s"' % (
+                        (self._attr['name'], self._attr['fuzzy-matching'])))
+
+        if type(self._attr['compress']) != bool:
+            raise EDXMLValidationError(
+                'Object type "%s" has an invalid compress attribute: "%s"' % (
+                    self._attr['name'], repr(self._attr['compress']))
+            )
+
+        try:
+            re.compile(self._attr['regexp'])
+        except sre_constants.error:
+            raise EDXMLValidationError('Object type "%s" contains invalid regular expression: "%s"' %
+                                       (self._attr['name'], self._attr['regexp']))
+
+        DataType(self._attr['data-type']).Validate()
+
+        return self
+
+    @classmethod
+    def Read(cls, typeElement, ontology):
+        return cls(
+            ontology,
+            typeElement.attrib['name'],
+            typeElement.attrib['display-name'],
+            typeElement.attrib['description'],
+            typeElement.attrib['data-type'],
+            typeElement.get('compress', 'false') == 'true',
+            typeElement.get('fuzzy-matching', 'none'),
+            typeElement.get('regexp', '[\s\S]*')
         )
 
-  def Validate(self):
-    """
+    def Update(self, objectType):
+        """
 
-    Checks if the object type is valid. It only looks
-    at the attributes of the definition itself. Since it does
-    not have access to the full ontology, the context of
-    the event type is not considered. For example, it does not
-    check if other, conflicting object type definitions exist.
+        Args:
+          objectType (edxml.ontology.ObjectType): The new ObjectType instance
 
-    Raises:
-      EDXMLValidationError
+        Returns:
+          edxml.ontology.ObjectType: The updated ObjectType instance
 
-    Returns:
-      edxml.ontology.ObjectType: The ObjectType instance
+        """
+        if self._attr['name'] != objectType.GetName():
+            raise Exception('Attempt to update object type "%s" with object type "%s".' %
+                            (self._attr['name'], objectType.GetName()))
 
-    """
-    if not len(self._attr['name']) <= 64:
-      raise EDXMLValidationError('The name of object type "%s" is too long.' % self._attr['name'])
-    if not re.match(self.NAME_PATTERN, self._attr['name']):
-      raise EDXMLValidationError('Object type "%s" has an invalid name.' % self._attr['name'])
+        if self._attr['display-name'] != objectType.GetDisplayName():
+            raise Exception('Attempt to update object type "%s", but display names do not match' % self._attr['name'],
+                            (self._attr['display-name'], objectType.GetName()))
 
-    if not len(self._attr['display-name']) <= 64:
-      raise EDXMLValidationError(
-        'The display name of object type "%s" is too long: "%s".' % (self._attr['name'], self._attr['display-name'])
-      )
-    if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
-      raise EDXMLValidationError(
-        'Object type "%s" has an invalid display name: "%s"' % (self._attr['name'], self._attr['display-name'])
-      )
+        if self._attr['description'] != objectType.GetDescription():
+            raise Exception('Attempt to update object type "%s", but descriptions do not match.' % self._attr['name'],
+                            (self._attr['description'], objectType.GetName()))
 
-    if not len(self._attr['description']) <= 128:
-      raise EDXMLValidationError(
-        'The description of object type "%s" is too long: "%s"' % (self._attr['name'], self._attr['description'])
-      )
+        if self._attr['data-type'] != str(objectType.GetDataType()):
+            raise Exception('Attempt to update object type "%s", but data types do not match.' % self._attr['name'],
+                            (self._attr['data-type'], objectType.GetName()))
 
-    if not re.match(self.FUZZY_MATCHING_PATTERN, self._attr['fuzzy-matching']):
-      raise EDXMLValidationError(
-        'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' % (self._attr['name'], self._attr['fuzzy-matching'])
-      )
-    if self._attr['fuzzy-matching'][:10] == 'substring:':
-      try:
-        re.compile('%s' % self._attr['fuzzy-matching'][10:])
-      except sre_constants.error:
-        raise EDXMLValidationError(
-          'Definition of object type %s has an invalid regular expression in its fuzzy-matching attribute: "%s"' % (
-            (self._attr['name'], self._attr['fuzzy-matching'])))
+        if self._attr['compress'] != objectType.IsCompressible():
+            raise Exception('Attempt to update object type "%s", but compress flags do not match.' % self._attr['name'],
+                            (self._attr['compress'], objectType.GetName()))
 
-    if type(self._attr['compress']) != bool:
-      raise EDXMLValidationError(
-        'Object type "%s" has an invalid compress attribute: "%s"' % (self._attr['name'], repr(self._attr['compress']))
-      )
+        if self._attr['fuzzy-matching'] != objectType.GetFuzzyMatching():
+            raise Exception('Attempt to update object type "%s", but fuzzy '
+                            'matching attributes do not match.' % self._attr['name'],
+                            (self._attr['fuzzy-matching'], objectType.GetName()))
 
-    try:
-      re.compile(self._attr['regexp'])
-    except sre_constants.error:
-      raise EDXMLValidationError('Object type "%s" contains invalid regular expression: "%s"' %
-                                 (self._attr['name'], self._attr['regexp']))
+        if self._attr['regexp'] != objectType.GetRegexp():
+            raise Exception('Attempt to update object type "%s", but their '
+                            'regular expressions do not match.' % self._attr['name'],
+                            (self._attr['regexp'], objectType.GetName()))
 
-    DataType(self._attr['data-type']).Validate()
+        self.Validate()
 
-    return self
+        return self
 
-  @classmethod
-  def Read(cls, typeElement, ontology):
-    return cls(
-      ontology,
-      typeElement.attrib['name'],
-      typeElement.attrib['display-name'],
-      typeElement.attrib['description'],
-      typeElement.attrib['data-type'],
-      typeElement.get('compress', 'false') == 'true',
-      typeElement.get('fuzzy-matching', 'none'),
-      typeElement.get('regexp', '[\s\S]*')
-    )
+    def GenerateXml(self):
+        """
 
-  def Update(self, objectType):
-    """
+        Generates an lxml etree Element representing
+        the EDXML <objecttype> tag for this object type.
 
-    Args:
-      objectType (edxml.ontology.ObjectType): The new ObjectType instance
+        Returns:
+          etree.Element: The element
 
-    Returns:
-      edxml.ontology.ObjectType: The updated ObjectType instance
+        """
 
-    """
-    if self._attr['name'] != objectType.GetName():
-      raise Exception('Attempt to update object type "%s" with object type "%s".' %
-                      (self._attr['name'], objectType.GetName()))
+        attribs = dict(self._attr)
 
-    if self._attr['display-name'] != objectType.GetDisplayName():
-      raise Exception('Attempt to update object type "%s", but display names do not match' % self._attr['name'],
-                      (self._attr['display-name'], objectType.GetName()))
+        attribs['compress'] = 'true' if self._attr['compress'] else 'false'
 
-    if self._attr['description'] != objectType.GetDescription():
-      raise Exception('Attempt to update object type "%s", but descriptions do not match.' % self._attr['name'],
-                      (self._attr['description'], objectType.GetName()))
-
-    if self._attr['data-type'] != str(objectType.GetDataType()):
-      raise Exception('Attempt to update object type "%s", but data types do not match.' % self._attr['name'],
-                      (self._attr['data-type'], objectType.GetName()))
-
-    if self._attr['compress'] != objectType.IsCompressible():
-      raise Exception('Attempt to update object type "%s", but compress flags do not match.' % self._attr['name'],
-                      (self._attr['compress'], objectType.GetName()))
-
-    if self._attr['fuzzy-matching'] != objectType.GetFuzzyMatching():
-      raise Exception('Attempt to update object type "%s", but fuzzy matching attributes do not match.' % self._attr['name'],
-                      (self._attr['fuzzy-matching'], objectType.GetName()))
-
-    if self._attr['regexp'] != objectType.GetRegexp():
-      raise Exception('Attempt to update object type "%s", but their regular expressions do not match.' % self._attr['name'],
-                      (self._attr['regexp'], objectType.GetName()))
-
-    self.Validate()
-
-    return self
-
-  def GenerateXml(self):
-    """
-
-    Generates an lxml etree Element representing
-    the EDXML <objecttype> tag for this object type.
-
-    Returns:
-      etree.Element: The element
-
-    """
-
-    attribs = dict(self._attr)
-
-    attribs['compress'] = 'true' if self._attr['compress'] else 'false'
-
-    return etree.Element('objecttype', attribs)
+        return etree.Element('objecttype', attribs)
