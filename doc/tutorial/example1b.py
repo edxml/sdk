@@ -1,57 +1,58 @@
 from edxml.ontology import Ontology
+from edxml.ontology import DataType
+import sys
+import json
+from edxml import SimpleEDXMLWriter, EDXMLEvent
 
 myOntology = Ontology()
 
-from edxml.ontology import DataType
-
 myOntology.CreateObjectType('datetime')\
-  .SetDescription('date and time in ISO 8601 format')\
-  .SetDataType(DataType.DateTime())\
-  .SetDisplayName('time stamp')
+    .SetDescription('date and time in ISO 8601 format')\
+    .SetDataType(DataType.DateTime())\
+    .SetDisplayName('time stamp')
 
 myOntology.CreateObjectType('computing.networking.host.ipv4')\
-  .SetDescription('IPv4 address of a computer in a computer network')\
-  .SetDataType(DataType.Ipv4())\
-  .SetDisplayName('IPv4 address', 'IPv4 addresses')
+    .SetDescription('IPv4 address of a computer in a computer network')\
+    .SetDataType(DataType.Ipv4())\
+    .SetDisplayName('IPv4 address', 'IPv4 addresses')
 
 myOntology.CreateObjectType('computing.user.name')\
-  .SetDescription('name of a computer user account')\
-  .SetDataType(DataType.String(Length=255))\
-  .SetDisplayName('user name')\
-  .FuzzyMatchPhonetic()
+    .SetDescription('name of a computer user account')\
+    .SetDataType(DataType.String(Length=255))\
+    .SetDisplayName('user name')\
+    .FuzzyMatchPhonetic()
 
 myOntology.CreateObjectType('computing.ftp.command')\
-  .SetDescription('command issued by means of a File Transfer Protocol')\
-  .SetDataType(DataType.String(Length=255))\
-  .SetDisplayName('FTP command')
+    .SetDescription('command issued by means of a File Transfer Protocol')\
+    .SetDataType(DataType.String(Length=255))\
+    .SetDisplayName('FTP command')
 
 myEventType = myOntology.CreateEventType('org.myorganization.logs.ftp')\
-  .SetDisplayName('FTP command')\
-  .SetDescription('a logged FTP command')\
-  .SetSummaryTemplate('FTP command issued to [[server]]')\
-  .SetStoryTemplate(
+    .SetDisplayName('FTP command')\
+    .SetDescription('a logged FTP command')\
+    .SetSummaryTemplate('FTP command issued to [[server]]')\
+    .SetStoryTemplate(
     'On [[FULLDATETIME:time]], a user named "[[user]]" issued '
     'command "[[command]]" on FTP server [[server]]. The command '
     'was issued from a device having IP address [[client]].')
 
 myEventType.CreateProperty('time',    ObjectTypeName='datetime')
-myEventType.CreateProperty('server',  ObjectTypeName='computing.networking.host.ipv4')
-myEventType.CreateProperty('client',  ObjectTypeName='computing.networking.host.ipv4')
+myEventType.CreateProperty(
+    'server',  ObjectTypeName='computing.networking.host.ipv4')
+myEventType.CreateProperty(
+    'client',  ObjectTypeName='computing.networking.host.ipv4')
 myEventType.CreateProperty('user',    ObjectTypeName='computing.user.name')
 myEventType.CreateProperty('command', ObjectTypeName='computing.ftp.command')
 
 mySource = myOntology.CreateEventSource('/myorganization/logs/ftp/')
 
-import sys, json
-from edxml import SimpleEDXMLWriter, EDXMLEvent
-
 with SimpleEDXMLWriter(sys.stdout) as writer:
-  writer.SetOntology(myOntology)\
-        .SetEventType('org.myorganization.logs.ftp')\
-        .SetEventSource('/myorganization/logs/ftp/')
+    writer.SetOntology(myOntology)\
+          .SetEventType('org.myorganization.logs.ftp')\
+          .SetEventSource('/myorganization/logs/ftp/')
 
-  for line in sys.stdin:
-    properties = json.loads(line)
-    del properties['source']
-    del properties['offset']
-    writer.AddEvent(EDXMLEvent(properties))
+    for line in sys.stdin:
+        properties = json.loads(line)
+        del properties['source']
+        del properties['offset']
+        writer.AddEvent(EDXMLEvent(properties))

@@ -1,4 +1,5 @@
-import sys, json
+import sys
+import json
 
 from dateutil.parser import parse
 
@@ -15,18 +16,19 @@ writer.SetOntology(myOntology)
 definedUri = []
 
 for line in sys.stdin:
-  properties = json.loads(line)
+    properties = json.loads(line)
 
-  parsedDateTime = parse(properties['datetime'])
-  sourceUri = '/some/namespace/' + parsedDateTime.strftime('%Y/%m/')
+    parsedDateTime = parse(properties['datetime'])
+    sourceUri = '/some/namespace/' + parsedDateTime.strftime('%Y/%m/')
 
-  if sourceUri not in definedUri:
-    # We have not defined this source URI yet.
-    sourceDesc = parsedDateTime.strftime('Data generated in %B %Y')
-    acquisitionDate = parsedDateTime.strftime('%Y%m%d')
-    myOntology.CreateEventSource(sourceUri, Description=sourceDesc, AcquisitionDate=acquisitionDate)
-    definedUri.append(sourceUri)
+    if sourceUri not in definedUri:
+        # We have not defined this source URI yet.
+        sourceDesc = parsedDateTime.strftime('Data generated in %B %Y')
+        acquisitionDate = parsedDateTime.strftime('%Y%m%d')
+        myOntology.CreateEventSource(
+            sourceUri, Description=sourceDesc, AcquisitionDate=acquisitionDate)
+        definedUri.append(sourceUri)
 
-  writer.AddEvent(EDXMLEvent(properties))
+    writer.AddEvent(EDXMLEvent(properties))
 
 writer.Close()
