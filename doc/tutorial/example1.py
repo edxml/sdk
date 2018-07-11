@@ -37,12 +37,12 @@ myEventType = myOntology.CreateEventType('org.myorganization.logs.ftp')\
     'command "[[command]]" on FTP server [[server]]. The command '
     'was issued from a device having IP address [[client]].')
 
-myEventType.CreateProperty('time',    ObjectTypeName='datetime')
+myEventType.CreateProperty('time', ObjectTypeName='datetime')
 myEventType.CreateProperty(
-    'server',  ObjectTypeName='computing.networking.host.ipv4')
+    'server', ObjectTypeName='computing.networking.host.ipv4')
 myEventType.CreateProperty(
-    'client',  ObjectTypeName='computing.networking.host.ipv4')
-myEventType.CreateProperty('user',    ObjectTypeName='computing.user.name')
+    'client', ObjectTypeName='computing.networking.host.ipv4')
+myEventType.CreateProperty('user', ObjectTypeName='computing.user.name')
 myEventType.CreateProperty('command', ObjectTypeName='computing.ftp.command')
 
 mySource = myOntology.CreateEventSource('/myorganization/logs/ftp/')

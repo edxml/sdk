@@ -151,7 +151,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                                     self.Warning(
                                         ('The post processor of the transcoder for JSON record type %s produced '
                                          'an invalid event: %s\n\nContinuing...') % (RecordType, str(Except))
-                                        )
+                                    )
                     except Exception as Except:
                         if not self._ignore_invalid_events or self._debug:
                             raise
@@ -159,7 +159,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                             self.Warning(
                                 ('The post processor of the transcoder for JSON record type %s failed '
                                  'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
-                                )
+                            )
                 else:
                     try:
                         outputs.append(self._writer.AddEvent(Event))

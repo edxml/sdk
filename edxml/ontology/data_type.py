@@ -807,8 +807,8 @@ class DataType(object):
 
         if splitDataType[0] == 'datetime':
             if not re.match(
-              '^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$',
-              value):
+                '^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$',
+                    value):
                 raise EDXMLValidationError(
                     "Invalid value for data type %s: '%s'." % (self.type, value))
         elif splitDataType[0] == 'sequence':

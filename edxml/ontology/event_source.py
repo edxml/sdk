@@ -17,8 +17,8 @@ class EventSource(object):
     def __init__(self, Ontology, Uri, Description='no description available', AcquisitionDate='00000000'):
 
         self._attr = {
-            'uri':           str(Uri).rstrip('/') + '/',
-            'description':   str(Description),
+            'uri': str(Uri).rstrip('/') + '/',
+            'description': str(Description),
             'date-acquired': str(AcquisitionDate)
         }
 

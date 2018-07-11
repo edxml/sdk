@@ -121,7 +121,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
             UniquePropertyValues = [u''.join(random.sample(
                 RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(self.Diversity)]
             RandomUniquePropertyValues = random.sample(range(self.Diversity), int(
-                self.Diversity * (1.0 - (self.CollisionPercentage/100.0))))
+                self.Diversity * (1.0 - (self.CollisionPercentage / 100.0))))
         else:
             RandomUniquePropertyValues = []
 

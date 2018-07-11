@@ -16,12 +16,12 @@ class PropertyRelation(object):
     def __init__(self, EventType, Source, Dest, Description, TypeClass, TypePredicate, Confidence=10, Directed=True):
 
         self._attr = {
-            'property1':         Source.GetName(),
-            'property2':         Dest.GetName(),
-            'description':       Description,
-            'type':              '%s:%s' % (TypeClass, TypePredicate),
-            'confidence':        int(Confidence),
-            'directed':          bool(Directed),
+            'property1': Source.GetName(),
+            'property2': Dest.GetName(),
+            'description': Description,
+            'type': '%s:%s' % (TypeClass, TypePredicate),
+            'confidence': int(Confidence),
+            'directed': bool(Directed),
         }
 
         self._eventType = EventType  # type: edxml.ontology.EventType

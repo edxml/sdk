@@ -31,17 +31,17 @@ class EventProperty(object):
                  Unique=False, Optional=True, Multivalued=True, Merge='drop', Similar=''):
 
         self._attr = {
-            'name':               Name,
-            'object-type':        ObjectType.GetName(),
-            'description':        Description or Name.replace('-', ' '),
-            'concept':            ConceptName,
+            'name': Name,
+            'object-type': ObjectType.GetName(),
+            'description': Description or Name.replace('-', ' '),
+            'concept': ConceptName,
             'concept-confidence': int(ConceptConfidence),
-            'unique':             bool(Unique),
-            'optional':           bool(Optional),
-            'multivalued':        bool(Multivalued),
-            'cnp':                int(Cnp),
-            'merge':              Merge,
-            'similar':            Similar
+            'unique': bool(Unique),
+            'optional': bool(Optional),
+            'multivalued': bool(Multivalued),
+            'cnp': int(Cnp),
+            'merge': Merge,
+            'similar': Similar
         }
 
         self._eventType = eventType  # type: edxml.ontology.EventType

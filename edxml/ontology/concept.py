@@ -16,7 +16,7 @@ class Concept(object):
     def __init__(self, Ontology, Name, DisplayName=None, Description=None):
 
         self._attr = {
-            'name':            Name,
+            'name': Name,
             'display-name': DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
             'description': Description or Name
         }

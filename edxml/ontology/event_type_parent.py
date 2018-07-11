@@ -19,9 +19,9 @@ class EventTypeParent(object):
                  SiblingsDescription=None):
 
         self._attr = {
-            'eventtype':          ParentEventTypeName,
-            'propertymap':        PropertyMap,
-            'parent-description':   ParentDescription or 'belonging to',
+            'eventtype': ParentEventTypeName,
+            'propertymap': PropertyMap,
+            'parent-description': ParentDescription or 'belonging to',
             'siblings-description': SiblingsDescription or 'sharing'
         }
 
