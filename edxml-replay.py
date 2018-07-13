@@ -52,72 +52,72 @@ class EDXMLReplay(EDXMLPullFilter):
     class UnbufferedStdout(object):
         # This is a wrapper to create an unbuffered
         # version of sys.stdout.
-        def __init__(self, Stream):
-            self.Stream = Stream
+        def __init__(self, stream):
+            self.stream = stream
 
-        def write(self, Data):
-            self.Stream.write(Data)
-            self.Stream.flush()
+        def write(self, data):
+            self.stream.write(data)
+            self.stream.flush()
 
-        def __getattr__(self, Attr):
-            return getattr(self.Stream, Attr)
+        def __getattr__(self, attr):
+            return getattr(self.stream, attr)
 
-    def __init__(self, SpeedMultiplier, BufferStufferEnabled):
+    def __init__(self, speed_multiplier, buffer_stuffer_enabled):
 
-        self.TimeShift = None
-        self.SpeedMultiplier = SpeedMultiplier
-        self.BufferStufferEnabled = BufferStufferEnabled
-        self.DateTimeProperties = []
-        self.KnownProperties = []
-        self.CurrentEventTypeName = None
+        self.time_shift = None
+        self.speed_multiplier = speed_multiplier
+        self.buffer_stuffer_enabled = buffer_stuffer_enabled
+        self.date_time_properties = []
+        self.known_properties = []
+        self.current_event_type_name = None
 
         # Call parent class constructor
         super(EDXMLReplay, self).__init__(
             EDXMLReplay.UnbufferedStdout(sys.stdout))
 
-    def _openEventGroup(self, eventTypeName, eventSourceUri):
-        self.CurrentEventTypeName = eventTypeName
-        EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceUri)
+    def _open_event_group(self, event_type_name, event_source_uri):
+        self.current_event_type_name = event_type_name
+        EDXMLPullFilter._open_event_group(self, event_type_name, event_source_uri)
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
 
-        DateTimeStrings = []
-        DateTimeObjects = []
-        NewEventObjects = []
+        date_time_strings = []
+        date_time_objects = []
+        new_event_objects = []
 
-        if self.BufferStufferEnabled:
+        if self.buffer_stuffer_enabled:
             # Generate a 4K comment.
             print('<!-- ' + 'x' * 4096 + ' -->')
 
         # Find all timestamps in event
-        for PropertyName, Objects in edxmlEvent.GetProperties().items():
-            if PropertyName not in self.KnownProperties:
-                datatype = self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()
+        for property_name, objects in event.get_properties().items():
+            if property_name not in self.known_properties:
+                datatype = self._ontology.get_event_type(self.current_event_type_name)[property_name].get_data_type()
                 if str(datatype) == 'datetime':
-                    self.DateTimeProperties.append(PropertyName)
-                self.KnownProperties.append(PropertyName)
+                    self.date_time_properties.append(property_name)
+                self.known_properties.append(property_name)
 
-            if PropertyName in self.DateTimeProperties:
-                DateTimeObjects.append((PropertyName, Objects))
-                DateTimeStrings.extend(Objects)
+            if property_name in self.date_time_properties:
+                date_time_objects.append((property_name, objects))
+                date_time_strings.extend(objects)
             else:
                 # We copy all event objects, except
                 # for the timestamps
-                NewEventObjects.extend(Objects)
+                new_event_objects.extend(objects)
 
-        if len(DateTimeStrings) > 0:
+        if len(date_time_strings) > 0:
             # We will use the smallest timestamp
             # as the event timestamp. Note that we
             # use lexicographical ordering here.
-            CurrentEventDateTime = parse(min(DateTimeStrings))
-            if self.TimeShift:
+            current_event_date_time = parse(min(date_time_strings))
+            if self.time_shift:
 
                 # Determine how much time remains before
                 # the event should be output.
-                Delay = (CurrentEventDateTime - datetime.now(pytz.UTC)
-                         ).total_seconds() + self.TimeShift
-                if Delay >= 0:
-                    time.sleep(Delay * SpeedMultiplier)
+                delay = (current_event_date_time - datetime.now(pytz.UTC)
+                         ).total_seconds() + self.time_shift
+                if delay >= 0:
+                    time.sleep(delay * speed_multiplier)
 
                     # If SpeedMultiplier < 1, it means we will wait shorter
                     # than the time between current and previous event. That
@@ -127,25 +127,25 @@ class EDXMLReplay(EDXMLPullFilter):
                     # speed will drop. To compensate for this effect, we also
                     # shift the entire dataset back in time. If SpeedMultiplier
                     # is larger than 1, the opposite effect occurs.
-                    self.TimeShift += (SpeedMultiplier - 1.0) * Delay
+                    self.time_shift += (speed_multiplier - 1.0) * delay
             else:
                 # Determine the global time shift between
                 # the input dataset and the current time.
-                self.TimeShift = (datetime.now(pytz.UTC) -
-                                  CurrentEventDateTime).total_seconds()
+                self.time_shift = (datetime.now(pytz.UTC) -
+                                   current_event_date_time).total_seconds()
 
             # Now we add the timestamp objects, replacing
             # their values with the current time.
-            for PropertyName, Objects in DateTimeObjects:
-                edxmlEvent[PropertyName] = [DataType.FormatUtcDateTime(
-                    datetime.now(tz=pytz.utc)) for Object in Objects]
+            for property_name, objects in date_time_objects:
+                event[property_name] = [DataType.format_utc_datetime(
+                    datetime.now(tz=pytz.utc)) for Object in objects]
 
-        EDXMLPullFilter._parsedEvent(self, edxmlEvent)
+        EDXMLPullFilter._parsed_event(self, event)
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This script accepts EDXML data as input and writes time shifted events to standard
    output. Timestamps of input events are shifted to the current time. This is useful
@@ -172,44 +172,44 @@ def PrintHelp():
 
      cat data.edxml | edxml-replay.py -s 10
 
-"""
+""")
 
 
-Input = sys.stdin
-SpeedMultiplier = 1.0
-CurrOption = 1
-BufferStufferEnabled = False
+event_input = sys.stdin
+speed_multiplier = 1.0
+curr_option = 1
+buffer_stuffer_enabled = False
 
-while CurrOption < len(sys.argv):
+while curr_option < len(sys.argv):
 
-    if sys.argv[CurrOption] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[curr_option] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrOption] == '-f':
-        CurrOption += 1
-        Input = open(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-f':
+        curr_option += 1
+        event_input = open(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '-s':
-        CurrOption += 1
-        SpeedMultiplier = 1.0 / (1e-9 + float(sys.argv[CurrOption]))
+    elif sys.argv[curr_option] == '-s':
+        curr_option += 1
+        speed_multiplier = 1.0 / (1e-9 + float(sys.argv[curr_option]))
 
-    elif sys.argv[CurrOption] == '-b':
-        BufferStufferEnabled = True
+    elif sys.argv[curr_option] == '-b':
+        buffer_stuffer_enabled = True
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrOption])
+                         sys.argv[curr_option])
         sys.exit()
 
-    CurrOption += 1
+    curr_option += 1
 
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
-with EDXMLReplay(SpeedMultiplier, BufferStufferEnabled) as Replay:
+with EDXMLReplay(speed_multiplier, buffer_stuffer_enabled) as Replay:
     try:
-        Replay.parse(Input)
+        Replay.parse(event_input)
     except KeyboardInterrupt:
         sys.exit()

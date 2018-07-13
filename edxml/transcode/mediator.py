@@ -19,24 +19,24 @@ class TranscoderMediator(EDXMLBase):
     output buffer when the mediator goes out of scope.
     """
 
-    _record_transcoders = {}
-    _transcoders = {}  # type: Dict[any, edxml.transcode.Transcoder]
-    _sources = []
+    __record_transcoders = {}
+    __transcoders = {}  # type: Dict[any, edxml.transcode.Transcoder]
+    __sources = []
 
     _debug = False
-    _disable_buffering = False
     _warn_no_transcoder = False
     _warn_fallback = False
-
-    _validate_events = True
+    _warn_invalid_events = False
     _ignore_invalid_objects = False
     _ignore_invalid_events = False
-    _log_repaired_events = False
-    _auto_merge_eventtypes = []
-    _warn_invalid_events = False
-    _defaultSourceUri = None
 
-    def __init__(self, Output=None):
+    __disable_buffering = False
+    __validate_events = True
+    __log_repaired_events = False
+    __auto_merge_eventtypes = []
+    __defaultSourceUri = None
+
+    def __init__(self, output=None):
         """
 
         Create a new transcoder mediator which will output streaming
@@ -49,14 +49,14 @@ class TranscoderMediator(EDXMLBase):
         that generate output.
 
         Args:
-          Output (file, optional): a file-like object
+          output (file, optional): a file-like object
         """
 
         super(TranscoderMediator, self).__init__()
-        self._output = Output
+        self.__output = output
         self._writer = None   # var: edxml.SimpleEDXMLWriter
         self._ontology = Ontology()
-        self._last_written_ontology_version = self._ontology.GetVersion()
+        self._last_written_ontology_version = self._ontology.get_version()
 
     def __enter__(self):
         return self
@@ -67,16 +67,16 @@ class TranscoderMediator(EDXMLBase):
         # output buffer. We do that to prevent us from outputting
         # invalid EDXML data. For other kinds of exceptions, like
         # KeyboardInterrupt, flushing the# output buffers is fine.
-        self.Close(flush=exc_type != EDXMLValidationError)
+        self.close(flush=exc_type != EDXMLValidationError)
 
     @staticmethod
-    def _transcoderIsPostprocessor(transcoder):
-        thisMethod = getattr(transcoder, 'PostProcess')
-        baseMethod = getattr(Transcoder, 'PostProcess')
-        return thisMethod.__func__ is not baseMethod.__func__
+    def _transcoder_is_postprocessor(transcoder):
+        this_method = getattr(transcoder, 'post_process')
+        base_method = getattr(Transcoder, 'post_process')
+        return this_method.__func__ is not base_method.__func__
 
     @classmethod
-    def Register(cls, RecordIdentifier, RecordTranscoder):
+    def register(cls, record_type_identifier, record_transcoder):
         """
 
         Register a transcoder for processing records identified by
@@ -95,17 +95,17 @@ class TranscoderMediator(EDXMLBase):
           for which no transcoder has been registered.
 
         Args:
-          RecordIdentifier: Record type identifier
-          RecordTranscoder (class): Transcoder class
+          record_type_identifier: Record type identifier
+          record_transcoder (class): Transcoder class
         """
-        if RecordTranscoder not in cls._transcoders:
-            cls._transcoders[RecordTranscoder] = RecordTranscoder()
-            cls._auto_merge_eventtypes.extend(
-                cls._transcoders[RecordTranscoder].GetAutoMergeEventTypes())
+        if record_transcoder not in cls.__transcoders:
+            cls.__transcoders[record_transcoder] = record_transcoder()
+            cls.__auto_merge_eventtypes.extend(
+                cls.__transcoders[record_transcoder].get_auto_merge_event_types())
 
-        cls._record_transcoders[RecordIdentifier] = RecordTranscoder
+        cls.__record_transcoders[record_type_identifier] = record_transcoder
 
-    def Debug(self, disableBuffering=True, warnNoTranscoder=True, warnFallback=True, logRepairedEvents=True):
+    def debug(self, disable_buffering=True, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
         """
         Enable debugging mode, which prints informative
         messages about transcoding issues, disables
@@ -121,23 +121,23 @@ class TranscoderMediator(EDXMLBase):
         event was repaired.
 
         Args:
-          disableBuffering  (bool): Disable output buffering
-          warnNoTranscoder  (bool): Warn when no transcoder found
-          warnFallback      (bool): Warn when using fallback transcoder
-          logRepairedEvents (bool): Log events that were repaired
+          disable_buffering  (bool): Disable output buffering
+          warn_no_transcoder  (bool): Warn when no transcoder found
+          warn_fallback      (bool): Warn when using fallback transcoder
+          log_repaired_events (bool): Log events that were repaired
 
         Returns:
           TranscoderMediator:
         """
         self._debug = True
-        self._disable_buffering = disableBuffering
-        self._warn_no_transcoder = warnNoTranscoder
-        self._warn_fallback = warnFallback
-        self._log_repaired_events = logRepairedEvents
+        self.__disable_buffering = disable_buffering
+        self._warn_no_transcoder = warn_no_transcoder
+        self._warn_fallback = warn_fallback
+        self.__log_repaired_events = log_repaired_events
 
         return self
 
-    def DisableEventValidation(self):
+    def disable_event_validation(self):
         """
         Instructs the EDXML writer not to validate its
         output. This may be used to boost performance in
@@ -148,10 +148,10 @@ class TranscoderMediator(EDXMLBase):
         Returns:
          TranscoderMediator:
         """
-        self._validate_events = False
+        self.__validate_events = False
         return self
 
-    def IgnoreInvalidObjects(self):
+    def ignore_invalid_objects(self):
         """
 
         Instructs the EDXML writer to ignore invalid object
@@ -170,7 +170,7 @@ class TranscoderMediator(EDXMLBase):
         self._ignore_invalid_objects = True
         return self
 
-    def IgnoreInvalidEvents(self, Warn=False):
+    def ignore_invalid_events(self, warn=False):
         """
 
         Instructs the EDXML writer to ignore invalid events.
@@ -187,16 +187,16 @@ class TranscoderMediator(EDXMLBase):
           This has no effect when event validation is disabled.
 
         Args:
-          Warn (bool): Print warnings or not
+          warn (bool): Print warnings or not
 
         Returns:
           TranscoderMediator:
         """
         self._ignore_invalid_events = True
-        self._warn_invalid_events = Warn
+        self._warn_invalid_events = warn
         return self
 
-    def AddEventSource(self, SourceUri):
+    def add_event_source(self, source_uri):
         """
 
         Adds an EDXML event source definition. If no event sources
@@ -208,7 +208,7 @@ class TranscoderMediator(EDXMLBase):
           after generating them changes their hashes.
 
         The mediator will not output the EDXML ontology until
-        it receives its first event through the Process() method.
+        it receives its first event through the process() method.
         This means that the caller can generate an event source
         'just in time' by inspecting the input record and use this
         method to create the appropriate source definition.
@@ -217,16 +217,16 @@ class TranscoderMediator(EDXMLBase):
         be customized.
 
         Args:
-          SourceUri (str): An Event Source URI
+          source_uri (str): An Event Source URI
 
         Returns:
           EventSource:
         """
-        source = self._ontology.CreateEventSource(SourceUri)
-        self._sources.append(source)
+        source = self._ontology.create_event_source(source_uri)
+        self.__sources.append(source)
         return source
 
-    def SetEventSource(self, SourceUri):
+    def set_event_source(self, source_uri):
         """
 
         Set the default event source for the output events. If no explicit
@@ -234,19 +234,19 @@ class TranscoderMediator(EDXMLBase):
         be used.
 
         Args:
-          SourceUri (str): The event source URI
+          source_uri (str): The event source URI
 
         Returns:
           TranscoderMediator:
         """
-        self._defaultSourceUri = SourceUri
+        self.__defaultSourceUri = source_uri
         if self._writer:
-            self._writer.SetEventSource(SourceUri)
+            self._writer.set_event_source(source_uri)
 
         return self
 
     @classmethod
-    def GetTranscoder(cls, RecordSelector):
+    def _get_transcoder(cls, record_selector):
         """
 
         Returns a Transcoder instance for transcoding
@@ -254,16 +254,16 @@ class TranscoderMediator(EDXMLBase):
         has been registered for records of that selector.
 
         Args:
-          RecordSelector (str): record type selector
+          record_selector (str): record type selector
 
         Returns:
           Transcoder:
         """
 
-        if RecordSelector in cls._record_transcoders:
-            return cls._transcoders[cls._record_transcoders[RecordSelector]]
+        if record_selector in cls.__record_transcoders:
+            return cls.__transcoders[cls.__record_transcoders[record_selector]]
         else:
-            return cls._transcoders.get(cls._record_transcoders.get('RECORD_OF_UNKNOWN_TYPE'))
+            return cls.__transcoders.get(cls.__record_transcoders.get('RECORD_OF_UNKNOWN_TYPE'))
 
     def _write_initial_ontology(self):
         # Here, we write the ontology elements that are
@@ -271,79 +271,79 @@ class TranscoderMediator(EDXMLBase):
 
         # First, we accumulate the object types into an
         # empty ontology.
-        objectTypes = Ontology()
-        for transcoder in self._transcoders.values():
-            transcoder.SetOntology(objectTypes)
-            for _ in transcoder.GenerateObjectTypes():
+        object_types = Ontology()
+        for transcoder in self.__transcoders.values():
+            transcoder.set_ontology(object_types)
+            for _ in transcoder.generate_object_types():
                 # Here, we only populate the list of object types,
                 # we don't do anything with them.
                 pass
 
         # Add the object types to the main mediator ontology
-        self._ontology.Update(objectTypes)
+        self._ontology.update(object_types)
 
         # Then, we accumulate the concepts into an
         # empty ontology.
         concepts = Ontology()
-        for transcoder in self._transcoders.values():
-            transcoder.SetOntology(concepts)
-            for _ in transcoder.GenerateConcepts():
+        for transcoder in self.__transcoders.values():
+            transcoder.set_ontology(concepts)
+            for _ in transcoder.generate_concepts():
                 # Here, we only populate the list of concepts,
                 # we don't do anything with them.
                 pass
 
         # Add the concepts to the main mediator ontology
-        self._ontology.Update(concepts)
+        self._ontology.update(concepts)
 
         # Now, we allow each of the transcoders to create their event
         # types in separate ontologies. We do that to allow two transcoders
         # to create two event types that share the same name. That is
         # a common pattern in transcoders that inherit event type definitions
         # from their parent, adjust the event type and finally rename it.
-        for transcoder in self._transcoders.values():
-            transcoder.SetOntology(Ontology())
-            transcoder.UpdateOntology(objectTypes, validate=False)
-            transcoder.UpdateOntology(concepts, validate=False)
-            for _, _ in transcoder.GenerateEventTypes():
+        for transcoder in self.__transcoders.values():
+            transcoder.set_ontology(Ontology())
+            transcoder.update_ontology(object_types, validate=False)
+            transcoder.update_ontology(concepts, validate=False)
+            for _, _ in transcoder.generate_event_types():
                 # Here, we only populate the ontology, we
                 # don't do anything with the ontology elements.
-                self._ontology.Update(transcoder._ontology, validate=False)
-                transcoder.UpdateOntology(objectTypes, validate=False)
-                transcoder.UpdateOntology(concepts, validate=False)
-                transcoder.SetOntology(Ontology())
+                self._ontology.update(transcoder._ontology, validate=False)
+                transcoder.update_ontology(object_types, validate=False)
+                transcoder.update_ontology(concepts, validate=False)
+                transcoder.set_ontology(Ontology())
 
-        if len(self._sources) == 0:
-            self.Warning(
+        if len(self.__sources) == 0:
+            self.warning(
                 'No EDXML source was defined, generating bogus source.')
-            self._sources.append(
-                self._ontology.CreateEventSource('/undefined/'))
+            self.__sources.append(
+                self._ontology.create_event_source('/undefined/'))
 
-        self._writer.AddOntology(self._ontology)
-        self._last_written_ontology_version = self._ontology.GetVersion()
+        self._writer.add_ontology(self._ontology)
+        self._last_written_ontology_version = self._ontology.get_version()
 
     def _write_ontology_update(self):
         # Here, we write ontology updates resulting
         # from adding new ontology elements while
         # generating events. Currently, this is limited
         # to event source definitions.
-        return self._writer.AddOntology(self._ontology)
+        return self._writer.add_ontology(self._ontology)
 
     def _create_writer(self):
-        self._writer = SimpleEDXMLWriter(self._output, self._validate_events)
-        if self._defaultSourceUri:
-            self._writer.SetEventSource(self._defaultSourceUri)
-        if self._disable_buffering:
-            self._writer.SetBufferSize(0)
+        self._writer = SimpleEDXMLWriter(self.__output, self.__validate_events)
+        if self.__defaultSourceUri:
+            self._writer.set_event_source(self.__defaultSourceUri)
+        if self.__disable_buffering:
+            self._writer.set_buffer_size(0)
         if self._ignore_invalid_objects:
-            self._writer.IgnoreInvalidObjects()
+            self._writer.ignore_invalid_objects()
         if self._ignore_invalid_events:
-            self._writer.IgnoreInvalidEvents(self._warn_invalid_events)
-        if self._log_repaired_events:
-            self._writer.LogRepairedEvents()
-        for EventTypeName in self._auto_merge_eventtypes:
-            self._writer.AutoMerge(EventTypeName)
+            self._writer.ignore_invalid_events(self._warn_invalid_events)
+        if self.__log_repaired_events:
+            self._writer.log_repaired_events()
+        for EventTypeName in self.__auto_merge_eventtypes:
+            self._writer.auto_merge(EventTypeName)
 
-    def Process(self, DataRecord):
+    def process(self, record):
         """
         Processes a single input record, invoking the correct
         transcoder to generate an EDXML event and writing the
@@ -353,7 +353,7 @@ class TranscoderMediator(EDXMLBase):
         any generated XML data will be returned as unicode string.
 
         Args:
-          DataRecord: Input data record
+          record: Input data record
 
         Returns:
           unicode: Generated output XML data
@@ -361,7 +361,7 @@ class TranscoderMediator(EDXMLBase):
         """
         return u''
 
-    def Close(self, flush=True):
+    def close(self, flush=True):
         """
         Finalizes the transcoding process by flushing
         the output buffer. When the mediator is not used
@@ -384,4 +384,4 @@ class TranscoderMediator(EDXMLBase):
         if self._writer is None:
             self._create_writer()
 
-        return self._writer.Close(flush)
+        return self._writer.close(flush)

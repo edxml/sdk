@@ -28,7 +28,7 @@ Now we can express the parent-child relationship between both event types as fol
 
 .. code-block:: javascript
 
-    file.MakeChildren('contained in', dir.IsParent('containing', file)).Map('dir', 'name')
+    file.make_children('contained in', dir.is_parent('containing', file)).map('dir', 'name')
 
 The API to define the relationship is defined to yield code that is actually quite readable. In plain English, it says:
 
@@ -36,6 +36,6 @@ The API to define the relationship is defined to yield code that is actually qui
 
   *Make files children contained in the directory, which is the parent containing the file, by mapping the directory of the file to the name of the directory.*
 
-Note that the text fragments 'contained in' and 'containing' are more than just syntactic sugar. These texts are in fact the parent description and siblings description that the EDXML specification is talking about. The call to :func:`edxml.ontology.EventType.MakeChildren()` returns an instance of the :class:`edxml.ontology.EventTypeParent` class. The call to :func:`edxml.ontology.EventTypeParent.Map()` creates the property map. As detailed in the EDXML specification, the property map defines which object values are shared between the parent and child events and which property of the child corresponds with each of the properties of the parent event.
+Note that the text fragments 'contained in' and 'containing' are more than just syntactic sugar. These texts are in fact the parent description and siblings description that the EDXML specification is talking about. The call to :func:`edxml.ontology.EventType.make_children()` returns an instance of the :class:`edxml.ontology.EventTypeParent` class. The call to :func:`edxml.ontology.EventTypeParent.map()` creates the property map. As detailed in the EDXML specification, the property map defines which object values are shared between the parent and child events and which property of the child corresponds with each of the properties of the parent event.
 
-  *It may be convenient to match the names of the properties that bind the parent and child event types. In that case, the second argument to the Map() method can be omitted.*
+  *It may be convenient to match the names of the properties that bind the parent and child event types. In that case, the second argument to the map() method can be omitted.*

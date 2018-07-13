@@ -5,7 +5,6 @@ from edxml.event import EDXMLEvent
 
 def test_event_init():
     content = u"Två dagar kvar🎉🎉"
-    event = EDXMLEvent([], EventTypeName=None, SourceUri=None,
-                       Parents=None, Content=content)
+    event = EDXMLEvent({}, event_type_name=None, source_uri=None, parents=None, content=content)
 
-    assert event.Content == content
+    assert event.get_content() == content

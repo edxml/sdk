@@ -43,106 +43,106 @@ from edxml.EDXMLParser import EDXMLPullParser
 
 class EDXML2CSV(EDXMLPullParser):
 
-    def __init__(self, OutputColumnNames, ColumnSeparator, PrintHeaderLine):
+    def __init__(self, output_column_names, column_separator, print_header_line):
 
-        self.PropertyNames = []
-        self.ColumnSeparator = ColumnSeparator
-        self.OutputColumnNames = OutputColumnNames
-        self.PrintHeaderLine = PrintHeaderLine
+        self.__property_names = []
+        self.__column_separator = column_separator
+        self.__output_column_names = output_column_names
+        self.__print_header_line = print_header_line
         super(EDXML2CSV, self).__init__(sys.stdout)
 
-    def _parsedOntology(self, ontology):
+    def _parsed_ontology(self, ontology):
 
         # Compile a list of output columns,
         # one column per event property.
-        PropertyNames = set()
-        for EventTypeName, EventType in self.getOntology().GetEventTypes().iteritems():
-            PropertyNames.update(EventType.GetProperties().keys())
+        property_names = set()
+        for event_type_name, event_type in self.get_ontology().get_event_types().iteritems():
+            property_names.update(event_type.get_properties().keys())
 
         # Filter the available properties using
         # the list of requested output columns.
-        if len(self.OutputColumnNames) > 0:
-            for Property in self.OutputColumnNames:
-                if Property in PropertyNames:
-                    self.PropertyNames.append(Property)
+        if len(self.__output_column_names) > 0:
+            for property_name in self.__output_column_names:
+                if property_name in property_names:
+                    self.__property_names.append(property_name)
         else:
             # No output column specification was given,
             # just output all of them.
-            self.PropertyNames = list(PropertyNames)
+            self.__property_names = list(property_names)
 
         # Output a header line containing the output column names
-        if self.PrintHeaderLine:
-            sys.stdout.write('event type' + self.ColumnSeparator +
-                             self.ColumnSeparator.join(self.PropertyNames) + '\n')
+        if self.__print_header_line:
+            sys.stdout.write('event type' + self.__column_separator +
+                             self.__column_separator.join(self.__property_names) + '\n')
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
 
-        PropertyObjects = {}
-        EscapedEventContent = edxmlEvent.GetContent().replace(
-            '\n', '\\n').replace(self.ColumnSeparator, '\\' + self.ColumnSeparator)
+        property_objects = {}
+        escaped_event_content = event.get_content().replace(
+            '\n', '\\n').replace(self.__column_separator, '\\' + self.__column_separator)
 
-        for PropertyName in self.PropertyNames:
-            PropertyObjects[PropertyName] = []
+        for property_name in self.__property_names:
+            property_objects[property_name] = []
 
-        for PropertyName, Objects in edxmlEvent.GetProperties().iteritems():
-            if PropertyName in self.PropertyNames:
-                for Object in Objects:
-                    EscapedValue = Object.replace(
-                        self.ColumnSeparator, '\\' + self.ColumnSeparator)
-                    PropertyObjects[PropertyName].append(EscapedValue)
+        for property_name, objects in event.get_properties().iteritems():
+            if property_name in self.__property_names:
+                for event_object in objects:
+                    escaped_value = event_object.replace(
+                        self.__column_separator, '\\' + self.__column_separator)
+                    property_objects[property_name].append(escaped_value)
 
-                self.IterateGenerateLines(self.PropertyNames, PropertyObjects,
-                                          edxmlEvent.GetTypeName() + self.ColumnSeparator,
-                                          EscapedEventContent, 0)
+                self.__iterate_generate_lines(self.__property_names, property_objects,
+                                              event.get_type_name() + self.__column_separator,
+                                              escaped_event_content, 0)
 
-    def IterateGenerateLines(self, Columns, PropertyObjects, LineStart, LineEnd, StartColumn):
+    def __iterate_generate_lines(self, columns, property_objects, line_start, line_end, start_column):
 
-        StartColPropertyName = Columns[StartColumn]
+        start_col_property_name = columns[start_column]
 
-        if len(PropertyObjects[StartColPropertyName]) == 0:
+        if len(property_objects[start_col_property_name]) == 0:
             # Property has no objects, iterate.
-            Line = LineStart + self.ColumnSeparator
-            if len(Columns) > StartColumn + 1:
-                self.IterateGenerateLines(
-                    Columns, PropertyObjects, Line, LineEnd, StartColumn + 1)
+            line = line_start + self.__column_separator
+            if len(columns) > start_column + 1:
+                self.__iterate_generate_lines(
+                    columns, property_objects, line, line_end, start_column + 1)
             return
 
-        for ObjectValue in PropertyObjects[StartColPropertyName]:
+        for object_value in property_objects[start_col_property_name]:
 
             # Add object value to the current output line
-            Line = LineStart + ObjectValue + self.ColumnSeparator
+            line = line_start + object_value + self.__column_separator
 
-            for Column in range(StartColumn + 1, len(Columns)):
+            for column in range(start_column + 1, len(columns)):
 
-                ColumnProperty = Columns[Column]
-                NumPropertyObjects = len(PropertyObjects[ColumnProperty])
+                column_property = columns[column]
+                num_property_objects = len(property_objects[column_property])
 
-                if NumPropertyObjects == 0:
+                if num_property_objects == 0:
 
                     # Property has no objects.
-                    Line += self.ColumnSeparator
+                    line += self.__column_separator
 
-                elif NumPropertyObjects == 1:
+                elif num_property_objects == 1:
 
                     # We have exactly one object for this property.
-                    Line += PropertyObjects[ColumnProperty][0] + \
-                        self.ColumnSeparator
+                    line += property_objects[column_property][0] + \
+                            self.__column_separator
 
                 else:
 
                     # We have multiple objects for this property,
                     # which means we need to generate multiple output
                     # lines. Iterate.
-                    self.IterateGenerateLines(
-                        Columns, PropertyObjects, Line, LineEnd, Column)
+                    self.__iterate_generate_lines(
+                        columns, property_objects, line, line_end, column)
                     return
 
-            sys.stdout.write(unicode(Line + LineEnd + '\n').encode('utf-8'))
+            sys.stdout.write(unicode(line + line_end + '\n').encode('utf-8'))
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This utility accepts EDXML data as input and writes the events to standard
    output, formatted in rows and columns. For every event property, a output
@@ -173,50 +173,50 @@ def PrintHelp():
 
      cat data.edxml | edxml-to-csv.py -c property-a,property-b -s ';'
 
-"""
+""")
 
 
-OutputColumns = []
-Input = sys.stdin
-ColumnSeparator = '\t'
-SuppressHeaderLine = False
-CurrOption = 1
+output_columns = []
+event_input = sys.stdin
+column_separator = '\t'
+suppress_header_line = False
+curr_option = 1
 
-while CurrOption < len(sys.argv):
+while curr_option < len(sys.argv):
 
-    if sys.argv[CurrOption] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[curr_option] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrOption] == '-f':
-        CurrOption += 1
-        Input = open(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-f':
+        curr_option += 1
+        event_input = open(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] in ('-c', '--columns'):
-        CurrOption += 1
-        OutputColumns = sys.argv[CurrOption].split(',')
+    elif sys.argv[curr_option] in ('-c', '--columns'):
+        curr_option += 1
+        output_columns = sys.argv[curr_option].split(',')
 
-    elif sys.argv[CurrOption] in ('-s', '--separator'):
-        CurrOption += 1
-        ColumnSeparator = sys.argv[CurrOption]
+    elif sys.argv[curr_option] in ('-s', '--separator'):
+        curr_option += 1
+        column_separator = sys.argv[curr_option]
 
-    elif sys.argv[CurrOption] == '--noheader':
-        CurrOption += 1
-        SuppressHeaderLine = True
+    elif sys.argv[curr_option] == '--noheader':
+        curr_option += 1
+        suppress_header_line = True
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrOption])
+                         sys.argv[curr_option])
         sys.exit()
 
-    CurrOption += 1
+    curr_option += 1
 
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-    EDXML2CSV(OutputColumns, ColumnSeparator,
-              not SuppressHeaderLine).parse(Input)
+    EDXML2CSV(output_columns, column_separator,
+              not suppress_header_line).parse(event_input)
 except KeyboardInterrupt:
     sys.exit()

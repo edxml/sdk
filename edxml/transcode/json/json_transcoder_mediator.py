@@ -18,21 +18,21 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
     TYPE_FIELD = None
     """
-  This constant must be set to the name of the field in the root of the JSON record
-  that contains the JSON record type, allowing the Transcoder Manager to route
-  JSON records to the correct transcoder.
+    This constant must be set to the name of the field in the root of the JSON record
+    that contains the JSON record type, allowing the Transcoder Manager to route
+    JSON records to the correct transcoder.
 
-  If the constant is set to None, all JSON records will be routed to the fallback
-  transcoder. If there is no fallback transcoder available, the record will not
-  be processed.
+    If the constant is set to None, all JSON records will be routed to the fallback
+    transcoder. If there is no fallback transcoder available, the record will not
+    be processed.
 
-  Note:
-    The fallback transcoder is a transcoder that registered itself as a transcoder
-    for the record type named 'RECORD_OF_UNKNOWN_TYPE', which is a reserved name.
-  """
+    Note:
+      The fallback transcoder is a transcoder that registered itself as a transcoder
+      for the record type named 'RECORD_OF_UNKNOWN_TYPE', which is a reserved name.
+    """
 
     @classmethod
-    def Register(cls, RecordTypeName, Transcoder):
+    def register(cls, record_type_identifier, transcoder):
         """
 
         Register a transcoder for processing records of specified
@@ -48,14 +48,14 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           that has a record type for which no transcoder has been registered.
 
         Args:
-          RecordTypeName (str): Name of the JSON record type
-          Transcoder (JsonTranscoder): JsonTranscoder class
+          record_type_identifier (str): Name of the JSON record type
+          transcoder (JsonTranscoder): JsonTranscoder class
         """
-        edxml.transcode.mediator.TranscoderMediator.Register(
-            RecordTypeName, Transcoder)
+        edxml.transcode.mediator.TranscoderMediator.register(
+            record_type_identifier, transcoder)
 
     @classmethod
-    def GetTranscoder(cls, RecordTypeName):
+    def _get_transcoder(cls, record_type_name):
         """
 
         Returns a JsonTranscoder instance for transcoding
@@ -63,14 +63,14 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         has been registered for the record type.
 
         Args:
-          RecordTypeName (str): Name of the JSON record type
+          record_type_name (str): Name of the JSON record type
 
         Returns:
           JsonTranscoder:
         """
-        return edxml.transcode.mediator.TranscoderMediator.GetTranscoder(RecordTypeName)
+        return edxml.transcode.mediator.TranscoderMediator._get_transcoder(record_type_name)
 
-    def Process(self, JsonData):
+    def process(self, json_record):
         """
         Processes a single JSON record, invoking the correct
         transcoder to generate an EDXML event and writing the
@@ -88,7 +88,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         values that are themselves dictionaries of lists.
 
         Args:
-          JsonData (dict,object): Json dictionary
+          json_record (dict,object): Json dictionary
 
         Returns:
           unicode: Generated output XML data
@@ -100,92 +100,93 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         if self.TYPE_FIELD is None:
             # Type field is not set, which means we must use the
             # fallback transcoder.
-            RecordType = 'RECORD_OF_UNKNOWN_TYPE'
+            record_type = 'RECORD_OF_UNKNOWN_TYPE'
         else:
             try:
-                RecordType = JsonData.get(
+                record_type = json_record.get(
                     self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
             except AttributeError:
-                RecordType = getattr(
-                    JsonData, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+                record_type = getattr(
+                    json_record, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
 
-        Transcoder = self.GetTranscoder(RecordType)
+        transcoder = self._get_transcoder(record_type)
 
-        if not Transcoder and RecordType != 'RECORD_OF_UNKNOWN_TYPE':
+        if not transcoder and record_type != 'RECORD_OF_UNKNOWN_TYPE':
             # No transcoder available for record type,
             # use the fallback transcoder, if available.
-            Transcoder = self.GetTranscoder('RECORD_OF_UNKNOWN_TYPE')
+            transcoder = self._get_transcoder('RECORD_OF_UNKNOWN_TYPE')
 
-        if Transcoder:
+        if transcoder:
 
-            if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
-                self.Warning(
+            if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
+                self.warning(
                     'JSON record has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD)
-                self.Warning('Record was: %s' % JsonData)
+                self.warning('Record was: %s' % json_record)
 
-            for Event in Transcoder.Generate(JsonData, RecordType):
+            for Event in transcoder.generate(json_record, record_type):
                 if not self._writer:
                     # Apparently, this is the first event that
                     # is generated. Create an EDXML writer and
                     # write the initial ontology.
                     self._create_writer()
                     self._write_initial_ontology()
-                if self._ontology.IsModifiedSince(self._last_written_ontology_version):
+                if self._ontology.is_modified_since(self._last_written_ontology_version):
                     # Ontology was changed since we wrote the last ontology update,
                     # so we need to write another update.
                     self._write_ontology_update()
-                    self._last_written_ontology_version = self._ontology.GetVersion()
+                    self._last_written_ontology_version = self._ontology.get_version()
 
-                if self._transcoderIsPostprocessor(Transcoder):
+                if self._transcoder_is_postprocessor(transcoder):
                     try:
-                        for PostProcessedEvent in Transcoder.PostProcess(Event):
+                        for PostProcessedEvent in transcoder.post_process(Event):
                             try:
                                 outputs.append(
-                                    self._writer.AddEvent(PostProcessedEvent))
+                                    self._writer.add_event(PostProcessedEvent))
                             except StopIteration:
-                                outputs.append(self._writer.Close())
+                                outputs.append(self._writer.close())
                             except EDXMLError as Except:
                                 if not self._ignore_invalid_events:
                                     raise
                                 if self._warn_invalid_events:
-                                    self.Warning(
+                                    self.warning(
                                         ('The post processor of the transcoder for JSON record type %s produced '
-                                         'an invalid event: %s\n\nContinuing...') % (RecordType, str(Except))
+                                         'an invalid event: %s\n\nContinuing...') % (record_type, str(Except))
                                     )
                     except Exception as Except:
                         if not self._ignore_invalid_events or self._debug:
                             raise
                         if self._warn_invalid_events:
-                            self.Warning(
+                            self.warning(
                                 ('The post processor of the transcoder for JSON record type %s failed '
-                                 'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
+                                 'with %s: %s\n\nContinuing...') % (record_type, type(Except).__name__, str(Except))
                             )
                 else:
                     try:
-                        outputs.append(self._writer.AddEvent(Event))
+                        outputs.append(self._writer.add_event(Event))
                     except StopIteration:
-                        outputs.append(self._writer.Close())
+                        outputs.append(self._writer.close())
                     except EDXMLError as Except:
                         if not self._ignore_invalid_events:
                             raise
                         if self._warn_invalid_events:
-                            self.Warning(('The transcoder for JSON record type %s produced an invalid '
-                                          'event: %s\n\nContinuing...') % (RecordType, str(Except)))
+                            self.warning(('The transcoder for JSON record type %s produced an invalid '
+                                          'event: %s\n\nContinuing...') % (record_type, str(Except)))
                     except Exception as Except:
                         if self._debug:
                             raise
-                        self.Warning(('Transcoder for JSON record type %s failed '
-                                      'with %s: %s\n\nContinuing...') % (RecordType, type(Except).__name__, str(Except))
-                                     )
+                        self.warning(
+                            'Transcoder for JSON record type %s failed '
+                            'with %s: %s\n\nContinuing...' % (record_type, type(Except).__name__, str(Except))
+                        )
         else:
             if self._warn_no_transcoder:
-                if RecordType == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
-                    self.Warning(
+                if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
+                    self.warning(
                         'JSON record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD)
                 else:
-                    self.Warning(('No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
-                                  'no %s event generated.') % RecordType
+                    self.warning(('No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
+                                  'no %s event generated.') % record_type
                                  )
-                self.Warning('Record was: %s' % JsonData)
+                self.warning('Record was: %s' % json_record)
 
         return u''.join(outputs)

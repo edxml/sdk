@@ -29,7 +29,7 @@ def file(request):
         events.append(edxml_event)
 
     a = EDXMLPullParser()
-    a.setEventTypeHandler(request.param["event_types"], handler=handler)
+    a.set_event_type_handler(request.param["event_types"], handler=handler)
     a.parse(open(request.param["filename"]))
     request.param["parser"] = a
     request.param["events"] = events
@@ -122,17 +122,17 @@ def test_write(file, writer):
     edxml = writer["writer"]  # type: SimpleEDXMLWriter
     validator = writer["validator"]
     parser = file["parser"]  # type: EDXMLPullParser
-    ontology = parser.getOntology()
-    edxml.AddOntology(ontology)
-    edxml.SetBufferSize(0)
+    ontology = parser.get_ontology()
+    edxml.add_ontology(ontology)
+    edxml.set_buffer_size(0)
     for event in file["events"]:
-        edxml.AddEvent(event)
-    edxml.Flush()
-    edxml.Close()
+        edxml.add_event(event)
+    edxml.flush()
+    edxml.close()
 
     time.sleep(1)
     validator_parser = validator()  # type: EDXMLPullParser
-    assert parser.getEventCounter() == validator_parser.getEventCounter()
+    assert parser.get_event_counter() == validator_parser.get_event_counter()
 
 
 # We can run pytest directly in our debugger

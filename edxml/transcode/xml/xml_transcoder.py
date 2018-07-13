@@ -13,62 +13,62 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
     TYPE_MAP = {}
     """
-  The TYPE_MAP attribute is a dictionary mapping EDXML event type names
-  to the XPath expressions of the equivalent input XML elements. This mapping
-  is used by the transcoder mediator to find the correct transcoder for each input
-  data record.
+    The TYPE_MAP attribute is a dictionary mapping EDXML event type names
+    to the XPath expressions of the equivalent input XML elements. This mapping
+    is used by the transcoder mediator to find the correct transcoder for each input
+    data record.
 
-  Note:
-    When no EDXML event type name is specified for a particular XPath expression,
-    it is up to the transcoder to set the event type on the events that it generates.
+    Note:
+      When no EDXML event type name is specified for a particular XPath expression,
+      it is up to the transcoder to set the event type on the events that it generates.
 
-  Note:
-    The fallback transcoder must set the None key to the name of the EDXML
-    fallback event type.
-  """
+    Note:
+      The fallback transcoder must set the None key to the name of the EDXML
+      fallback event type.
+    """
 
     XPATH_MAP = {}
     """
-  The XPATH_MAP attribute is a dictionary mapping XPath expressions to EDXML
-  event properties. The map is used to automatically populate the properties of
-  the EDXMLEvent instances produced by the Generate method of the XmlTranscoder
-  class. The keys are XPath expressions relative to the root of the XML input
-  elements for this transcoder. Example::
+    The XPATH_MAP attribute is a dictionary mapping XPath expressions to EDXML
+    event properties. The map is used to automatically populate the properties of
+    the EDXMLEvent instances produced by the Generate method of the XmlTranscoder
+    class. The keys are XPath expressions relative to the root of the XML input
+    elements for this transcoder. Example::
 
-      {'./some/subtag[@attribute]': 'property-name'}
+        {'./some/subtag[@attribute]': 'property-name'}
 
-  The use of EXSLT regular expressions is supported and may be used in Xpath keys
-  like this::
+    The use of EXSLT regular expressions is supported and may be used in Xpath keys
+    like this::
 
-      {'*[re:test(., "^abc$", "i")]': 'property-name'}
+        {'*[re:test(., "^abc$", "i")]': 'property-name'}
 
-  Extending XPath by injecting custom Python functions is supported due to the lxml
-  implementation of XPath that is being used in the transcoder implementation. Please
-  refer to the lxml documentation about this subject. This transcoder implementation
-  provides a small set of custom XPath functions already, which shows how it is done.
+    Extending XPath by injecting custom Python functions is supported due to the lxml
+    implementation of XPath that is being used in the transcoder implementation. Please
+    refer to the lxml documentation about this subject. This transcoder implementation
+    provides a small set of custom XPath functions already, which shows how it is done.
 
-  Note that the event structure will not be validated until the event is yielded by
-  the Generate() method. This creates the possibility to add nonexistent properties
-  to the XPath map and remove them in the Generate method, which may be convenient
-  for composing properties from multiple XML input tags or attributes, or for
-  splitting the auto-generated event into multiple output events.
-  """
+    Note that the event structure will not be validated until the event is yielded by
+    the generate() method. This creates the possibility to add nonexistent properties
+    to the XPath map and remove them in the Generate method, which may be convenient
+    for composing properties from multiple XML input tags or attributes, or for
+    splitting the auto-generated event into multiple output events.
+    """
 
     EMPTY_VALUES = {}
     """
-  The EMPTY_VALUES attribute is a dictionary mapping XPath expressions to
-  values of the associated property that should be considered empty. As an example,
-  the data source might use a specific string to indicate a value that is absent
-  or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the XPath
-  expression associated with an output event property, the property will be
-  automatically omitted from the generated EDXML events. Example::
+    The EMPTY_VALUES attribute is a dictionary mapping XPath expressions to
+    values of the associated property that should be considered empty. As an example,
+    the data source might use a specific string to indicate a value that is absent
+    or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the XPath
+    expression associated with an output event property, the property will be
+    automatically omitted from the generated EDXML events. Example::
 
-      {'./some/subtag[@attribute]': ('none', '-')}
+        {'./some/subtag[@attribute]': ('none', '-')}
 
-  Note that empty values are *always* omitted, because empty values are not permitted
-  in EDXML event objects.
+    Note that empty values are *always* omitted, because empty values are not permitted
+    in EDXML event objects.
 
-  """
+    """
 
     _XPATH_MATCHERS = {}   # type: Dict[str, etree.XPath]
 
@@ -79,12 +79,12 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         # namespace, but lxml throws weird exceptions on repeated
         # invocations of namespaced functions...
         ns = etree.FunctionNamespace(None)
-        ns['findall'] = XmlTranscoder._FindAll
-        ns['ctrl_strip'] = XmlTranscoder._StripControlChars
-        ns['ws_normalize'] = XmlTranscoder._NormalizeString
+        ns['findall'] = XmlTranscoder._find_all
+        ns['ctrl_strip'] = XmlTranscoder._strip_control_chars
+        ns['ws_normalize'] = XmlTranscoder._normalize_string
 
     @staticmethod
-    def _FindAll(Context, Nodes, Pattern, Flags):
+    def _find_all(context, nodes, pattern, flags):
         """
 
         This function is available as an XPath function named 'findall', in
@@ -104,24 +104,24 @@ class XmlTranscoder(edxml.transcode.Transcoder):
           The regular expression must not contain more than one group.
 
         Args:
-            Context: lxml function context
-            Nodes (List[etree._Element]):
+            context: lxml function context
+            nodes (List[etree._Element]):
             Pattern Union[str, re.SRE_Pattern]:
-            Flags (int): Regular expression flags
+            flags (int): Regular expression flags
 
         Returns:
           List[unicode]
 
         """
-        TotalMatches = []
-        for Node in Nodes:
+        total_matches = []
+        for Node in nodes:
             if Node.text:
-                Matches = re.findall(Pattern, Node.text, int(Flags))
-                TotalMatches.extend(unicode(Match) for Match in Matches)
-        return TotalMatches
+                matches = re.findall(pattern, Node.text, int(flags))
+                total_matches.extend(unicode(match) for match in matches)
+        return total_matches
 
     @staticmethod
-    def _StripControlChars(Context, Strings):
+    def _strip_control_chars(context, strings):
         """
 
         This function is available as an XPath function named 'ctrl_strip', in
@@ -132,24 +132,24 @@ class XmlTranscoder(edxml.transcode.Transcoder):
           'ctrl_strip(string(./some/subtag))'
 
         Args:
-            Context: lxml function context
-            Strings (Union[unicode, List[unicode]): Input strings
+            context: lxml function context
+            strings (Union[unicode, List[unicode]): Input strings
 
         Returns:
           (Union[unicode, List[unicode])
 
         """
-        OutStrings = []
-        if Strings:
-            if not isinstance(Strings, list):
-                Strings = [Strings]
-            for String in Strings:
-                OutStrings.append("".join(ch for ch in unicode(
-                    String) if unicodedata.category(ch)[0] != "C"))
-        return OutStrings if isinstance(Strings, list) else OutStrings[0]
+        out_strings = []
+        if strings:
+            if not isinstance(strings, list):
+                strings = [strings]
+            for string in strings:
+                out_strings.append("".join(ch for ch in unicode(
+                    string) if unicodedata.category(ch)[0] != "C"))
+        return out_strings if isinstance(strings, list) else out_strings[0]
 
     @staticmethod
-    def _NormalizeString(Context, Strings):
+    def _normalize_string(context, strings):
         """
 
         This function is available as an XPath function named 'ws_normalize', in
@@ -161,22 +161,22 @@ class XmlTranscoder(edxml.transcode.Transcoder):
           'ws_normalize(string(./some/subtag))'
 
         Args:
-            Context: lxml function context
-            Strings (Union[unicode, List[unicode]): Input strings
+            context: lxml function context
+            strings (Union[unicode, List[unicode]): Input strings
 
         Returns:
           (Union[unicode, List[unicode])
 
         """
-        OutStrings = []
-        if Strings:
-            if not isinstance(Strings, list):
-                Strings = [Strings]
-            for String in Strings:
-                OutStrings.append(' '.join(String.split()))
-        return OutStrings if isinstance(Strings, list) else OutStrings[0]
+        out_strings = []
+        if strings:
+            if not isinstance(strings, list):
+                strings = [strings]
+            for String in strings:
+                out_strings.append(' '.join(String.split()))
+        return out_strings if isinstance(strings, list) else out_strings[0]
 
-    def Generate(self, Element, XPathSelector, **kwargs):
+    def generate(self, element, xpath_selector, **kwargs):
         """
 
         Generates one or more EDXML events from the
@@ -192,63 +192,63 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         editing the event content, and so on.
 
         Args:
-          Element (etree.Element): XML element
-          XPathSelector (str): The matching XPath selector
+          element (etree.Element): XML element
+          xpath_selector (str): The matching XPath selector
           **kwargs: Arbitrary keyword arguments
 
         Yields:
           EDXMLEvent:
         """
 
-        Properties = {}
+        properties = {}
 
-        EventTypeName = self.TYPE_MAP.get(XPathSelector, None)
+        event_type_name = self.TYPE_MAP.get(xpath_selector, None)
 
-        for XPath, PropertyName in self.XPATH_MAP.items():
+        for xpath, property_name in self.XPATH_MAP.items():
 
-            if XPath not in XmlTranscoder._XPATH_MATCHERS:
+            if xpath not in XmlTranscoder._XPATH_MATCHERS:
                 # Create and cache a compiled function for evaluating the
                 # XPath expression.
                 try:
-                    XmlTranscoder._XPATH_MATCHERS[XPath] = etree.XPath(
-                        XPath, namespaces={
+                    XmlTranscoder._XPATH_MATCHERS[xpath] = etree.XPath(
+                        xpath, namespaces={
                             're': 'http://exslt.org/regular-expressions'}
                     )
                 except XPathSyntaxError:
                     raise ValueError(
                         'TYPE_MAP of %s contains invalid XPath for property %s: %s' % (
-                            self.__class__, PropertyName, XPath)
+                            self.__class__, property_name, xpath)
                     )
 
             # Use the XPath evaluation function to find matches
-            for Property in XmlTranscoder._XPATH_MATCHERS[XPath](Element):
+            for property in XmlTranscoder._XPATH_MATCHERS[xpath](element):
 
-                if PropertyName not in Properties:
-                    Properties[PropertyName] = []
+                if property_name not in properties:
+                    properties[property_name] = []
                 try:
                     # Here, we assume that the XPath expression selects
                     # an XML tag. We will use its text to populate the property
-                    if len(Property.text) == 0:
+                    if len(property.text) == 0:
                         # Skip empty values
                         continue
-                    elif Property.text in self.EMPTY_VALUES.get(XPath, ()):
+                    elif property.text in self.EMPTY_VALUES.get(xpath, ()):
                         # Property should be regarded as empty.
                         continue
 
-                    Properties[PropertyName].append(unicode(Property.text))
+                    properties[property_name].append(unicode(property.text))
                 except AttributeError:
                     # Oops, XPath did not select a tag, it might be
                     # an attribute then.
-                    Property = unicode(Property)
-                    if len(Property) == 0:
+                    property = unicode(property)
+                    if len(property) == 0:
                         # Skip empty values
                         continue
-                    elif Property in self.EMPTY_VALUES.get(XPath, ()):
+                    elif property in self.EMPTY_VALUES.get(xpath, ()):
                         # Property should be regarded as empty.
                         continue
-                    Properties[PropertyName].append(Property)
+                    properties[property_name].append(property)
                 except TypeError:
                     # XPath returned None
                     continue
 
-        yield EventElement(Properties, EventTypeName)
+        yield EventElement(properties, event_type_name)

@@ -15,30 +15,31 @@ class EventTypeParent(object):
     PROPERTY_MAP_PATTERN = re.compile(
         "^[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*$")
 
-    def __init__(self, ChildEventType, ParentEventTypeName, PropertyMap, ParentDescription=None,
-                 SiblingsDescription=None):
+    def __init__(self, child_event_type, parent_event_type_name, property_map, parent_description=None,
+                 siblings_description=None):
 
         self._attr = {
-            'eventtype': ParentEventTypeName,
-            'propertymap': PropertyMap,
-            'parent-description': ParentDescription or 'belonging to',
-            'siblings-description': SiblingsDescription or 'sharing'
+            'eventtype': parent_event_type_name,
+            'propertymap': property_map,
+            'parent-description': parent_description or 'belonging to',
+            'siblings-description': siblings_description or 'sharing'
         }
 
-        self._childEventType = ChildEventType
+        self._childEventType = child_event_type
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._childEventType._childModifiedCallback()
+        self._childEventType._child_modified_callback()
         return self
 
-    def _setAttr(self, key, value):
+    def _set_attr(self, key, value):
         if self._attr[key] != value:
             self._attr[key] = value
-            self._childModifiedCallback()
+            self._child_modified_callback()
 
     @classmethod
-    def Create(cls, ChildEventType, ParentEventTypeName, PropertyMap, ParentDescription=None, SiblingsDescription=None):
+    def create(cls, child_event_type, parent_event_type_name, property_map, parent_description=None,
+               siblings_description=None):
         """
 
         Creates a new event type parent. The PropertyMap argument is a dictionary
@@ -57,54 +58,54 @@ class EventTypeParent(object):
            as the child.
 
         Args:
-          ChildEventType (EventType): The child event type
-          ParentEventTypeName (str): Name of the parent event type
-          PropertyMap (Dict[str, str]): Property map
-          ParentDescription (Optional[str]): The EDXML parent-description attribute
-          SiblingsDescription (Optional[str]): The EDXML siblings-description attribute
+          child_event_type (EventType): The child event type
+          parent_event_type_name (str): Name of the parent event type
+          property_map (Dict[str, str]): Property map
+          parent_description (Optional[str]): The EDXML parent-description attribute
+          siblings_description (Optional[str]): The EDXML siblings-description attribute
 
         Returns:
           edxml.ontology.EventTypeParent: The EventTypeParent instance
         """
         return cls(
-            ChildEventType,
-            ParentEventTypeName,
+            child_event_type,
+            parent_event_type_name,
             ','.join(['%s:%s' % (Child, Parent)
-                      for Child, Parent in PropertyMap.items()]),
-            ParentDescription,
-            SiblingsDescription
+                      for Child, Parent in property_map.items()]),
+            parent_description,
+            siblings_description
         )
 
-    def SetParentDescription(self, Description):
+    def set_parent_description(self, description):
         """
         Sets the EDXML parent-description attribute
 
         Args:
-          Description (str): The EDXML parent-description attribute
+          description (str): The EDXML parent-description attribute
 
         Returns:
           edxml.ontology.EventTypeParent: The EventTypeParent instance
         """
-        self._setAttr('parent-description', Description)
+        self._set_attr('parent-description', description)
 
         return self
 
-    def SetSiblingsDescription(self, Description):
+    def set_siblings_description(self, description):
         """
 
         Sets the EDXML siblings-description attribute
 
         Args:
-          Description (str): The EDXML siblings-description attribute
+          description (str): The EDXML siblings-description attribute
 
         Returns:
           edxml.ontology.EventTypeParent: The EventTypeParent instance
         """
-        self._setAttr('siblings-description', Description)
+        self._set_attr('siblings-description', description)
 
         return self
 
-    def Map(self, ChildPropertyName, ParentPropertyName=None):
+    def map(self, child_property_name, parent_property_name=None):
         """
 
         Add a property mapping, mapping a property in the child
@@ -113,13 +114,13 @@ class EventTypeParent(object):
         that the parent and child properties are named identically.
 
         Args:
-          ChildPropertyName (str):  Child property
-          ParentPropertyName (str): Parent property
+          child_property_name (str):  Child property
+          parent_property_name (str): Parent property
 
         Returns:
           edxml.ontology.EventTypeParent: The EventTypeParent instance
         """
-        ParentPropertyName = ChildPropertyName if ParentPropertyName is None else ParentPropertyName
+        parent_property_name = child_property_name if parent_property_name is None else parent_property_name
 
         try:
             current = dict(Mapping.split(':')
@@ -127,12 +128,12 @@ class EventTypeParent(object):
         except ValueError:
             current = {}
 
-        current[ChildPropertyName] = ParentPropertyName
-        self._setAttr('propertymap', ','.join(
+        current[child_property_name] = parent_property_name
+        self._set_attr('propertymap', ','.join(
             ['%s:%s' % (Child, Parent) for Child, Parent in current.items()]))
         return self
 
-    def GetEventType(self):
+    def get_event_type(self):
         """
 
         Returns the name of the parent event type.
@@ -142,7 +143,7 @@ class EventTypeParent(object):
         """
         return self._attr['eventtype']
 
-    def GetPropertyMap(self):
+    def get_property_map(self):
         """
 
         Returns the property map as a dictionary mapping
@@ -154,7 +155,7 @@ class EventTypeParent(object):
         """
         return dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
 
-    def GetParentDescription(self):
+    def get_parent_description(self):
         """
 
         Returns the EDXML 'parent-description' attribute.
@@ -164,7 +165,7 @@ class EventTypeParent(object):
         """
         return self._attr['eventtype']
 
-    def GetSiblingsDescription(self):
+    def get_siblings_description(self):
         """
 
         Returns the EDXML 'siblings-description' attribute.
@@ -174,7 +175,7 @@ class EventTypeParent(object):
         """
         return self._attr['eventtype']
 
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the event type parent is valid. It only looks
@@ -224,16 +225,16 @@ class EventTypeParent(object):
         return self
 
     @classmethod
-    def Read(cls, parentElement, childEventType):
+    def create_from_xml(cls, parent_element, child_event_type):
         return cls(
-            childEventType,
-            parentElement.attrib['eventtype'],
-            parentElement.attrib['propertymap'],
-            parentElement.attrib['parent-description'],
-            parentElement.attrib['siblings-description']
+            child_event_type,
+            parent_element.attrib['eventtype'],
+            parent_element.attrib['propertymap'],
+            parent_element.attrib['parent-description'],
+            parent_element.attrib['siblings-description']
         )
 
-    def Update(self, parent):
+    def update(self, parent):
         """
 
         Updates the event type parent to match the EventTypeParent
@@ -247,15 +248,15 @@ class EventTypeParent(object):
           edxml.ontology.EventTypeParent: The updated EventTypeParent instance
 
         """
-        if self._attr['eventtype'] != parent.GetEventType():
+        if self._attr['eventtype'] != parent.get_event_type():
             raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".' %
-                            (self._attr['eventtype'], parent.GetEventType()))
+                            (self._attr['eventtype'], parent.get_event_type()))
 
-        self.Validate()
+        self.validate()
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing

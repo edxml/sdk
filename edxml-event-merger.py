@@ -54,71 +54,71 @@ class EDXMLEventMerger(EDXMLPullFilter):
         super(EDXMLEventMerger, self).__init__(sys.stdout)
         self.HashBuffer = {}
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
 
-        Hash = edxmlEvent.ComputeStickyHash(self.getOntology())
+        event_hash = event.compute_sticky_hash(self.get_ontology())
 
-        if Hash in self.HashBuffer:
-            edxmlEvent.MergeWith([self.HashBuffer[Hash]], self.getOntology())
+        if event_hash in self.HashBuffer:
+            event.merge_with([self.HashBuffer[event_hash]], self.get_ontology())
 
-        self.HashBuffer[Hash] = edxmlEvent
+        self.HashBuffer[event_hash] = event
 
-        EDXMLPullFilter._parsedEvent(self, edxmlEvent)
+        EDXMLPullFilter._parsed_event(self, event)
 
 
 class BufferingEDXMLEventMerger(EDXMLPushFilter):
 
-    def __init__(self, EventBufferSize, Latency):
+    def __init__(self, event_buffer_size, latency):
 
         super(BufferingEDXMLEventMerger, self).__init__(sys.stdout)
-        self.BufferSize = 0
-        self.MaxLatency = Latency
-        self.MaxBufferSize = EventBufferSize
-        self.LastOutputTime = time.time()
-        self.HashBuffer = {}
+        self.__buffer_size = 0
+        self.__max_latency = latency
+        self.__max_buffer_size = event_buffer_size
+        self.__last_output_time = time.time()
+        self.__hash_buffer = {}
 
-    def _closeEventGroup(self, eventTypeName, eventSourceId):
+    def _close_event_group(self, event_type_name, event_source_id):
 
-        self._flushBuffer()
+        self._flush_buffer()
 
-        EDXMLPushFilter._closeEventGroup(self, eventTypeName, eventSourceId)
+        EDXMLPushFilter._close_event_group(self, event_type_name, event_source_id)
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
 
-        Hash = edxmlEvent.ComputeStickyHash(self.getOntology())
+        event_hash = event.compute_sticky_hash(self.get_ontology())
 
-        if Hash in self.HashBuffer:
+        if event_hash in self.__hash_buffer:
             # This hash is in our buffer, which means
             # we have a collision. Add the event for
             # merging later.
-            self.HashBuffer[Hash].append(edxmlEvent)
+            self.__hash_buffer[event_hash].append(event)
         else:
             # We have a new hash, add it to
             # the buffer.
-            self.HashBuffer[Hash] = [edxmlEvent]
+            self.__hash_buffer[event_hash] = [event]
 
-        self.BufferSize += 1
-        if self.BufferSize >= self.MaxBufferSize:
-            self._flushBuffer()
+        self.__buffer_size += 1
+        if self.__buffer_size >= self.__max_buffer_size:
+            self._flush_buffer()
 
-        if self.BufferSize > 0 and 0 < self.MaxLatency <= (time.time() - self.LastOutputTime):
-            self._flushBuffer()
+        if self.__buffer_size > 0 and 0 < self.__max_latency <= (time.time() - self.__last_output_time):
+            self._flush_buffer()
 
-    def _flushBuffer(self):
-        for eventHash, events in self.HashBuffer.iteritems():
+    def _flush_buffer(self):
+        for event_hash, events in self.__hash_buffer.iteritems():
             if len(events) > 1:
-                outputEvent = events.pop()
-                outputEvent.MergeWith(events, self.getOntology())
-                self._writer.AddEvent(outputEvent)
+                output_event = events.pop()
+                output_event.merge_with(events, self.get_ontology())
+                self._writer.add_event(output_event)
 
-        self.BufferSize = 0
-        self.LastOutputTime = time.time()
+        self.__buffer_size = 0
+        self.__last_output_time = time.time()
         self.Buffer = {}
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This utility reads an EDXML stream from standard input or from a file and outputs
    that same stream after resolving event hash collisions in the input.
@@ -148,65 +148,65 @@ def PrintHelp():
 
      edxml-event-merger.py -b 1000 -l 10 -f input.edxml > output.edxml
 
-"""
+""")
 
 
-CurrOption = 1
-BufferSize = 1
-OutputLatency = 0
-InputFileName = None
+curr_option = 1
+buffer_size = 1
+output_latency = 0
+input_file_name = None
 
-while CurrOption < len(sys.argv):
+while curr_option < len(sys.argv):
 
-    if sys.argv[CurrOption] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[curr_option] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrOption] == '-f':
-        CurrOption += 1
-        InputFileName = sys.argv[CurrOption]
+    elif sys.argv[curr_option] == '-f':
+        curr_option += 1
+        input_file_name = sys.argv[curr_option]
 
-    elif sys.argv[CurrOption] == '-b':
-        CurrOption += 1
-        BufferSize = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-b':
+        curr_option += 1
+        buffer_size = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '-l':
-        CurrOption += 1
-        OutputLatency = float(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-l':
+        curr_option += 1
+        output_latency = float(sys.argv[curr_option])
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrOption])
+                         sys.argv[curr_option])
         sys.exit()
 
-    CurrOption += 1
+    curr_option += 1
 
-if InputFileName is None:
+if input_file_name is None:
     sys.stderr.write(
         "\nNo filename was given, waiting for EDXML data on STDIN...(use --help to get help)")
-    Input = sys.stdin
+    event_input = sys.stdin
 else:
-    sys.stderr.write("\nProcessing file %s:" % InputFileName)
-    Input = open(InputFileName)
+    sys.stderr.write("\nProcessing file %s:" % input_file_name)
+    event_input = open(input_file_name)
 
 sys.stdout.flush()
 
-if BufferSize > 1:
+if buffer_size > 1:
     # We need to read input with minimal
     # input buffering. This works best
     # when using the readline() method.
-    with BufferingEDXMLEventMerger(BufferSize, OutputLatency) as Merger:
+    with BufferingEDXMLEventMerger(buffer_size, output_latency) as merger:
         try:
             while 1:
-                Line = Input.readline()
+                Line = event_input.readline()
                 if not Line:
                     break
-                Merger.feed(Line)
+                merger.feed(Line)
         except KeyboardInterrupt:
             sys.exit()
 else:
-    with EDXMLEventMerger() as Merger:
+    with EDXMLEventMerger() as merger:
         try:
-            Merger.parse(open('demo.edxml'))
+            merger.parse(open('demo.edxml'))
         except KeyboardInterrupt:
             sys.exit()

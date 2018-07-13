@@ -37,24 +37,25 @@
 
 import sys
 
+from edxml.EDXMLBase import EDXMLValidationError
 from edxml.EDXMLFilter import EDXMLPullFilter
-from edxml.EDXMLParser import EDXMLOntologyPullParser, EDXMLValidationError
+from edxml.EDXMLParser import EDXMLOntologyPullParser, ProcessingInterrupted
 
 
 class EDXMLDefinitionSwapper(EDXMLPullFilter):
 
-    def __init__(self, otherOntology, Output=sys.stdout):
+    def __init__(self, other_ontology, output=sys.stdout):
 
-        super(EDXMLDefinitionSwapper, self).__init__(Output)
-        self.otherOntology = otherOntology
+        super(EDXMLDefinitionSwapper, self).__init__(output)
+        self.otherOntology = other_ontology
 
-    def _parsedOntology(self, parsedOntology):
-        EDXMLPullFilter._parsedOntology(self, self.otherOntology)
+    def _parsed_ontology(self, parsed_ontology):
+        EDXMLPullFilter._parsed_ontology(self, self.otherOntology)
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This utility replaces the eventtype definitions of one EDXML file with those
    contained in another EDXML file. The resulting EDXML stream is validated
@@ -72,71 +73,71 @@ def PrintHelp():
 
      cat input.edxml | edxml-replace-ontology.py -o ontology-source.edxml > output.edxml
 
-"""
+""")
 
 # Program starts here.
 
 
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-OntologyFileName = None
-Input = sys.stdin
+argument_count = len(sys.argv)
+current_argument = 1
+ontology_file_name = None
+event_input = sys.stdin
 
 # Parse commandline arguments
 
-while CurrentArgument < ArgumentCount:
+while current_argument < argument_count:
 
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[current_argument] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        Input = open(sys.argv[CurrentArgument])
+    elif sys.argv[current_argument] == '-f':
+        current_argument += 1
+        event_input = open(sys.argv[current_argument])
 
-    elif sys.argv[CurrentArgument] == '-o':
-        CurrentArgument += 1
-        OntologyFileName = sys.argv[CurrentArgument]
+    elif sys.argv[current_argument] == '-o':
+        current_argument += 1
+        ontology_file_name = sys.argv[current_argument]
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
+                         sys.argv[current_argument])
         sys.exit()
 
-    CurrentArgument += 1
+    current_argument += 1
 
 # Program starts here. Check commandline arguments.
 
-if OntologyFileName is None:
+if ontology_file_name is None:
     sys.stderr.write(
         "No ontology source was specified. Use the --help option to get help.\n")
     sys.exit()
 
-sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName)
+sys.stderr.write("\nUsing file '%s' as ontology source." % ontology_file_name)
 
-Parser = EDXMLOntologyPullParser()
+parser = EDXMLOntologyPullParser()
 
 # Parse the ontology from the specified
 # EDXML file.
 
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-    Parser.parse(open(OntologyFileName))
-except EDXMLOntologyPullParser.ProcessingInterrupted:
+    parser.parse(open(ontology_file_name))
+except ProcessingInterrupted:
     pass
 except EDXMLValidationError as Error:
     sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (
-        OntologyFileName, str(Error)))
+        ontology_file_name, str(Error)))
     sys.exit(1)
 except Exception:
     raise
 
 # Now parse the input while swapping the ontology.
-with EDXMLDefinitionSwapper(Parser.getOntology()) as swapper:
+with EDXMLDefinitionSwapper(parser.get_ontology()) as swapper:
     try:
-        swapper.parse(Input)
+        swapper.parse(event_input)
     except KeyboardInterrupt:
         pass

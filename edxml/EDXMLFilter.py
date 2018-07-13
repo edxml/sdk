@@ -60,9 +60,9 @@ class EDXMLFilter(EDXMLParserBase):
         self._close()
 
     def _close(self):
-        self._writer.Close()
+        self._writer.close()
 
-    def _parsedOntology(self, parsedOntology):
+    def _parsed_ontology(self, parsed_ontology):
         """
 
         Callback that writes the parsed ontology into
@@ -71,13 +71,13 @@ class EDXMLFilter(EDXMLParserBase):
         ontology in the output stream can be modified.
 
         Args:
-          parsedOntology (edxml.ontology.Ontology): The ontology
+          parsed_ontology (edxml.ontology.Ontology): The ontology
 
         """
-        super(EDXMLFilter, self)._parsedOntology(parsedOntology)
-        self._writer.AddOntology(parsedOntology)
+        super(EDXMLFilter, self)._parsed_ontology(parsed_ontology)
+        self._writer.add_ontology(parsed_ontology)
 
-    def _openEventGroup(self, eventTypeName, eventSourceUri):
+    def _open_event_group(self, event_type_name, event_source_uri):
         """
 
         Callback that writes a new <eventgroup> opening tag
@@ -87,15 +87,15 @@ class EDXMLFilter(EDXMLParserBase):
         in the event group can be modified.
 
         Args:
-          eventTypeName (str): The name of the event type
-          eventSourceUri: The source URI
+          event_type_name (str): The name of the event type
+          event_source_uri: The source URI
 
         """
-        super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
-        self._writer.OpenEventGroup(eventTypeName, eventSourceUri)
+        super(EDXMLFilter, self)._open_event_group(event_type_name, event_source_uri)
+        self._writer.open_event_group(event_type_name, event_source_uri)
         self.__groupOpen = True
 
-    def _closeEventGroup(self, eventTypeName, eventSourceId):
+    def _close_event_group(self, event_type_name, event_source_id):
         """
 
         Callback that writes a closing <eventgroup> tag into
@@ -104,15 +104,15 @@ class EDXMLFilter(EDXMLParserBase):
         be omitted in the output.
 
         Args:
-          eventTypeName (str): The name of the event type
-          eventSourceId: The source identifier
+          event_type_name (str): The name of the event type
+          event_source_id: The source identifier
 
         """
-        super(EDXMLFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
-        self._writer.CloseEventGroup()
+        super(EDXMLFilter, self)._close_event_group(event_type_name, event_source_id)
+        self._writer.close_event_group()
         self.__groupOpen = False
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
         """
 
         Callback that writes the parsed event into
@@ -123,11 +123,11 @@ class EDXMLFilter(EDXMLParserBase):
         in the output.
 
         Args:
-          edxmlEvent (edxml.ParsedEvent): The event
+          event (edxml.ParsedEvent): The event
 
         """
-        super(EDXMLFilter, self)._parsedEvent(edxmlEvent)
-        self._writer.AddEvent(edxmlEvent)
+        super(EDXMLFilter, self)._parsed_event(event)
+        self._writer.add_event(event)
 
 
 class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
@@ -139,12 +139,12 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
     before the data is output.
     """
 
-    def __init__(self, Output, Validate=True):
+    def __init__(self, output, validate=True):
         super(EDXMLPullFilter, self).__init__()
-        self._writer = EDXMLWriter(Output, Validate)
+        self._writer = EDXMLWriter(output, validate)
 
-    def _parsedEvent(self, edxmlEvent):
-        EDXMLFilter._parsedEvent(self, edxmlEvent)
+    def _parsed_event(self, event):
+        EDXMLFilter._parsed_event(self, event)
 
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
@@ -156,6 +156,6 @@ class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
     before the data is output.
     """
 
-    def __init__(self, Output, Validate=True):
+    def __init__(self, output, validate=True):
         super(EDXMLPushFilter, self).__init__()
-        self._writer = EDXMLWriter(Output, Validate)
+        self._writer = EDXMLWriter(output, validate)

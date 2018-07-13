@@ -5,52 +5,50 @@ from edxml import SimpleEDXMLWriter, EDXMLEvent
 import json
 from dateutil.parser import parse
 
-myOntology = Ontology()
+ontology = Ontology()
 
-myOntology.CreateObjectType('datetime')\
-    .SetDescription('date and time in ISO 8601 format')\
-    .SetDataType(DataType.DateTime())\
-    .SetDisplayName('time stamp')
+ontology.create_object_type('datetime') \
+    .set_description('date and time in ISO 8601 format')\
+    .set_data_type(DataType.datetime())\
+    .set_display_name('time stamp')
 
-myOntology.CreateObjectType('computing.networking.host.ipv4')\
-    .SetDescription('IPv4 address of a computer in a computer network')\
-    .SetDataType(DataType.Ipv4())\
-    .SetDisplayName('IPv4 address', 'IPv4 addresses')
+ontology.create_object_type('computing.networking.host.ipv4') \
+    .set_description('IPv4 address of a computer in a computer network')\
+    .set_data_type(DataType.ip_v4())\
+    .set_display_name('IPv4 address', 'IPv4 addresses')
 
-myOntology.CreateObjectType('computing.user.name')\
-    .SetDescription('name of a computer user account')\
-    .SetDataType(DataType.String(Length=255))\
-    .SetDisplayName('user name')\
-    .FuzzyMatchPhonetic()
+ontology.create_object_type('computing.user.name') \
+    .set_description('name of a computer user account')\
+    .set_data_type(DataType.string(length=255))\
+    .set_display_name('user name')\
+    .fuzzy_match_phonetic()
 
-myOntology.CreateObjectType('computing.ftp.command')\
-    .SetDescription('command issued by means of a File Transfer Protocol')\
-    .SetDataType(DataType.String(Length=255))\
-    .SetDisplayName('FTP command')
+ontology.create_object_type('computing.ftp.command') \
+    .set_description('command issued by means of a File Transfer Protocol')\
+    .set_data_type(DataType.string(length=255))\
+    .set_display_name('FTP command')
 
-myEventType = myOntology.CreateEventType('org.myorganization.logs.ftp')\
-    .SetDisplayName('FTP command')\
-    .SetDescription('a logged FTP command')\
-    .SetSummaryTemplate('FTP command issued to [[server]]')\
-    .SetStoryTemplate(
+event_type = ontology.create_event_type('org.myorganization.logs.ftp') \
+    .set_display_name('FTP command')\
+    .set_description('a logged FTP command')\
+    .set_summary_template('FTP command issued to [[server]]')\
+    .set_story_template(
     'On [[FULLDATETIME:time]], a user named "[[user]]" issued '
     'command "[[command]]" on FTP server [[server]]. The command '
     'was issued from a device having IP address [[client]].')
 
-myEventType.CreateProperty('time', ObjectTypeName='datetime')
-myEventType.CreateProperty(
-    'server', ObjectTypeName='computing.networking.host.ipv4')
-myEventType.CreateProperty(
-    'client', ObjectTypeName='computing.networking.host.ipv4')
-myEventType.CreateProperty('user', ObjectTypeName='computing.user.name')
-myEventType.CreateProperty('command', ObjectTypeName='computing.ftp.command')
+event_type.create_property('time', 'datetime')
+event_type.create_property('server', 'computing.networking.host.ipv4')
+event_type.create_property('client', 'computing.networking.host.ipv4')
+event_type.create_property('user', 'computing.user.name')
+event_type.create_property('command', 'computing.ftp.command')
 
-mySource = myOntology.CreateEventSource('/myorganization/logs/ftp/')
+source = ontology.create_event_source('/myorganization/logs/ftp/')
 
 writer = SimpleEDXMLWriter(sys.stdout)
-writer.SetOntology(myOntology)
-writer.SetEventType('org.myorganization.logs.ftp')
-writer.SetEventSource('/myorganization/logs/ftp/')
+writer.set_ontology(ontology)
+writer.set_event_type('org.myorganization.logs.ftp')
+writer.set_event_source('/myorganization/logs/ftp/')
 
 for line in sys.stdin:
     properties = json.loads(line)
@@ -60,9 +58,9 @@ for line in sys.stdin:
     del properties['offset']
 
     # Convert time to valid EDXML datetime string
-    properties['datetime'] = DataType.FormatUtcDateTime(
+    properties['datetime'] = DataType.format_utc_datetime(
         parse(properties['datetime']))
 
-    writer.AddEvent(EDXMLEvent(properties))
+    writer.add_event(EDXMLEvent(properties))
 
-writer.Close()
+writer.close()

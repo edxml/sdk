@@ -10,10 +10,10 @@ class ExampleBrick(edxml.ontology.Brick):
     CONCEPT_COMPUTER = 'computer'
 
     @classmethod
-    def generateConcepts(cls, targetOntology):
-        yield targetOntology.CreateConcept('computer')\
-                            .SetDescription('some kind of a computing device')\
-                            .SetDisplayName('computer')
+    def generate_concepts(cls, target_ontology):
+        yield target_ontology.create_concept('computer') \
+            .set_description('some kind of a computing device') \
+            .set_display_name('computer')
 
 
-edxml.ontology.Ontology.RegisterBrick(ExampleBrick)
+edxml.ontology.Ontology.register_brick(ExampleBrick)

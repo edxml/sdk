@@ -11,7 +11,7 @@ Ontology bricks are designed for sharing object type definitions and concept def
 
 In order to make the automatic addition of brick elements work, the Python source file that defines the brick must contain a call to :func:`edxml.ontology.Ontology.RegisterBrick` to register itself with the Ontology class. For example, if your brick class is named MyBrick, the source file must contain the command::
 
-  edxml.ontology.Ontology.RegisterBrick(MyBrick)
+  edxml.ontology.Ontology.register_brick(MyBrick)
 
 Creating an ontology brick is done by extending the :class:`edxml.ontology.Brick` class and overriding one or two methods. Below, we show a full example of a brick which defines one concept:
 

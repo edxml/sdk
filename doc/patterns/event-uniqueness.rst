@@ -7,15 +7,15 @@ By including *unique properties* in your event type definitions, the way these h
 
 Generating colliding events allows an event source to produce an update for a previously generated event. A recipient can merge the events to track the current state of some variable record in the source. Typical examples are tickets from a ticketing system that have a variable status ('open', 'in progress', 'done'). Or a source might compute some incremental aggregate that is constantly being updated. Defining unique properties is also required in order to define :doc:`parent-child relationships<parents-children>` between event types.
 
-Creating unique properties can be done by calling the :func:`edxml.ontology.EventProperty.Unique()` method on the event property:
+Creating unique properties can be done by calling the :func:`edxml.ontology.EventProperty.unique()` method on the event property:
 
 .. code-block:: python
 
-  myEventType.CreateProperty('time', ObjectTypeName='datetime').Unique()
+  my_event_type.create_property('time', 'datetime').unique()
 
-Multiple instances of the same logical event can be merged using the various merge strategies defined in the EDXML specification. By default, the merge strategy of all properties is set to ``drop``. Setting a different merge strategy on an event property can be done using the various ``Merge...()`` methods on the property. A quick example:
+Multiple instances of the same logical event can be merged using the various merge strategies defined in the EDXML specification. By default, the merge strategy of all properties is set to ``drop``. Setting a different merge strategy on an event property can be done using the various ``merge_...()`` methods on the property. A quick example:
 
 .. code-block:: python
 
-  myEventType['time-end'].MergeMax()
+  my_event_type['time-end'].merge_max()
 

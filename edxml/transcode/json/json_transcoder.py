@@ -9,38 +9,38 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
     ATTRIBUTE_MAP = {}
     """
-  The ATTRIBUTE_MAP attribute is a dictionary mapping JSON attributes to EDXML
-  event properties. The map is used to automatically populate the properties of
-  the EDXMLEvent instances produced by the Generate method of the JsonTranscoder
-  class. The keys may contain dots, indicating a subfield or positions within
-  an array, like so::
+    The ATTRIBUTE_MAP attribute is a dictionary mapping JSON attributes to EDXML
+    event properties. The map is used to automatically populate the properties of
+    the EDXMLEvent instances produced by the Generate method of the JsonTranscoder
+    class. The keys may contain dots, indicating a subfield or positions within
+    an array, like so::
 
-      {'fieldname.0.subfieldname': 'property-name'}
+        {'fieldname.0.subfieldname': 'property-name'}
 
-  Note that the event structure will not be validated until the event is yielded by
-  the Generate() method. This creates the possibility to add nonexistent properties
-  to the attribute map and remove them in the Generate method, which may be convenient
-  for composing properties from multiple JSON values, or for splitting the auto-generated
-  event into multiple output events.
-  """
+    Note that the event structure will not be validated until the event is yielded by
+    the generate() method. This creates the possibility to add nonexistent properties
+    to the attribute map and remove them in the Generate method, which may be convenient
+    for composing properties from multiple JSON values, or for splitting the auto-generated
+    event into multiple output events.
+    """
 
     EMPTY_VALUES = {}
     """
-  The EMPTY_VALUES attribute is a dictionary mapping input record fields to
-  values of the associated property that should be considered empty. As an example,
-  the data source might use a specific string to indicate a value that is absent
-  or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the field
-  associated with an output event property, the property will be automatically
-  omitted from the generated EDXML events. Example::
+    The EMPTY_VALUES attribute is a dictionary mapping input record fields to
+    values of the associated property that should be considered empty. As an example,
+    the data source might use a specific string to indicate a value that is absent
+    or irrelevant, like '-', 'n/a' or 'none'. By listing these values with the field
+    associated with an output event property, the property will be automatically
+    omitted from the generated EDXML events. Example::
 
-      {'fieldname.0.subfieldname': ('none', '-')}
+        {'fieldname.0.subfieldname': ('none', '-')}
 
-  Note that empty values are *always* omitted, because empty values are not permitted
-  in EDXML event objects.
+    Note that empty values are *always* omitted, because empty values are not permitted
+    in EDXML event objects.
 
-  """
+    """
 
-    def Generate(self, Json, RecordTypeName, **kwargs):
+    def generate(self, record, record_type_name, **kwargs):
         """
 
         Generates one or more EDXML events from the
@@ -65,67 +65,67 @@ class JsonTranscoder(edxml.transcode.Transcoder):
         editing the event content, and so on.
 
         Args:
-          Json (dict, object): Decoded JSON data
-          RecordTypeName (str): The JSON record type
+          record (dict, object): Decoded JSON data
+          record_type_name (str): The JSON record type
           **kwargs: Arbitrary keyword arguments
 
         Yields:
           EDXMLEvent:
         """
 
-        Properties = {}
+        properties = {}
 
-        EventTypeName = self.TYPE_MAP.get(RecordTypeName, None)
+        event_type_name = self.TYPE_MAP.get(record_type_name, None)
 
         for JsonField, PropertyName in self.ATTRIBUTE_MAP.items():
             # Below, we parse dotted notation to find sub-fields
             # in the Json data.
 
-            FieldPath = JsonField.split('.')
-            if len(FieldPath) > 0:
+            field_path = JsonField.split('.')
+            if len(field_path) > 0:
                 try:
                     # Try using the record as a dictionary
-                    Value = Json.get(FieldPath[0])
+                    value = record.get(field_path[0])
                 except AttributeError:
                     # That did not work. Try using the record
                     # as an object.
                     try:
-                        Value = getattr(Json, FieldPath[0])
+                        value = getattr(record, field_path[0])
                     except AttributeError:
                         # That did not work either. Try interpreting
                         # the field as an index into a list.
                         try:
-                            Value = Json[int(FieldPath[0])]
+                            value = record[int(field_path[0])]
                         except (ValueError, IndexError):
                             # Field not found in record, try next field.
                             continue
                 # Now descend into the record to find the innermost
                 # value that the field is referring to.
-                for Field in FieldPath[1:]:
+                for Field in field_path[1:]:
                     try:
                         try:
-                            Value = Value.get(Field)
+                            value = value.get(Field)
                         except AttributeError:
-                            Value = getattr(Value, Field)
+                            value = getattr(value, Field)
                     except AttributeError:
                         try:
-                            Value = Value[int(Field)]
+                            value = value[int(Field)]
                         except (ValueError, IndexError):
                             # Field not found in JSON.
-                            Value = None
+                            value = None
                             break
 
-                if Value is not None:
-                    Empty = ['']
-                    Empty.extend(self.EMPTY_VALUES.get(JsonField, ()))
-                    if type(Value) == list:
-                        Properties[PropertyName] = [
-                            v for v in Value if v not in Empty]
-                    elif type(Value) == bool:
-                        Properties[PropertyName] = [
-                            'true' if Value else 'false']
+                if value is not None:
+                    empty = ['']
+                    empty.extend(self.EMPTY_VALUES.get(JsonField, ()))
+                    if type(value) == list:
+                        properties[PropertyName] = [
+                            v for v in value if v not in empty]
+                    elif type(value) == bool:
+                        properties[PropertyName] = [
+                            'true' if value else 'false']
                     else:
-                        Properties[PropertyName] = [
-                            Value] if Value not in Empty else []
+                        properties[PropertyName] = [
+                            value] if value not in empty else []
 
-        yield EDXMLEvent(Properties, EventTypeName)
+        yield EDXMLEvent(properties, event_type_name)

@@ -14,27 +14,27 @@ class EventSource(object):
     SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
     ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
-    def __init__(self, Ontology, Uri, Description='no description available', AcquisitionDate='00000000'):
+    def __init__(self, ontology, uri, description='no description available', acquisition_date='00000000'):
 
         self._attr = {
-            'uri': str(Uri).rstrip('/') + '/',
-            'description': str(Description),
-            'date-acquired': str(AcquisitionDate)
+            'uri': str(uri).rstrip('/') + '/',
+            'description': str(description),
+            'date-acquired': str(acquisition_date)
         }
 
-        self._ontology = Ontology  # type: edxml.ontology.Ontology
+        self._ontology = ontology  # type: edxml.ontology.Ontology
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._ontology._childModifiedCallback()
+        self._ontology._child_modified_callback()
         return self
 
-    def _setAttr(self, key, value):
+    def _set_attr(self, key, value):
         if self._attr[key] != value:
             self._attr[key] = value
-            self._childModifiedCallback()
+            self._child_modified_callback()
 
-    def GetUri(self):
+    def get_uri(self):
         """
 
         Returns the source URI
@@ -44,7 +44,7 @@ class EventSource(object):
         """
         return self._attr['uri']
 
-    def GetDescription(self):
+    def get_description(self):
         """
 
         Returns the source description
@@ -54,7 +54,7 @@ class EventSource(object):
         """
         return self._attr['description']
 
-    def GetAcquisitionDateString(self):
+    def get_acquisition_date_string(self):
         """
 
         Returns the acquisition date
@@ -65,37 +65,37 @@ class EventSource(object):
 
         return self._attr['date-acquired']
 
-    def SetDescription(self, Description):
+    def set_description(self, description):
         """
 
         Sets the source description
 
         Args:
-          Description (str): Description
+          description (str): Description
 
         Returns:
           edxml.ontology.EventSource: The EventSource instance
         """
 
-        self._setAttr('description', str(Description))
+        self._set_attr('description', str(description))
         return self
 
-    def SetAcquisitionDate(self, dateTime):
+    def set_acquisition_date(self, date_time):
         """
 
         Sets the acquisition date
 
         Args:
-          dateTime (datetime.datetime): Acquisition date
+          date_time (datetime.datetime): Acquisition date
 
         Returns:
           edxml.ontology.EventSource: The EventSource instance
         """
 
-        self._setAttr('date-acquired', dateTime.strftime('%Y%m01'))
+        self._set_attr('date-acquired', date_time.strftime('%Y%m01'))
         return self
 
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the event source definition is valid.
@@ -123,15 +123,15 @@ class EventSource(object):
         return self
 
     @classmethod
-    def Read(cls, sourceElement, ontology):
+    def create_from_xml(cls, source_element, ontology):
         return cls(
             ontology,
-            sourceElement.attrib['uri'],
-            sourceElement.attrib['description'],
-            sourceElement.attrib['date-acquired']
+            source_element.attrib['uri'],
+            source_element.attrib['description'],
+            source_element.attrib['date-acquired']
         )
 
-    def Update(self, source):
+    def update(self, source):
         """
 
         Updates the event source to match the EventSource
@@ -145,15 +145,15 @@ class EventSource(object):
           edxml.ontology.EventSource: The updated EventSource instance
 
         """
-        if self._attr['uri'] != source.GetUri():
+        if self._attr['uri'] != source.get_uri():
             raise Exception('Attempt to update event source "%s" with source "%s".' %
-                            (self._attr['uri'], source.GetUri()))
+                            (self._attr['uri'], source.get_uri()))
 
-        self.Validate()
+        self.validate()
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing

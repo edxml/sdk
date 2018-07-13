@@ -46,6 +46,22 @@ from EDXMLBase import EDXMLBase, EvilCharacterFilter, EDXMLValidationError
 
 
 class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
+    """
+    Class for generating EDXML streams
+
+    The Output parameter is a file-like object that will be used to send the XML data to.
+    This file-like object can be pretty much anything, as long as it has a write() method
+    and a mode containing 'a' (opened for appending). When the Output parameter is omitted,
+    the generated XML data will be returned by the methods that generate output.
+
+    The optional Validate parameter controls if the generated EDXML stream should be auto-validated
+    or not. Automatic validation is enabled by default.
+
+    Args:
+        output (file, optional): File-like output object
+        validate (bool, optional): Enable output validation (True) or not (False)
+        log_repaired_events (bool, optional): Log repaired events (True) or not (False)
+    """
 
     class OutputBuffer(object):
         """
@@ -63,57 +79,42 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # actually unicode data.
             self.buffer.append(unicode(data, encoding='utf-8'))
 
-    """Class for generating EDXML streams
-
-  The Output parameter is a file-like object that will be used to send the XML data to.
-  This file-like object can be pretty much anything, as long as it has a write() method
-  and a mode containing 'a' (opened for appending). When the Output parameter is omitted,
-  the generated XML data will be returned by the methods that generate output.
-
-  The optional Validate parameter controls if the generated EDXML stream should be auto-validated
-  or not. Automatic validation is enabled by default.
-
-  Args:
-    Output (file, optional): File-like output object
-    Validate (bool, optional): Enable output validation (True) or not (False)
-    LogRepairedEvents (bool, optional): Log repaired events (True) or not (False)
-  """
-
-    def __init__(self, Output=None, Validate=True, LogRepairedEvents=False):
+    def __init__(self, output=None, validate=True, log_repaired_events=False):
 
         super(EDXMLWriter, self).__init__()
 
-        self._ontology = None
+        self.__ontology = None
         self.__schema = None                 # type: etree.RelaxNG
-        self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
-        self.__eventTypeSchema = None        # type: etree.RelaxNG
-        self.__justWroteOntology = False
-        self._log_repaired_events = LogRepairedEvents
-        self.InvalidEvents = 0
-        self.Validate = Validate
-        self.Output = Output
-        self.ElementStack = []
-        self.CurrentEventTypeName = None
-        self.CurrentEventSourceUri = None
+        self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
+        self.__event_type_schema = None        # type: etree.RelaxNG
+        self.__just_wrote_ontology = False
+        self.__log_repaired_events = log_repaired_events
+        self.__invalid_event_count = 0
+        self.__validate = validate
+        self.__output = output
+        self.__element_stack = []
+        self.__current_event_type_name = None
+        self.__current_event_source_uri = None
+        self.__event_group_xml_writer = None
 
-        self._numEventsRepaired = 0
-        self._numEventsProduced = 0
+        self.__num_events_repaired = 0
+        self.__num_events_produced = 0
 
-        if self.Output is None:
+        if self.__output is None:
             # Create an output buffer to capture XML data
-            self.Output = self.OutputBuffer()
+            self.__output = self.OutputBuffer()
 
         # Passing a file name as output will make lxml open the file, and it will open it with mode 'w'. Since
         # we use multiple lxml file writers to produce output, the output will be truncated mid stream. Therefore,
         # we only accept files and file-like objects as output, allowing us to verify if we can append to the file.
-        if not hasattr(self.Output, 'write'):
+        if not hasattr(self.__output, 'write'):
             raise IOError(
-                'The output of the EDXML writer does not look like an open file: ' + repr(self.Output))
+                'The output of the EDXML writer does not look like an open file: ' + repr(self.__output))
 
         # If the output is not opened for appending,
         # we raise an error for the reason outlined above.
-        if 'a' not in self.Output.mode:
-            if self.Output == sys.stdout:
+        if 'a' not in self.__output.mode:
+            if self.__output == sys.stdout:
                 # Unless the output is standard output, which cannot
                 # be truncated. We make this exception because sys.stdout
                 # object has mode 'w', which would normally qualify as unsafe.
@@ -133,29 +134,29 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         # not acceptable. We solve that issue by writing the event
         # groups into a secondary XML generator, allowing us to
         # flush after each event.
-        self.XMLWriter = self.__OuterXMLSerialiserCoRoutine()
-        self.XMLWriter.next()
+        self.__writer = self.__outer_xml_serializer_coroutine()
+        self.__writer.next()
 
-        self.CurrentElementType = ""
-        self.EventTypes = {}
-        self.ObjectTypes = {}
+        self.__current_element_type = ""
+        self.__event_types = {}
+        self.__object_types = {}
 
-    def getEventTypeSchema(self, eventTypeName):
-        if eventTypeName not in self.__eventTypeSchemaCache:
-            self.__eventTypeSchemaCache[eventTypeName] = etree.RelaxNG(
-                self._ontology.GetEventType(
-                    eventTypeName).generateRelaxNG(self._ontology)
+    def get_output(self):
+        return self.__output
+
+    def get_event_type_schema(self, event_type_name):
+        if event_type_name not in self.__event_type_schema_cache:
+            self.__event_type_schema_cache[event_type_name] = etree.RelaxNG(
+                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology)
             )
-        return self.__eventTypeSchemaCache.get(eventTypeName)
+        return self.__event_type_schema_cache.get(event_type_name)
 
-    def __generateEventValidationException(self, event, eventElement):
+    def __generate_event_validation_exception(self, event, event_element):
         try:
-            self._ontology.GetEventType(
-                self.CurrentEventTypeName).validateEventStructure(event)
+            self.__ontology.get_event_type(self.__current_event_type_name).validate_event_structure(event)
 
             # EventType structure checks out alright. Let us check the object values.
-            self._ontology.GetEventType(
-                self.CurrentEventTypeName).validateEventObjects(event)
+            self.__ontology.get_event_type(self.__current_event_type_name).validate_event_objects(event)
 
             # EventType validation did not find the issue. We have
             # no other option than to raise a RelaxNG error containing
@@ -163,66 +164,66 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # TODO: In lxml 3.8, the error_log has a path attribute, which is an xpath
             # pointing to the exact location of the problem. Show that in the exception.
             raise EDXMLValidationError(
-                self.__eventTypeSchema.error_log.last_error.message)
+                self.__event_type_schema.error_log.last_error.message)
 
         except EDXMLValidationError as exception:
-            self.InvalidEvents += 1
+            self.__invalid_event_count += 1
             raise EDXMLValidationError('An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
-                etree.tostring(eventElement, pretty_print=True).encode(
+                etree.tostring(event_element, pretty_print=True).encode(
                     'utf-8'), exception,
                 'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
                 'and begin writing a new event.'), sys.exc_info()[2])
 
-    def __OuterXMLSerialiserCoRoutine(self):
+    def __outer_xml_serializer_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
-        with etree.xmlfile(self.Output, encoding='utf-8') as Writer:
-            if 'flush' not in dir(Writer):
+        with etree.xmlfile(self.__output, encoding='utf-8') as writer:
+            if 'flush' not in dir(writer):
                 raise Exception(
                     'The installed version of lxml is too old. Please install version >= 3.4.')
-            Writer.write_declaration()
-            with Writer.element('edxml', version='3.0.0'):
-                Writer.flush()
+            writer.write_declaration()
+            with writer.element('edxml', version='3.0.0'):
+                writer.flush()
                 try:
                     while True:
                         # This is the main loop which generates eventgroups elements.
-                        Element = (yield)
-                        if Element is None:
+                        element = (yield)
+                        if element is None:
                             # Sending None signals the end of the generation of
                             # the ontology element, and the beginning of the
                             # eventgroups element.
-                            with Writer.element('eventgroups'):
-                                Writer.flush()
+                            with writer.element('eventgroups'):
+                                writer.flush()
                                 while True:
-                                    Element = (yield)
-                                    if Element is None:
+                                    element = (yield)
+                                    if element is None:
                                         # Sending None signals the end of the generation of
                                         # the eventgroups element. We break out of the loop,
                                         # causing the context manager to write the closing
                                         # tag of the eventgroups element. We then fall back
                                         # into the outer while loop.
                                         break
-                                    Writer.write(Element, pretty_print=True)
-                                    Writer.flush()
+                                    writer.write(element, pretty_print=True)
+                                    writer.flush()
                         else:
-                            Writer.write(Element, pretty_print=True)
-                            Writer.flush()
+                            writer.write(element, pretty_print=True)
+                            writer.flush()
                 except GeneratorExit:
                     pass
 
-    def __InnerXMLSerialiserCoRoutine(self, EventTypeName, EventSourceUri):
+    def __inner_xml_serializer_coroutine(self, event_type_name, event_source_uri):
         """Coroutine which performs the actual XML serialisation of eventgroups"""
-        with etree.xmlfile(self.Output, encoding='utf-8') as Writer:
-            with Writer.element('eventgroup', **{'event-type': EventTypeName, 'source-uri': EventSourceUri}):
-                Writer.flush()
+        with etree.xmlfile(self.__output, encoding='utf-8') as writer:
+            with writer.element('eventgroup', **{'event-type': event_type_name, 'source-uri': event_source_uri}):
+                writer.flush()
                 try:
                     while True:
-                        Element = (yield)
-                        Writer.write(Element, pretty_print=True)
-                        Writer.flush()
+                        element = (yield)
+                        writer.write(element, pretty_print=True)
+                        writer.flush()
                 except GeneratorExit:
                     pass
 
-    def AddOntology(self, edxmlOntology):
+    def add_ontology(self, ontology):
         """
 
         Writes an EDXML ontology element into the output. This method
@@ -234,58 +235,58 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         the generated XML data will be returned as unicode string.
 
         Args:
-          edxmlOntology (edxml.ontology.Ontology): The ontology
+          ontology (edxml.ontology.Ontology): The ontology
 
         Returns:
           unicode: Generated output XML data
 
         """
-        reOpenEventGroups = False
-        prevEventTypeName = None
-        prevEventSource = None
+        reopen_event_groups = False
+        prev_event_type_name = None
+        prev_event_source = None
 
-        if len(self.ElementStack) > 0:
-            if self.ElementStack[-1] == 'eventgroup':
-                prevEventTypeName = self.CurrentEventTypeName
-                prevEventSource = self.CurrentEventSourceUri
-                self.CloseEventGroup()
+        if len(self.__element_stack) > 0:
+            if self.__element_stack[-1] == 'eventgroup':
+                prev_event_type_name = self.__current_event_type_name
+                prev_event_source = self.__current_event_source_uri
+                self.close_event_group()
 
-        if len(self.ElementStack) > 0:
-            if self.ElementStack[-1] == 'eventgroups':
-                reOpenEventGroups = True
-                self.CloseEventGroups()
+        if len(self.__element_stack) > 0:
+            if self.__element_stack[-1] == 'eventgroups':
+                reopen_event_groups = True
+                self.close_event_groups()
 
-        if self._ontology is None:
-            self._ontology = edxmlOntology.Validate()
+        if self.__ontology is None:
+            self.__ontology = ontology.validate()
         else:
             # We update our existing ontology, to make sure
             # that both are compatible.
-            self._ontology.Update(edxmlOntology)
+            self.__ontology.update(ontology)
 
         try:
-            self.XMLWriter.send(edxmlOntology.GenerateXml())
+            self.__writer.send(ontology.generate_xml())
         except StopIteration:
             # When the co-routine dropped out of its wrote loop while
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
 
-        self.__eventTypeSchemaCache = {}
-        self.__justWroteOntology = True
+        self.__event_type_schema_cache = {}
+        self.__just_wrote_ontology = True
 
-        if reOpenEventGroups:
-            self.OpenEventGroups()
-        if prevEventTypeName is not None and prevEventSource is not None:
-            self.OpenEventGroup(prevEventTypeName, prevEventSource)
+        if reopen_event_groups:
+            self.open_event_groups()
+        if prev_event_type_name is not None and prev_event_source is not None:
+            self.open_event_group(prev_event_type_name, prev_event_source)
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def OpenEventGroups(self):
+    def open_event_groups(self):
         """
         Opens the <eventgroups> element, containing all eventgroups
 
@@ -295,37 +296,37 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         Returns:
           unicode: Generated output XML data
         """
-        if len(self.ElementStack) > 0:
-            self.Error(
+        if len(self.__element_stack) > 0:
+            self.error(
                 'An <eventgroups> tag must be child of the <events> tag. Did you forget to call CloseDefinitions()?')
 
-        if not self.__justWroteOntology:
-            self.Error(
+        if not self.__just_wrote_ontology:
+            self.error(
                 'Attempt to output an eventgroups element without a preceding ontology element.')
-        self.__justWroteOntology = False
+        self.__just_wrote_ontology = False
 
         # We send None to the outer XML generator, to
         # hint it that the ontology element has been
         # completed and we want it to generate the
         # eventgroups opening tag.
         try:
-            self.XMLWriter.send(None)
+            self.__writer.send(None)
         except StopIteration:
             # When the co-routine dropped out of its wrote loop while
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
 
-        self.ElementStack.append('eventgroups')
+        self.__element_stack.append('eventgroups')
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def OpenEventGroup(self, EventTypeName, SourceUri):
+    def open_event_group(self, event_type_name, source_uri):
         """
         Opens an event group.
 
@@ -333,44 +334,44 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         the generated XML data will be returned as unicode string.
 
         Args:
-          EventTypeName (str): Name of the eventtype
-          SourceUri (str): EDXML event source URI
+          event_type_name (str): Name of the eventtype
+          source_uri (str): EDXML event source URI
 
         Returns:
           unicode: Generated output XML data
 
         """
 
-        if len(self.ElementStack) == 0:
-            self.OpenEventGroups()
-        self.ElementStack.append('eventgroup')
+        if len(self.__element_stack) == 0:
+            self.open_event_groups()
+        self.__element_stack.append('eventgroup')
 
-        if self._ontology.GetEventType(EventTypeName) is None:
+        if self.__ontology.get_event_type(event_type_name) is None:
             raise EDXMLValidationError(
-                'Attempt to open an event group using unknown event type: "%s"' % EventTypeName)
-        if self._ontology.GetEventSource(SourceUri) is None:
+                'Attempt to open an event group using unknown event type: "%s"' % event_type_name)
+        if self.__ontology.get_event_source(source_uri) is None:
             raise EDXMLValidationError(
-                'Attempt to open an event group using unknown source URI: "%s"' % SourceUri)
+                'Attempt to open an event group using unknown source URI: "%s"' % source_uri)
 
-        self.CurrentEventTypeName = EventTypeName
-        self.CurrentEventSourceUri = SourceUri
+        self.__current_event_type_name = event_type_name
+        self.__current_event_source_uri = source_uri
 
-        if self.Validate:
-            self.__eventTypeSchema = self.getEventTypeSchema(
-                self.CurrentEventTypeName)
+        if self.__validate:
+            self.__event_type_schema = self.get_event_type_schema(
+                self.__current_event_type_name)
 
-        self.EventGroupXMLWriter = self.__InnerXMLSerialiserCoRoutine(
-            self.CurrentEventTypeName, SourceUri)
-        self.EventGroupXMLWriter.next()
+        self.__event_group_xml_writer = self.__inner_xml_serializer_coroutine(
+            self.__current_event_type_name, source_uri)
+        self.__event_group_xml_writer.next()
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def Close(self):
+    def close(self):
         """
 
         Finalizes the output data stream.
@@ -381,33 +382,33 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         Returns:
           unicode: Generated output XML data
         """
-        if self.__justWroteOntology:
+        if self.__just_wrote_ontology:
             # EDXML data streams must contain sequences of pairs of
             # an <ontology> element followed by an <eventgroups>
             # element. Apparently, we just wrote an <ontology>
             # element, so we must open a new eventgroups tag.
-            self.OpenEventGroups()
-        if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroup':
-            self.CloseEventGroup()
-        if len(self.ElementStack) > 0 and self.ElementStack[-1] == 'eventgroups':
-            self.CloseEventGroups()
-        self.XMLWriter.close()
+            self.open_event_groups()
+        if len(self.__element_stack) > 0 and self.__element_stack[-1] == 'eventgroup':
+            self.close_event_group()
+        if len(self.__element_stack) > 0 and self.__element_stack[-1] == 'eventgroups':
+            self.close_event_groups()
+        self.__writer.close()
 
-        if self._numEventsProduced > 0 and (100 * self._numEventsRepaired) / self._numEventsProduced > 10:
+        if self.__num_events_produced > 0 and (100 * self.__num_events_repaired) / self.__num_events_produced > 10:
             sys.stderr.write(
                 'WARNING: %d out of %d events were automatically repaired because they were invalid. '
                 'If performance is important, verify your event generator code to produce valid events.\n' %
-                (self._numEventsRepaired, self._numEventsProduced)
+                (self.__num_events_repaired, self.__num_events_produced)
             )
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def CloseEventGroup(self):
+    def close_event_group(self):
         """
 
         Closes a previously opened event group.
@@ -418,22 +419,22 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         Returns:
           unicode: Generated output XML data
         """
-        if self.ElementStack[-1] != 'eventgroup':
-            self.Error(
+        if self.__element_stack[-1] != 'eventgroup':
+            self.error(
                 'Unbalanced <eventgroup> tag. Did you forget to call CloseEvent()?')
-        self.ElementStack.pop()
+        self.__element_stack.pop()
 
         # This closes the generator, writing the closing eventgroup tag.
-        self.EventGroupXMLWriter.close()
+        self.__event_group_xml_writer.close()
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def AddEvent(self, event):
+    def add_event(self, event):
         """
 
         Adds specified event to the output data stream.
@@ -448,75 +449,73 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
           unicode: Generated output XML data
 
         """
-        if self.ElementStack[-1] != 'eventgroup':
-            self.Error(
+        if self.__element_stack[-1] != 'eventgroup':
+            self.error(
                 'A <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
 
         if isinstance(event, etree._Element):
-            eventElement = event
+            event_element = event
         elif isinstance(event, edxml.EDXMLEvent):
             event = edxml.EventElement(
-                event.GetProperties(), Parents=event.GetExplicitParents(), Content=event.GetContent()
+                event.get_properties(), parents=event.get_explicit_parents(), content=event.get_content()
             )
-            eventElement = event.element
+            event_element = event.get_element()
         elif isinstance(event, edxml.EventElement):
-            eventElement = event.element
+            event_element = event.get_element()
         else:
             raise TypeError('Unknown type of event: %s' % str(type(event)))
 
-        if self.Validate:
-            if not self.__eventTypeSchema.validate(eventElement):
+        if self.__validate:
+            if not self.__event_type_schema.validate(event_element):
                 # Event does not validate.
                 try:
                     # Try to repair the event by normalizing the object
                     # values.
-                    if self._log_repaired_events:
-                        originalEvent = deepcopy(event)
-                        self._ontology.GetEventType(
-                            self.CurrentEventTypeName).normalizeEventObjects(event)
-                        for propertyName in originalEvent.keys():
-                            if event[propertyName] != originalEvent[propertyName]:
+                    if self.__log_repaired_events:
+                        original_event = deepcopy(event)
+                        self.__ontology.get_event_type(self.__current_event_type_name).normalize_event_objects(event)
+                        for property_name in original_event.keys():
+                            if event[property_name] != original_event[property_name]:
                                 sys.stderr.write(
                                     'Repaired invalid property %s of event type %s: %s => %s\n' %
-                                    (propertyName, self.CurrentEventTypeName, repr(
-                                        originalEvent[propertyName]), repr(event[propertyName]))
+                                    (property_name, self.__current_event_type_name, repr(
+                                        original_event[property_name]), repr(event[property_name]))
                                 )
                     else:
-                        self._ontology.GetEventType(
-                            self.CurrentEventTypeName).normalizeEventObjects(event)
+                        self.__ontology.get_event_type(self.__current_event_type_name).normalize_event_objects(event)
 
                 except EDXMLValidationError:
                     # Repairing failed.
-                    self.__generateEventValidationException(
-                        event, eventElement)
+                    self.__generate_event_validation_exception(
+                        event, event_element)
                 else:
                     # Repairing succeeded. For the time being, just to be sure,
                     # we validate the event again.
-                    # TODO: Remove this second validation once normalizeEventObjects()
+                    # TODO: Remove this second validation once normalize_event_objects()
                     # is known to yield valid object values in all cases.
-                    if not self.__eventTypeSchema.validate(eventElement):
-                        self.__generateEventValidationException(
-                            event, eventElement)
-                    self._numEventsRepaired += 1
+                    if not self.__event_type_schema.validate(event_element):
+                        self.__generate_event_validation_exception(
+                            event, event_element)
+                    self.__num_events_repaired += 1
 
         try:
-            self.EventGroupXMLWriter.send(eventElement)
+            self.__event_group_xml_writer.send(event_element)
         except StopIteration:
             # When the co-routine dropped out of its wrote loop while
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
 
-        self._numEventsProduced += 1
+        self.__num_events_produced += 1
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''
 
-    def CloseEventGroups(self):
+    def close_event_groups(self):
         """
 
         Closes a previously opened <eventgroups> element.
@@ -528,25 +527,25 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
           unicode: Generated output XML data
 
         """
-        if self.ElementStack[-1] != 'eventgroups':
-            self.Error(
-                'Unbalanced <eventgroups> tag. Did you forget to call CloseEventGroup()?')
-        self.ElementStack.pop()
+        if self.__element_stack[-1] != 'eventgroups':
+            self.error(
+                'Unbalanced <eventgroups> tag. Did you forget to call close_event_group()?')
+        self.__element_stack.pop()
         # We send None to the outer XML generator, to
         # hint it that the eventgroups element has been
         # completed and we want it to generate the
         # eventgroups closing tag.
         try:
-            self.XMLWriter.send(None)
+            self.__writer.send(None)
         except StopIteration:
             # When the co-routine dropped out of its wrote loop while
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
 
-        if isinstance(self.Output, self.OutputBuffer):
-            output = u''.join(self.Output.buffer)
-            self.Output.buffer.clear()
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
             return output
         else:
             return u''

@@ -14,7 +14,7 @@ class SocketEDXMLWriter(SimpleEDXMLWriter):
         Instantiate the socket writer by calling it with a host and port tuple.
         It creates a connection and writes to it.
 
-        :param addres: tuple of hostname or address and port of the target
+        :param address: tuple of hostname or address and port of the target
         :param validate: Boolean, True by default
         """
         client_socket = socket.create_connection(address)
@@ -22,4 +22,4 @@ class SocketEDXMLWriter(SimpleEDXMLWriter):
         # set the buffer to 0 because however much lxml flushes, the data is not sent
         # also tried TCP_NODELAY to no effect
         socketfile = client_socket.makefile('ab', 0)
-        super(self.__class__, self).__init__(socketfile, Validate=validate)
+        super(self.__class__, self).__init__(socketfile, validate=validate)

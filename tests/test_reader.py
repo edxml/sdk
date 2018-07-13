@@ -29,15 +29,15 @@ def data(request):
 def test_read(data):
     a = EDXMLPullParser()
     # Before parsing, event counter should be 0
-    assert a.getEventCounter() == 0
+    assert a.get_event_counter() == 0
     a.parse(data["file"])
     # After parsing, the event counter should be the number of events in the file
-    assert a.getEventCounter() == data["event_count"]
+    assert a.get_event_counter() == data["event_count"]
     # The event counter for our specific event type should be the same
-    assert a.getEventTypeCounter(
+    assert a.get_event_type_counter(
         data["event_type_name"]) == data["event_count"]
     # Our object types should be parsed correctly and in order
-    assert a.getOntology().GetObjectTypes().keys() == data["object_types"]
+    assert a.get_ontology().get_object_types().keys() == data["object_types"]
 
 
 # We can run pytest directly in our debugger
