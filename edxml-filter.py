@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                          EDXML Filtering Utility
 #
 #                            EXAMPLE APPLICATION
@@ -30,7 +30,7 @@
 #
 #  ===========================================================================
 #
-# 
+#
 #  This utility reads an EDXML stream from standard input and filters it according
 #  to the user supplied parameters. The result is sent to standard output.
 #
@@ -47,72 +47,75 @@
 #
 #
 
-import sys, re
+import sys
+import re
 from edxml.EDXMLFilter import EDXMLPullFilter
 
 
 class EDXMLEventGroupFilter(EDXMLPullFilter):
-  def __init__(self, SourceUriPattern, EventTypeName):
+    def __init__(self, SourceUriPattern, EventTypeName):
 
-    super(EDXMLEventGroupFilter, self).__init__(sys.stdout, False)
-    self.SourceUriPattern = SourceUriPattern
-    self.EventTypeName = EventTypeName
-    self.passThrough = True
+        super(EDXMLEventGroupFilter, self).__init__(sys.stdout, False)
+        self.SourceUriPattern = SourceUriPattern
+        self.EventTypeName = EventTypeName
+        self.passThrough = True
 
-  def _parsedOntology(self, parsedOntology):
-    filteredEventTypes = []
-    filteredSources = []
+    def _parsedOntology(self, parsedOntology):
+        filteredEventTypes = []
+        filteredSources = []
 
-    if self.EventTypeName:
-      for eventTypeName in parsedOntology.GetEventTypeNames():
-        if eventTypeName != self.EventTypeName:
-          filteredEventTypes.append(eventTypeName)
+        if self.EventTypeName:
+            for eventTypeName in parsedOntology.GetEventTypeNames():
+                if eventTypeName != self.EventTypeName:
+                    filteredEventTypes.append(eventTypeName)
 
-    for sourceUri, source in parsedOntology.GetEventSources():
-      if re.match(self.SourceUriPattern, sourceUri) is not None:
-        filteredSources.append(sourceUri)
+        for sourceUri, source in parsedOntology.GetEventSources():
+            if re.match(self.SourceUriPattern, sourceUri) is not None:
+                filteredSources.append(sourceUri)
 
-    for eventTypeName in filteredEventTypes:
-      parsedOntology.DeleteEventType(eventTypeName)
-    for eventSource in filteredSources:
-      parsedOntology.DeleteEventSource(eventSource)
+        for eventTypeName in filteredEventTypes:
+            parsedOntology.DeleteEventType(eventTypeName)
+        for eventSource in filteredSources:
+            parsedOntology.DeleteEventSource(eventSource)
 
-    parsedOntology.Validate()
+        parsedOntology.Validate()
 
-    super(EDXMLEventGroupFilter, self)._parsedOntology(parsedOntology)
+        super(EDXMLEventGroupFilter, self)._parsedOntology(parsedOntology)
 
-  def _openEventGroup(self, eventTypeName, eventSourceUri):
+    def _openEventGroup(self, eventTypeName, eventSourceUri):
 
-    if self.getOntology().GetEventSource(eventSourceUri) is None:
-      # Source is gone, turn filter output off.
-      self.passThrough = False
-      eventTypeName = None
-      eventSourceUri = None
+        if self.getOntology().GetEventSource(eventSourceUri) is None:
+            # Source is gone, turn filter output off.
+            self.passThrough = False
+            eventTypeName = None
+            eventSourceUri = None
 
-    if self.getOntology().GetEventType(eventTypeName) is None:
-      # Event type is gone, turn filter output off.
-      self.passThrough = False
-      eventTypeName = None
-      eventSourceUri = None
+        if self.getOntology().GetEventType(eventTypeName) is None:
+            # Event type is gone, turn filter output off.
+            self.passThrough = False
+            eventTypeName = None
+            eventSourceUri = None
 
-    if self.passThrough:
-      super(EDXMLEventGroupFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
+        if self.passThrough:
+            super(EDXMLEventGroupFilter, self)._openEventGroup(
+                eventTypeName, eventSourceUri)
 
-  def _closeEventGroup(self, eventTypeName, eventSourceId):
+    def _closeEventGroup(self, eventTypeName, eventSourceId):
 
-    if self.passThrough:
-      super(EDXMLEventGroupFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
-    else:
-      self.passThrough = True
+        if self.passThrough:
+            super(EDXMLEventGroupFilter, self)._closeEventGroup(
+                eventTypeName, eventSourceId)
+        else:
+            self.passThrough = True
 
-  def _parsedEvent(self, edxmlEvent):
-    if self.passThrough:
-      super(EDXMLEventGroupFilter, self)._parsedEvent(edxmlEvent)
+    def _parsedEvent(self, edxmlEvent):
+        if self.passThrough:
+            super(EDXMLEventGroupFilter, self)._parsedEvent(edxmlEvent)
 
 
 def PrintHelp():
 
-  print """
+    print """
 
    This utility reads an EDXML stream from standard input and filters it according
    to the user supplied parameters. The result is sent to standard output.
@@ -141,7 +144,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -153,34 +157,35 @@ EventTypeFilter = None
 
 while CurrentArgument < ArgumentCount:
 
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    elif sys.argv[CurrentArgument] == '-s':
+        CurrentArgument += 1
+        SourceFilter = re.compile(sys.argv[CurrentArgument])
 
-  elif sys.argv[CurrentArgument] == '-s':
+    elif sys.argv[CurrentArgument] == '-e':
+        CurrentArgument += 1
+        EventTypeFilter = sys.argv[CurrentArgument]
+
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    SourceFilter = re.compile(sys.argv[CurrentArgument])
-
-  elif sys.argv[CurrentArgument] == '-e':
-    CurrentArgument += 1
-    EventTypeFilter = sys.argv[CurrentArgument]
-
-  elif sys.argv[CurrentArgument] == '-f':
-    CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 with EDXMLEventGroupFilter(SourceFilter, EventTypeFilter) as eventFilter:
-  try:
-    eventFilter.parse(Input)
-  except KeyboardInterrupt:
-    pass
+    try:
+        eventFilter.parse(Input)
+    except KeyboardInterrupt:
+        pass

@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                         EDXML time shifting utility
 #
 #                            EXAMPLE APPLICATION
@@ -30,7 +30,7 @@
 #
 #  ===========================================================================
 #
-# 
+#
 #  This script accepts EDXML data as input and writes time shifted events to standard
 #  output. Timestamps of input events are shifted to the current time. This is useful
 #  for simulating live EDXML data sources using previously recorded data. Note that
@@ -49,98 +49,103 @@ from edxml.ontology import DataType
 
 class EDXMLReplay(EDXMLPullFilter):
 
-  class UnbufferedStdout(object):
-    # This is a wrapper to create an unbuffered
-    # version of sys.stdout.
-    def __init__(self, Stream):
-      self.Stream = Stream
+    class UnbufferedStdout(object):
+        # This is a wrapper to create an unbuffered
+        # version of sys.stdout.
+        def __init__(self, Stream):
+            self.Stream = Stream
 
-    def write(self, Data):
-      self.Stream.write(Data)
-      self.Stream.flush()
+        def write(self, Data):
+            self.Stream.write(Data)
+            self.Stream.flush()
 
-    def __getattr__(self, Attr):
-      return getattr(self.Stream, Attr)
+        def __getattr__(self, Attr):
+            return getattr(self.Stream, Attr)
 
-  def __init__(self, SpeedMultiplier, BufferStufferEnabled):
+    def __init__(self, SpeedMultiplier, BufferStufferEnabled):
 
-    self.TimeShift = None
-    self.SpeedMultiplier = SpeedMultiplier
-    self.BufferStufferEnabled = BufferStufferEnabled
-    self.DateTimeProperties = []
-    self.KnownProperties = []
-    self.CurrentEventTypeName = None
+        self.TimeShift = None
+        self.SpeedMultiplier = SpeedMultiplier
+        self.BufferStufferEnabled = BufferStufferEnabled
+        self.DateTimeProperties = []
+        self.KnownProperties = []
+        self.CurrentEventTypeName = None
 
-    # Call parent class constructor
-    super(EDXMLReplay, self).__init__(EDXMLReplay.UnbufferedStdout(sys.stdout))
+        # Call parent class constructor
+        super(EDXMLReplay, self).__init__(
+            EDXMLReplay.UnbufferedStdout(sys.stdout))
 
-  def _openEventGroup(self, eventTypeName, eventSourceUri):
-    self.CurrentEventTypeName = eventTypeName
-    EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceUri)
+    def _openEventGroup(self, eventTypeName, eventSourceUri):
+        self.CurrentEventTypeName = eventTypeName
+        EDXMLPullFilter._openEventGroup(self, eventTypeName, eventSourceUri)
 
-  def _parsedEvent(self, edxmlEvent):
+    def _parsedEvent(self, edxmlEvent):
 
-    DateTimeStrings = []
-    DateTimeObjects = []
-    NewEventObjects = []
+        DateTimeStrings = []
+        DateTimeObjects = []
+        NewEventObjects = []
 
-    if self.BufferStufferEnabled:
-      # Generate a 4K comment.
-      print('<!-- ' + 'x' * 4096 + ' -->')
+        if self.BufferStufferEnabled:
+            # Generate a 4K comment.
+            print('<!-- ' + 'x' * 4096 + ' -->')
 
-    # Find all timestamps in event
-    for PropertyName, Objects in edxmlEvent.GetProperties().items():
-      if PropertyName not in self.KnownProperties:
-        if str(self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()) == 'datetime':
-          self.DateTimeProperties.append(PropertyName)
-        self.KnownProperties.append(PropertyName)
+        # Find all timestamps in event
+        for PropertyName, Objects in edxmlEvent.GetProperties().items():
+            if PropertyName not in self.KnownProperties:
+                datatype = self._ontology.GetEventType(self.CurrentEventTypeName)[PropertyName].GetDataType()
+                if str(datatype) == 'datetime':
+                    self.DateTimeProperties.append(PropertyName)
+                self.KnownProperties.append(PropertyName)
 
-      if PropertyName in self.DateTimeProperties:
-        DateTimeObjects.append((PropertyName, Objects))
-        DateTimeStrings.extend(Objects)
-      else:
-        # We copy all event objects, except
-        # for the timestamps
-        NewEventObjects.extend(Objects)
+            if PropertyName in self.DateTimeProperties:
+                DateTimeObjects.append((PropertyName, Objects))
+                DateTimeStrings.extend(Objects)
+            else:
+                # We copy all event objects, except
+                # for the timestamps
+                NewEventObjects.extend(Objects)
 
-    if len(DateTimeStrings) > 0:
-      # We will use the smallest timestamp
-      # as the event timestamp. Note that we
-      # use lexicographical ordering here.
-      CurrentEventDateTime = parse(min(DateTimeStrings))
-      if self.TimeShift:
+        if len(DateTimeStrings) > 0:
+            # We will use the smallest timestamp
+            # as the event timestamp. Note that we
+            # use lexicographical ordering here.
+            CurrentEventDateTime = parse(min(DateTimeStrings))
+            if self.TimeShift:
 
-        # Determine how much time remains before
-        # the event should be output.
-        Delay = (CurrentEventDateTime - datetime.now(pytz.UTC)).total_seconds() + self.TimeShift
-        if Delay >= 0:
-          time.sleep(Delay * SpeedMultiplier)
+                # Determine how much time remains before
+                # the event should be output.
+                Delay = (CurrentEventDateTime - datetime.now(pytz.UTC)
+                         ).total_seconds() + self.TimeShift
+                if Delay >= 0:
+                    time.sleep(Delay * SpeedMultiplier)
 
-          # If SpeedMultiplier < 1, it means we will wait shorter
-          # than the time between current and previous event. That
-          # means that the next event will be farther away in the
-          # future, and require longer delays. All delays that we
-          # skip due to the SpeedMultiplier will add up, event output
-          # speed will drop. To compensate for this effect, we also
-          # shift the entire dataset back in time. If SpeedMultiplier
-          # is larger than 1, the opposite effect occurs.
-          self.TimeShift += (SpeedMultiplier - 1.0) * Delay
-      else:
-        # Determine the global time shift between
-        # the input dataset and the current time.
-        self.TimeShift = (datetime.now(pytz.UTC) - CurrentEventDateTime).total_seconds()
+                    # If SpeedMultiplier < 1, it means we will wait shorter
+                    # than the time between current and previous event. That
+                    # means that the next event will be farther away in the
+                    # future, and require longer delays. All delays that we
+                    # skip due to the SpeedMultiplier will add up, event output
+                    # speed will drop. To compensate for this effect, we also
+                    # shift the entire dataset back in time. If SpeedMultiplier
+                    # is larger than 1, the opposite effect occurs.
+                    self.TimeShift += (SpeedMultiplier - 1.0) * Delay
+            else:
+                # Determine the global time shift between
+                # the input dataset and the current time.
+                self.TimeShift = (datetime.now(pytz.UTC) -
+                                  CurrentEventDateTime).total_seconds()
 
-      # Now we add the timestamp objects, replacing
-      # their values with the current time.
-      for PropertyName, Objects in DateTimeObjects:
-        edxmlEvent[PropertyName] = [DataType.FormatUtcDateTime(datetime.now(tz=pytz.utc)) for Object in Objects]
+            # Now we add the timestamp objects, replacing
+            # their values with the current time.
+            for PropertyName, Objects in DateTimeObjects:
+                edxmlEvent[PropertyName] = [DataType.FormatUtcDateTime(
+                    datetime.now(tz=pytz.utc)) for Object in Objects]
 
-    EDXMLPullFilter._parsedEvent(self, edxmlEvent)
+        EDXMLPullFilter._parsedEvent(self, edxmlEvent)
 
 
 def PrintHelp():
 
-  print """
+    print """
 
    This script accepts EDXML data as input and writes time shifted events to standard
    output. Timestamps of input events are shifted to the current time. This is useful
@@ -169,6 +174,7 @@ def PrintHelp():
 
 """
 
+
 Input = sys.stdin
 SpeedMultiplier = 1.0
 CurrOption = 1
@@ -176,32 +182,34 @@ BufferStufferEnabled = False
 
 while CurrOption < len(sys.argv):
 
-  if sys.argv[CurrOption] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrOption] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrOption] == '-f':
+    elif sys.argv[CurrOption] == '-f':
+        CurrOption += 1
+        Input = open(sys.argv[CurrOption])
+
+    elif sys.argv[CurrOption] == '-s':
+        CurrOption += 1
+        SpeedMultiplier = 1.0 / (1e-9 + float(sys.argv[CurrOption]))
+
+    elif sys.argv[CurrOption] == '-b':
+        BufferStufferEnabled = True
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrOption])
+        sys.exit()
+
     CurrOption += 1
-    Input = open(sys.argv[CurrOption])
-
-  elif sys.argv[CurrOption] == '-s':
-    CurrOption += 1
-    SpeedMultiplier = 1.0 / (1e-9 + float(sys.argv[CurrOption]))
-
-  elif sys.argv[CurrOption] == '-b':
-    BufferStufferEnabled = True
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrOption])
-    sys.exit()
-
-  CurrOption += 1
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 with EDXMLReplay(SpeedMultiplier, BufferStufferEnabled) as Replay:
-  try:
-    Replay.parse(Input)
-  except KeyboardInterrupt:
-    sys.exit()
+    try:
+        Replay.parse(Input)
+    except KeyboardInterrupt:
+        sys.exit()

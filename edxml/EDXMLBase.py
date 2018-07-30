@@ -33,98 +33,100 @@ import re
 
 
 class EDXMLError(Exception):
-  """Generic EDXML exception class"""
-  pass
+    """Generic EDXML exception class"""
+    pass
 
 
 class EDXMLValidationError(EDXMLError):
-  """Exception for signaling EDXML validation errors"""
-  pass
+    """Exception for signaling EDXML validation errors"""
+    pass
 
 
 class EDXMLProcessingInterrupted(Exception):
-  """Exception for signaling that EDXML processing was aborted"""
-  pass
+    """Exception for signaling that EDXML processing was aborted"""
+    pass
 
 
 class EDXMLBase(object):
-  """Base class for most SDK subclasses"""
+    """Base class for most SDK subclasses"""
 
-  def __init__(self):
+    def __init__(self):
 
-    self.WarningCount = 0
-    self.ErrorCount = 0
+        self.WarningCount = 0
+        self.ErrorCount = 0
 
-  def Error(self, Message):
-    """Raises :class:`EDXMLError`.
+    def Error(self, Message):
+        """Raises :class:`EDXMLError`.
 
-    Args:
-      Message (str): Error message
-    """
+        Args:
+          Message (str): Error message
+        """
 
-    self.ErrorCount += 1
-    raise EDXMLError(unicode("ERROR: " + Message).encode('utf-8'))
+        self.ErrorCount += 1
+        raise EDXMLError(unicode("ERROR: " + Message).encode('utf-8'))
 
-  def Warning(self, Message):
-    """Prints a warning to sys.stderr.
+    def Warning(self, Message):
+        """Prints a warning to sys.stderr.
 
-    Args:
-      Message (str): Warning message
+        Args:
+          Message (str): Warning message
 
-    """
-    self.WarningCount += 1
-    sys.stderr.write(unicode("WARNING: " + Message + "\n").encode('utf-8'))
+        """
+        self.WarningCount += 1
+        sys.stderr.write(unicode("WARNING: " + Message + "\n").encode('utf-8'))
 
-  def GetWarningCount(self):
-    """Returns the number of warnings generated"""
-    return self.WarningCount
+    def GetWarningCount(self):
+        """Returns the number of warnings generated"""
+        return self.WarningCount
 
-  def GetErrorCount(self):
-    """Returns the number of errors generated"""
-    return self.ErrorCount
+    def GetErrorCount(self):
+        """Returns the number of errors generated"""
+        return self.ErrorCount
 
 
 class EvilCharacterFilter(object):
-  """
-  This class exports a single property named evilXmlCharsRegExp.
-  It contains a compiled regular expression that matches all unicode
-  characters that are illegal in XML, like control characters.
-
-  Since the lxml library which this SDK is based on does not accept
-  any of these characters as input, any code that uses lxml to
-  generate XML must handle the TypeError exceptions that are thrown
-  by lxml when attempting to feed it illegal characters.
-
-  The regular expression produced by this class eases handling these
-  exceptions.
-  """
-  def __init__(self):
-    # The lxml package does not filter out illegal XML
-    # characters. So, below we compile a regular expression
-    # matching all ranges of illegal characters. We will
-    # use that to do our own filtering.
-
-    ranges = [
-      (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F),
-      (0x7F, 0x84), (0x86, 0x9F),
-      (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF)
-    ]
-
-    if sys.maxunicode >= 0x10000:  # not narrow build
-      ranges.extend([
-        (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF),
-        (0x3FFFE, 0x3FFFF), (0x4FFFE, 0x4FFFF),
-        (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
-        (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF),
-        (0x9FFFE, 0x9FFFF), (0xAFFFE, 0xAFFFF),
-        (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
-        (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF),
-        (0xFFFFE, 0xFFFFF), (0x10FFFE, 0x10FFFF)
-      ])
-
-    regexpRanges = ["%s-%s" % (unichr(Low), unichr(High)) for (Low, High) in ranges]
-
-    self.evilXmlCharsRegExp = re.compile(u'[%s]' % u''.join(regexpRanges))
     """
+    This class exports a single property named evilXmlCharsRegExp.
+    It contains a compiled regular expression that matches all unicode
+    characters that are illegal in XML, like control characters.
+
+    Since the lxml library which this SDK is based on does not accept
+    any of these characters as input, any code that uses lxml to
+    generate XML must handle the TypeError exceptions that are thrown
+    by lxml when attempting to feed it illegal characters.
+
+    The regular expression produced by this class eases handling these
+    exceptions.
+    """
+
+    def __init__(self):
+        # The lxml package does not filter out illegal XML
+        # characters. So, below we compile a regular expression
+        # matching all ranges of illegal characters. We will
+        # use that to do our own filtering.
+
+        ranges = [
+            (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F),
+            (0x7F, 0x84), (0x86, 0x9F),
+            (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF)
+        ]
+
+        if sys.maxunicode >= 0x10000:  # not narrow build
+            ranges.extend([
+                (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF),
+                (0x3FFFE, 0x3FFFF), (0x4FFFE, 0x4FFFF),
+                (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
+                (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF),
+                (0x9FFFE, 0x9FFFF), (0xAFFFE, 0xAFFFF),
+                (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
+                (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF),
+                (0xFFFFE, 0xFFFFF), (0x10FFFE, 0x10FFFF)
+            ])
+
+        regexpRanges = ["%s-%s" % (unichr(Low), unichr(High))
+                        for (Low, High) in ranges]
+
+        self.evilXmlCharsRegExp = re.compile(u'[%s]' % u''.join(regexpRanges))
+        """
     This is the compiled regular expression.
     """

@@ -14,3 +14,6 @@ JSON records and route JSON records to the correct transcoder.
 """
 from json_transcoder import JsonTranscoder
 from json_transcoder_mediator import JsonTranscoderMediator
+
+
+__all__ = ['JsonTranscoder', 'JsonTranscoderMediator']

@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                         EDXML Source URL Extractor
 #
 #                            EXAMPLE APPLICATION
@@ -30,46 +30,47 @@
 #
 #  ===========================================================================
 #
-# 
-#  Python script that outputs a list of source URLs that is found in 
+#
+#  Python script that outputs a list of source URLs that is found in
 #  specified EDXML file.
 
 import sys
 from xml.sax import make_parser
 from xml.sax.saxutils import XMLFilterBase
 from edxml.EDXMLBase import EDXMLProcessingInterrupted
-from edxml.EDXMLParser import EDXMLParser
 
 
 class EDXMLParser(XMLFilterBase):
 
-  def __init__ (self, upstream, SkipEvents = False):
+    def __init__(self, upstream, SkipEvents=False):
 
-    self.Sources = []
-    self.SkipEvents = SkipEvents
-    XMLFilterBase.__init__(self, upstream)
+        self.Sources = []
+        self.SkipEvents = SkipEvents
+        XMLFilterBase.__init__(self, upstream)
 
-  def startElement(self, name, attrs):
+    def startElement(self, name, attrs):
 
-    if name == 'source':
-      Url = attrs.get('url',"")
-      if not Url in self.Sources: self.Sources.append(Url)
+        if name == 'source':
+            Url = attrs.get('url', "")
+            if Url not in self.Sources:
+                self.Sources.append(Url)
 
-  def endElement(self, name):
+    def endElement(self, name):
 
-    if self.SkipEvents:
-      if name == 'ontology':
+        if self.SkipEvents:
+            if name == 'ontology':
 
-        # We hit the end of the ontology element,
-        # and we were instructed to skip parsing the
-        # event data, so we should abort parsing now.
-        raise EDXMLProcessingInterrupted('')
+                # We hit the end of the ontology element,
+                # and we were instructed to skip parsing the
+                # event data, so we should abort parsing now.
+                raise EDXMLProcessingInterrupted('')
+
 
 def PrintHelp():
 
-  print """
+    print """
 
-   Python script that outputs a list of source URLs that is found in 
+   Python script that outputs a list of source URLs that is found in
    specified EDXML file.
 
    Options:
@@ -86,7 +87,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -96,19 +98,20 @@ Input = sys.stdin
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 
 SaxParser = make_parser()
@@ -118,12 +121,13 @@ Parser = EDXMLParser(SaxParser, True)
 SaxParser.setContentHandler(Parser)
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  SaxParser.parse(Input)
+    SaxParser.parse(Input)
 except EDXMLProcessingInterrupted:
-  pass
+    pass
 
 for Source in Parser.Sources:
-  print Source
+    print Source

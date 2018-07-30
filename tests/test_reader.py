@@ -34,7 +34,8 @@ def test_read(data):
     # After parsing, the event counter should be the number of events in the file
     assert a.getEventCounter() == data["event_count"]
     # The event counter for our specific event type should be the same
-    assert a.getEventTypeCounter(data["event_type_name"]) == data["event_count"]
+    assert a.getEventTypeCounter(
+        data["event_type_name"]) == data["event_count"]
     # Our object types should be parsed correctly and in order
     assert a.getOntology().GetObjectTypes().keys() == data["object_types"]
 

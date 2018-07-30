@@ -2,7 +2,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                   Python classes for filtering EDXML data
 #
 #                  Copyright (c) 2010 - 2016 by D.H.J. Takken
@@ -36,126 +36,126 @@ it is written, using an :class:`edxml.ontology.Ontology` instance to interpret i
 
 """
 
-from EDXMLParser import *
+from EDXMLParser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
 from edxml.EDXMLWriter import EDXMLWriter
 
 
 class EDXMLFilter(EDXMLParserBase):
-  """
-  Extension of the push parser that copies its input
-  to the specified output. By overriding the various
-  callbacks provided by this class, the EDXML data can
-  be manipulated before the data is output.
-  """
-
-  def __init__(self):
-    super(EDXMLFilter, self).__init__()
-    self._writer = None  # type: EDXMLWriter
-    self.__groupOpen = False
-
-  def __enter__(self):
-    return self
-
-  def __exit__(self, exc_type, exc_val, exc_tb):
-    self._close()
-
-  def _close(self):
-    self._writer.Close()
-
-  def _parsedOntology(self, parsedOntology):
+    """
+    Extension of the push parser that copies its input
+    to the specified output. By overriding the various
+    callbacks provided by this class, the EDXML data can
+    be manipulated before the data is output.
     """
 
-    Callback that writes the parsed ontology into
-    the output. By overriding this method and calling
-    the parent method after changing the ontology, the
-    ontology in the output stream can be modified.
+    def __init__(self):
+        super(EDXMLFilter, self).__init__()
+        self._writer = None  # type: EDXMLWriter
+        self.__groupOpen = False
 
-    Args:
-      parsedOntology (edxml.ontology.Ontology): The ontology
+    def __enter__(self):
+        return self
 
-    """
-    super(EDXMLFilter, self)._parsedOntology(parsedOntology)
-    self._writer.AddOntology(parsedOntology)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
 
-  def _openEventGroup(self, eventTypeName, eventSourceUri):
-    """
+    def _close(self):
+        self._writer.Close()
 
-    Callback that writes a new <eventgroup> opening tag
-    into the output. By overriding this method and calling
-    the parent method after changing the method arguments,
-    the event type name or source identifier of the events
-    in the event group can be modified.
+    def _parsedOntology(self, parsedOntology):
+        """
 
-    Args:
-      eventTypeName (str): The name of the event type
-      eventSourceUri: The source URI
+        Callback that writes the parsed ontology into
+        the output. By overriding this method and calling
+        the parent method after changing the ontology, the
+        ontology in the output stream can be modified.
 
-    """
-    super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
-    self._writer.OpenEventGroup(eventTypeName, eventSourceUri)
-    self.__groupOpen = True
+        Args:
+          parsedOntology (edxml.ontology.Ontology): The ontology
 
-  def _closeEventGroup(self, eventTypeName, eventSourceId):
-    """
+        """
+        super(EDXMLFilter, self)._parsedOntology(parsedOntology)
+        self._writer.AddOntology(parsedOntology)
 
-    Callback that writes a closing <eventgroup> tag into
-    the output. By overriding this method, the _openEventGroup
-    method and the _parsedEvent method, entire event groups can
-    be omitted in the output.
+    def _openEventGroup(self, eventTypeName, eventSourceUri):
+        """
 
-    Args:
-      eventTypeName (str): The name of the event type
-      eventSourceId: The source identifier
+        Callback that writes a new <eventgroup> opening tag
+        into the output. By overriding this method and calling
+        the parent method after changing the method arguments,
+        the event type name or source identifier of the events
+        in the event group can be modified.
 
-    """
-    super(EDXMLFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
-    self._writer.CloseEventGroup()
-    self.__groupOpen = False
+        Args:
+          eventTypeName (str): The name of the event type
+          eventSourceUri: The source URI
 
-  def _parsedEvent(self, edxmlEvent):
-    """
+        """
+        super(EDXMLFilter, self)._openEventGroup(eventTypeName, eventSourceUri)
+        self._writer.OpenEventGroup(eventTypeName, eventSourceUri)
+        self.__groupOpen = True
 
-    Callback that writes the parsed event into
-    the output. By overriding this method and calling
-    the parent method after changing the event, the
-    events in the output stream can be modified. If the
-    parent method is not called, the event will be omitted
-    in the output.
+    def _closeEventGroup(self, eventTypeName, eventSourceId):
+        """
 
-    Args:
-      edxmlEvent (edxml.ParsedEvent): The event
+        Callback that writes a closing <eventgroup> tag into
+        the output. By overriding this method, the _openEventGroup
+        method and the _parsedEvent method, entire event groups can
+        be omitted in the output.
 
-    """
-    super(EDXMLFilter, self)._parsedEvent(edxmlEvent)
-    self._writer.AddEvent(edxmlEvent)
+        Args:
+          eventTypeName (str): The name of the event type
+          eventSourceId: The source identifier
+
+        """
+        super(EDXMLFilter, self)._closeEventGroup(eventTypeName, eventSourceId)
+        self._writer.CloseEventGroup()
+        self.__groupOpen = False
+
+    def _parsedEvent(self, edxmlEvent):
+        """
+
+        Callback that writes the parsed event into
+        the output. By overriding this method and calling
+        the parent method after changing the event, the
+        events in the output stream can be modified. If the
+        parent method is not called, the event will be omitted
+        in the output.
+
+        Args:
+          edxmlEvent (edxml.ParsedEvent): The event
+
+        """
+        super(EDXMLFilter, self)._parsedEvent(edxmlEvent)
+        self._writer.AddEvent(edxmlEvent)
 
 
 class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
-  """
-  Extension of the pull parser that copies its input
-  to the specified output. By overriding the various
-  callbacks provided by this class (or rather, the
-  EDXMLFilter class), the EDXML data can be manipulated
-  before the data is output.
-  """
+    """
+    Extension of the pull parser that copies its input
+    to the specified output. By overriding the various
+    callbacks provided by this class (or rather, the
+    EDXMLFilter class), the EDXML data can be manipulated
+    before the data is output.
+    """
 
-  def __init__(self, Output, Validate=True):
-    super(EDXMLPullFilter, self).__init__()
-    self._writer = EDXMLWriter(Output, Validate)
+    def __init__(self, Output, Validate=True):
+        super(EDXMLPullFilter, self).__init__()
+        self._writer = EDXMLWriter(Output, Validate)
 
-  def _parsedEvent(self, edxmlEvent):
-    EDXMLFilter._parsedEvent(self, edxmlEvent)
+    def _parsedEvent(self, edxmlEvent):
+        EDXMLFilter._parsedEvent(self, edxmlEvent)
 
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
-  """
-  Extension of the push parser that copies its input
-  to the specified output. By overriding the various
-  callbacks provided by this class (or rather, the
-  EDXMLFilter class), the EDXML data can be manipulated
-  before the data is output.
-  """
+    """
+    Extension of the push parser that copies its input
+    to the specified output. By overriding the various
+    callbacks provided by this class (or rather, the
+    EDXMLFilter class), the EDXML data can be manipulated
+    before the data is output.
+    """
 
-  def __init__(self, Output, Validate=True):
-    super(EDXMLPushFilter, self).__init__()
-    self._writer = EDXMLWriter(Output, Validate)
+    def __init__(self, Output, Validate=True):
+        super(EDXMLPushFilter, self).__init__()
+        self._writer = EDXMLWriter(Output, Validate)

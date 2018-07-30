@@ -1,5 +1,5 @@
-from setuptools import setup, find_packages  # Always prefer setuptools over distutils
-from codecs import open  # To use a consistent encoding
+# Always prefer setuptools over distutils
+from setuptools import setup, find_packages
 from os import path
 
 here = path.abspath(path.dirname(__file__))
@@ -7,7 +7,10 @@ here = path.abspath(path.dirname(__file__))
 # with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 #  long_description = f.read()
 
-exec (open('edxml/version.py').read())
+# Explicitly state a version to please flake8
+__version__ = 1.0
+# This will read __version__ from edxml/version.py
+execfile('edxml/version.py')
 
 setup(
     name='edxml',
@@ -66,7 +69,8 @@ setup(
     # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=['lxml>=3.8', 'python-dateutil', 'iso3166', 'pytz', 'termcolor', 'typing', 'pytest'],
+    install_requires=['lxml>=3.8', 'python-dateutil',
+                      'iso3166', 'pytz', 'termcolor', 'typing', 'pytest'],
 
     # Specify additional packages that are only installed for specific purposes,
     # like building documentation.

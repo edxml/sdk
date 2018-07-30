@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                            Event data stripper
 #
 #                            EXAMPLE APPLICATION
@@ -31,7 +31,7 @@
 #  ===========================================================================
 #
 #
-# 
+#
 #  Python script that will filter out the event data from EDXML and validate the
 #  ontology in the <ontology> element in the process. The stripped version of
 #  the input is printed on standard output.
@@ -44,7 +44,7 @@ from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 
 def PrintHelp():
 
-  print """
+    print """
 
    This utility will filter out the event data from EDXML streams and validate the
    ontology in the <ontology> section in the process. The stripped version of
@@ -64,7 +64,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -74,30 +75,32 @@ Input = sys.stdin
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 Parser = EDXMLOntologyPullParser()
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  Parser.parse(Input)
+    Parser.parse(Input)
 except EDXMLOntologyPullParser.ProcessingInterrupted:
-  pass
+    pass
 
 SimpleEDXMLWriter(sys.stdout)\
-  .AddOntology(Parser.getOntology())\
-  .Close()
+    .AddOntology(Parser.getOntology())\
+    .Close()

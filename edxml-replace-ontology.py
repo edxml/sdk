@@ -3,7 +3,7 @@
 #
 #
 #  ===========================================================================
-# 
+#
 #                      EDXML Ontology Replacement Utility
 #
 #                            EXAMPLE APPLICATION
@@ -30,7 +30,7 @@
 #
 #  ===========================================================================
 #
-# 
+#
 #  This utility replaces the eventtype definition of one EDXML file with those
 #  contained in another EDXML file. The resulting EDXML stream is validated
 #  against the new ontology and written to standard output.
@@ -43,18 +43,18 @@ from edxml.EDXMLParser import EDXMLOntologyPullParser, EDXMLValidationError
 
 class EDXMLDefinitionSwapper(EDXMLPullFilter):
 
-  def __init__(self, otherOntology, Output=sys.stdout):
+    def __init__(self, otherOntology, Output=sys.stdout):
 
-    super(EDXMLDefinitionSwapper, self).__init__(Output)
-    self.otherOntology = otherOntology
+        super(EDXMLDefinitionSwapper, self).__init__(Output)
+        self.otherOntology = otherOntology
 
-  def _parsedOntology(self, parsedOntology):
-    EDXMLPullFilter._parsedOntology(self, self.otherOntology)
+    def _parsedOntology(self, parsedOntology):
+        EDXMLPullFilter._parsedOntology(self, self.otherOntology)
 
 
 def PrintHelp():
 
-  print """
+    print """
 
    This utility replaces the eventtype definitions of one EDXML file with those
    contained in another EDXML file. The resulting EDXML stream is validated
@@ -74,7 +74,8 @@ def PrintHelp():
 
 """
 
-# Program starts here. 
+# Program starts here.
+
 
 ArgumentCount = len(sys.argv)
 CurrentArgument = 1
@@ -85,29 +86,31 @@ Input = sys.stdin
 
 while CurrentArgument < ArgumentCount:
 
-  if sys.argv[CurrentArgument] in ('-h', '--help'):
-    PrintHelp()
-    sys.exit(0)
+    if sys.argv[CurrentArgument] in ('-h', '--help'):
+        PrintHelp()
+        sys.exit(0)
 
-  elif sys.argv[CurrentArgument] == '-f':
+    elif sys.argv[CurrentArgument] == '-f':
+        CurrentArgument += 1
+        Input = open(sys.argv[CurrentArgument])
+
+    elif sys.argv[CurrentArgument] == '-o':
+        CurrentArgument += 1
+        OntologyFileName = sys.argv[CurrentArgument]
+
+    else:
+        sys.stderr.write("Unknown commandline argument: %s\n" %
+                         sys.argv[CurrentArgument])
+        sys.exit()
+
     CurrentArgument += 1
-    Input = open(sys.argv[CurrentArgument])
-
-  elif sys.argv[CurrentArgument] == '-o':
-    CurrentArgument += 1
-    OntologyFileName = sys.argv[CurrentArgument]
-
-  else:
-    sys.stderr.write("Unknown commandline argument: %s\n" % sys.argv[CurrentArgument])
-    sys.exit()
-
-  CurrentArgument += 1
 
 # Program starts here. Check commandline arguments.
 
 if OntologyFileName is None:
-  sys.stderr.write("No ontology source was specified. Use the --help option to get help.\n")
-  sys.exit()
+    sys.stderr.write(
+        "No ontology source was specified. Use the --help option to get help.\n")
+    sys.exit()
 
 sys.stderr.write("\nUsing file '%s' as ontology source." % OntologyFileName)
 
@@ -117,21 +120,23 @@ Parser = EDXMLOntologyPullParser()
 # EDXML file.
 
 if Input == sys.stdin:
-  sys.stderr.write('Waiting for EDXML data on standard input... (use --help option to get help)\n')
+    sys.stderr.write(
+        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-  Parser.parse(open(OntologyFileName))
+    Parser.parse(open(OntologyFileName))
 except EDXMLOntologyPullParser.ProcessingInterrupted:
-  pass
+    pass
 except EDXMLValidationError as Error:
-  sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (OntologyFileName, str(Error)))
-  sys.exit(1)
-except:
-  raise
+    sys.stderr.write("\n\nOntology source file '%s' is invalid EDXML:\n\n%s" % (
+        OntologyFileName, str(Error)))
+    sys.exit(1)
+except Exception:
+    raise
 
 # Now parse the input while swapping the ontology.
 with EDXMLDefinitionSwapper(Parser.getOntology()) as swapper:
-  try:
-    swapper.parse(Input)
-  except KeyboardInterrupt:
-    pass
+    try:
+        swapper.parse(Input)
+    except KeyboardInterrupt:
+        pass

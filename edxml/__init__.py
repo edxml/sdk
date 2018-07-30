@@ -11,3 +11,8 @@ from EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 
 import ontology
 import transcode
+
+
+__all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EDXMLWriter', 'SimpleEDXMLWriter',
+           'EDXMLPullParser', 'EDXMLPushParser', 'EDXMLOntologyPullParser', 'EDXMLOntologyPushParser',
+           'EDXMLPullFilter', 'EDXMLPushFilter', 'ontology', 'transcode', '__version__']
