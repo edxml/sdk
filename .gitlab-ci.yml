@@ -7,6 +7,6 @@ stages:
 test1:
   stage: test
   script:
-  - flake8 --max-line-length=120
-  - pip install .
-  - pytest
+  - python2 -m flake8 --max-line-length=120
+  - pip2 install .
+  - python2 -m pytest
