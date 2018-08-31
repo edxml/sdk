@@ -42,51 +42,46 @@ class EDXMLValidationError(EDXMLError):
     pass
 
 
-class EDXMLProcessingInterrupted(Exception):
-    """Exception for signaling that EDXML processing was aborted"""
-    pass
-
-
 class EDXMLBase(object):
     """Base class for most SDK subclasses"""
 
     def __init__(self):
 
-        self.WarningCount = 0
-        self.ErrorCount = 0
+        self.warning_count = 0
+        self.error_count = 0
 
-    def Error(self, Message):
+    def error(self, message):
         """Raises :class:`EDXMLError`.
 
         Args:
-          Message (str): Error message
+          message (str): Error message
         """
 
-        self.ErrorCount += 1
-        raise EDXMLError(unicode("ERROR: " + Message).encode('utf-8'))
+        self.error_count += 1
+        raise EDXMLError(unicode("ERROR: " + message).encode('utf-8'))
 
-    def Warning(self, Message):
+    def warning(self, message):
         """Prints a warning to sys.stderr.
 
         Args:
-          Message (str): Warning message
+          message (str): Warning message
 
         """
-        self.WarningCount += 1
-        sys.stderr.write(unicode("WARNING: " + Message + "\n").encode('utf-8'))
+        self.warning_count += 1
+        sys.stderr.write(unicode("WARNING: " + message + "\n").encode('utf-8'))
 
-    def GetWarningCount(self):
+    def get_warning_count(self):
         """Returns the number of warnings generated"""
-        return self.WarningCount
+        return self.warning_count
 
-    def GetErrorCount(self):
+    def get_error_count(self):
         """Returns the number of errors generated"""
-        return self.ErrorCount
+        return self.error_count
 
 
 class EvilCharacterFilter(object):
     """
-    This class exports a single property named evilXmlCharsRegExp.
+    This class exports a single property named evil_xml_chars_regexp.
     It contains a compiled regular expression that matches all unicode
     characters that are illegal in XML, like control characters.
 
@@ -123,10 +118,10 @@ class EvilCharacterFilter(object):
                 (0xFFFFE, 0xFFFFF), (0x10FFFE, 0x10FFFF)
             ])
 
-        regexpRanges = ["%s-%s" % (unichr(Low), unichr(High))
-                        for (Low, High) in ranges]
+        regexp_ranges = ["%s-%s" % (unichr(low), unichr(high))
+                         for (low, high) in ranges]
 
-        self.evilXmlCharsRegExp = re.compile(u'[%s]' % u''.join(regexpRanges))
+        self.evil_xml_chars_regexp = re.compile(u'[%s]' % u''.join(regexp_ranges))
         """
     This is the compiled regular expression.
     """

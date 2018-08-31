@@ -12,19 +12,19 @@ class Ontology(object):
     Class representing an EDXML ontology
     """
 
-    _bricks = {
+    __bricks = {
         'object_types': None,
         'concepts': None
-    }  # type: Dict[edxml.ontology.Ontology]
+    }  # type: Dict[str, edxml.ontology.Ontology]
 
     def __init__(self):
-        self._version = 0
-        self._event_types = {}    # type: Dict[str, edxml.ontology.EventType]
-        self._object_types = {}   # type: Dict[str, edxml.ontology.ObjectType]
-        self._sources = {}        # type: Dict[str, edxml.ontology.EventSource]
-        self._concepts = {}       # type: Dict[str, edxml.ontology.Concept]
+        self.__version = 0
+        self.__event_types = {}    # type: Dict[str, edxml.ontology.EventType]
+        self.__object_types = {}   # type: Dict[str, edxml.ontology.ObjectType]
+        self.__sources = {}        # type: Dict[str, edxml.ontology.EventSource]
+        self.__concepts = {}       # type: Dict[str, edxml.ontology.Concept]
 
-    def Clear(self):
+    def clear(self):
         """
 
         Removes all event types, object types, concepts
@@ -33,15 +33,15 @@ class Ontology(object):
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-        self._version = 0
-        self._event_types = {}
-        self._object_types = {}
-        self._sources = {}
-        self._concepts = {}
+        self.__version = 0
+        self.__event_types = {}
+        self.__object_types = {}
+        self.__sources = {}
+        self.__concepts = {}
 
         return self
 
-    def GetVersion(self):
+    def get_version(self):
         """
 
         Returns the current ontology version. The initial
@@ -52,9 +52,9 @@ class Ontology(object):
           int: Ontology version
 
         """
-        return self._version
+        return self.__version
 
-    def IsModifiedSince(self, version):
+    def is_modified_since(self, version):
         """
 
         Returns True if the ontology is newer than
@@ -65,10 +65,10 @@ class Ontology(object):
           bool:
 
         """
-        return self._version > version
+        return self.__version > version
 
     @classmethod
-    def RegisterBrick(cls, ontologyBrick):
+    def register_brick(cls, brick):
         """
 
         Registers an ontology brick with the Ontology class, allowing
@@ -77,38 +77,38 @@ class Ontology(object):
         this method to register itself with the Ontology class.
 
         Args:
-          ontologyBrick (edxml.ontology.Brick): Ontology brick
+          brick (edxml.ontology.Brick): Ontology brick
 
         """
 
-        if not cls._bricks['object_types']:
-            cls._bricks['object_types'] = edxml.ontology.Ontology()
-        if not cls._bricks['concepts']:
-            cls._bricks['concepts'] = edxml.ontology.Ontology()
+        if not cls.__bricks['object_types']:
+            cls.__bricks['object_types'] = edxml.ontology.Ontology()
+        if not cls.__bricks['concepts']:
+            cls.__bricks['concepts'] = edxml.ontology.Ontology()
 
-        for _ in ontologyBrick.generateObjectTypes(cls._bricks['object_types']):
+        for _ in brick.generate_object_types(cls.__bricks['object_types']):
             pass
 
-        for _ in ontologyBrick.generateConcepts(cls._bricks['concepts']):
+        for _ in brick.generate_concepts(cls.__bricks['concepts']):
             pass
 
-    def _importObjectTypeFromBrick(self, ObjectTypeName):
+    def _import_object_type_from_brick(self, object_type_name):
 
-        if Ontology._bricks['object_types'] is not None:
-            objectType = Ontology._bricks['object_types'].GetObjectType(
-                ObjectTypeName)
-            if objectType:
-                self._addObjectType(objectType)
+        if Ontology.__bricks['object_types'] is not None:
+            object_type = Ontology.__bricks['object_types'].get_object_type(
+                object_type_name)
+            if object_type:
+                self._add_object_type(object_type)
 
-    def _importConceptFromBrick(self, ConceptName):
+    def _import_concept_from_brick(self, concept_name):
 
-        if Ontology._bricks['concepts'] is not None:
-            brickConcept = Ontology._bricks['concepts'].GetConcept(ConceptName)
-            if brickConcept:
-                self._addConcept(brickConcept)
+        if Ontology.__bricks['concepts'] is not None:
+            brick_concept = Ontology.__bricks['concepts'].get_concept(concept_name)
+            if brick_concept:
+                self._add_concept(brick_concept)
 
-    def CreateObjectType(self, Name, DisplayNameSingular=None, DisplayNamePlural=None,
-                         Description=None, DataType='string:0:cs:u'):
+    def create_object_type(self, name, display_name_singular=None, display_name_plural=None, description=None,
+                           data_type='string:0:cs:u'):
         """
 
         Creates and returns a new ObjectType instance. When no display
@@ -125,29 +125,28 @@ class Ontology(object):
         the new definition is ignored and the existing one returned.
 
         Args:
-          Name (str): object type name
-          DisplayNameSingular (str): display name (singular form)
-          DisplayNamePlural (str): display name (plural form)
-          Description (str): short description of the object type
-          DataType (str): a valid EDXML data type
+          name (str): object type name
+          display_name_singular (str): display name (singular form)
+          display_name_plural (str): display name (plural form)
+          description (str): short description of the object type
+          data_type (str): a valid EDXML data type
 
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
 
-        if DisplayNameSingular:
-            DisplayName = '%s/%s' % (DisplayNameSingular,
-                                     DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
+        if display_name_singular:
+            display_name = '%s/%s' % (display_name_singular,
+                                      display_name_plural if display_name_plural else '%ss' % display_name_singular)
         else:
-            DisplayName = None
+            display_name = None
 
-        if Name not in self._object_types:
-            self._addObjectType(ObjectType(
-                self, Name, DisplayName, Description, DataType), validate=False)
+        if name not in self.__object_types:
+            self._add_object_type(ObjectType(self, name, display_name, description, data_type), validate=False)
 
-        return self._object_types[Name]
+        return self.__object_types[name]
 
-    def CreateConcept(self, Name, DisplayNameSingular=None, DisplayNamePlural=None, Description=None):
+    def create_concept(self, name, display_name_singular=None, display_name_plural=None, description=None):
         """
 
         Creates and returns a new Concept instance. When no display
@@ -164,28 +163,27 @@ class Ontology(object):
         the new definition is ignored and the existing one returned.
 
         Args:
-          Name (str): concept name
-          DisplayNameSingular (str): display name (singular form)
-          DisplayNamePlural (str): display name (plural form)
-          Description (str): short description of the concept
+          name (str): concept name
+          display_name_singular (str): display name (singular form)
+          display_name_plural (str): display name (plural form)
+          description (str): short description of the concept
 
         Returns:
           edxml.ontology.Concept: The Concept instance
         """
 
-        if DisplayNameSingular:
-            DisplayName = '%s/%s' % (DisplayNameSingular,
-                                     DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
+        if display_name_singular:
+            display_name = '%s/%s' % (display_name_singular,
+                                      display_name_plural if display_name_plural else '%ss' % display_name_singular)
         else:
-            DisplayName = None
+            display_name = None
 
-        if Name not in self._concepts:
-            self._addConcept(Concept(self, Name, DisplayName,
-                                     Description), validate=False)
+        if name not in self.__concepts:
+            self._add_concept(Concept(self, name, display_name, description), validate=False)
 
-        return self._concepts[Name]
+        return self.__concepts[name]
 
-    def CreateEventType(self, Name, DisplayNameSingular=None, DisplayNamePlural=None, Description=None):
+    def create_event_type(self, name, display_name_singular=None, display_name_plural=None, description=None):
         """
 
         Creates and returns a new EventType instance. When no display
@@ -202,27 +200,26 @@ class Ontology(object):
         the new definition is ignored and the existing one returned.
 
         Args:
-          Name (str): Event type name
-          DisplayNameSingular (str): Display name (singular form)
-          DisplayNamePlural (str): Display name (plural form)
-          Description (str): Event type description
+          name (str): Event type name
+          display_name_singular (str): Display name (singular form)
+          display_name_plural (str): Display name (plural form)
+          description (str): Event type description
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        if DisplayNameSingular:
-            DisplayName = '%s/%s' % (DisplayNameSingular,
-                                     DisplayNamePlural if DisplayNamePlural else '%ss' % DisplayNameSingular)
+        if display_name_singular:
+            display_name = '%s/%s' % (display_name_singular,
+                                      display_name_plural if display_name_plural else '%ss' % display_name_singular)
         else:
-            DisplayName = None
+            display_name = None
 
-        if Name not in self._event_types:
-            self._addEventType(
-                EventType(self, Name, DisplayName, Description), validate=False)
+        if name not in self.__event_types:
+            self._add_event_type(EventType(self, name, display_name, description), validate=False)
 
-        return self._event_types[Name]
+        return self.__event_types[name]
 
-    def CreateEventSource(self, Uri, Description='no description available', AcquisitionDate='00000000'):
+    def create_event_source(self, uri, description='no description available', acquisition_date='00000000'):
         """
 
         Creates a new event source definition. If no acquisition date
@@ -246,21 +243,20 @@ class Ontology(object):
           source URI tree.
 
         Args:
-         Uri (str): The source URI
-         Description (str): Description of the source
-         AcquisitionDate (str): Acquisition date in format yyyymmdd
+         uri (str): The source URI
+         description (str): Description of the source
+         acquisition_date (str): Acquisition date in format yyyymmdd
 
         Returns:
           edxml.ontology.EventSource:
         """
 
-        if Uri not in self._sources:
-            self._addEventSource(EventSource(
-                self, Uri, Description, AcquisitionDate), validate=False)
+        if uri not in self.__sources:
+            self._add_event_source(EventSource(self, uri, description, acquisition_date), validate=False)
 
-        return self._sources[Uri]
+        return self.__sources[uri]
 
-    def DeleteObjectType(self, objectTypeName):
+    def delete_object_type(self, object_type_name):
         """
 
         Deletes specified object type from the ontology, if
@@ -270,19 +266,19 @@ class Ontology(object):
           Deleting object types may result in an invalid ontology.
 
         Args:
-          objectTypeName (str): An EDXML object type name
+          object_type_name (str): An EDXML object type name
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
 
-        if objectTypeName in self._object_types:
-            del self._object_types[objectTypeName]
-            self._childModifiedCallback()
+        if object_type_name in self.__object_types:
+            del self.__object_types[object_type_name]
+            self._child_modified_callback()
 
         return self
 
-    def DeleteConcept(self, conceptName):
+    def delete_concept(self, concept_name):
         """
 
         Deletes specified concept from the ontology, if
@@ -292,19 +288,19 @@ class Ontology(object):
           Deleting concepts may result in an invalid ontology.
 
         Args:
-          conceptName (str): An EDXML concept name
+          concept_name (str): An EDXML concept name
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
 
-        if conceptName in self._concepts:
-            del self._concepts[conceptName]
-            self._childModifiedCallback()
+        if concept_name in self.__concepts:
+            del self.__concepts[concept_name]
+            self._child_modified_callback()
 
         return self
 
-    def DeleteEventType(self, eventTypeName):
+    def delete_event_type(self, event_type_name):
         """
 
         Deletes specified event type from the ontology, if
@@ -314,43 +310,43 @@ class Ontology(object):
           Deleting event types may result in an invalid ontology.
 
         Args:
-          eventTypeName (str): An EDXML event type name
+          event_type_name (str): An EDXML event type name
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
 
-        if eventTypeName in self._event_types:
-            del self._event_types[eventTypeName]
-            self._childModifiedCallback()
+        if event_type_name in self.__event_types:
+            del self.__event_types[event_type_name]
+            self._child_modified_callback()
 
         return self
 
-    def DeleteEventSource(self, sourceUri):
+    def delete_event_source(self, source_uri):
         """
 
         Deletes specified event source definition from the
         ontology, if it exists.
 
         Args:
-          sourceUri (str): An EDXML event source URI
+          source_uri (str): An EDXML event source URI
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
 
-        if sourceUri in self._sources:
-            del self._sources[sourceUri]
-            self._childModifiedCallback()
+        if source_uri in self.__sources:
+            del self.__sources[source_uri]
+            self._child_modified_callback()
 
         return self
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._version += 1
+        self.__version += 1
         return self
 
-    def _addEventType(self, eventType, validate=True):
+    def _add_event_type(self, event_type, validate=True):
         """
 
         Adds specified event type to the ontology. If the
@@ -358,25 +354,25 @@ class Ontology(object):
         for consistency with the existing definition.
 
         Args:
-          eventType (edxml.ontology.EventType): An EventType instance
+          event_type (edxml.ontology.EventType): An EventType instance
           validate (bool): Validate definition (True) or not (False)
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-        name = eventType.GetName()
+        name = event_type.get_name()
 
-        if name in self._event_types:
-            self._event_types[name].Update(eventType)
+        if name in self.__event_types:
+            self.__event_types[name].update(event_type)
         else:
             if validate:
-                eventType.Validate()
-            self._event_types[name] = eventType
-            self._childModifiedCallback()
+                event_type.validate()
+            self.__event_types[name] = event_type
+            self._child_modified_callback()
 
         return self
 
-    def _addObjectType(self, objectType, validate=True):
+    def _add_object_type(self, object_type, validate=True):
         """
 
         Adds specified object type to the ontology. If the
@@ -384,25 +380,25 @@ class Ontology(object):
         for consistency with the existing definition.
 
         Args:
-          objectType (edxml.ontology.ObjectType): An ObjectType instance
+          object_type (edxml.ontology.ObjectType): An ObjectType instance
           validate (bool): Validate definition (True) or not (False)
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-        name = objectType.GetName()
+        name = object_type.get_name()
 
-        if name in self._object_types:
-            self._object_types[name].Update(objectType)
+        if name in self.__object_types:
+            self.__object_types[name].update(object_type)
         else:
             if validate:
-                objectType.Validate()
-            self._object_types[name] = objectType
-            self._childModifiedCallback()
+                object_type.validate()
+            self.__object_types[name] = object_type
+            self._child_modified_callback()
 
         return self
 
-    def _addConcept(self, concept, validate=True):
+    def _add_concept(self, concept, validate=True):
         """
 
         Adds specified concept to the ontology. If the
@@ -416,19 +412,19 @@ class Ontology(object):
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-        name = concept.GetName()
+        name = concept.get_name()
 
-        if name in self._concepts:
-            self._concepts[name].Update(concept)
+        if name in self.__concepts:
+            self.__concepts[name].update(concept)
         else:
             if validate:
-                concept.Validate()
-            self._concepts[name] = concept
-            self._childModifiedCallback()
+                concept.validate()
+            self.__concepts[name] = concept
+            self._child_modified_callback()
 
         return self
 
-    def _addEventSource(self, eventSource, validate=True):
+    def _add_event_source(self, event_source, validate=True):
         """
 
         Adds specified event source to the ontology. If the
@@ -436,25 +432,25 @@ class Ontology(object):
         for consistency with the existing definition.
 
         Args:
-          eventSource (edxml.ontology.EventSource): An EventSource instance
+          event_source (edxml.ontology.EventSource): An EventSource instance
           validate (bool): Validate definition (True) or not (False)
 
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-        uri = eventSource.GetUri()
+        uri = event_source.get_uri()
 
-        if uri in self._sources:
-            self._sources[uri].Update(eventSource)
+        if uri in self.__sources:
+            self.__sources[uri].update(event_source)
         else:
             if validate:
-                eventSource.Validate()
-            self._sources[uri] = eventSource
-            self._childModifiedCallback()
+                event_source.validate()
+            self.__sources[uri] = event_source
+            self._child_modified_callback()
 
         return self
 
-    def GetEventTypes(self):
+    def get_event_types(self):
         """
 
         Returns a dictionary containing all event types
@@ -464,9 +460,9 @@ class Ontology(object):
         Returns:
           Dict[str, edxml.ontology.EventType]: EventType instances
         """
-        return self._event_types
+        return self.__event_types
 
-    def GetObjectTypes(self):
+    def get_object_types(self):
         """
 
         Returns a dictionary containing all object types
@@ -476,9 +472,9 @@ class Ontology(object):
         Returns:
           Dict[str, edxml.ontology.ObjectType]: ObjectType instances
         """
-        return self._object_types
+        return self.__object_types
 
-    def GetConcepts(self):
+    def get_concepts(self):
         """
 
         Returns a dictionary containing all concepts
@@ -488,9 +484,9 @@ class Ontology(object):
         Returns:
           Dict[str, edxml.ontology.Concept]: Concept instances
         """
-        return self._concepts
+        return self.__concepts
 
-    def GetEventSources(self):
+    def get_event_sources(self):
         """
 
         Returns a dictionary containing all event sources
@@ -500,9 +496,9 @@ class Ontology(object):
         Returns:
           Dict[str, edxml.ontology.EventSource]: EventSource instances
         """
-        return self._sources
+        return self.__sources
 
-    def GetEventTypeNames(self):
+    def get_event_type_names(self):
         """
 
         Returns the list of names of all defined
@@ -511,9 +507,9 @@ class Ontology(object):
         Returns:
            List[str]: List of event type names
         """
-        return self._event_types.keys()
+        return self.__event_types.keys()
 
-    def GetObjectTypeNames(self):
+    def get_object_type_names(self):
         """
 
         Returns the list of names of all defined
@@ -522,9 +518,9 @@ class Ontology(object):
         Returns:
            List[str]: List of object type names
         """
-        return self._object_types.keys()
+        return self.__object_types.keys()
 
-    def GetConceptNames(self):
+    def get_concept_names(self):
         """
 
         Returns the list of names of all defined
@@ -533,9 +529,9 @@ class Ontology(object):
         Returns:
            List[str]: List of concept names
         """
-        return self._concepts.keys()
+        return self.__concepts.keys()
 
-    def GetEventType(self, Name):
+    def get_event_type(self, name):
         """
 
         Returns the EventType instance having
@@ -543,14 +539,14 @@ class Ontology(object):
         no event type with that name exists.
 
         Args:
-          Name (str): Event type name
+          name (str): Event type name
 
         Returns:
           edxml.ontology.EventType: The event type instance
         """
-        return self._event_types.get(Name)
+        return self.__event_types.get(name)
 
-    def GetObjectType(self, Name):
+    def get_object_type(self, name):
         """
 
         Returns the ObjectType instance having
@@ -558,14 +554,14 @@ class Ontology(object):
         no object type with that name exists.
 
         Args:
-          Name (str): Object type name
+          name (str): Object type name
 
         Returns:
           edxml.ontology.ObjectType: The object type instance
         """
-        return self._object_types.get(Name)
+        return self.__object_types.get(name)
 
-    def GetConcept(self, Name):
+    def get_concept(self, name):
         """
 
         Returns the Concept instance having
@@ -573,14 +569,14 @@ class Ontology(object):
         no concept with that name exists.
 
         Args:
-          Name (str): Concept name
+          name (str): Concept name
 
         Returns:
           edxml.ontology.Concept: The Concept instance
         """
-        return self._concepts.get(Name)
+        return self.__concepts.get(name)
 
-    def GetEventSource(self, Uri):
+    def get_event_source(self, uri):
         """
 
         Returns the EventSource instance having
@@ -588,38 +584,32 @@ class Ontology(object):
         no event source with that URI exists.
 
         Args:
-          Uri (str): Event source URI
+          uri (str): Event source URI
 
         Returns:
           edxml.ontology.EventSource: The event source instance
         """
-        return self._sources.get(Uri)
+        return self.__sources.get(uri)
 
-    def __parseEventTypes(self, eventtypesElement, validate):
-        for typeElement in eventtypesElement:
-            self._addEventType(
-                EventType.Read(typeElement, self), validate
+    def __parse_event_types(self, event_types_element, validate=True):
+        for typeElement in event_types_element:
+            self._add_event_type(EventType.create_from_xml(typeElement, self), validate)
+
+    def __parse_object_types(self, object_types_element, validate=True):
+        for typeElement in object_types_element:
+            self._add_object_type(ObjectType.create_from_xml(typeElement, self), validate)
+
+    def __parse_concepts(self, concepts_element, validate=True):
+        for conceptElement in concepts_element:
+            self._add_concept(
+                Concept.create_from_xml(conceptElement, self), validate
             )
 
-    def __parseObjectTypes(self, objecttypesElement, validate):
-        for typeElement in objecttypesElement:
-            self._addObjectType(
-                ObjectType.Read(typeElement, self), validate
-            )
+    def __parse_sources(self, sources_element, validate=True):
+        for sourceElement in sources_element:
+            self._add_event_source(EventSource.create_from_xml(sourceElement, self), validate)
 
-    def __parseConcepts(self, conceptsElement, validate):
-        for conceptElement in conceptsElement:
-            self._addConcept(
-                Concept.Read(conceptElement, self), validate
-            )
-
-    def __parseSources(self, sourcesElement, validate):
-        for sourceElement in sourcesElement:
-            self._addEventSource(
-                EventSource.Read(sourceElement, self), validate
-            )
-
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the defined ontology is a valid EDXML ontology.
@@ -632,187 +622,185 @@ class Ontology(object):
 
         """
         # Validate all object types
-        for objectTypeName, objectType in self._object_types.items():
-            objectType.Validate()
+        for object_type_name, object_type in self.__object_types.items():
+            object_type.validate()
 
         # Validate all event types and their
         # story / summary templates
-        for eventTypeName, eventType in self._event_types.items():
-            eventType.Validate()
-            eventType.ValidateTemplate(eventType.GetSummaryTemplate(), self)
-            eventType.ValidateTemplate(eventType.GetStoryTemplate(), self)
+        for event_type_name, event_type in self.__event_types.items():
+            event_type.validate()
+            event_type.validate_template(event_type.get_summary_template(), self)
+            event_type.validate_template(event_type.get_story_template(), self)
 
         # Check if all event type parents are defined
-        for eventTypeName, eventType in self._event_types.items():
-            eventType.Validate()
-            if eventType.GetParent() is not None:
-                if eventType.GetParent().GetEventType() not in self._event_types:
+        for event_type_name, event_type in self.__event_types.items():
+            event_type.validate()
+            if event_type.get_parent() is not None:
+                if event_type.get_parent().get_event_type() not in self.__event_types:
                     raise EDXMLValidationError(
                         'Event type "%s" refers to parent event type "%s", which is not defined.' %
-                        (eventTypeName, eventType.GetParent().GetEventType()))
+                        (event_type_name, event_type.get_parent().get_event_type()))
 
         # Check if the object type of each property exists
-        for eventTypeName, eventType in self._event_types.iteritems():
-            for propertyName, eventProperty in eventType.iteritems():
-                objectTypeName = eventProperty.GetObjectTypeName()
-                if self.GetObjectType(objectTypeName) is None:
+        for event_type_name, event_type in self.__event_types.iteritems():
+            for property_name, event_property in event_type.iteritems():
+                object_type_name = event_property.get_object_type_name()
+                if self.get_object_type(object_type_name) is None:
                     # Object type is not defined, try to load it from
                     # any registered ontology bricks
-                    self._importObjectTypeFromBrick(objectTypeName)
-                if self.GetObjectType(objectTypeName) is None:
+                    self._import_object_type_from_brick(object_type_name)
+                if self.get_object_type(object_type_name) is None:
                     raise EDXMLValidationError(
                         'Property "%s" of event type "%s" refers to undefined object type "%s".' %
-                        (propertyName, eventTypeName,
-                         eventProperty.GetObjectTypeName())
+                        (property_name, event_type_name,
+                         event_property.get_object_type_name())
                     )
 
         # Check if the concepts referred to by each property exists
-        for eventTypeName, eventType in self._event_types.iteritems():
-            for propertyName, eventProperty in eventType.iteritems():
-                conceptName = eventProperty.GetConceptName()
-                if conceptName is not None:
-                    if self.GetConcept(conceptName) is None:
+        for event_type_name, event_type in self.__event_types.iteritems():
+            for property_name, event_property in event_type.iteritems():
+                concept_name = event_property.get_concept_name()
+                if concept_name is not None:
+                    if self.get_concept(concept_name) is None:
                         # Concept is not defined, try to load it from
                         # any registered ontology bricks
-                        self._importConceptFromBrick(conceptName)
-                    if self.GetConcept(conceptName) is None:
+                        self._import_concept_from_brick(concept_name)
+                    if self.get_concept(concept_name) is None:
                         raise EDXMLValidationError(
                             'Property "%s" of event type "%s" refers to undefined concept "%s".' %
-                            (propertyName, eventTypeName,
-                             eventProperty.GetConceptName())
+                            (property_name, event_type_name,
+                             event_property.get_concept_name())
                         )
 
         # Check if merge strategies make sense for the
         # configured property merge strategies
-        for eventTypeName, eventType in self._event_types.iteritems():
-            for propertyName, eventProperty in eventType.iteritems():
-                if eventProperty.GetMergeStrategy() in ('min', 'max'):
-                    if not eventProperty.GetDataType().IsNumerical():
-                        if not eventProperty.GetDataType().IsDateTime():
+        for event_type_name, event_type in self.__event_types.iteritems():
+            for property_name, event_property in event_type.iteritems():
+                if event_property.get_merge_strategy() in ('min', 'max'):
+                    if not event_property.get_data_type().is_numerical():
+                        if not event_property.get_data_type().is_datetime():
                             raise EDXMLValidationError(
                                 'Property "%s" of event type "%s" has data type %s, which '
                                 'cannot be used with merge strategy %s.'
-                                % (propertyName, eventTypeName, eventProperty.GetDataType(),
-                                   eventProperty.GetMergeStrategy())
+                                % (property_name, event_type_name, event_property.get_data_type(),
+                                   event_property.get_merge_strategy())
                             )
 
         # Check if unique properties have their merge strategies set
         # to 'match'
         # TODO: Still needed for EDXML 3?
-        for eventTypeName, eventType in self._event_types.iteritems():
-            for propertyName, eventProperty in eventType.iteritems():
-                if eventProperty.IsUnique():
-                    if eventProperty.GetMergeStrategy() != 'match':
+        for event_type_name, event_type in self.__event_types.iteritems():
+            for property_name, event_property in event_type.iteritems():
+                if event_property.is_unique():
+                    if event_property.get_merge_strategy() != 'match':
                         raise EDXMLValidationError(
                             'Unique property "%s" of event type "%s" does not have its merge strategy set to "match".' %
-                            (propertyName, eventTypeName)
+                            (property_name, event_type_name)
                         )
                 else:
-                    if eventProperty.GetMergeStrategy() == 'match':
+                    if event_property.get_merge_strategy() == 'match':
                         raise EDXMLValidationError(
                             'Property "%s" of event type "%s" is not unique but it does '
                             'have its merge strategy set to "match".' %
-                            (propertyName, eventTypeName)
+                            (property_name, event_type_name)
                         )
 
         # Verify that non-unique event type only have
         # properties with merge strategy 'drop'.
-        for eventTypeName, eventType in self._event_types.iteritems():
-            if not eventType.IsUnique():
-                for propertyName, eventProperty in eventType.iteritems():
-                    if eventProperty.GetMergeStrategy() != 'drop':
+        for event_type_name, event_type in self.__event_types.iteritems():
+            if not event_type.is_unique():
+                for property_name, event_property in event_type.iteritems():
+                    if event_property.get_merge_strategy() != 'drop':
                         raise EDXMLValidationError(
                             'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
-                            (eventTypeName, propertyName,
-                             eventProperty.GetMergeStrategy())
+                            (event_type_name, property_name,
+                             event_property.get_merge_strategy())
                         )
 
         # Validate event parent definitions
-        for eventTypeName, eventType in self._event_types.items():
-            if eventType.GetParent() is None:
+        for event_type_name, event_type in self.__event_types.items():
+            if event_type.get_parent() is None:
                 continue
 
             # Check if all unique parent properties are present
             # in the property map
-            parentEventType = self.GetEventType(
-                eventType.GetParent().GetEventType())
-            for parentPropertyName, parentProperty in parentEventType.iteritems():
-                if parentProperty.IsUnique():
-                    if parentPropertyName not in eventType.GetParent().GetPropertyMap().values():
+            parent_event_type = self.get_event_type(event_type.get_parent().get_event_type())
+            for parent_property_name, parent_property in parent_event_type.iteritems():
+                if parent_property.is_unique():
+                    if parent_property_name not in event_type.get_parent().get_property_map().values():
                         raise EDXMLValidationError(
                             'Event type %s contains a parent definition which lacks '
                             'a mapping for unique parent property \'%s\'.' %
-                            (eventTypeName, parentPropertyName)
+                            (event_type_name, parent_property_name)
                         )
 
-            for childProperty, parentProperty in eventType.GetParent().GetPropertyMap().items():
+            for childProperty, parent_property in event_type.get_parent().get_property_map().items():
 
                 # Check if child property exists
-                if childProperty not in eventType.keys():
+                if childProperty not in event_type.keys():
                     raise EDXMLValidationError(
                         'Event type %s contains a parent definition which refers to unknown child property \'%s\'.' %
-                        (eventTypeName, childProperty)
+                        (event_type_name, childProperty)
                     )
 
                 # Check if parent property exists and if it is a unique property
-                parentEventType = self.GetEventType(
-                    eventType.GetParent().GetEventType())
-                if parentProperty not in parentEventType.keys() or \
-                   parentEventType[parentProperty].GetMergeStrategy() != 'match':
+                parent_event_type = self.get_event_type(event_type.get_parent().get_event_type())
+                if parent_property not in parent_event_type.keys() or \
+                   parent_event_type[parent_property].get_merge_strategy() != 'match':
                     raise EDXMLValidationError(
                         ('Event type %s contains a parent definition which refers '
                          'to parent property "%s" of event type %s, '
                          'but this property is not unique, or it does not exist.') %
-                        (eventTypeName, parentProperty,
-                            eventType.GetParent().GetEventType())
+                        (event_type_name, parent_property,
+                            event_type.get_parent().get_event_type())
                     )
 
                 # Check if child property has allowed merge strategy
-                if eventType[childProperty].GetMergeStrategy() not in ('match', 'drop'):
+                if event_type[childProperty].get_merge_strategy() not in ('match', 'drop'):
                     raise EDXMLValidationError(
                         ('Event type %s contains a parent definition which refers to child property \'%s\'. '
                          'This property has merge strategy %s, which is not allowed for properties that are used in '
                          'parent definitions.') %
-                        (eventTypeName, childProperty,
-                            eventType[childProperty].GetMergeStrategy())
+                        (event_type_name, childProperty,
+                            event_type[childProperty].get_merge_strategy())
                     )
 
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
-        for eventTypeName, eventType in self._event_types.items():
-            for relation in eventType.GetPropertyRelations():
-                if relation.GetTypeClass() in ('inter', 'intra'):
-                    sourceConcept = eventType[relation.GetSource(
-                    )].GetConceptName()
-                    targetConcept = eventType[relation.GetTarget(
-                    )].GetConceptName()
-                    if sourceConcept and targetConcept:
-                        sourcePrimitive = sourceConcept.split('.', 2)[0]
-                        targetPrimitive = targetConcept.split('.', 2)[0]
-                        if relation.GetTypeClass() == 'intra':
-                            if sourcePrimitive != targetPrimitive:
+        for event_type_name, event_type in self.__event_types.items():
+            for relation in event_type.get_property_relations():
+                if relation.get_type_class() in ('inter', 'intra'):
+                    source_concept = event_type[relation.get_source(
+                    )].get_concept_name()
+                    target_concept = event_type[relation.get_target(
+                    )].get_concept_name()
+                    if source_concept and target_concept:
+                        source_primitive = source_concept.split('.', 2)[0]
+                        target_primitive = target_concept.split('.', 2)[0]
+                        if relation.get_type_class() == 'intra':
+                            if source_primitive != target_primitive:
                                 raise EDXMLValidationError(
                                     ('Properties %s and %s in the intra-concept relation in event type %s must both '
                                      'refer to the same primitive concept.') %
-                                    (relation.GetSource(),
-                                        relation.GetTarget(), eventTypeName)
+                                    (relation.get_source(),
+                                     relation.get_target(), event_type_name)
                                 )
                     else:
                         raise EDXMLValidationError(
                             ('Both properties %s and %s in the inter/intra-concept relation in event type %s must '
                              'refer to a concept.') %
-                            (relation.GetSource(),
-                             relation.GetTarget(), eventTypeName)
+                            (relation.get_source(),
+                             relation.get_target(), event_type_name)
                         )
 
         return self
 
     @classmethod
-    def Read(cls, ontologyElement):
+    def create_from_xml(cls, ontology_element):
         """
 
         Args:
-          ontologyElement (lxml.etree.Element):
+          ontology_element (lxml.etree.Element):
 
         Returns:
           edxml.ontology.Ontology: The ontology
@@ -820,37 +808,21 @@ class Ontology(object):
 
         ontology = cls()
 
-        for element in ontologyElement:
+        for element in ontology_element:
             if element.tag == 'eventtypes':
-                ontology.__parseEventTypes(element)
+                ontology.__parse_event_types(element)
             elif element.tag == 'objecttypes':
-                ontology.__parseObjectTypes(element)
+                ontology.__parse_object_types(element)
             elif element.tag == 'concepts':
-                ontology.__parseConcepts(element)
+                ontology.__parse_concepts(element)
             elif element.tag == 'sources':
-                ontology.__parseSources(element)
+                ontology.__parse_sources(element)
             else:
                 raise TypeError('Unexpected element: "%s"' % element.tag)
 
         return ontology
 
-    def AddBrick(self, ontologyBrick):
-        """
-        Updates the ontology using the definitions contained
-        in specified ontology brick.
-
-        Args:
-          ontologyBrick (edxml.ontology.Brick):
-
-        Returns:
-          edxml.ontology.Ontology: The ontology
-
-        """
-        ontologyBrick.AddTo(self)
-
-        return self
-
-    def Update(self, otherOntology, validate=True):
+    def update(self, other_ontology, validate=True):
         """
 
         Updates the ontology using the definitions contained
@@ -859,7 +831,7 @@ class Ontology(object):
         containing a full ontology element.
 
         Args:
-          otherOntology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
+          other_ontology (Union[lxml.etree.Element,edxml.ontology.Ontology]):
           validate (bool): Validate the resulting ontology
 
         Raises:
@@ -869,41 +841,41 @@ class Ontology(object):
           edxml.ontology.Ontology: The ontology
         """
 
-        if isinstance(otherOntology, Ontology):
+        if isinstance(other_ontology, Ontology):
             if validate:
-                otherOntology.Validate()
-            for ObjectTypeName, objectType in otherOntology.GetObjectTypes().items():
-                self._addObjectType(objectType)
-            for EventTypeName, eventType in otherOntology.GetEventTypes().items():
-                self._addEventType(eventType)
-            for ConceptName, concept in otherOntology.GetConcepts().items():
-                self._addConcept(concept)
-            for uri, source in otherOntology.GetEventSources().items():
-                self._addEventSource(source)
+                other_ontology.validate()
+            for ObjectTypeName, objectType in other_ontology.get_object_types().items():
+                self._add_object_type(objectType)
+            for EventTypeName, eventType in other_ontology.get_event_types().items():
+                self._add_event_type(eventType)
+            for ConceptName, concept in other_ontology.get_concepts().items():
+                self._add_concept(concept)
+            for uri, source in other_ontology.get_event_sources().items():
+                self._add_event_source(source)
 
-        elif isinstance(otherOntology, etree._Element):
-            for element in otherOntology:
+        elif isinstance(other_ontology, etree._Element):
+            for element in other_ontology:
                 if element.tag == 'objecttypes':
-                    self.__parseObjectTypes(element, validate)
+                    self.__parse_object_types(element, validate)
                 elif element.tag == 'concepts':
-                    self.__parseConcepts(element, validate)
+                    self.__parse_concepts(element, validate)
                 elif element.tag == 'eventtypes':
-                    self.__parseEventTypes(element, validate)
+                    self.__parse_event_types(element, validate)
                 elif element.tag == 'sources':
-                    self.__parseSources(element, validate)
+                    self.__parse_sources(element, validate)
                 else:
                     raise EDXMLValidationError(
                         'Unexpected ontology element: "%s"' % element.tag)
 
             if validate:
-                self.Validate()
+                self.validate()
         else:
             raise TypeError('Cannot update ontology from %s',
-                            str(type(otherOntology)))
+                            str(type(other_ontology)))
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing
@@ -913,22 +885,22 @@ class Ontology(object):
           etree.Element: The element
 
         """
-        ontologyElement = etree.Element('ontology')
-        objectTypes = etree.SubElement(ontologyElement, 'objecttypes')
-        concepts = etree.SubElement(ontologyElement, 'concepts')
-        eventTypes = etree.SubElement(ontologyElement, 'eventtypes')
-        eventSources = etree.SubElement(ontologyElement, 'sources')
+        ontology_element = etree.Element('ontology')
+        object_types = etree.SubElement(ontology_element, 'objecttypes')
+        concepts = etree.SubElement(ontology_element, 'concepts')
+        event_types = etree.SubElement(ontology_element, 'eventtypes')
+        event_sources = etree.SubElement(ontology_element, 'sources')
 
-        for objectTypeName, objectType in self._object_types.iteritems():
-            objectTypes.append(objectType.GenerateXml())
+        for objectTypeName, objectType in self.__object_types.iteritems():
+            object_types.append(objectType.generate_xml())
 
-        for conceptName, concept in self._concepts.iteritems():
-            concepts.append(concept.GenerateXml())
+        for conceptName, concept in self.__concepts.iteritems():
+            concepts.append(concept.generate_xml())
 
-        for eventTypeName, eventType in self._event_types.iteritems():
-            eventTypes.append(eventType.GenerateXml())
+        for eventTypeName, eventType in self.__event_types.iteritems():
+            event_types.append(eventType.generate_xml())
 
-        for uri, source in self._sources.iteritems():
-            eventSources.append(source.GenerateXml())
+        for uri, source in self.__sources.iteritems():
+            event_sources.append(source.generate_xml())
 
-        return ontologyElement
+        return ontology_element

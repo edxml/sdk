@@ -43,6 +43,10 @@ from EDXMLBase import EDXMLValidationError
 from edxml import ParsedEvent
 
 
+class ProcessingInterrupted(Exception):
+    pass
+
+
 class EDXMLParserBase(object):
     """
     This is the base class for all EDXML parsers.
@@ -59,27 +63,27 @@ class EDXMLParserBase(object):
         """
 
         self._ontology = None                # type: edxml.ontology.Ontology
-        self._elementIterator = None         # type: etree.Element
-        self._eventClass = None
+        self._element_iterator = None         # type: etree.Element
+        self._event_class = None
 
-        self.__currentEventType = None       # type: str
-        self.__currentEventSourceUri = None  # type: str
-        self.__currentEventSource = None     # type: edxml.ontology.EventSource
-        self.__currentGroupEventCount = 0    # type: int
-        self.__rootElement = None            # type: etree.Element
-        self.__currentGroupElement = None    # type: etree.Element
-        self.__eventGroupsElement = None     # type: etree.Element
-        self.__previousRootLength = None
-        self.__numParsedEvents = 0           # type: int
-        self.__numParsedEventTypes = {}      # type: Dict[str, int]
-        self.__eventTypeHandlers = {}        # type: Dict[str, callable]
-        self.__eventSourceHandlers = {}      # type: Dict[str, callable]
-        self.__currentEventHandlers = []     # type: List[callable]
-        self.__sourceUriPatternMap = {}      # type: Dict[Any, List[str]]
+        self.__current_event_type = None       # type: str
+        self.__current_event_source_uri = None  # type: str
+        self.__current_event_source = None     # type: edxml.ontology.EventSource
+        self.__current_group_event_count = 0    # type: int
+        self.__root_element = None            # type: etree.Element
+        self.__current_group_element = None    # type: etree.Element
+        self.__event_groups_element = None     # type: etree.Element
+        self.__previous_root_length = None
+        self.__num_parsed_events = 0           # type: int
+        self.__num_parsed_event_types = {}      # type: Dict[str, int]
+        self.__event_type_handlers = {}        # type: Dict[str, callable]
+        self.__event_source_handlers = {}      # type: Dict[str, callable]
+        self.__current_event_handlers = []     # type: List[callable]
+        self.__source_uri_pattern_map = {}      # type: Dict[Any, List[str]]
 
         self.__schema = None                 # type: etree.RelaxNG
-        self.__eventTypeSchemaCache = {}     # type: Dict[str, etree.RelaxNG]
-        self.__eventTypeSchema = None        # type: etree.RelaxNG
+        self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
+        self.__event_type_schema = None        # type: etree.RelaxNG
 
         self.__validate = validate           # type: bool
 
@@ -96,7 +100,7 @@ class EDXMLParserBase(object):
         # a second exception complaining about the document being
         # invalid, masking the original problem.
         if exc_type is None:
-            self.__validateRootElement()
+            self.__validate_root_element()
             self._close()
 
     def _close(self):
@@ -111,7 +115,7 @@ class EDXMLParserBase(object):
         """
         return self
 
-    def setEventTypeHandler(self, eventTypes, handler):
+    def set_event_type_handler(self, event_types, handler):
         """
 
         Register a handler for specified event types. Whenever
@@ -124,21 +128,21 @@ class EDXMLParserBase(object):
         Event type handlers are invoked before event source handlers.
 
         Args:
-          eventTypes (List[str]): List of event type names
+          event_types (List[str]): List of event type names
           handler (callable): Handler
 
         Returns:
           EDXMLParserBase: The EDXML parser
 
         """
-        for eventType in eventTypes:
-            if eventType not in self.__eventTypeHandlers:
-                self.__eventTypeHandlers[eventType] = []
-            self.__eventTypeHandlers[eventType].append(handler)
+        for eventType in event_types:
+            if eventType not in self.__event_type_handlers:
+                self.__event_type_handlers[eventType] = []
+            self.__event_type_handlers[eventType].append(handler)
 
         return self
 
-    def setEventSourceHandler(self, eventSourcePatterns, handler):
+    def set_event_source_handler(self, source_patterns, handler):
         """
 
         Register a handler for specified event sources. Whenever
@@ -152,21 +156,21 @@ class EDXMLParserBase(object):
         handlers are invoked after event type handlers.
 
         Args:
-          eventSourcePatterns (List[str]): List of regular expressions
+          source_patterns (List[str]): List of regular expressions
           handler (callable): Handler
 
         Returns:
           EDXMLParserBase: The EDXML parser
 
         """
-        for pattern in eventSourcePatterns:
-            if pattern not in self.__eventSourceHandlers:
-                self.__eventSourceHandlers[pattern] = []
-            self.__eventSourceHandlers[pattern].append(handler)
+        for pattern in source_patterns:
+            if pattern not in self.__event_source_handlers:
+                self.__event_source_handlers[pattern] = []
+            self.__event_source_handlers[pattern].append(handler)
 
         return self
 
-    def setCustomEventClass(self, eventClass):
+    def set_custom_event_class(self, event_class):
         """
 
         By default, EDXML parsers will generate ParsedEvent
@@ -188,16 +192,16 @@ class EDXMLParserBase(object):
           classes.
 
         Args:
-          eventClass (etree.ElementBase): The custom element class
+          event_class (etree.ElementBase): The custom element class
 
         Returns:
           EDXMLParserBase: The EDXML parser
 
         """
-        self._eventClass = eventClass
+        self._event_class = event_class
         return self
 
-    def getEventCounter(self):
+    def get_event_counter(self):
         """
 
         Returns the number of parsed events. This counter
@@ -206,9 +210,9 @@ class EDXMLParserBase(object):
         Returns:
           int: The number of parsed events
         """
-        return self.__numParsedEvents
+        return self.__num_parsed_events
 
-    def getEventTypeCounter(self, eventTypeName):
+    def get_event_type_counter(self, event_type_name):
         """
 
         Returns the number of parsed events of the specified
@@ -216,14 +220,14 @@ class EDXMLParserBase(object):
         _parsedEvent callback returned.
 
         Args:
-          eventTypeName (str): The type of parsed events
+          event_type_name (str): The type of parsed events
 
         Returns:
           int: The number of parsed events
         """
-        return self.__numParsedEventTypes.get(eventTypeName, 0)
+        return self.__num_parsed_event_types.get(event_type_name, 0)
 
-    def getOntology(self):
+    def get_ontology(self):
         """
 
         Returns the ontology that was read by the parser, or
@@ -238,7 +242,7 @@ class EDXMLParserBase(object):
         """
         return self._ontology
 
-    def getEventTypeSchema(self, eventTypeName):
+    def get_event_type_schema(self, event_type_name):
         """
 
         Returns the RelaxNG schema that is used by the parser
@@ -246,31 +250,30 @@ class EDXMLParserBase(object):
         the event type is not known to the parser.
 
         Args:
-          eventTypeName (str):
+          event_type_name (str):
 
         Returns:
           etree.RelaxNG:
         """
-        if eventTypeName not in self.__eventTypeSchemaCache:
-            self.__eventTypeSchemaCache[eventTypeName] = etree.RelaxNG(
-                self._ontology.GetEventType(
-                    eventTypeName).generateRelaxNG(self._ontology)
+        if event_type_name not in self.__event_type_schema_cache:
+            self.__event_type_schema_cache[event_type_name] = etree.RelaxNG(
+                self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
             )
-        return self.__eventTypeSchemaCache.get(eventTypeName)
+        return self.__event_type_schema_cache.get(event_type_name)
 
-    def __findRootElement(self, eventElement):
+    def __find_root_element(self, event_element):
         # Find the root element by traversing up the
         # tree. The first parent element that we will
         # find this way is the eventgroup tag that
         # contains the current event.
-        self.__rootElement = eventElement.getparent()
-        while self.__rootElement is not None and self.__rootElement.tag != 'edxml':
-            self.__rootElement = self.__rootElement.getparent()
-        if self.__rootElement is None or self.__rootElement.tag != 'edxml':
+        self.__root_element = event_element.getparent()
+        while self.__root_element is not None and self.__root_element.tag != 'edxml':
+            self.__root_element = self.__root_element.getparent()
+        if self.__root_element is None or self.__root_element.tag != 'edxml':
             raise EDXMLValidationError(
                 'Invalid EDXML structure detected: Could not find the edxml root tag.')
 
-    def __validateRootElement(self):
+    def __validate_root_element(self):
         # Note that this method can only be called after
         # parsing is completed. At any other stage in the
         # parsing process, the tree structure is incomplete.
@@ -281,15 +284,15 @@ class EDXMLParserBase(object):
             )
 
         try:
-            self.__schema.assertValid(self.__rootElement)
+            self.__schema.assertValid(self.__root_element)
         except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
             # XML structure is invalid.
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-                (etree.tostring(self.__rootElement), str(ValidationError))
+                (etree.tostring(self.__root_element), str(ValidationError))
             )
 
-    def __validateDefinitionsElement(self, ontologyElement):
+    def __validate_definitions_element(self, ontology_element):
         if not self.__schema:
             self.__schema = etree.RelaxNG(
                 etree.parse(os.path.dirname(os.path.realpath(
@@ -302,8 +305,8 @@ class EDXMLParserBase(object):
         # we integrate the ontology element into a
         # skeleton tree, yielding a complete, valid
         # EDXML structure.
-        skeleton = etree.Element('edxml', attrib=self.__rootElement.attrib)
-        skeleton.append(deepcopy(ontologyElement))
+        skeleton = etree.Element('edxml', attrib=self.__root_element.attrib)
+        skeleton.append(deepcopy(ontology_element))
         etree.SubElement(skeleton, 'eventgroups')
 
         try:
@@ -312,30 +315,30 @@ class EDXMLParserBase(object):
             # XML structure is invalid.
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-                (etree.tostring(self.__rootElement), str(ValidationError))
+                (etree.tostring(self.__root_element), str(ValidationError))
             )
 
-    def __processOntology(self, ontologyElement):
-        precedingEventGroupsElement = ontologyElement.getprevious()
-        if precedingEventGroupsElement is not None:
-            precedingDefinitionsElement = precedingEventGroupsElement.getprevious()
-            if precedingDefinitionsElement is None:
+    def __process_ontology(self, ontology_element):
+        preceding_event_groups_element = ontology_element.getprevious()
+        if preceding_event_groups_element is not None:
+            preceding_definitions_element = preceding_event_groups_element.getprevious()
+            if preceding_definitions_element is None:
                 # XML structure is invalid, because there must be
                 # an ontology element preceding the eventgroups element.
                 raise EDXMLValidationError(
                     "EDXML structure contains an ontology element without a preceding eventgroups element: %s\n" %
-                    (etree.tostring(self.__rootElement))
+                    (etree.tostring(self.__root_element))
                 )
 
             # We have one complete pair of an ontology and
             # an eventgroups element preceding the current ontology
             # element. We can safely delete them.
-            del self.__rootElement[0:2]
+            del self.__root_element[0:2]
 
         # Before parsing the ontology information, we validate
         # the generic structure of the ontology element, using
         # the RelaxNG schema.
-        self.__validateDefinitionsElement(ontologyElement)
+        self.__validate_definitions_element(ontology_element)
 
         # We survived XML structure validation. We can proceed
         # and process the new ontology information.
@@ -343,30 +346,30 @@ class EDXMLParserBase(object):
             self._ontology = edxml.ontology.Ontology()
 
         try:
-            self._ontology.Update(ontologyElement)
-            self.__eventTypeSchemaCache = {}
+            self._ontology.update(ontology_element)
+            self.__event_type_schema_cache = {}
         except EDXMLValidationError as exception:
             exception.message = "Invalid ontology definition detected: %s\n%s" %\
-                                (etree.tostring(ontologyElement,
+                                (etree.tostring(ontology_element,
                                                 pretty_print=True), exception.message)
             raise
 
-        for eventTypeName in self._ontology.GetEventTypeNames():
-            self.__numParsedEventTypes[eventTypeName] = 0
+        for eventTypeName in self._ontology.get_event_type_names():
+            self.__num_parsed_event_types[eventTypeName] = 0
 
         # Invoke callback to inform about the
         # new ontology.
-        self._parsedOntology(self._ontology)
+        self._parsed_ontology(self._ontology)
 
         # Use the ontology to build a mapping of event
         # handler source patterns to source URIs
-        self.__sourceUriPatternMap = defaultdict(list)
-        for pattern in self.__eventSourceHandlers.keys():
-            for sourceUri, source in self._ontology.GetEventSources():
+        self.__source_uri_pattern_map = defaultdict(list)
+        for pattern in self.__event_source_handlers.keys():
+            for sourceUri, source in self._ontology.get_event_sources():
                 if re.match(pattern, sourceUri):
-                    self.__sourceUriPatternMap[pattern].append(sourceUri)
+                    self.__source_uri_pattern_map[pattern].append(sourceUri)
 
-    def _parsedOntology(self, edxmlOntology):
+    def _parsed_ontology(self, ontology):
         """
         Callback that is invoked when the ontology has
         been updated from input data. The passed ontology
@@ -374,78 +377,78 @@ class EDXMLParserBase(object):
         that has been parsed so far.
 
         Args:
-          edxmlOntology (edxml.ontology.Ontology): The parsed ontology
+          ontology (edxml.ontology.Ontology): The parsed ontology
         """
         # Since an override of this method may call this parent
         # method passing a different ontology, we assign it here.
-        self._ontology = edxmlOntology
+        self._ontology = ontology
 
-    def _parseEdxml(self):
+    def _parse_edxml(self):
 
-        for action, elem in self._elementIterator:
+        for action, elem in self._element_iterator:
 
-            if self.__rootElement is None:
-                self.__findRootElement(elem)
+            if self.__root_element is None:
+                self.__find_root_element(elem)
 
             if elem.tag == 'edxml':
                 if elem.getparent() is None:
-                    versionString = elem.attrib['version']
-                    if versionString is None:
+                    version_string = elem.attrib['version']
+                    if version_string is None:
                         raise EDXMLValidationError(
                             'Root element is missing the version attribute.')
-                    version = versionString.split('.')
+                    version = version_string.split('.')
                     if len(version) != 3:
                         raise EDXMLValidationError(
-                            'Root element contains invalid version attribute: "%s"' % versionString)
+                            'Root element contains invalid version attribute: "%s"' % version_string)
                     if int(version[0]) != 3 or int(version[1]) > 0:
                         raise EDXMLValidationError(
-                            'Unsupported EDXML version: "%s"' % versionString)
+                            'Unsupported EDXML version: "%s"' % version_string)
                 continue
 
             if elem.tag == 'event':
                 if elem.getparent().tag == 'eventgroup':
-                    if self.__currentGroupElement is None:
+                    if self.__current_group_element is None:
                         # Apparently, we did not parse the current event group
                         # yet.
-                        self.__parseEventGroup(elem.getparent())
+                        self.__parse_event_group(elem.getparent())
 
-                    if self.__currentEventType is not None and self.__currentEventSourceUri is not None:
-                        elem.SetType(self.__currentEventType).SetSource(
-                            self.__currentEventSourceUri)
-                        self.__parseEvent(elem)
-                        self.__currentGroupEventCount += 1
-                        if self.__currentGroupEventCount > 1:
+                    if self.__current_event_type is not None and self.__current_event_source_uri is not None:
+                        elem.set_type(self.__current_event_type).set_source(
+                            self.__current_event_source_uri)
+                        self.__parse_event(elem)
+                        self.__current_group_event_count += 1
+                        if self.__current_group_event_count > 1:
                             # Delete the event tag, unless it is
                             # the first event tag in the event group.
                             # We do not want to delete the event that
                             # we are currently processing, lxml does
                             # not like that.
-                            del self.__currentGroupElement[0]
+                            del self.__current_group_element[0]
                             pass
                 continue
 
             if elem.tag == 'eventgroup':
                 if elem.getparent().tag == 'eventgroups':
-                    if self.__currentGroupElement is not None:
-                        self._closeEventGroup(
-                            self.__currentEventType, self.__currentEventSourceUri)
-                        self.__currentGroupEventCount = 0
-                    self.__currentGroupElement = None
-                    self.__currentEventType = None
-                    self.__currentEventSource = None
-                    self.__currentEventSourceUri = None
+                    if self.__current_group_element is not None:
+                        self._close_event_group(
+                            self.__current_event_type, self.__current_event_source_uri)
+                        self.__current_group_event_count = 0
+                    self.__current_group_element = None
+                    self.__current_event_type = None
+                    self.__current_event_source = None
+                    self.__current_event_source_uri = None
                 continue
 
             if elem.tag == 'ontology':
                 if elem.getparent().tag == 'edxml':
-                    self.__processOntology(elem)
+                    self.__process_ontology(elem)
                 continue
 
-    def __parseEventGroup(self, groupElement):
+    def __parse_event_group(self, group_element):
 
-        if self.__currentGroupElement is not None:
-            self._closeEventGroup(self.__currentEventType,
-                                  self.__currentEventSourceUri)
+        if self.__current_group_element is not None:
+            self._close_event_group(self.__current_event_type,
+                                    self.__current_event_source_uri)
 
         # Since lxml iterparse gives us partial XML
         # trees, elements from which we have not seen
@@ -455,60 +458,60 @@ class EDXMLParserBase(object):
         # parsing is still in progress. Hence the explicit
         # attribute validation here.
 
-        eventTypeName = groupElement.attrib.get('event-type', '')
-        sourceUri = groupElement.attrib.get('source-uri', '')
-        if not re.match(edxml.ontology.EventType.NAME_PATTERN.pattern, eventTypeName):
+        event_type_name = group_element.attrib.get('event-type', '')
+        source_uri = group_element.attrib.get('source-uri', '')
+        if not re.match(edxml.ontology.EventType.NAME_PATTERN.pattern, event_type_name):
             raise EDXMLValidationError(
-                'An eventgroup tag has an invalid event-type attribute: "%s"' % eventTypeName)
-        if not re.match(edxml.ontology.EventSource.SOURCE_URI_PATTERN.pattern, sourceUri):
+                'An eventgroup tag has an invalid event-type attribute: "%s"' % event_type_name)
+        if not re.match(edxml.ontology.EventSource.SOURCE_URI_PATTERN.pattern, source_uri):
             raise EDXMLValidationError(
-                'An eventgroup tag has an invalid source-uri attribute: "%s"' % sourceUri)
+                'An eventgroup tag has an invalid source-uri attribute: "%s"' % source_uri)
 
-        self.__currentGroupElement = groupElement
-        self._openEventGroup(
-            groupElement.attrib['event-type'], groupElement.attrib['source-uri'])
+        self.__current_group_element = group_element
+        self._open_event_group(
+            group_element.attrib['event-type'], group_element.attrib['source-uri'])
 
-        if self.__currentEventType is None and self.__currentEventSourceUri is None:
+        if self.__current_event_type is None and self.__current_event_source_uri is None:
             # This may happen when an extension of this
             # class 'swallows' an event group.
-            self.__currentEventSource = None
-            self.__currentEventSourceUri = None
-            self.__eventTypeSchema = None
+            self.__current_event_source = None
+            self.__current_event_source_uri = None
+            self.__event_type_schema = None
             return
 
-        self.__currentEventSource = self._ontology.GetEventSource(
-            self.__currentEventSourceUri)
+        self.__current_event_source = self._ontology.get_event_source(
+            self.__current_event_source_uri)
 
-        if self.__currentEventSource is None:
+        if self.__current_event_source is None:
             raise EDXMLValidationError(
-                "An eventgroup refers to Source URI %s, which is not defined." % self.__currentEventSourceUri
+                "An eventgroup refers to Source URI %s, which is not defined." % self.__current_event_source_uri
             )
-        if self._ontology.GetEventType(self.__currentEventType) is None:
+        if self._ontology.get_event_type(self.__current_event_type) is None:
             raise EDXMLValidationError(
-                "An eventgroup refers to eventtype %s, which is not defined." % self.__currentEventType
+                "An eventgroup refers to eventtype %s, which is not defined." % self.__current_event_type
             )
 
-        self.__currentEventSourceUri = self.__currentEventSource.GetUri()
+        self.__current_event_source_uri = self.__current_event_source.get_uri()
 
         if self.__validate:
-            self.__eventTypeSchema = self.getEventTypeSchema(
-                self.__currentEventType)
+            self.__event_type_schema = self.get_event_type_schema(
+                self.__current_event_type)
 
-    def _closeEventGroup(self, eventTypeName, eventSourceUri):
+    def _close_event_group(self, event_type_name, event_source_uri):
         """
 
         Callback that is invoked whenever an open event group
         is closed. The event type name and source URI match the
-        values that were passed to _openEventGroup().
+        values that were passed to _open_event_group().
 
         Args:
-          eventTypeName (str): The event type name
-          eventSourceUri (str): URI of the event source
+          event_type_name (str): The event type name
+          event_source_uri (str): URI of the event source
 
         """
         pass
 
-    def _openEventGroup(self, eventTypeName, eventSourceUri):
+    def _open_event_group(self, event_type_name, event_source_uri):
         """
 
         Callback that is invoked whenever a new event group
@@ -521,84 +524,83 @@ class EDXMLParserBase(object):
         parent method are None, the parser will ignore the entire
         event group. This implies that no callbacks will be generated
         for the events contained inside it. When the closing tag of
-        the group is parsed, the _closeEventGroup callback is
+        the group is parsed, the _close_event_group callback is
         invoked normally.
 
         Args:
-          eventTypeName (str): The event type name
-          eventSourceUri (str): URI of the event source
+          event_type_name (str): The event type name
+          event_source_uri (str): URI of the event source
 
         """
-        self.__currentEventType = eventTypeName
-        self.__currentEventSourceUri = eventSourceUri
+        self.__current_event_type = event_type_name
+        self.__current_event_source_uri = event_source_uri
 
-        self.__currentEventHandlers = []
+        self.__current_event_handlers = []
 
-        if self.__currentEventType and self.__currentEventSourceUri:
+        if self.__current_event_type and self.__current_event_source_uri:
 
             # Add handlers for the event type
-            self.__currentEventHandlers.extend(
-                self.__eventTypeHandlers.get(self.__currentEventType, ()))
+            self.__current_event_handlers.extend(
+                self.__event_type_handlers.get(self.__current_event_type, ()))
 
             # Add handlers for the event source
-            for pattern, handlers in self.__eventSourceHandlers.iteritems():
-                if self.__currentEventSourceUri in self.__sourceUriPatternMap[pattern]:
-                    self.__currentEventHandlers.extend(handlers)
+            for pattern, handlers in self.__event_source_handlers.iteritems():
+                if self.__current_event_source_uri in self.__source_uri_pattern_map[pattern]:
+                    self.__current_event_handlers.extend(handlers)
 
-        if len(self.__currentEventHandlers) == 0:
+        if len(self.__current_event_handlers) == 0:
             # No handlers found, check if the empty
-            # _parsedEvent() method has been overridden
+            # _parsed_event() method has been overridden
             # by a class extension, so we can use that
             # for handling events.
-            thisMethod = getattr(self, '_parsedEvent')
-            baseMethod = getattr(EDXMLParserBase, '_parsedEvent')
-            if thisMethod.__func__ is not baseMethod.__func__:
-                self.__currentEventHandlers.append(self._parsedEvent)
+            this_method = getattr(self, '_parsed_event')
+            base_method = getattr(EDXMLParserBase, '_parsed_event')
+            if this_method.__func__ is not base_method.__func__:
+                self.__current_event_handlers.append(self._parsed_event)
 
-    def __parseEvent(self, event):
-        if self.__validate and self.__eventTypeSchema is not None:
-            if not self.__eventTypeSchema.validate(event):
+    def __parse_event(self, event):
+        if self.__validate and self.__event_type_schema is not None:
+            if not self.__event_type_schema.validate(event):
                 # Event does not validate. Try to generate a validation
                 # exception that is more readable than the RelaxNG
                 # error is, by validating using the EventType class.
                 try:
-                    self._ontology.GetEventType(
-                        self.__currentEventType).validateEventStructure(event)
+                    self._ontology.get_event_type(self.__current_event_type).validate_event_structure(event)
 
                     # EventType structure checks out alright. Let us check the object values.
-                    self._ontology.GetEventType(
-                        self.__currentEventType).validateEventObjects(event)
+                    self._ontology.get_event_type(self.__current_event_type).validate_event_objects(event)
 
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
                     # a undoubtedly cryptic error message.
                     raise EDXMLValidationError(
-                        self.__eventTypeSchema.error_log)
+                        self.__event_type_schema.error_log)
 
                 except EDXMLValidationError as exception:
-                    schema = self._ontology.GetEventType(
-                        self.__currentEventType).generateRelaxNG(self._ontology)
+                    schema = self._ontology.get_event_type(
+                        self.__current_event_type
+                    ).generate_relax_ng(self._ontology)
                     raise EDXMLValidationError('Event failed to validate:\n%s\n\n%s\nSchema:\n%s' % (
                         etree.tostring(event, pretty_print=True).encode(
                             'utf-8'), exception,
                         etree.tostring(schema, pretty_print=True)), sys.exc_info()[2])
 
         # Call all event handlers in order
-        for handler in self.__currentEventHandlers:
+        for handler in self.__current_event_handlers:
             handler(event)
 
-        self.__numParsedEvents += 1
-        if self.__currentEventType:
-            self.__numParsedEventTypes[self.__currentEventType] += 1
+        self.__num_parsed_events += 1
+        if self.__current_event_type:
+            self.__num_parsed_event_types[self.__current_event_type] += 1
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
         """
 
         Callback that is invoked for every event that is parsed
         from the input EDXML stream.
 
         Args:
-          edxmlEvent (edxml.ParsedEvent): The parsed event
+          event (edxml.ParsedEvent): The parsed event
 
         """
         pass
@@ -616,7 +618,7 @@ class EDXMLPullParser(EDXMLParserBase):
 
     """
 
-    def parse(self, inputFile):
+    def parse(self, input_file):
         """
 
         Parses the specified file. The file can be any
@@ -630,11 +632,11 @@ class EDXMLPullParser(EDXMLParserBase):
           is preferred and may result in a small performance gain.
 
         Args:
-          inputFile (Union[io.TextIOBase, file, str]):
+          input_file (Union[io.TextIOBase, file, str]):
 
         """
-        self._elementIterator = etree.iterparse(
-            inputFile,
+        self._element_iterator = etree.iterparse(
+            input_file,
             events=['end'],
             tag=('edxml', 'ontology', 'eventgroup', 'event'),
             no_network=True, resolve_entities=False
@@ -643,12 +645,12 @@ class EDXMLPullParser(EDXMLParserBase):
         # Set a custom class that lxml should use for
         # representing event elements
         lookup = etree.ElementNamespaceClassLookup()
-        if self._eventClass is not None:
-            lookup.get_namespace('')['event'] = self._eventClass
+        if self._event_class is not None:
+            lookup.get_namespace('')['event'] = self._event_class
         else:
             lookup.get_namespace('')['event'] = ParsedEvent
-        self._elementIterator.set_element_class_lookup(lookup)
-        self._parseEdxml()
+        self._element_iterator.set_element_class_lookup(lookup)
+        self._parse_edxml()
 
 
 class EDXMLPushParser(EDXMLParserBase):
@@ -669,7 +671,7 @@ class EDXMLPushParser(EDXMLParserBase):
     def __init__(self, validate=True):
         super(EDXMLPushParser, self).__init__(validate)
         self.__inputParser = None
-        self.__feedTarget = None
+        self.__feed_target = None
 
     def feed(self, data):
         """
@@ -683,27 +685,27 @@ class EDXMLPushParser(EDXMLParserBase):
           data (str): String data
 
         """
-        if self._elementIterator is None:
+        if self._element_iterator is None:
             self.__inputParser = etree.XMLPullParser(
                 events=['end'],
                 tag=('event', 'eventgroup', 'ontology'),
-                target=self.__feedTarget, no_network=True, resolve_entities=False
+                target=self.__feed_target, no_network=True, resolve_entities=False
             )
 
             # Set a custom class that lxml should use for
             # representing event elements
             lookup = etree.ElementNamespaceClassLookup()
-            if self._eventClass is not None:
-                lookup.get_namespace('')['event'] = self._eventClass
+            if self._event_class is not None:
+                lookup.get_namespace('')['event'] = self._event_class
             else:
                 lookup.get_namespace('')['event'] = ParsedEvent
             self.__inputParser.set_element_class_lookup(lookup)
 
-            self._elementIterator = self.__inputParser.read_events()
+            self._element_iterator = self.__inputParser.read_events()
         self.__inputParser.feed(data)
-        self._parseEdxml()
+        self._parse_edxml()
 
-    def setFeedTarget(self, target):
+    def set_feed_target(self, target):
         """
 
         Sets an optional feed target for the parser.
@@ -721,7 +723,7 @@ class EDXMLPushParser(EDXMLParserBase):
         # TODO: The lxml library allows the feed target to generate other
         # objects than lxml Element instances, like JSON representations.
         # Implement support for this use case.
-        self.__feedTarget = target
+        self.__feed_target = target
         return self
 
 
@@ -729,7 +731,7 @@ class EDXMLOntologyPullParser(EDXMLPullParser):
     """
     A variant of the incremental pull parser which interrupts
     the parsing process when the ontology has been read. It does
-    so by raising EDXMLOntologyPullParser.ProcessingInterrupted.
+    so by raising ProcessingInterrupted.
     It can be used to extract ontology information from EDXML
     data streams and skip reading the event data.
     """
@@ -738,19 +740,16 @@ class EDXMLOntologyPullParser(EDXMLPullParser):
     # override the parse method to skip all event tags and offer
     # an option to scan the full data stream for ontology info.
 
-    class ProcessingInterrupted(Exception):
-        pass
-
-    def _parsedOntology(self, edxmlOntology):
-        super(EDXMLOntologyPullParser, self)._parsedOntology(edxmlOntology)
-        raise EDXMLOntologyPullParser.ProcessingInterrupted
+    def _parsed_ontology(self, ontology):
+        super(EDXMLOntologyPullParser, self)._parsed_ontology(ontology)
+        raise ProcessingInterrupted
 
 
 class EDXMLOntologyPushParser(EDXMLPushParser):
     """
     A variant of the incremental push parser which interrupts
     the parsing process when the ontology has been read. It does
-    so by raising EDXMLOntologyPushParser.ProcessingInterrupted.
+    so by raising ProcessingInterrupted.
     It can be used to extract ontology information from EDXML
     data streams and skip reading the event data.
     """
@@ -759,9 +758,6 @@ class EDXMLOntologyPushParser(EDXMLPushParser):
     # override the parse method to skip all event tags and offer
     # an option to scan the full data stream for ontology info.
 
-    class ProcessingInterrupted(Exception):
-        pass
-
-    def _parsedOntology(self, edxmlOntology):
-        super(EDXMLOntologyPushParser, self)._parsedOntology(edxmlOntology)
-        raise EDXMLOntologyPushParser.ProcessingInterrupted
+    def _parsed_ontology(self, ontology):
+        super(EDXMLOntologyPushParser, self)._parsed_ontology(ontology)
+        raise ProcessingInterrupted

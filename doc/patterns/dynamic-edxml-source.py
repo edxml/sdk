@@ -11,7 +11,7 @@ myOntology = Ontology()
 # ...add event type definitions here...
 
 writer = SimpleEDXMLWriter(sys.stdout)
-writer.SetOntology(myOntology)
+writer.set_ontology(myOntology)
 
 definedUri = []
 
@@ -25,10 +25,9 @@ for line in sys.stdin:
         # We have not defined this source URI yet.
         sourceDesc = parsedDateTime.strftime('Data generated in %B %Y')
         acquisitionDate = parsedDateTime.strftime('%Y%m%d')
-        myOntology.CreateEventSource(
-            sourceUri, Description=sourceDesc, AcquisitionDate=acquisitionDate)
+        myOntology.create_event_source(sourceUri, description=sourceDesc, acquisition_date=acquisitionDate)
         definedUri.append(sourceUri)
 
-    writer.AddEvent(EDXMLEvent(properties))
+    writer.add_event(EDXMLEvent(properties))
 
-writer.Close()
+writer.close()

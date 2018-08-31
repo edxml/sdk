@@ -13,27 +13,27 @@ class Concept(object):
     NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
 
-    def __init__(self, Ontology, Name, DisplayName=None, Description=None):
+    def __init__(self, ontology, name, display_name=None, description=None):
 
         self._attr = {
-            'name': Name,
-            'display-name': DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
-            'description': Description or Name
+            'name': name,
+            'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
+            'description': description or name
         }
 
-        self._ontology = Ontology  # type: edxml.ontology.Ontology
+        self._ontology = ontology  # type: edxml.ontology.Ontology
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._ontology._childModifiedCallback()
+        self._ontology._child_modified_callback()
         return self
 
-    def _setAttr(self, key, value):
+    def _set_attr(self, key, value):
         if self._attr[key] != value:
             self._attr[key] = value
-            self._childModifiedCallback()
+            self._child_modified_callback()
 
-    def GetName(self):
+    def get_name(self):
         """
 
         Returns the name of the concept.
@@ -44,7 +44,7 @@ class Concept(object):
 
         return self._attr['name']
 
-    def GetDisplayName(self):
+    def get_display_name(self):
         """
 
         Returns the display-name attribute of the concept.
@@ -55,7 +55,7 @@ class Concept(object):
 
         return self._attr['display-name']
 
-    def GetDisplayNameSingular(self):
+    def get_display_name_singular(self):
         """
 
         Returns the display name of the concept, in singular form.
@@ -66,7 +66,7 @@ class Concept(object):
 
         return self._attr['display-name'].split('/')[0]
 
-    def GetDisplayNamePlural(self):
+    def get_display_name_plural(self):
         """
 
         Returns the display name of the concept, in plural form.
@@ -77,7 +77,7 @@ class Concept(object):
 
         return self._attr['display-name'].split('/')[1]
 
-    def GetDescription(self):
+    def get_description(self):
         """
 
         Returns the description of the concept.
@@ -88,22 +88,22 @@ class Concept(object):
 
         return self._attr['description']
 
-    def SetDescription(self, Description):
+    def set_description(self, description):
         """
 
         Sets the concept description
 
         Args:
-          Description (str): Description
+          description (str): Description
 
         Returns:
           edxml.ontology.Concept: The Concept instance
         """
 
-        self._setAttr('description', str(Description))
+        self._set_attr('description', str(description))
         return self
 
-    def SetDisplayName(self, Singular, Plural=None):
+    def set_display_name(self, singular, plural=None):
         """
 
         Configure the display name. If the plural form
@@ -111,20 +111,20 @@ class Concept(object):
         appending an 's' to the singular form.
 
         Args:
-          Singular (str): display name (singular form)
-          Plural (str): display name (plural form)
+          singular (str): display name (singular form)
+          plural (str): display name (plural form)
 
         Returns:
           edxml.ontology.Concept: The Concept instance
         """
 
-        if Plural is None:
-            Plural = '%ss' % Singular
+        if plural is None:
+            plural = '%ss' % singular
 
-        self._setAttr('display-name', '%s/%s' % (Singular, Plural))
+        self._set_attr('display-name', '%s/%s' % (singular, plural))
         return self
 
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the concept is valid. It only looks
@@ -167,15 +167,15 @@ class Concept(object):
         return self
 
     @classmethod
-    def Read(cls, typeElement, ontology):
+    def create_from_xml(cls, type_element, ontology):
         return cls(
             ontology,
-            typeElement.attrib['name'],
-            typeElement.attrib['display-name'],
-            typeElement.attrib['description'],
+            type_element.attrib['name'],
+            type_element.attrib['display-name'],
+            type_element.attrib['description'],
         )
 
-    def Update(self, concept):
+    def update(self, concept):
         """
         Update the concept using information from the provided
         concept and validate the result.
@@ -187,23 +187,23 @@ class Concept(object):
           edxml.ontology.Concept: The updated Concept instance
 
         """
-        if self._attr['name'] != concept.GetName():
+        if self._attr['name'] != concept.get_name():
             raise Exception('Attempt to update concept "%s" with concept "%s".' %
-                            (self._attr['name'], concept.GetName()))
+                            (self._attr['name'], concept.get_name()))
 
-        if self._attr['display-name'] != concept.GetDisplayName():
+        if self._attr['display-name'] != concept.get_display_name():
             raise Exception('Attempt to update concept "%s", but display names do not match.' % self._attr['name'],
-                            (self._attr['display-name'], concept.GetName()))
+                            (self._attr['display-name'], concept.get_name()))
 
-        if self._attr['description'] != concept.GetDescription():
+        if self._attr['description'] != concept.get_description():
             raise Exception('Attempt to update concept "%s", but descriptions do not match.' % self._attr['name'],
-                            (self._attr['description'], concept.GetName()))
+                            (self._attr['description'], concept.get_name()))
 
-        self.Validate()
+        self.validate()
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing

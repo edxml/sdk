@@ -33,66 +33,66 @@ class EventType(MutableMapping):
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
     )
 
-    def __init__(self, Ontology, Name, DisplayName=None, Description=None, ClassList='',
-                 Summary='no description available', Story='no description available', Parent=None):
+    def __init__(self, ontology, name, display_name=None, description=None, class_list='',
+                 summary='no description available', story='no description available', parent=None):
 
-        self._attr = {
-            'name': Name,
-            'display-name': DisplayName or ' '.join(('%s/%s' % (Name, Name)).split('.')),
-            'description': Description or Name,
-            'classlist': ClassList,
-            'summary': Summary,
-            'story': Story.replace('\n', '[[NEWPAR:]]')
+        self.__attr = {
+            'name': name,
+            'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
+            'description': description or name,
+            'classlist': class_list,
+            'summary': summary,
+            'story': story.replace('\n', '[[NEWPAR:]]')
         }
 
         # type: Dict[str, edxml.ontology.EventProperty]
-        self._properties = {}
-        self._relations = []       # type: List[edxml.ontology.PropertyRelation]
-        self._parent = Parent      # type: edxml.ontology.EventTypeParent
-        self._relaxNG = None       # type: etree.RelaxNG
-        self._ontology = Ontology  # type: edxml.ontology.Ontology
+        self.__properties = {}
+        self.__relations = []       # type: List[edxml.ontology.PropertyRelation]
+        self.__parent = parent      # type: edxml.ontology.EventTypeParent
+        self.__relax_ng = None       # type: etree.RelaxNG
+        self.__ontology = ontology  # type: edxml.ontology.Ontology
 
-        self._parentDescription = None  # type: str
+        self.__parent_description = None  # type: str
 
         # type: Dict[str, edxml.ontology.EventProperty]
         self.__cachedUniqueProperties = None
         # type: Dict[str, edxml.ontology.EventProperty]
         self.__cachedHashProperties = None
 
-    def __delitem__(self, propertyName):
-        if propertyName in self._properties:
-            del self._properties[propertyName]
-            self._childModifiedCallback()
+    def __delitem__(self, property_name):
+        if property_name in self.__properties:
+            del self.__properties[property_name]
+            self._child_modified_callback()
 
-    def __setitem__(self, propertyName, propertyInstance):
-        if isinstance(propertyInstance, edxml.ontology.EventProperty):
-            self._properties[propertyName] = propertyInstance
-            self._childModifiedCallback()
+    def __setitem__(self, property_name, property_instance):
+        if isinstance(property_instance, edxml.ontology.EventProperty):
+            self.__properties[property_name] = property_instance
+            self._child_modified_callback()
         else:
             raise TypeError('Not an event property: %s' %
-                            repr(propertyInstance))
+                            repr(property_instance))
 
     def __len__(self):
-        return len(self._properties)
+        return len(self.__properties)
 
-    def __getitem__(self, propertyName):
+    def __getitem__(self, property_name):
         """
 
         Args:
-          propertyName (str): Name of an event property
+          property_name (str): Name of an event property
 
         Returns:
           edxml.ontology.EventProperty:
         """
         try:
-            return self._properties[propertyName]
+            return self.__properties[property_name]
         except KeyError:
             raise Exception('Event type %s has no property named %s.' %
-                            (self._attr['name'], propertyName))
+                            (self.__attr['name'], property_name))
 
-    def __contains__(self, propertyName):
+    def __contains__(self, property_name):
         try:
-            self._properties[propertyName]
+            self.__properties[property_name]
         except (KeyError, IndexError):
             return False
         else:
@@ -104,22 +104,22 @@ class EventType(MutableMapping):
         Yields:
           Dict[str, edxml.ontology.EventProperty]
         """
-        for propertyName, prop in self._properties.iteritems():
+        for propertyName, prop in self.__properties.iteritems():
             yield propertyName
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__cachedUniqueProperties = None
         self.__cachedHashProperties = None
-        self._ontology._childModifiedCallback()
+        self.__ontology._child_modified_callback()
         return self
 
-    def _setAttr(self, key, value):
-        if self._attr[key] != value:
-            self._attr[key] = value
-            self._childModifiedCallback()
+    def _set_attr(self, key, value):
+        if self.__attr[key] != value:
+            self.__attr[key] = value
+            self._child_modified_callback()
 
-    def GetName(self):
+    def get_name(self):
         """
 
         Returns the event type name
@@ -127,9 +127,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['name']
+        return self.__attr['name']
 
-    def GetDescription(self):
+    def get_description(self):
         """
 
         Returns the event type description
@@ -137,9 +137,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['description']
+        return self.__attr['description']
 
-    def GetDisplayNameSingular(self):
+    def get_display_name_singular(self):
         """
 
         Returns the event type display name, in singular form.
@@ -147,9 +147,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['display-name'].split('/')[0]
+        return self.__attr['display-name'].split('/')[0]
 
-    def GetDisplayNamePlural(self):
+    def get_display_name_plural(self):
         """
 
         Returns the event type display name, in plural form.
@@ -157,9 +157,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['display-name'].split('/')[1]
+        return self.__attr['display-name'].split('/')[1]
 
-    def GetClasses(self):
+    def get_classes(self):
         """
 
         Returns the list of classes that this event type
@@ -168,9 +168,9 @@ class EventType(MutableMapping):
         Returns:
           List[str]:
         """
-        return self._attr['classlist'].split(',')
+        return self.__attr['classlist'].split(',')
 
-    def GetProperties(self):
+    def get_properties(self):
         """
 
         Returns a dictionary containing all properties
@@ -181,9 +181,9 @@ class EventType(MutableMapping):
         Returns:
            Dict[str,edxml.ontology.EventProperty]: Properties
         """
-        return self._properties
+        return self.__properties
 
-    def GetUniqueProperties(self):
+    def get_unique_properties(self):
         """
 
         Returns a dictionary containing all unique properties
@@ -194,9 +194,9 @@ class EventType(MutableMapping):
         Returns:
            Dict[str, edxml.ontology.EventProperty]: Properties
         """
-        return {n: p for n, p in self._properties.items() if p.IsUnique()}
+        return {n: p for n, p in self.__properties.items() if p.is_unique()}
 
-    def GetHashProperties(self):
+    def get_hash_properties(self):
         """
 
         Returns a dictionary containing all properties
@@ -212,11 +212,11 @@ class EventType(MutableMapping):
         if self.__cachedHashProperties is None:
             props = {}
 
-            for n, p in self._properties.items():
-                dataType = p.GetDataType().GetSplit()
+            for n, p in self.__properties.items():
+                data_type = p.get_data_type().get_split()
 
-                if not self.IsUnique() or p.IsUnique():
-                    if dataType[0] != 'number' or dataType[1] not in ('float', 'double'):
+                if not self.is_unique() or p.is_unique():
+                    if data_type[0] != 'number' or data_type[1] not in ('float', 'double'):
                         # Floating point objects are ignored.
                         props[n] = p
 
@@ -224,7 +224,7 @@ class EventType(MutableMapping):
 
         return self.__cachedHashProperties
 
-    def GetPropertyRelations(self):
+    def get_property_relations(self):
         """
 
         Returns the list of property relations that
@@ -233,9 +233,9 @@ class EventType(MutableMapping):
         Returns:
           List[edxml.ontology.PropertyRelation]:
         """
-        return self._relations
+        return self.__relations
 
-    def HasClass(self, ClassName):
+    def has_class(self, class_name):
         """
 
         Returns True if specified class is in the list of
@@ -243,14 +243,14 @@ class EventType(MutableMapping):
         otherwise.
 
         Args:
-          ClassName (str): The class name
+          class_name (str): The class name
 
         Returns:
           bool:
         """
-        return ClassName in self._attr['classlist'].split(',')
+        return class_name in self.__attr['classlist'].split(',')
 
-    def IsUnique(self):
+    def is_unique(self):
         """
 
         Returns True if the event type is a unique
@@ -261,13 +261,13 @@ class EventType(MutableMapping):
         """
         if self.__cachedUniqueProperties is None:
             self.__cachedUniqueProperties = {}
-            for propertyName, eventProperty in self._properties.iteritems():
-                if eventProperty.IsUnique():
+            for propertyName, eventProperty in self.__properties.iteritems():
+                if eventProperty.is_unique():
                     self.__cachedUniqueProperties[propertyName] = eventProperty
 
         return len(self.__cachedUniqueProperties) > 0
 
-    def GetSummaryTemplate(self):
+    def get_summary_template(self):
         """
 
         Returns the event summary template.
@@ -275,9 +275,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['summary']
+        return self.__attr['summary']
 
-    def GetStoryTemplate(self):
+    def get_story_template(self):
         """
 
         Returns the event story template.
@@ -285,9 +285,9 @@ class EventType(MutableMapping):
         Returns:
           str:
         """
-        return self._attr['story']
+        return self.__attr['story']
 
-    def GetParent(self):
+    def get_parent(self):
         """
 
         Returns the parent event type, or None
@@ -296,9 +296,9 @@ class EventType(MutableMapping):
         Returns:
           EventTypeParent: The parent event type
         """
-        return self._parent
+        return self.__parent
 
-    def CreateProperty(self, Name, ObjectTypeName, Description=None):
+    def create_property(self, name, object_type_name, description=None):
         """
 
         Create a new event property.
@@ -308,53 +308,52 @@ class EventType(MutableMapping):
            which role the object has in the event type.
 
         Args:
-          Name (str): Property name
-          ObjectTypeName (str): Name of the object type
-          Description (str): Property description
+          name (str): Property name
+          object_type_name (str): Name of the object type
+          description (str): Property description
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        if Name not in self._properties:
-            objectType = self._ontology.GetObjectType(ObjectTypeName)
-            if not objectType:
+        if name not in self.__properties:
+            object_type = self.__ontology.get_object_type(object_type_name)
+            if not object_type:
                 # Object type is not defined, try to load it from
                 # any registered ontology bricks
-                self._ontology._importObjectTypeFromBrick(ObjectTypeName)
-                objectType = self._ontology.GetObjectType(ObjectTypeName)
-            if objectType:
-                self._properties[Name] = edxml.ontology.EventProperty(
-                    self, Name, objectType, Description).Validate()
+                self.__ontology._import_object_type_from_brick(object_type_name)
+                object_type = self.__ontology.get_object_type(object_type_name)
+            if object_type:
+                self.__properties[name] = edxml.ontology.EventProperty(self, name, object_type, description).validate()
             else:
                 raise Exception(
                     'Attempt to create property "%s" of event type "%s" referring to undefined object type "%s".' %
-                    (Name, self.GetName(), ObjectTypeName)
+                    (name, self.get_name(), object_type_name)
                 )
         else:
             raise Exception(
                 'Attempt to create existing property "%s" of event type "%s".' %
-                (Name, self.GetName())
+                (name, self.get_name())
             )
 
-        self._childModifiedCallback()
-        return self._properties[Name]
+        self._child_modified_callback()
+        return self.__properties[name]
 
-    def AddProperty(self, Property):
+    def add_property(self, property_name):
         """
 
         Add specified property
 
         Args:
-          Property (edxml.ontology.EventProperty): EventProperty instance
+          property_name (edxml.ontology.EventProperty): EventProperty instance
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._properties[Property.GetName()] = Property.Validate()
-        self._childModifiedCallback()
+        self.__properties[property_name.get_name()] = property_name.validate()
+        self._child_modified_callback()
         return self
 
-    def RemoveProperty(self, propertyName):
+    def remove_property(self, property_name):
         """
 
         Removes specified property from the event type.
@@ -365,52 +364,52 @@ class EventType(MutableMapping):
           the del operator to delete a property.
 
         Args:
-          propertyName (str): The name of the property
+          property_name (str): The name of the property
 
         Returns:
           edxml.ontology.EventType: The EventType instance
 
         """
-        if propertyName in self._properties:
-            del self._properties[propertyName]
-            self._childModifiedCallback()
+        if property_name in self.__properties:
+            del self.__properties[property_name]
+            self._child_modified_callback()
 
         return self
 
-    def CreateRelation(self, Source, Target, Description, TypeClass, TypePredicate, Confidence=1.0, Directed=True):
+    def create_relation(self, source, target, description, type_class, type_predicate, confidence=1.0, directed=True):
         """
 
         Create a new property relation
 
         Args:
-          Source (str): Name of source property
-          Target (str): Name of target property
-          Description (str): Relation description, with property placeholders
-          TypeClass (str): Relation type class ('inter', 'intra' or 'other')
-          TypePredicate (str): free form predicate
-          Confidence (float): Relation confidence [0.0,1.0]
-          Directed (bool): Directed relation True / False
+          source (str): Name of source property
+          target (str): Name of target property
+          description (str): Relation description, with property placeholders
+          type_class (str): Relation type class ('inter', 'intra' or 'other')
+          type_predicate (str): free form predicate
+          confidence (float): Relation confidence [0.0,1.0]
+          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
         """
 
-        if Source not in self:
+        if source not in self:
             raise KeyError('Cannot find property %s in event type %s.' %
-                           (Source, self._attr['name']))
+                           (source, self.__attr['name']))
 
-        if Target not in self:
+        if target not in self:
             raise KeyError('Cannot find property %s in event type %s.' %
-                           (Target, self._attr['name']))
+                           (target, self.__attr['name']))
 
-        relation = edxml.ontology.PropertyRelation(
-            self, self[Source], self[Target], Description, TypeClass, TypePredicate, Confidence, Directed)
-        self._relations.append(relation.Validate())
+        relation = edxml.ontology.PropertyRelation(self, self[source], self[target], description, type_class,
+                                                   type_predicate, confidence, directed)
+        self.__relations.append(relation.validate())
 
-        self._childModifiedCallback()
+        self._child_modified_callback()
         return relation
 
-    def AddRelation(self, Relation):
+    def add_relation(self, relation):
         """
 
         Add specified property relation. It is recommended to use the methods
@@ -418,17 +417,17 @@ class EventType(MutableMapping):
         a syntax that yields more readable code.
 
         Args:
-          Relation (edxml.ontology.PropertyRelation): Property relation
+          relation (edxml.ontology.PropertyRelation): Property relation
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._relations.append(Relation.Validate())
+        self.__relations.append(relation.validate())
 
-        self._childModifiedCallback()
+        self._child_modified_callback()
         return self
 
-    def MakeChildren(self, SiblingsDescription, Parent):
+    def make_children(self, siblings_description, parent):
         """
 
         Marks this event type as child of the specified parent event type. In
@@ -437,117 +436,117 @@ class EventType(MutableMapping):
         on identical property names.
 
         Notes:
-          You must call IsParent() on the parent before calling MakeChildren()
+          You must call is_parent() on the parent before calling make_children()
 
         Args:
-          SiblingsDescription (str): EDXML siblings-description attribute
-          Parent (edxml.ontology.EventType): Parent event type
+          siblings_description (str): EDXML siblings-description attribute
+          parent (edxml.ontology.EventType): Parent event type
 
         Returns:
           edxml.ontology.EventTypeParent: The event type parent definition
         """
 
-        if self._parentDescription:
-            self._parent = edxml.ontology.EventTypeParent(
-                self, Parent.GetName(), '', self._parentDescription, SiblingsDescription)
+        if self.__parent_description:
+            self.__parent = edxml.ontology.EventTypeParent(self, parent.get_name(), '', self.__parent_description,
+                                                           siblings_description)
         else:
             raise Exception(
-                'You must call IsParent() on the parent before calling MakeChildren().')
+                'You must call is_parent() on the parent before calling make_children().')
 
         # If all unique properties of the parent event type
         # also exist in the child event type, we can create
         # a default property map.
-        propertyMap = {}
-        for propertyName, eventProperty in Parent.GetUniqueProperties().items():
+        property_map = {}
+        for propertyName, eventProperty in parent.get_unique_properties().items():
             if propertyName in self:
-                propertyMap[propertyName] = propertyName
+                property_map[propertyName] = propertyName
             else:
-                propertyMap = {}
+                property_map = {}
                 break
 
-        for childProperty, parentProperty in propertyMap.items():
-            self._parent.Map(childProperty, parentProperty)
+        for childProperty, parentProperty in property_map.items():
+            self.__parent.map(childProperty, parentProperty)
 
-        self._childModifiedCallback()
-        return self._parent
+        self._child_modified_callback()
+        return self.__parent
 
-    def IsParent(self, ParentDescription, Child):
+    def is_parent(self, parent_description, child):
         """
 
         Marks this event type as parent of the specified child event type.
 
         Notes:
-          To be used in conjunction with the MakeChildren() method.
+          To be used in conjunction with the make_children() method.
 
         Args:
-          ParentDescription (str): EDXML parent-description attribute
-          Child (edxml.ontology.EventType): Child event type
+          parent_description (str): EDXML parent-description attribute
+          child (edxml.ontology.EventType): Child event type
 
         Returns:
           edxml.ontology.EventType: The EventType instance
 
         """
 
-        Child._parentDescription = ParentDescription
-        Child._childModifiedCallback()
+        child.__parent_description = parent_description
+        child._child_modified_callback()
         return self
 
-    def SetDescription(self, Description):
+    def set_description(self, description):
         """
 
         Sets the event type description
 
         Args:
-          Description (str): Description
+          description (str): Description
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
 
-        self._setAttr('description', str(Description))
+        self._set_attr('description', str(description))
         return self
 
-    def SetParent(self, Parent):
+    def set_parent(self, parent):
         """
 
         Set the parent event type
 
         Notes:
-          It is recommended to use the MakeChildren() and
-          IsParent() methods in stead whenever possible,
+          It is recommended to use the make_children() and
+          is_parent() methods in stead whenever possible,
           which results in more readable code.
 
         Args:
-          Parent (edxml.ontology.EventTypeParent): Parent event type
+          parent (edxml.ontology.EventTypeParent): Parent event type
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._parent = Parent
+        self.__parent = parent
 
-        self._childModifiedCallback()
+        self._child_modified_callback()
         return self
 
-    def AddClass(self, ClassName):
+    def add_class(self, class_name):
         """
 
         Adds the specified event type class
 
         Args:
-          ClassName (str):
+          class_name (str):
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        if ClassName:
-            if self._attr['classlist'] == '':
-                self._setAttr('classlist', ClassName)
+        if class_name:
+            if self.__attr['classlist'] == '':
+                self._set_attr('classlist', class_name)
             else:
-                self._setAttr('classlist', ','.join(
-                    list(set(self._attr['classlist'].split(',') + [ClassName]))))
+                self._set_attr('classlist', ','.join(
+                    list(set(self.__attr['classlist'].split(',') + [class_name]))))
         return self
 
-    def SetClasses(self, ClassNames):
+    def set_classes(self, class_names):
         """
 
         Replaces the list of classes that the event type
@@ -555,29 +554,29 @@ class EventType(MutableMapping):
         are automatically removed from the list.
 
         Args:
-          ClassNames (Iterable[str]):
+          class_names (Iterable[str]):
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._setAttr('classlist', ','.join(list(set(ClassNames))))
+        self._set_attr('classlist', ','.join(list(set(class_names))))
         return self
 
-    def SetName(self, EventTypeName):
+    def set_name(self, event_type_name):
         """
 
         Sets the name of the event type.
 
         Args:
-         EventTypeName (str): Event type name
+         event_type_name (str): Event type name
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._setAttr('name', EventTypeName)
+        self._set_attr('name', event_type_name)
         return self
 
-    def SetDisplayName(self, Singular, Plural=None):
+    def set_display_name(self, singular, plural=None):
         """
 
         Configure the display name. If the plural form
@@ -585,52 +584,52 @@ class EventType(MutableMapping):
         appending an 's' to the singular form.
 
         Args:
-          Singular (str): Singular display name
-          Plural (str): Plural display name
+          singular (str): Singular display name
+          plural (str): Plural display name
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
 
-        if Plural is None:
-            Plural = '%ss' % Singular
-        self._setAttr('display-name', '%s/%s' % (Singular, Plural))
+        if plural is None:
+            plural = '%ss' % singular
+        self._set_attr('display-name', '%s/%s' % (singular, plural))
         return self
 
-    def SetSummaryTemplate(self, Summary):
+    def set_summary_template(self, summary):
         """
 
         Set the event summary template
 
         Args:
-          Summary (str): The event summary template
+          summary (str): The event summary template
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
 
-        if Summary:
-            self._setAttr('summary', Summary)
+        if summary:
+            self._set_attr('summary', summary)
         return self
 
-    def SetStoryTemplate(self, Story):
+    def set_story_template(self, story):
         """
 
         Set the event story template. Newline characters are automatically
         replaced with [[NEWPAR:]] place holders.
 
         Args:
-          Story (str): The event story template
+          story (str): The event story template
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
 
-        if Story:
-            self._setAttr('story', Story.replace('\n', '[[NEWPAR:]]'))
+        if story:
+            self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
         return self
 
-    def EvaluateTemplate(self, edxmlEvent, which='story', capitalize=True, colorize=False):
+    def evaluate_template(self, edxml_event, which='story', capitalize=True, colorize=False):
         """
 
         Evaluates the event story or summary template of an event type using
@@ -647,7 +646,7 @@ class EventType(MutableMapping):
         be displayed using bold white characters.
 
         Args:
-          edxmlEvent (edxml.EDXMLEvent): the EDXML event to use
+          edxml_event (edxml.EDXMLEvent): the EDXML event to use
           which (bool): which template to evaluate
           capitalize (bool): Capitalize output or not
           colorize (bool): Colorize output or not
@@ -657,27 +656,27 @@ class EventType(MutableMapping):
         """
 
         # Recursively split a placeholder string at '{' and '}'
-        def __splitTemplate(String, offset=0):
+        def _split_template(template, offset=0):
 
             elements = []
-            length = len(String)
+            length = len(template)
 
             while offset < length:
-                pos1 = String.find('{', offset)
-                pos2 = String.find('}', offset)
+                pos1 = template.find('{', offset)
+                pos2 = template.find('}', offset)
                 if pos1 == -1:
                     # There are no more sub-strings, Find closing bracket.
                     if pos2 == -1:
                         # No closing bracket either, which means that the
                         # remaining part of the string is one element.
                         # lacks brackets.
-                        substring = String[offset:length]
+                        substring = template[offset:length]
                         offset = length
                         elements.append(substring)
                     else:
                         # Found closing bracket. Add substring and return
                         # to caller.
-                        substring = String[offset:pos2]
+                        substring = template[offset:pos2]
                         offset = pos2 + 1
                         elements.append(substring)
                         break
@@ -694,27 +693,27 @@ class EventType(MutableMapping):
                         if pos1 < pos2:
                             # Opening bracket comes first, which means we should
                             # iterate.
-                            substring = String[offset:pos1]
+                            substring = template[offset:pos1]
                             offset = pos1 + 1
 
                             elements.append(substring)
-                            offset, Parsed = __splitTemplate(String, offset)
-                            elements.append(Parsed)
+                            offset, parsed = _split_template(template, offset)
+                            elements.append(parsed)
                         else:
                             # closing bracket comes first, which means we found
                             # an innermost substring. Add substring and return
                             # to caller.
-                            substring = String[offset:pos2]
+                            substring = template[offset:pos2]
                             offset = pos2 + 1
                             elements.append(substring)
                             break
 
             return offset, elements
 
-        def __formatTimeDuration(Min, Max):
-            dateTimeA = parse(Min)
-            dateTimeB = parse(Max)
-            delta = relativedelta.relativedelta(dateTimeB, dateTimeA)
+        def _format_time_duration(time_min, time_max):
+            date_time_a = parse(time_min)
+            date_time_b = parse(time_max)
+            delta = relativedelta.relativedelta(date_time_b, date_time_a)
 
             if delta.minutes > 0:
                 if delta.hours > 0:
@@ -742,22 +741,22 @@ class EventType(MutableMapping):
                 return u'%d.%d seconds' % \
                        (delta.seconds, delta.microseconds)
 
-        def __formatByteCount(byteCount):
+        def _format_byte_count(byte_count):
             suffixes = [u'B', u'KB', u'MB', u'GB', u'TB', u'PB']
-            if byteCount == 0:
+            if byte_count == 0:
                 return u'0 B'
             i = 0
-            while byteCount >= 1024 and i < len(suffixes) - 1:
-                byteCount /= 1024.
+            while byte_count >= 1024 and i < len(suffixes) - 1:
+                byte_count /= 1024.
                 i += 1
-            f = (u'%.2f' % byteCount).rstrip('0').rstrip('.')
+            f = (u'%.2f' % byte_count).rstrip('0').rstrip('.')
             return u'%s %s' % (f, suffixes[i])
 
-        def __processSimplePlaceholderString(string, eventObjectValues, capitalizeString):
+        def _process_simple_placeholder_string(string, event_object_values, capitalize_string):
 
             replacements = {}
 
-            if capitalizeString and string != '':
+            if capitalize_string and string != '':
                 if string[0] == '{':
                     if string[1:2] != '[[':
                         # Sting does not start with a placeholder,
@@ -776,21 +775,21 @@ class EventType(MutableMapping):
 
             # Format object values based on their data type to make them
             # more human friendly.
-            for propertyName, values in eventObjectValues.items():
-                if self[propertyName].GetDataType().GetFamily() == 'number':
-                    if self[propertyName].GetDataType().GetSplit()[1] in ('float', 'double'):
+            for property_name, values in event_object_values.items():
+                if self[property_name].get_data_type().get_family() == 'number':
+                    if self[property_name].get_data_type().get_split()[1] in ('float', 'double'):
                         # Floating point numbers are normalized in scientific notation,
                         # here we format it to whatever is the most suitable for the value.
                         for index, value in enumerate(values):
-                            eventObjectValues[propertyName][index] = '%f' % float(
+                            event_object_values[property_name][index] = '%f' % float(
                                 value)
 
             for placeholder in placeholders:
 
-                objectStrings = []
+                object_strings = []
                 try:
-                    formatter, argumentString = placeholder[1].split(':', 1)
-                    arguments = argumentString.split(',')
+                    formatter, argument_string = placeholder[1].split(':', 1)
+                    arguments = argument_string.split(',')
                 except ValueError:
                     # No formatter present.
                     formatter = None
@@ -798,7 +797,7 @@ class EventType(MutableMapping):
 
                 if not formatter:
                     try:
-                        objectStrings.extend(eventObjectValues[arguments[0]])
+                        object_strings.extend(event_object_values[arguments[0]])
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
@@ -806,20 +805,20 @@ class EventType(MutableMapping):
 
                 elif formatter == 'TIMESPAN':
 
-                    dateTimeStrings = []
-                    for propertyName in arguments:
+                    date_time_strings = []
+                    for property_name in arguments:
                         try:
-                            for objectValue in eventObjectValues[propertyName]:
-                                dateTimeStrings.append(objectValue)
+                            for object_value in event_object_values[property_name]:
+                                date_time_strings.append(object_value)
                         except KeyError:
                             pass
 
-                    if len(dateTimeStrings) > 0:
+                    if len(date_time_strings) > 0:
                         # Note that we use lexicographic sorting here.
-                        dateTimeA = parse(min(dateTimeStrings))
-                        dateTimeB = parse(max(dateTimeStrings))
-                        objectStrings.append(u'between %s and %s' % (
-                            dateTimeA.isoformat(' '), dateTimeB.isoformat(' ')))
+                        date_time_a = parse(min(date_time_strings))
+                        date_time_b = parse(max(date_time_strings))
+                        object_strings.append(u'between %s and %s' % (
+                            date_time_a.isoformat(' '), date_time_b.isoformat(' ')))
                     else:
                         # No valid replacement string could be generated, which implies
                         # that we must return an empty string.
@@ -827,17 +826,17 @@ class EventType(MutableMapping):
 
                 elif formatter == 'DURATION':
 
-                    dateTimeStrings = []
-                    for propertyName in arguments:
+                    date_time_strings = []
+                    for property_name in arguments:
                         try:
-                            for objectValue in eventObjectValues[propertyName]:
-                                dateTimeStrings.append(objectValue)
+                            for object_value in event_object_values[property_name]:
+                                date_time_strings.append(object_value)
                         except KeyError:
                             pass
 
-                    if len(dateTimeStrings) > 0:
-                        objectStrings.append(__formatTimeDuration(
-                            min(dateTimeStrings), max(dateTimeStrings)))
+                    if len(date_time_strings) > 0:
+                        object_strings.append(_format_time_duration(
+                            min(date_time_strings), max(date_time_strings)))
                     else:
                         # No valid replacement string could be generated, which implies
                         # that we must return an empty string.
@@ -846,211 +845,211 @@ class EventType(MutableMapping):
                 elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        dateTime = parse(objectValue)
+                    for object_value in values:
+                        date_time = parse(object_value)
 
                         try:
                             if formatter == 'FULLDATETIME':
-                                objectStrings.append(dateTime.strftime(
+                                object_strings.append(date_time.strftime(
                                     u'%A, %B %d %Y at %H:%M:%Sh UTC'))
                             elif formatter == 'DATETIME':
-                                objectStrings.append(dateTime.strftime(
+                                object_strings.append(date_time.strftime(
                                     u'%B %d %Y at %H:%M:%Sh UTC'))
                             elif formatter == 'DATE':
-                                objectStrings.append(
-                                    dateTime.strftime(u'%a, %B %d %Y'))
+                                object_strings.append(
+                                    date_time.strftime(u'%a, %B %d %Y'))
                             elif formatter == 'YEAR':
-                                objectStrings.append(dateTime.strftime(u'%Y'))
+                                object_strings.append(date_time.strftime(u'%Y'))
                             elif formatter == 'MONTH':
-                                objectStrings.append(
-                                    dateTime.strftime(u'%B %Y'))
+                                object_strings.append(
+                                    date_time.strftime(u'%B %Y'))
                             elif formatter == 'WEEK':
-                                objectStrings.append(
-                                    dateTime.strftime(u'week %W of %Y'))
+                                object_strings.append(
+                                    date_time.strftime(u'week %W of %Y'))
                         except ValueError:
                             # This may happen for some time stamps before year 1900, which
                             # is not supported by strftime.
-                            objectStrings.append(
+                            object_strings.append(
                                 u'some date, a long, long time ago')
 
                 elif formatter == 'BYTECOUNT':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        objectStrings.append(
-                            __formatByteCount(int(objectValue)))
+                    for object_value in values:
+                        object_strings.append(
+                            _format_byte_count(int(object_value)))
 
                 elif formatter == 'LATITUDE':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        degrees = int(objectValue)
-                        minutes = int((objectValue - degrees) * 60.0)
+                    for object_value in values:
+                        degrees = int(object_value)
+                        minutes = int((object_value - degrees) * 60.0)
                         seconds = int(
-                            (objectValue - degrees - (minutes / 60.0)) * 3600.0)
+                            (object_value - degrees - (minutes / 60.0)) * 3600.0)
 
-                        objectStrings.append(u'%d°%d′%d %s″' % (
+                        object_strings.append(u'%d°%d′%d %s″' % (
                             degrees, minutes, seconds, 'N' if degrees > 0 else 'S'))
 
                 elif formatter == 'LONGITUDE':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        degrees = int(objectValue)
-                        minutes = int((objectValue - degrees) * 60.0)
+                    for object_value in values:
+                        degrees = int(object_value)
+                        minutes = int((object_value - degrees) * 60.0)
                         seconds = int(
-                            (objectValue - degrees - (minutes / 60.0)) * 3600.0)
+                            (object_value - degrees - (minutes / 60.0)) * 3600.0)
 
-                        objectStrings.append(u'%d°%d′%d %s″' % (
+                        object_strings.append(u'%d°%d′%d %s″' % (
                             degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
 
                 elif formatter == 'UPPERCASE':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        objectStrings.append(objectValue.upper())
+                    for object_value in values:
+                        object_strings.append(object_value.upper())
 
                 elif formatter == 'CURRENCY':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    propertyName, currencySymbol = arguments
-                    for objectValue in values:
-                        objectStrings.append(u'%.2f%s' % (
-                            int(objectValue), currencySymbol))
+                    property_name, currency_symbol = arguments
+                    for object_value in values:
+                        object_strings.append(u'%.2f%s' % (
+                            int(object_value), currency_symbol))
 
                 elif formatter == 'URL':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    propertyName, targetName = arguments
-                    for objectValue in values:
-                        objectStrings.append(u'%s (%s)' %
-                                             (targetName, objectValue))
+                    property_name, target_name = arguments
+                    for object_value in values:
+                        object_strings.append(u'%s (%s)' %
+                                              (target_name, object_value))
 
                 elif formatter == 'MERGE':
 
-                    for propertyName in arguments:
+                    for property_name in arguments:
                         try:
-                            for objectValue in eventObjectValues[propertyName]:
-                                objectStrings.append(objectValue)
+                            for object_value in event_object_values[property_name]:
+                                object_strings.append(object_value)
                         except KeyError:
                             pass
 
                 elif formatter == 'COUNTRYCODE':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
+                    for object_value in values:
                         try:
-                            objectStrings.append(
-                                countries.get(objectValue).name)
+                            object_strings.append(
+                                countries.get(object_value).name)
                         except KeyError:
-                            objectStrings.append(
-                                objectValue + u' (unknown country code)')
+                            object_strings.append(
+                                object_value + u' (unknown country code)')
 
                 elif formatter == 'BOOLEAN_STRINGCHOICE':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    propertyName, true, false = arguments
-                    for objectValue in values:
-                        if objectValue == u'true':
-                            objectStrings.append(true)
+                    property_name, true, false = arguments
+                    for object_value in values:
+                        if object_value == u'true':
+                            object_strings.append(true)
                         else:
-                            objectStrings.append(false)
+                            object_strings.append(false)
 
                 elif formatter == 'BOOLEAN_ON_OFF':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        if objectValue == u'true':
+                    for object_value in values:
+                        if object_value == u'true':
                             # Print 'on'
-                            objectStrings.append(u'on')
+                            object_strings.append(u'on')
                         else:
                             # Print 'off'
-                            objectStrings.append(u'off')
+                            object_strings.append(u'off')
 
                 elif formatter == 'BOOLEAN_IS_ISNOT':
 
                     try:
-                        values = eventObjectValues[arguments[0]]
+                        values = event_object_values[arguments[0]]
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
                         return u''
 
-                    for objectValue in values:
-                        if objectValue == u'true':
+                    for object_value in values:
+                        if object_value == u'true':
                             # Print 'is'
-                            objectStrings.append(u'is')
+                            object_strings.append(u'is')
                         else:
                             # Print 'is not'
-                            objectStrings.append(u'is not')
+                            object_strings.append(u'is not')
 
                 elif formatter == 'EMPTY':
 
-                    propertyName = arguments[0]
-                    if propertyName not in eventObjectValues or len(eventObjectValues[propertyName]) == 0:
+                    property_name = arguments[0]
+                    if property_name not in event_object_values or len(event_object_values[property_name]) == 0:
                         # Property has no object, use the second formatter argument
                         # in stead of the object value itself.
-                        objectStrings.append(arguments[0])
+                        object_strings.append(arguments[0])
                     else:
                         # Property has an object, so the formatter will
                         # yield an empty string. This in turn implies that
@@ -1059,33 +1058,33 @@ class EventType(MutableMapping):
 
                 elif formatter == 'NEWPAR':
 
-                    objectStrings.append('\n')
+                    object_strings.append('\n')
 
-                if len(objectStrings) > 0:
-                    if len(objectStrings) > 1:
+                if len(object_strings) > 0:
+                    if len(object_strings) > 1:
                         # If one property has multiple objects,
                         # list them all.
-                        if u''.join(objectStrings) != u'':
-                            LastObjectValue = objectStrings.pop()
+                        if u''.join(object_strings) != u'':
+                            last_object_value = object_strings.pop()
                             if colorize:
-                                ObjectString = u', '.join(
-                                    colored(ObjectString, 'white', attrs=['bold']) for ObjectString in objectStrings)\
-                                    + u' and ' + LastObjectValue
+                                object_string = u', '.join(
+                                    colored(ObjectString, 'white', attrs=['bold']) for ObjectString in object_strings)\
+                                    + u' and ' + last_object_value
                             else:
-                                ObjectString = u', '.join(objectStrings)\
-                                               + u' and ' + LastObjectValue
+                                object_string = u', '.join(object_strings)\
+                                    + u' and ' + last_object_value
                         else:
-                            ObjectString = u''
+                            object_string = u''
                     else:
-                        if colorize and objectStrings[0] != u'':
-                            ObjectString = colored(
-                                objectStrings[0], 'white', attrs=['bold'])
+                        if colorize and object_strings[0] != u'':
+                            object_string = colored(
+                                object_strings[0], 'white', attrs=['bold'])
                         else:
-                            ObjectString = objectStrings[0]
+                            object_string = object_strings[0]
                 else:
-                    ObjectString = u''
+                    object_string = u''
 
-                replacements[placeholder[0]] = ObjectString
+                replacements[placeholder[0]] = object_string
 
             # Return template where all placeholders are replaced
             # by the actual (formatted) object values
@@ -1099,31 +1098,28 @@ class EventType(MutableMapping):
 
             return string
 
-        def __processSplitTemplate(Elements, Event, Capitalize, IterationLevel=0):
-            Result = ''
+        def _process_split_template(elements, event, capitalize, iteration_level=0):
+            result = ''
 
-            for Element in Elements:
+            for Element in elements:
                 if type(Element) == list:
-                    Processed = __processSplitTemplate(
-                        Element, Event, Capitalize, IterationLevel + 1)
-                    Capitalize = False
+                    processed = _process_split_template(Element, event, capitalize, iteration_level + 1)
+                    capitalize = False
                 else:
                     if Element != '':
-                        Processed = __processSimplePlaceholderString(
-                            Element, Event, Capitalize)
-                        Capitalize = False
+                        processed = _process_simple_placeholder_string(
+                            Element, event, capitalize)
+                        capitalize = False
                     else:
-                        Processed = ''
-                Result += Processed
+                        processed = ''
+                result += processed
 
-            return Result
+            return result
 
-        return __processSplitTemplate(
-            __splitTemplate(unicode(self._attr[which]))[
-                1], edxmlEvent.GetProperties(), capitalize
-        )
+        return _process_split_template(_split_template(unicode(self.__attr[which]))[
+            1], edxml_event.get_properties(), capitalize)
 
-    def ValidateTemplate(self, template, ontology):
+    def validate_template(self, template, ontology):
         """Checks if given template makes sense.
 
         Args:
@@ -1138,17 +1134,17 @@ class EventType(MutableMapping):
 
         """
 
-        ZeroArgumentFormatters = [
+        zero_argument_formatters = [
             'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'BOOLEAN_ON_OFF',
             'BOOLEAN_IS_ISNOT', 'UPPERCASE'
         ]
 
         # Test if template grammar is correct, by
         # checking that curly brackets are balanced.
-        curlyNestings = {u'{': 1, u'}': -1}
+        curly_nestings = {u'{': 1, u'}': -1}
         nesting = 0
         for curly in [c for c in template if c in [u'{', u'}']]:
-            nesting += curlyNestings[curly]
+            nesting += curly_nestings[curly]
             if nesting < 0:
                 raise EDXMLValidationError(
                     'The following EDXML template contains unbalanced curly brackets:\n%s\n' % template)
@@ -1156,24 +1152,24 @@ class EventType(MutableMapping):
             raise EDXMLValidationError(
                 'The following EDXML template contains unbalanced curly brackets:\n%s\n' % template)
 
-        placeholderStrings = re.findall(self.TEMPLATE_PATTERN, template)
+        placeholder_strings = re.findall(self.TEMPLATE_PATTERN, template)
 
-        for template in placeholderStrings:
+        for template in placeholder_strings:
             # TODO: Write one generic check for existing properties by creating a table of
             # formatters, mapping formatter names to the indexes into the argument list of
             # arguments that are property names.
             try:
-                formatter, argumentString = str(template).split(':', 1)
-                arguments = argumentString.split(',')
+                formatter, argument_string = str(template).split(':', 1)
+                arguments = argument_string.split(',')
             except ValueError:
                 # Placeholder does not contain a formatter.
-                if str(template) in self._properties.keys():
+                if str(template) in self.__properties.keys():
                     continue
                 else:
                     raise EDXMLValidationError(
                         'Event type %s contains a story or summary template which refers to one or more '
                         'nonexistent properties: %s' %
-                        (self._attr['name'], template)
+                        (self.__attr['name'], template)
                     )
 
             # Some kind of string formatter was used.
@@ -1185,23 +1181,23 @@ class EventType(MutableMapping):
                     raise EDXMLValidationError(
                         ('Event type %s contains a story or summary template containing a string formatter (%s) '
                          'which requires two properties, but %d properties were specified.') %
-                        (self._attr['name'], formatter, len(arguments))
+                        (self.__attr['name'], formatter, len(arguments))
                     )
 
-                if arguments[0] in self._properties.keys() and \
-                   arguments[1] in self._properties.keys():
+                if arguments[0] in self.__properties.keys() and \
+                   arguments[1] in self.__properties.keys():
 
                     # Check that both properties are datetime values
                     for propertyName in arguments:
                         if propertyName == '':
                             raise EDXMLValidationError(
                                 'Invalid property name in %s formatter: "%s"' % (propertyName, formatter))
-                        if str(self._properties[propertyName].GetDataType()) != 'datetime':
+                        if str(self.__properties[propertyName].get_data_type()) != 'datetime':
                             raise EDXMLValidationError(
                                 ('Event type %s contains a story or summary template which '
                                  'uses a time related formatter, '
                                  'but the used property (%s) is not a datetime value.') % (
-                                    self._attr['name'], propertyName)
+                                    self.__attr['name'], propertyName)
                             )
 
                     continue
@@ -1209,7 +1205,7 @@ class EventType(MutableMapping):
                 if formatter not in self.KNOWN_FORMATTERS:
                     raise EDXMLValidationError(
                         'Event type %s contains a story or summary template which refers to an unknown formatter: %s' %
-                        (self._attr['name'], formatter)
+                        (self.__attr['name'], formatter)
                     )
 
                 if formatter in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
@@ -1218,48 +1214,48 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             ('Event type %s contains a story or summary template which uses the %s formatter, '
                              'which accepts just one property. Multiple properties were specified: %s') % (
-                                self._attr['name'], formatter, argumentString)
+                                self.__attr['name'], formatter, argument_string)
                         )
                     # Check that property is a datetime value
-                    if argumentString == '':
+                    if argument_string == '':
                         raise EDXMLValidationError(
                             'Invalid property name in %s formatter: "%s"' % (
-                                argumentString, formatter)
+                                argument_string, formatter)
                         )
-                    if str(self._properties[argumentString].GetDataType()) != 'datetime':
+                    if str(self.__properties[argument_string].get_data_type()) != 'datetime':
                         raise EDXMLValidationError(
                             ('Event type %s contains a template which uses the %s formatter. '
                              'The used property (%s) is not a datetime value, though.') % (
-                                self._attr['name'], formatter, argumentString)
+                                self.__attr['name'], formatter, argument_string)
                         )
 
-                elif formatter in ZeroArgumentFormatters:
+                elif formatter in zero_argument_formatters:
                     # Check that no additional arguments are present
                     if len(arguments) > 1:
                         raise EDXMLValidationError(
                             ('Event type %s contains a story or summary template which uses the %s formatter. '
                              'This formatter accepts no arguments, but they were specified: %s') %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
                     # Check that only one property is specified after the formatter
                     if len(arguments) > 1:
                         raise EDXMLValidationError(
                             ('Event type %s contains a story or summary template which uses the %s formatter. '
                              'This formatter accepts just one property. Multiple properties were given though: %s')
-                            % (self._attr['name'], formatter, argumentString)
+                            % (self.__attr['name'], formatter, argument_string)
                         )
                     if formatter in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
                         # Check that property is a boolean
-                        if argumentString == '':
+                        if argument_string == '':
                             raise EDXMLValidationError(
                                 'Invalid property name in %s formatter: "%s"' % (
-                                    argumentString, formatter)
+                                    argument_string, formatter)
                             )
-                        if str(self._properties[argumentString].GetDataType()) != 'boolean':
+                        if str(self.__properties[argument_string].get_data_type()) != 'boolean':
                             raise EDXMLValidationError(
                                 ('Event type %s contains a story or summary template which uses the %s formatter. '
                                  'The used property (%s) is not a boolean, though.') %
-                                (self._attr['name'], formatter, argumentString)
+                                (self.__attr['name'], formatter, argument_string)
                             )
 
                 elif formatter == 'CURRENCY':
@@ -1267,7 +1263,7 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             'Event type %s contains a story or summary template which uses a '
                             'malformed %s formatter: %s' %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
 
                 elif formatter == 'URL':
@@ -1275,7 +1271,7 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             'Event type %s contains a story or summary template which uses a '
                             'malformed %s formatter: %s' %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
 
                 elif formatter == 'EMPTY':
@@ -1283,7 +1279,7 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             'Event type %s contains a story or summary template which uses a '
                             'malformed %s formatter: %s' %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
 
                 elif formatter == 'NEWPAR':
@@ -1291,7 +1287,7 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             'Event type %s contains a story or summary template which uses a '
                             'malformed %s formatter: %s' %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
 
                 elif formatter == 'BOOLEAN_STRINGCHOICE':
@@ -1299,19 +1295,19 @@ class EventType(MutableMapping):
                         raise EDXMLValidationError(
                             'Event type %s contains a story or summary template which uses a '
                             'malformed %s formatter: %s' %
-                            (self._attr['name'], formatter, template)
+                            (self.__attr['name'], formatter, template)
                         )
                     # Check that property is a boolean
-                    if argumentString == '':
+                    if argument_string == '':
                         raise EDXMLValidationError(
                             'Invalid property name in %s formatter: "%s"' % (
-                                argumentString, formatter)
+                                argument_string, formatter)
                         )
-                    if str(self._properties[arguments[0]].GetDataType()) != 'boolean':
+                    if str(self.__properties[arguments[0]].get_data_type()) != 'boolean':
                         raise EDXMLValidationError(
                             ('Event type %s contains a story or summary template which uses the %s formatter. '
                              'The used property (%s) is not a boolean, though.') %
-                            (self._attr['name'], formatter, argumentString)
+                            (self.__attr['name'], formatter, argument_string)
                         )
 
                 elif formatter == 'MERGE':
@@ -1321,12 +1317,12 @@ class EventType(MutableMapping):
                 else:
                     raise EDXMLValidationError(
                         'Event type %s contains a story or summary template which uses an unknown formatter: %s' %
-                        (self._attr['name'], formatter)
+                        (self.__attr['name'], formatter)
                     )
 
         return self
 
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the event type definition is valid. Since it does
@@ -1341,67 +1337,67 @@ class EventType(MutableMapping):
           EventType: The EventType instance
 
         """
-        if not len(self._attr['name']) <= 64:
+        if not len(self.__attr['name']) <= 64:
             raise EDXMLValidationError(
-                'The name of event type "%s" is too long.' % self._attr['name'])
-        if not re.match(self.NAME_PATTERN, self._attr['name']):
+                'The name of event type "%s" is too long.' % self.__attr['name'])
+        if not re.match(self.NAME_PATTERN, self.__attr['name']):
             raise EDXMLValidationError(
-                'Event type "%s" has an invalid name.' % self._attr['name'])
+                'Event type "%s" has an invalid name.' % self.__attr['name'])
 
-        if not len(self._attr['display-name']) <= 64:
+        if not len(self.__attr['display-name']) <= 64:
             raise EDXMLValidationError(
                 'The display name of object type "%s" is too long: "%s"' % (
-                    self._attr['name'], self._attr['display-name'])
+                    self.__attr['name'], self.__attr['display-name'])
             )
-        if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+        if not re.match(self.DISPLAY_NAME_PATTERN, self.__attr['display-name']):
             raise EDXMLValidationError(
                 'Object type "%s" has an invalid display-name attribute: "%s"' % (
-                    self._attr['name'], self._attr['display-name'])
+                    self.__attr['name'], self.__attr['display-name'])
             )
 
-        if not len(self._attr['description']) <= 128:
+        if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
                 'The description of object type "%s" is too long: "%s"' % (
-                    self._attr['name'], self._attr['description'])
+                    self.__attr['name'], self.__attr['description'])
             )
 
-        if not re.match(self.CLASS_LIST_PATTERN, self._attr['classlist']):
+        if not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid class list: "%s"' %
-                (self._attr['name'], self._attr['classlist'])
+                (self.__attr['name'], self.__attr['classlist'])
             )
 
-        for propertyName, eventProperty in self.GetProperties().items():
-            eventProperty.Validate()
+        for propertyName, eventProperty in self.get_properties().items():
+            eventProperty.validate()
 
-        for relation in self._relations:
-            relation.Validate()
+        for relation in self.__relations:
+            relation.validate()
 
         return self
 
     @classmethod
-    def Read(cls, typeElement, ontology):
-        eventType = cls(ontology, typeElement.attrib['name'], typeElement.attrib['display-name'],
-                        typeElement.attrib['description'], typeElement.attrib['classlist'],
-                        typeElement.attrib['summary'], typeElement.attrib['story'])
+    def create_from_xml(cls, type_element, ontology):
+        event_type = cls(ontology, type_element.attrib['name'], type_element.attrib['display-name'],
+                         type_element.attrib['description'], type_element.attrib['classlist'],
+                         type_element.attrib['summary'], type_element.attrib['story'])
 
-        for element in typeElement:
+        for element in type_element:
             if element.tag == 'parent':
-                eventType.SetParent(
-                    edxml.ontology.EventTypeParent.Read(element, eventType))
+                event_type.set_parent(
+                    edxml.ontology.EventTypeParent.create_from_xml(element, event_type))
             elif element.tag == 'properties':
                 for propertyElement in element:
-                    eventType.AddProperty(
-                        edxml.ontology.EventProperty.Read(propertyElement, eventType))
+                    event_type.add_property(
+                        edxml.ontology.EventProperty.create_from_xml(propertyElement, ontology, event_type))
 
             elif element.tag == 'relations':
                 for relationElement in element:
-                    eventType.AddRelation(
-                        edxml.ontology.PropertyRelation.Read(relationElement, eventType))
+                    event_type.add_relation(
+                        edxml.ontology.PropertyRelation.create_from_xml(relationElement, event_type))
 
-        return eventType
+        return event_type
 
-    def Update(self, eventType):
+    def update(self, event_type):
         """
 
         Updates the event type to match the EventType
@@ -1409,52 +1405,52 @@ class EventType(MutableMapping):
         updated instance.
 
         Args:
-          eventType (edxml.ontology.EventType): The new EventType instance
+          event_type (edxml.ontology.EventType): The new EventType instance
 
         Returns:
           edxml.ontology.EventType: The updated EventType instance
 
         """
-        if self._attr['name'] != eventType.GetName():
+        if self.__attr['name'] != event_type.get_name():
             raise Exception('Attempt to update event type "%s" with event type "%s".' %
-                            (self._attr['name'], eventType.GetName()))
+                            (self.__attr['name'], event_type.get_name()))
 
-        if self._attr['description'] != eventType.GetDescription():
-            raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self._attr['name'],
-                            (self._attr['description'], eventType.GetName()))
+        if self.__attr['description'] != event_type.get_description():
+            raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self.__attr['name'],
+                            (self.__attr['description'], event_type.get_name()))
 
-        if self.GetParent() is not None:
-            if eventType.GetParent() is not None:
-                self.GetParent().Update(eventType.GetParent())
+        if self.get_parent() is not None:
+            if event_type.get_parent() is not None:
+                self.get_parent().update(event_type.get_parent())
             else:
                 raise Exception(
-                    'Attempt to update event type "%s", but update does not define a parent.' % self._attr['name'])
+                    'Attempt to update event type "%s", but update does not define a parent.' % self.__attr['name'])
         else:
-            if eventType.GetParent() is not None:
+            if event_type.get_parent() is not None:
                 raise Exception(
-                    'Attempt to update event type "%s", but update defines a parent.' % self._attr['name'])
+                    'Attempt to update event type "%s", but update defines a parent.' % self.__attr['name'])
 
-        updatePropertyNames = set(eventType.GetProperties().keys())
-        existingPropertyNames = set(self.GetProperties().keys())
+        update_property_names = set(event_type.get_properties().keys())
+        existing_property_names = set(self.get_properties().keys())
 
-        propertiesAdded = updatePropertyNames - existingPropertyNames
-        propertiesRemoved = existingPropertyNames - updatePropertyNames
+        properties_added = update_property_names - existing_property_names
+        properties_removed = existing_property_names - update_property_names
 
-        if len(propertiesAdded) > 0:
+        if len(properties_added) > 0:
             raise Exception(
-                'Attempt to add properties to existing definition of event type ' + self._attr['name'])
-        if len(propertiesRemoved) > 0:
+                'Attempt to add properties to existing definition of event type ' + self.__attr['name'])
+        if len(properties_removed) > 0:
             raise Exception(
-                'Attempt to remove properties from existing definition of event type ' + self._attr['name'])
+                'Attempt to remove properties from existing definition of event type ' + self.__attr['name'])
 
-        for propertyName, eventProperty in self.GetProperties().items():
-            eventProperty.Update(eventType[propertyName])
+        for propertyName, eventProperty in self.get_properties().items():
+            eventProperty.update(event_type[propertyName])
 
-        self.Validate()
+        self.validate()
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing
@@ -1465,22 +1461,22 @@ class EventType(MutableMapping):
 
         """
 
-        element = etree.Element('eventtype', self._attr)
-        if self._parent:
-            element.append(self._parent.GenerateXml())
+        element = etree.Element('eventtype', self.__attr)
+        if self.__parent:
+            element.append(self.__parent.generate_xml())
         properties = etree.Element('properties')
-        for Property in self._properties.values():
-            properties.append(Property.GenerateXml())
+        for Property in self.__properties.values():
+            properties.append(Property.generate_xml())
         relations = etree.Element('relations')
-        for Relation in self._relations:
-            relations.append(Relation.GenerateXml())
+        for Relation in self.__relations:
+            relations.append(Relation.generate_xml())
 
         element.append(properties)
         element.append(relations)
 
         return element
 
-    def GetSingularPropertyNames(self):
+    def get_singular_property_names(self):
         """
 
         Returns a list of properties that cannot have multiple values.
@@ -1488,9 +1484,9 @@ class EventType(MutableMapping):
         Returns:
            list(str): List of property names
         """
-        return [PropertyName for PropertyName, Property in self._properties.items() if Property.IsSingleValued()]
+        return [PropertyName for PropertyName, Property in self.__properties.items() if Property.is_single_valued()]
 
-    def GetMandatoryPropertyNames(self):
+    def get_mandatory_property_names(self):
         """
 
         Returns a list of properties that must have a value
@@ -1498,9 +1494,9 @@ class EventType(MutableMapping):
         Returns:
            list(str): List of property names
         """
-        return [PropertyName for PropertyName, Property in self._properties.items() if Property.IsMandatory()]
+        return [PropertyName for PropertyName, Property in self.__properties.items() if Property.is_mandatory()]
 
-    def validateEventStructure(self, edxmlEvent):
+    def validate_event_structure(self, edxml_event):
         """
 
         Validates the structure of the event by comparing its
@@ -1509,7 +1505,7 @@ class EventType(MutableMapping):
         more readable than standard XML validation exceptions.
 
         Args:
-          edxmlEvent (edxml.EDXMLEvent):
+          edxml_event (edxml.EDXMLEvent):
 
         Raises:
           EDXMLValidationError
@@ -1518,53 +1514,53 @@ class EventType(MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        if self.GetParent() is not None:
-            ParentPropertyMapping = self.GetParent().GetPropertyMap()
+        if self.get_parent() is not None:
+            parent_property_mapping = self.get_parent().get_property_map()
         else:
-            ParentPropertyMapping = {}
+            parent_property_mapping = {}
 
-        for propertyName, objects in edxmlEvent.items():
+        for propertyName, objects in edxml_event.items():
 
-            if propertyName in ParentPropertyMapping and len(objects) > 1:
+            if propertyName in parent_property_mapping and len(objects) > 1:
                 raise EDXMLValidationError(
                     ('An event of type %s contains multiple objects of property %s, '
                      'but this property can only have one object due to it being used '
-                     'in an implicit parent definition.') % (self._attr['name'], propertyName)
+                     'in an implicit parent definition.') % (self.__attr['name'], propertyName)
                 )
 
             # Check if the property is actually
             # supposed to be in this event.
-            if propertyName not in self.GetProperties():
+            if propertyName not in self.get_properties():
                 raise EDXMLValidationError(
                     ('An event of type %s contains an object of property %s, '
                      'but this property does not belong to the event type.') %
-                    (self._attr['name'], propertyName)
+                    (self.__attr['name'], propertyName)
                 )
 
         # Verify that match, min and max properties have an object.
-        for PropertyName in self.GetMandatoryPropertyNames():
-            if PropertyName not in edxmlEvent:
+        for PropertyName in self.get_mandatory_property_names():
+            if PropertyName not in edxml_event:
                 raise EDXMLValidationError(
                     ('An event of type %s is missing an object for property %s, '
                      'while it must have an object due to its configured merge strategy.')
-                    % (self._attr['name'], PropertyName)
+                    % (self.__attr['name'], PropertyName)
                 )
 
         # Verify that properties that cannot have multiple
         # objects actually have at most one object
-        for PropertyName in self.GetSingularPropertyNames():
-            if PropertyName in edxmlEvent:
-                if len(edxmlEvent[PropertyName]) > 1:
+        for PropertyName in self.get_singular_property_names():
+            if PropertyName in edxml_event:
+                if len(edxml_event[PropertyName]) > 1:
                     raise EDXMLValidationError(
                         ('An event of type %s has multiple objects of property %s, '
                          'while it cannot have more than one due to its configured merge strategy '
                          'or due to a implicit parent definition.') %
-                        (self._attr['name'], PropertyName)
+                        (self.__attr['name'], PropertyName)
                     )
 
         return self
 
-    def validateEventObjects(self, edxmlEvent):
+    def validate_event_objects(self, event):
         """
 
         Validates the object values in the event by comparing
@@ -1573,7 +1569,7 @@ class EventType(MutableMapping):
         exceptions.
 
         Args:
-          edxmlEvent (edxml.EDXMLEvent):
+          event (edxml.EDXMLEvent):
 
         Raises:
           EDXMLValidationError
@@ -1582,22 +1578,22 @@ class EventType(MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        for propertyName, objects in edxmlEvent.items():
+        for propertyName, objects in event.items():
 
-            propertyObjectType = self._properties[propertyName].GetObjectType()
+            property_object_type = self.__properties[propertyName].get_object_type()
 
             for objectValue in objects:
                 try:
-                    propertyObjectType.ValidateObjectValue(objectValue)
+                    property_object_type.validate_object_value(objectValue)
                 except EDXMLValidationError as e:
                     raise EDXMLValidationError(
                         'Invalid value for property %s of event type %s: %s' % (
-                            propertyName, self._attr['name'], e)
+                            propertyName, self.__attr['name'], e)
                     )
 
         return self
 
-    def normalizeEventObjects(self, edxmlEvent):
+    def normalize_event_objects(self, event):
         """
 
         Normalizes the object values in the event, resulting in
@@ -1605,7 +1601,7 @@ class EventType(MutableMapping):
         in case an object value cannot be normalized.
 
         Args:
-          edxmlEvent (edxml.EDXMLEvent):
+          event (edxml.EDXMLEvent):
 
         Raises:
           EDXMLValidationError
@@ -1614,22 +1610,22 @@ class EventType(MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        for propertyName, objects in edxmlEvent.items():
+        for propertyName, objects in event.items():
 
-            propertyObjectType = self._properties[propertyName].GetObjectType()
+            property_object_type = self.__properties[propertyName].get_object_type()
 
             try:
-                edxmlEvent[propertyName] = propertyObjectType.GetDataType(
-                ).NormalizeObjects(objects)
+                event[propertyName] = property_object_type.get_data_type(
+                ).normalize_objects(objects)
             except EDXMLValidationError as e:
                 raise EDXMLValidationError(
                     'Invalid value for property %s of event type %s: %s' % (
-                        propertyName, self._attr['name'], e)
+                        propertyName, self.__attr['name'], e)
                 )
 
         return self
 
-    def generateRelaxNG(self, Ontology):
+    def generate_relax_ng(self, ontology):
         """
 
         Returns an ElementTree containing a RelaxNG schema for validating
@@ -1638,7 +1634,7 @@ class EventType(MutableMapping):
         properties of the event type.
 
         Args:
-          Ontology (edxml.ontology.Ontology): Ontology containing the event type
+          ontology (edxml.ontology.Ontology): Ontology containing the event type
 
         Returns:
           ElementTree: The schema
@@ -1647,24 +1643,24 @@ class EventType(MutableMapping):
 
         properties = []
 
-        for PropertyName, Property in self._properties.items():
-            objectType = Ontology.GetObjectType(Property.GetObjectTypeName())
-            if PropertyName in self.GetMandatoryPropertyNames():
+        for property_name, event_property in self.__properties.items():
+            object_type = ontology.get_object_type(event_property.get_object_type_name())
+            if property_name in self.get_mandatory_property_names():
                 # Exactly one object must be present, no need
                 # to wrap it into an element to indicate this.
                 properties.append(
-                    e.element(objectType.GenerateRelaxNG(), name=PropertyName))
+                    e.element(object_type.generate_relaxng(), name=property_name))
             else:
-                if PropertyName in self.GetSingularPropertyNames():
+                if property_name in self.get_singular_property_names():
                     # Property is not mandatory, but if present there
                     # cannot be multiple values.
                     properties.append(e.optional(
-                        e.element(objectType.GenerateRelaxNG(), name=PropertyName)))
+                        e.element(object_type.generate_relaxng(), name=property_name)))
                 else:
                     # Property is not mandatory and can have any
                     # number of objects.
                     properties.append(e.zeroOrMore(
-                        e.element(objectType.GenerateRelaxNG(), name=PropertyName)))
+                        e.element(object_type.generate_relaxng(), name=property_name)))
 
         schema = e.element(
             e.optional(

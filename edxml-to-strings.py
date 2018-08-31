@@ -41,22 +41,22 @@ from edxml.EDXMLParser import EDXMLPullParser
 
 class EDXMLEventPrinter(EDXMLPullParser):
 
-    def __init__(self, Which='story', PrintColorized=False):
+    def __init__(self, which='story', print_colorized=False):
 
         super(EDXMLEventPrinter, self).__init__()
-        self.Which = Which
-        self.Colorize = PrintColorized
+        self.__which = which
+        self.__colorize = print_colorized
 
-    def _parsedEvent(self, edxmlEvent):
+    def _parsed_event(self, event):
 
-        print self.getOntology().GetEventType(edxmlEvent.GetTypeName()).EvaluateTemplate(
-            edxmlEvent, which=self.Which == 'summary', colorize=self.Colorize
-        )
+        print(self.get_ontology().get_event_type(event.get_type_name()).evaluate_template(
+            event, which=self.__which, colorize=self.__colorize
+        ))
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This utility outputs evaluated event story or summary templates for every event in a given
    EDXML file or input stream. The strings are printed to standard output.
@@ -79,47 +79,47 @@ def PrintHelp():
 
      cat input.edxml | edxml-to-strings.py -c
 
-"""
+""")
 
 # Program starts here.
 
 
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-Input = sys.stdin
-Which = 'story'
-Colorize = False
+argument_count = len(sys.argv)
+current_argument = 1
+event_input = sys.stdin
+which = 'story'
+colorize = False
 
 # Parse commandline arguments
 
-while CurrentArgument < ArgumentCount:
+while current_argument < argument_count:
 
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[current_argument] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        Input = open(sys.argv[CurrentArgument])
+    elif sys.argv[current_argument] == '-f':
+        current_argument += 1
+        event_input = open(sys.argv[current_argument])
 
-    elif sys.argv[CurrentArgument] == '--summary':
-        Which = 'summary'
+    elif sys.argv[current_argument] == '--summary':
+        which = 'summary'
 
-    elif sys.argv[CurrentArgument] == '-c':
-        Colorize = True
+    elif sys.argv[current_argument] == '-c':
+        colorize = True
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
+                         sys.argv[current_argument])
         sys.exit()
 
-    CurrentArgument += 1
+    current_argument += 1
 
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-    EDXMLEventPrinter(Which=Which, PrintColorized=Colorize).parse(Input)
+    EDXMLEventPrinter(which=which, print_colorized=colorize).parse(event_input)
 except KeyboardInterrupt:
     pass

@@ -41,9 +41,9 @@ import sys
 from edxml.EDXMLParser import EDXMLPullParser
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    This utility outputs various statistics for a set of EDXML files. It
    prints event counts, lists defined event types, object types, source
@@ -63,76 +63,76 @@ def PrintHelp():
 
      edxml-stats.py -f input01.edxml -f input02.edxml
 
-"""
+""")
 
 # Program starts here.
 
 
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-InputFiles = []
+argument_count = len(sys.argv)
+current_argument = 1
+input_files = []
 
 # Parse commandline arguments
 
-while CurrentArgument < ArgumentCount:
+while current_argument < argument_count:
 
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[current_argument] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        InputFiles.append((CurrentArgument, sys.argv[CurrentArgument]))
+    elif sys.argv[current_argument] == '-f':
+        current_argument += 1
+        input_files.append((current_argument, sys.argv[current_argument]))
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
+                         sys.argv[current_argument])
         sys.exit()
 
-    CurrentArgument += 1
+    current_argument += 1
 
-Parser = EDXMLPullParser(validate=False)
+parser = EDXMLPullParser(validate=False)
 
-if len(InputFiles) == 0:
+if len(input_files) == 0:
 
     # Feed the parser from standard input.
-    InputFiles = [('standard input', sys.stdin)]
+    input_files = [('standard input', sys.stdin)]
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 # We repeatedly use the same parser to process all EDXML files in succession.
 
-for FileName, File in InputFiles:
-    sys.stderr.write("Processing %s..." % FileName)
+for file_name, file in input_files:
+    sys.stderr.write("Processing %s..." % file_name)
 
     try:
-        Parser.parse(File)
+        parser.parse(file)
     except KeyboardInterrupt:
         sys.exit(0)
 
-print "\n"
-print "Total event count: %s\n" % Parser.getEventCounter()
-print "Event counts per type:\n"
+print("\n")
+print("Total event count: %s\n" % parser.get_event_counter())
+print("Event counts per type:\n")
 
-for EventTypeName in sorted(Parser.getOntology().GetEventTypeNames()):
-    print "%s: %s" % (string.ljust(EventTypeName, 40),
-                      Parser.getEventTypeCounter(EventTypeName))
+for event_type_name in sorted(parser.get_ontology().get_event_type_names()):
+    print("%s: %s" % (string.ljust(event_type_name, 40),
+                      parser.get_event_type_counter(event_type_name)))
 
-print "\nObject Types:\n"
+print("\nObject Types:\n")
 
-for ObjectTypeName in sorted(Parser.getOntology().GetObjectTypeNames()):
-    DataType = Parser.getOntology().GetObjectType(ObjectTypeName).GetDataType()
-    print "%s: %s" % (string.ljust(ObjectTypeName, 40), str(DataType))
+for object_type_name in sorted(parser.get_ontology().get_object_type_names()):
+    data_type = parser.get_ontology().get_object_type(object_type_name).get_data_type()
+    print("%s: %s" % (string.ljust(object_type_name, 40), str(data_type)))
 
 predicates = set()
-for EventTypeName, EventType in Parser.getOntology().GenerateEventTypes():
-    for Relation in EventType.GetPropertyRelations():
-        predicates.add(Relation.GetTypePredicate())
+for event_type_name, event_type in parser.get_ontology().get_event_types().items():
+    for relation in event_type.get_property_relations():
+        predicates.add(relation.get_type_predicate())
 
-print "\nProperty relation predicates:\n"
+print("\nProperty relation predicates:\n")
 for Predicate in sorted(predicates):
-    print Predicate
+    print(Predicate)
 
-print "\nSource URLs:\n"
-for Uri, Source in sorted(Parser.getOntology().GetEventSources()):
-    print Uri
+print("\nSource URLs:\n")
+for uri in sorted(parser.get_ontology().get_event_sources().keys()):
+    print(uri)

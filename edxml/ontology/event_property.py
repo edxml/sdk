@@ -27,42 +27,42 @@ class EventProperty(object):
     MERGE_MAX = 'max'
     """Merge strategy 'max'"""
 
-    def __init__(self, eventType, Name, ObjectType, Description=None, ConceptName=None, ConceptConfidence=0, Cnp=128,
-                 Unique=False, Optional=True, Multivalued=True, Merge='drop', Similar=''):
+    def __init__(self, event_type, name, object_type, description=None, concept_name=None, concept_confidence=0,
+                 cnp=128, unique=False, optional=True, multivalued=True, merge='drop', similar=''):
 
-        self._attr = {
-            'name': Name,
-            'object-type': ObjectType.GetName(),
-            'description': Description or Name.replace('-', ' '),
-            'concept': ConceptName,
-            'concept-confidence': int(ConceptConfidence),
-            'unique': bool(Unique),
-            'optional': bool(Optional),
-            'multivalued': bool(Multivalued),
-            'cnp': int(Cnp),
-            'merge': Merge,
-            'similar': Similar
+        self.__attr = {
+            'name': name,
+            'object-type': object_type.get_name(),
+            'description': description or name.replace('-', ' '),
+            'concept': concept_name,
+            'concept-confidence': int(concept_confidence),
+            'unique': bool(unique),
+            'optional': bool(optional),
+            'multivalued': bool(multivalued),
+            'cnp': int(cnp),
+            'merge': merge,
+            'similar': similar
         }
 
-        self._eventType = eventType  # type: edxml.ontology.EventType
-        self._objectType = ObjectType  # type: edxml.ontology.ObjectType
-        self._dataType = ObjectType.GetDataType()  # type: edxml.ontology.ObjectType
+        self.__event_type = event_type  # type: edxml.ontology.EventType
+        self.__object_type = object_type  # type: edxml.ontology.ObjectType
+        self.__data_type = object_type.get_data_type()  # type: edxml.ontology.ObjectType
 
-    def _setEventType(self, eventType):
-        self._eventType = eventType
+    def _set_event_type(self, event_type):
+        self.__event_type = event_type
         return self
 
-    def _childModifiedCallback(self):
+    def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._eventType._childModifiedCallback()
+        self.__event_type._child_modified_callback()
         return self
 
-    def _setAttr(self, key, value):
-        if self._attr[key] != value:
-            self._attr[key] = value
-            self._childModifiedCallback()
+    def _set_attr(self, key, value):
+        if self.__attr[key] != value:
+            self.__attr[key] = value
+            self._child_modified_callback()
 
-    def GetName(self):
+    def get_name(self):
         """
 
         Returns the property name.
@@ -70,9 +70,9 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['name']
+        return self.__attr['name']
 
-    def GetDescription(self):
+    def get_description(self):
         """
 
         Returns the property description.
@@ -80,9 +80,9 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['description']
+        return self.__attr['description']
 
-    def GetObjectTypeName(self):
+    def get_object_type_name(self):
         """
 
         Returns the name of the associated object type.
@@ -90,9 +90,9 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['object-type']
+        return self.__attr['object-type']
 
-    def GetMergeStrategy(self):
+    def get_merge_strategy(self):
         """
 
         Returns the merge strategy.
@@ -100,9 +100,9 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['merge']
+        return self.__attr['merge']
 
-    def GetConceptConfidence(self):
+    def get_concept_confidence(self):
         """
 
         Returns the concept identification confidence.
@@ -110,9 +110,9 @@ class EventProperty(object):
         Returns:
           int:
         """
-        return self._attr['concept-confidence']
+        return self.__attr['concept-confidence']
 
-    def GetSimilarHint(self):
+    def get_similar_hint(self):
         """
 
         Get the EDXML 'similar' attribute.
@@ -120,9 +120,9 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['similar']
+        return self.__attr['similar']
 
-    def GetObjectType(self):
+    def get_object_type(self):
         """
 
         Returns the ObjectType instance that is associated
@@ -131,9 +131,9 @@ class EventProperty(object):
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        return self._objectType
+        return self.__object_type
 
-    def GetDataType(self):
+    def get_data_type(self):
         """
 
         Returns the DataType instance that is associated
@@ -142,9 +142,9 @@ class EventProperty(object):
         Returns:
           edxml.ontology.DataType: The DataType instance
         """
-        return self._dataType
+        return self.__data_type
 
-    def GetConceptNamingPriority(self):
+    def get_concept_naming_priority(self):
         """
 
         Returns concept naming priority of the event property.
@@ -153,9 +153,9 @@ class EventProperty(object):
           int:
         """
 
-        return self._attr['cnp']
+        return self.__attr['cnp']
 
-    def RelateTo(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
+    def relate_to(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
         """
 
         Creates and returns a relation between this property and
@@ -166,24 +166,20 @@ class EventProperty(object):
         the two properties.
 
         Args:
-          TypePredicate (str): free form predicate
-          TargetPropertyName (str): Name of the related property
-          Reason (str): Relation description, with property placeholders
-          Confidence (int): Relation confidence [00,10]
-          Directed (bool): Directed relation True / False
+          type_predicate (str): free form predicate
+          target_property_name (str): Name of the related property
+          reason (str): Relation description, with property placeholders
+          confidence (int): Relation confidence [00,10]
+          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self._eventType.CreateRelation(
-            self.GetName(), TargetPropertyName,
-            Reason or '[[%s]] %s [[%s]]' % (
-                self.GetName(), TypePredicate, TargetPropertyName),
-            'other', TypePredicate, Confidence, Directed
-        )
+        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
+            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence, directed)
 
-    def RelateInter(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
+    def relate_inter(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
         """
 
         Creates and returns a relation between this property and
@@ -196,24 +192,20 @@ class EventProperty(object):
         the two properties.
 
         Args:
-          TypePredicate (str): free form predicate
-          TargetPropertyName (str): Name of the related property
-          Reason (str): Relation description, with property placeholders
-          Confidence (int): Relation confidence [0,10]
-          Directed (bool): Directed relation True / False
+          type_predicate (str): free form predicate
+          target_property_name (str): Name of the related property
+          reason (str): Relation description, with property placeholders
+          confidence (int): Relation confidence [0,10]
+          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self._eventType.CreateRelation(
-            self.GetName(), TargetPropertyName,
-            Reason or '[[%s]] %s [[%s]]' % (
-                self.GetName(), TypePredicate, TargetPropertyName),
-            'inter', TypePredicate, Confidence, Directed
-        )
+        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
+            self.get_name(), type_predicate, target_property_name), 'inter', type_predicate, confidence, directed)
 
-    def RelateIntra(self, TypePredicate, TargetPropertyName, Reason=None, Confidence=10, Directed=True):
+    def relate_intra(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
         """
 
         Creates and returns a relation between this property and
@@ -226,24 +218,20 @@ class EventProperty(object):
         the two properties.
 
         Args:
-          TargetPropertyName (str): Name of the related property
-          Reason (str): Relation description, with property placeholders
-          TypePredicate (str): free form predicate
-          Confidence (float): Relation confidence [0,10]
-          Directed (bool): Directed relation True / False
+          target_property_name (str): Name of the related property
+          reason (str): Relation description, with property placeholders
+          type_predicate (str): free form predicate
+          confidence (float): Relation confidence [0,10]
+          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self._eventType.CreateRelation(
-            self.GetName(), TargetPropertyName,
-            Reason or '[[%s]] %s [[%s]]' % (
-                self.GetName(), TypePredicate, TargetPropertyName),
-            'intra', TypePredicate, Confidence, Directed
-        )
+        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
+            self.get_name(), type_predicate, target_property_name), 'intra', type_predicate, confidence, directed)
 
-    def SetMergeStrategy(self, MergeStrategy):
+    def set_merge_strategy(self, merge_strategy):
         """
 
         Set the merge strategy of the property. This should
@@ -253,25 +241,25 @@ class EventProperty(object):
         valued when the merge strategy requires it.
 
         Args:
-          MergeStrategy (str): The merge strategy
+          merge_strategy (str): The merge strategy
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('merge', MergeStrategy)
+        self._set_attr('merge', merge_strategy)
 
-        if MergeStrategy == 'match':
-            self._setAttr('unique', True)
+        if merge_strategy == 'match':
+            self._set_attr('unique', True)
 
-        if MergeStrategy in ('match', 'min', 'max', 'replace'):
-            self._setAttr('multivalued', False)
+        if merge_strategy in ('match', 'min', 'max', 'replace'):
+            self._set_attr('multivalued', False)
 
-        if MergeStrategy in ('match', 'min', 'max'):
-            self._setAttr('optional', False)
+        if merge_strategy in ('match', 'min', 'max'):
+            self._set_attr('optional', False)
 
         return self
 
-    def SetDescription(self, Description):
+    def set_description(self, description):
         """
 
         Set the description of the property. This should
@@ -279,15 +267,15 @@ class EventProperty(object):
         has in the event type.
 
         Args:
-          Description (str): The property description
+          description (str): The property description
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('description', Description)
+        self._set_attr('description', description)
         return self
 
-    def Unique(self):
+    def unique(self):
         """
 
         Mark property as a unique property, which also sets
@@ -297,13 +285,13 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('unique', True)
-        self._setAttr('merge', 'match')
-        self._setAttr('optional', False)
-        self._setAttr('multivalued', False)
+        self._set_attr('unique', True)
+        self._set_attr('merge', 'match')
+        self._set_attr('optional', False)
+        self._set_attr('multivalued', False)
         return self
 
-    def IsUnique(self):
+    def is_unique(self):
         """
 
         Returns True if property is unique, returns False otherwise
@@ -311,9 +299,9 @@ class EventProperty(object):
         Returns:
           bool:
         """
-        return self._attr['unique']
+        return self.__attr['unique']
 
-    def IsOptional(self):
+    def is_optional(self):
         """
 
         Returns True if property is optional, returns False otherwise
@@ -321,9 +309,9 @@ class EventProperty(object):
         Returns:
           bool:
         """
-        return self._attr['optional']
+        return self.__attr['optional']
 
-    def IsMandatory(self):
+    def is_mandatory(self):
         """
 
         Returns True if property is mandatory, returns False otherwise
@@ -331,9 +319,9 @@ class EventProperty(object):
         Returns:
           bool:
         """
-        return not self._attr['optional']
+        return not self.__attr['optional']
 
-    def IsMultiValued(self):
+    def is_multi_valued(self):
         """
 
         Returns True if property is multi-valued, returns False otherwise
@@ -341,9 +329,9 @@ class EventProperty(object):
         Returns:
           bool:
         """
-        return self._attr['multivalued']
+        return self.__attr['multivalued']
 
-    def IsSingleValued(self):
+    def is_single_valued(self):
         """
 
         Returns True if property is single-valued, returns False otherwise
@@ -351,26 +339,40 @@ class EventProperty(object):
         Returns:
           bool:
         """
-        return not self._attr['multivalued']
+        return not self.__attr['multivalued']
 
-    def Identifies(self, ConceptName, Confidence):
+    def identifies(self, concept_name, confidence):
         """
 
         Marks the property as an identifier for specified
         concept, with specified confidence.
 
         Args:
-          ConceptName (str): concept name
-          Confidence (int): concept identification confidence [0, 10]
+          concept_name (str): concept name
+          confidence (int): concept identification confidence [0, 10]
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('concept', ConceptName)
-        self._setAttr('concept-confidence', int(Confidence))
+        self._set_attr('concept', concept_name)
+        self._set_attr('concept-confidence', int(confidence))
         return self
 
-    def SetConceptNamingPriority(self, Priority):
+    def set_multi_valued(self, is_multivalued):
+        """
+        Configures the property as multi-valued or single-valued
+
+        Args:
+            is_multivalued (bool):
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+
+        """
+        self._set_attr('multivalued', is_multivalued)
+        return self
+
+    def set_concept_naming_priority(self, priority):
         """
 
         Configure the concept naming priority of
@@ -378,15 +380,15 @@ class EventProperty(object):
         specified using this method, it's value is 128.
 
         Args:
-          Priority (int): The EDXML cnp attribute
+          priority (int): The EDXML cnp attribute
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('cnp', int(Priority))
+        self._set_attr('cnp', int(priority))
         return self
 
-    def GetConceptName(self):
+    def get_concept_name(self):
         """
 
         Returns the name of the concept if the property is an
@@ -395,23 +397,23 @@ class EventProperty(object):
         Returns:
           str:
         """
-        return self._attr['concept']
+        return self.__attr['concept']
 
-    def HintSimilar(self, Similarity):
+    def hint_similar(self, similarity):
         """
 
         Set the EDXML 'similar' attribute.
 
         Args:
-          Similarity (str): similar attribute string
+          similarity (str): similar attribute string
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._setAttr('similar', Similarity)
+        self._set_attr('similar', similarity)
         return self
 
-    def MergeAdd(self):
+    def merge_add(self):
         """
 
         Set merge strategy to 'add'.
@@ -419,10 +421,10 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.SetMergeStrategy('add')
+        self.set_merge_strategy('add')
         return self
 
-    def MergeReplace(self):
+    def merge_replace(self):
         """
 
         Set merge strategy to 'replace'.
@@ -430,10 +432,10 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.SetMergeStrategy('replace')
+        self.set_merge_strategy('replace')
         return self
 
-    def MergeDrop(self):
+    def merge_drop(self):
         """
 
         Set merge strategy to 'drop', which is
@@ -442,10 +444,10 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.SetMergeStrategy('drop')
+        self.set_merge_strategy('drop')
         return self
 
-    def MergeMin(self):
+    def merge_min(self):
         """
 
         Set merge strategy to 'min'.
@@ -453,10 +455,10 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.SetMergeStrategy('min')
+        self.set_merge_strategy('min')
         return self
 
-    def MergeMax(self):
+    def merge_max(self):
         """
 
         Set merge strategy to 'max'.
@@ -464,10 +466,10 @@ class EventProperty(object):
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.SetMergeStrategy('max')
+        self.set_merge_strategy('max')
         return self
 
-    def Validate(self):
+    def validate(self):
         """
 
         Checks if the property definition is valid. It only looks
@@ -482,89 +484,89 @@ class EventProperty(object):
           edxml.ontology.EventProperty: The EventProperty instance
 
         """
-        if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self._attr['name']):
+        if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
             raise EDXMLValidationError(
-                'Invalid property name in property definition: "%s"' % self._attr['name'])
+                'Invalid property name in property definition: "%s"' % self.__attr['name'])
 
-        if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self._attr['object-type']):
+        if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self.__attr['object-type']):
             raise EDXMLValidationError(
-                'Invalid object type name in property definition: "%s"' % self._attr['object-type'])
+                'Invalid object type name in property definition: "%s"' % self.__attr['object-type'])
 
-        if not len(self._attr['description']) <= 128:
+        if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
-                'Property description is too long: "%s"' % self._attr['description'])
+                'Property description is too long: "%s"' % self.__attr['description'])
 
-        if not len(self._attr['similar']) <= 64:
+        if not len(self.__attr['similar']) <= 64:
             raise EDXMLValidationError(
-                'Property attribute is too long: similar="%s"' % self._attr['similar'])
+                'Property attribute is too long: similar="%s"' % self.__attr['similar'])
 
-        if not 0 <= int(self._attr['cnp']) < 256:
+        if not 0 <= int(self.__attr['cnp']) < 256:
             raise EDXMLValidationError(
                 'Property "%s" has an invalid concept naming priority: "%d"' % (
-                    self._attr['name'], self._attr['cnp'])
+                    self.__attr['name'], self.__attr['cnp'])
             )
 
-        if self.IsUnique():
-            if self.IsOptional():
+        if self.is_unique():
+            if self.is_optional():
                 raise EDXMLValidationError(
-                    'Property "%s" is unique and optional at the same time' % self._attr['name']
+                    'Property "%s" is unique and optional at the same time' % self.__attr['name']
                 )
-            if self.IsMultiValued():
+            if self.is_multi_valued():
                 raise EDXMLValidationError(
-                    'Property "%s" is unique and multivalued at the same time' % self._attr[
+                    'Property "%s" is unique and multivalued at the same time' % self.__attr[
                         'name']
                 )
 
-        if self._attr['merge'] in ('match', 'min', 'max') and self.IsOptional():
+        if self.__attr['merge'] in ('match', 'min', 'max') and self.is_optional():
             raise EDXMLValidationError(
-                'Property "%s" cannot be optional due to its merge strategy' % self._attr[
+                'Property "%s" cannot be optional due to its merge strategy' % self.__attr[
                     'name']
             )
 
-        if self._attr['merge'] in ('match', 'min', 'max', 'replace') and self.IsMultiValued():
+        if self.__attr['merge'] in ('match', 'min', 'max', 'replace') and self.is_multi_valued():
             raise EDXMLValidationError(
-                'Property "%s" cannot be multivalued due to its merge strategy' % self._attr[
+                'Property "%s" cannot be multivalued due to its merge strategy' % self.__attr[
                     'name']
             )
 
-        if not self._attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
+        if not self.__attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
             raise EDXMLValidationError(
-                'Invalid property merge strategy: "%s"' % self._attr['merge'])
+                'Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
-        if self._attr['concept-confidence'] < 0 or self._attr['concept-confidence'] > 10:
+        if self.__attr['concept-confidence'] < 0 or self.__attr['concept-confidence'] > 10:
             raise EDXMLValidationError(
-                'Invalid property concept confidence: "%d"' % self._attr['concept-confidence'])
+                'Invalid property concept confidence: "%d"' % self.__attr['concept-confidence'])
 
         return self
 
     @classmethod
-    def Read(cls, propertyElement, parentEventType):
-        name = propertyElement.attrib['name']
-        objectTypeName = propertyElement.attrib['object-type']
-        objectType = parentEventType._ontology.GetObjectType(objectTypeName)
+    def create_from_xml(cls, property_element, ontology, parent_event_type):
+        name = property_element.attrib['name']
+        object_type_name = property_element.attrib['object-type']
+        object_type = ontology.get_object_type(object_type_name)
 
-        if not objectType:
+        if not object_type:
             raise EDXMLValidationError(
                 'Property "%s" of event type "%s" refers to undefined object type "%s".' %
-                (name, parentEventType.GetName(), objectTypeName)
+                (name, parent_event_type.get_name(), object_type_name)
             )
 
         return cls(
-            parentEventType,
-            propertyElement.attrib['name'],
-            objectType,
-            propertyElement.attrib['description'],
-            propertyElement.get('concept'),
-            propertyElement.get('concept-confidence', 0),
-            int(propertyElement.get('cnp', 0)),
-            propertyElement.get('unique', 'false') == 'true',
-            propertyElement.get('optional') == 'true',
-            propertyElement.get('multivalued') == 'true',
-            propertyElement.get('merge', 'drop'),
-            propertyElement.get('similar', '')
+            parent_event_type,
+            property_element.attrib['name'],
+            object_type,
+            property_element.attrib['description'],
+            property_element.get('concept'),
+            property_element.get('concept-confidence', 0),
+            int(property_element.get('cnp', 0)),
+            property_element.get('unique', 'false') == 'true',
+            property_element.get('optional') == 'true',
+            property_element.get('multivalued') == 'true',
+            property_element.get('merge', 'drop'),
+            property_element.get('similar', '')
         )
 
-    def Update(self, eventProperty):
+    def update(self, event_property):
         """
 
         Updates the event property to match the EventProperty
@@ -572,44 +574,44 @@ class EventProperty(object):
         updated instance.
 
         Args:
-          eventProperty (edxml.ontology.EventProperty): The new EventProperty instance
+          event_property (edxml.ontology.EventProperty): The new EventProperty instance
 
         Returns:
           edxml.ontology.EventProperty: The updated EventProperty instance
 
         """
-        if self._attr['name'] != eventProperty.GetName():
+        if self.__attr['name'] != event_property.get_name():
             raise Exception('Attempt to update event property "%s" with event property "%s".' %
-                            (self._attr['name'], eventProperty.GetName()))
+                            (self.__attr['name'], event_property.get_name()))
 
-        if self._attr['description'] != eventProperty.GetDescription():
+        if self.__attr['description'] != event_property.get_description():
             raise Exception('Attempt to update event property "%s", but descriptions do not match.' %
-                            self._attr['name'],
-                            (self._attr['description'], eventProperty.GetName()))
+                            self.__attr['name'],
+                            (self.__attr['description'], event_property.get_name()))
 
-        if int(self._attr['cnp']) != eventProperty.GetConceptNamingPriority():
+        if int(self.__attr['cnp']) != event_property.get_concept_naming_priority():
             raise Exception(
                 'Attempt to update event property "%s", but Entity Naming Priorities do not match.' %
-                self._attr['name'],
-                (self._attr['cnp'], eventProperty.GetName()))
+                self.__attr['name'],
+                (self.__attr['cnp'], event_property.get_name()))
 
-        if self._attr['optional'] != eventProperty.IsOptional():
+        if self.__attr['optional'] != event_property.is_optional():
             raise Exception(
-                'Attempt to update event property "%s", but "optional" attributes do not match.' % self._attr[
+                'Attempt to update event property "%s", but "optional" attributes do not match.' % self.__attr[
                     'name']
             )
 
-        if self._attr['multivalued'] != eventProperty.IsMultiValued():
+        if self.__attr['multivalued'] != event_property.is_multi_valued():
             raise Exception(
-                'Attempt to update event property "%s", but "multivalued" attributes do not match.' % self._attr[
+                'Attempt to update event property "%s", but "multivalued" attributes do not match.' % self.__attr[
                     'name']
             )
 
-        self.Validate()
+        self.validate()
 
         return self
 
-    def GenerateXml(self):
+    def generate_xml(self):
         """
 
         Generates an lxml etree Element representing
@@ -620,12 +622,12 @@ class EventProperty(object):
 
         """
 
-        attribs = dict(self._attr)
+        attribs = dict(self.__attr)
 
-        attribs['concept-confidence'] = '%d' % self._attr['concept-confidence']
-        attribs['unique'] = 'true' if self._attr['unique'] else 'false'
-        attribs['optional'] = 'true' if self._attr['optional'] else 'false'
-        attribs['multivalued'] = 'true' if self._attr['multivalued'] else 'false'
+        attribs['concept-confidence'] = '%d' % self.__attr['concept-confidence']
+        attribs['unique'] = 'true' if self.__attr['unique'] else 'false'
+        attribs['optional'] = 'true' if self.__attr['optional'] else 'false'
+        attribs['multivalued'] = 'true' if self.__attr['multivalued'] else 'false'
         attribs['cnp'] = '%d' % attribs['cnp']
 
         if attribs['concept'] is None:

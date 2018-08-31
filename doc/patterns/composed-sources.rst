@@ -46,26 +46,26 @@ The ``Transcoder`` class can automatically create EDXML events for you if you pr
 
   {'fieldname.0.subfieldname': 'property-name'}
 
-The resulting EDXML events are passed to the PostProcess() method of the transcoder where they can be post-processed if necessary.
+The resulting EDXML events are passed to the post_process() method of the transcoder where they can be post-processed if necessary.
 
 Transcoding Data Flow
 ---------------------
 
-Let us have a look at how input data flows through the various components to finally produce EDXML output. In general, reading the input data records is the responsibility of you, the transcoder developer. You need to process the input data to the point where it can be chopped up in individual input records. Each input record can then be passed to the :func:`edxml.transcode.TranscoderMediator.Process()` method of the mediator. From that moment on, the EDXML SDK takes over processing from you. Depending on the mediator implementation that you use, you may get lucky and also leave the parsing of input data to the mediator. For example, the :class:`edxml.transcode.xml.XmlTranscoderMediator` features a :func:`edxml.transcode.xml.XmlTranscoderMediator.Parse()` method that accepts file names and file-like objects. The XML mediator will use the XPath selectors from all registered transcoders to extract XML elements from the input data and pass them to the ``Process()`` method of the mediator.
+Let us have a look at how input data flows through the various components to finally produce EDXML output. In general, reading the input data records is the responsibility of you, the transcoder developer. You need to process the input data to the point where it can be chopped up in individual input records. Each input record can then be passed to the :func:`edxml.transcode.TranscoderMediator.process()` method of the mediator. From that moment on, the EDXML SDK takes over processing from you. Depending on the mediator implementation that you use, you may get lucky and also leave the parsing of input data to the mediator. For example, the :class:`edxml.transcode.xml.XmlTranscoderMediator` features a :func:`edxml.transcode.xml.XmlTranscoderMediator.parse()` method that accepts file names and file-like objects. The XML mediator will use the XPath selectors from all registered transcoders to extract XML elements from the input data and pass them to the ``Process()`` method of the mediator.
 
-The Process() method of the mediator will inspect the input record and check which of the registered selectors matches the record. The mediator will then pass the input record to the :func:`edxml.transcode.Transcoder.Generate()` method of the transcoder. This method is a Python generator that will use the various class constants to generate one or more EDXML events from the input record. The generated EDXML events are intercepted inside the ``Process()`` method of the mediator. The mediator will then pass each EDXML event to the :func:`edxml.transcode.Transcoder.PostProcess()` method of the transcoder, which is also a generator. The default implementation of this generator just passes the generated EDXML events unmodified. Transcoder developers can override it to edit the generated EDXML events before they are output.
+The process() method of the mediator will inspect the input record and check which of the registered selectors matches the record. The mediator will then pass the input record to the :func:`edxml.transcode.Transcoder.generate()` method of the transcoder. This method is a Python generator that will use the various class constants to generate one or more EDXML events from the input record. The generated EDXML events are intercepted inside the ``Process()`` method of the mediator. The mediator will then pass each EDXML event to the :func:`edxml.transcode.Transcoder.PostProcess()` method of the transcoder, which is also a generator. The default implementation of this generator just passes the generated EDXML events unmodified. Transcoder developers can override it to edit the generated EDXML events before they are output.
 
-Finally, the EDXML events produced by the ``PostProcess()`` method are written to the output EDXML stream.
+Finally, the EDXML events produced by the ``post_process()`` method are written to the output EDXML stream.
 
 To recapitulate, during the transcoding process the data flows through various class methods like this:
 
-1. :func:`edxml.transcode.TranscoderMediator.Process()`
-2. :func:`edxml.transcode.Transcoder.Generate()`
-3. :func:`edxml.transcode.Transcoder.PostProcess()`
+1. :func:`edxml.transcode.TranscoderMediator.process()`
+2. :func:`edxml.transcode.Transcoder.generate()`
+3. :func:`edxml.transcode.Transcoder.post_process()`
 
-Now that the data flow is clear, we can also see how to control the transcoding process by overriding class methods. First of all, the ``Process()`` method if the mediator inspects the passed input record and decides which transcoder to invoke. Overriding this method allows the decision making process to be manipulated. We will have a look at a specific use case later. Second, the ``Generate()`` method of the transcoder performs the actual transcoding: It generates EDXML events from the input record that is passed into it. Overriding it allows transcoder developers to edit the input records before the parent implementation uses them to create EDXML events. And lastly, the ``PostProcess()`` method of the transcoder performs optional post-processing on the EDXML events.
+Now that the data flow is clear, we can also see how to control the transcoding process by overriding class methods. First of all, the ``process()`` method if the mediator inspects the passed input record and decides which transcoder to invoke. Overriding this method allows the decision making process to be manipulated. We will have a look at a specific use case later. Second, the ``generate()`` method of the transcoder performs the actual transcoding: It generates EDXML events from the input record that is passed into it. Overriding it allows transcoder developers to edit the input records before the parent implementation uses them to create EDXML events. And lastly, the ``PostProcess()`` method of the transcoder performs optional post-processing on the EDXML events.
 
-Most use cases involve overriding either or both of the methods of the Transcoder class. The decision on which methods to override depends on the type of processing that you want to do, personal preference and performance requirements. For example, removing irrelevant fields from the input records early in the transcoding process may yield a performance gain. If you wish to generate multiple output events from a single input record, overriding the ``PostProcess()`` method may be the most convenient way to do that. It could be done by distributing the properties of a single generated EDXML super-event into multiple output events or by performing analysis on the generated event and yielding the analysis results in the form of multiple EDXML events. If you are transcoding XML data, manipulating the XML elements by overriding the ``Generate()`` method may yield performance gains.
+Most use cases involve overriding either or both of the methods of the Transcoder class. The decision on which methods to override depends on the type of processing that you want to do, personal preference and performance requirements. For example, removing irrelevant fields from the input records early in the transcoding process may yield a performance gain. If you wish to generate multiple output events from a single input record, overriding the ``post_process()`` method may be the most convenient way to do that. It could be done by distributing the properties of a single generated EDXML super-event into multiple output events or by performing analysis on the generated event and yielding the analysis results in the form of multiple EDXML events. If you are transcoding XML data, manipulating the XML elements by overriding the ``generate()`` method may yield performance gains.
 
 Generating Ontology Elements
 ----------------------------
@@ -76,10 +76,10 @@ The class methods for generating object types and concepts need not be overridde
 
 .. code-block:: python
 
-  def GenerateConcepts(self):
-    yield self._ontology.CreateConcept('file')\
-                        .SetDescription('a computer resource for recording data')\
-                        .SetDisplayName('file')
+  def generate_concepts(self):
+    yield self._ontology.create_concept('file')\
+                        .set_description('a computer resource for recording data')\
+                        .set_display_name('file')
 
 
 
@@ -119,7 +119,7 @@ The ``Mediator`` class fully supports the concept of a fallback event type. Atta
 1. Register your fallback transcoder with the mediator using ``RECORD_OF_UNKNOWN_TYPE`` as selector. The mediator will then invoke the fallback transcoder whenever it encounters an input record for which no transcoder is registered.
 2. The ``TYPE_MAP`` dictionary constant in the fallback transcoder must contain just one key: :keyword:`None`. The value is the name of the generic fallback event type produced by the fallback transcoder, as usual.
 
-In case you are writing an XML transcoder, the question may arise how the mediator knows how to extract XML elements for the fallback transcoder given the fact that it will not use an XPath expression to register itself. The answer lies in the `tags` argument of the :func:`edxml.transcode.xml.XmlTranscoderMediator.Parse()` method. This arguments allows specifying a list of XML element names of elements that will be considered for feeding to a transcoder. Any considered element that does not match any of the registered XPath expressions will be given to the fallback transcoder, if any.
+In case you are writing an XML transcoder, the question may arise how the mediator knows how to extract XML elements for the fallback transcoder given the fact that it will not use an XPath expression to register itself. The answer lies in the `tags` argument of the :func:`edxml.transcode.xml.XmlTranscoderMediator.parse()` method. This arguments allows specifying a list of XML element names of elements that will be considered for feeding to a transcoder. Any considered element that does not match any of the registered XPath expressions will be given to the fallback transcoder, if any.
 
 .. epigraph::
 
@@ -138,21 +138,21 @@ the mediator will use the fallback transcoder for all records except for records
 Multi-Field Selectors
 ---------------------
 
-Sometimes, you may need to inspect multiple fields in the input records in order to decide which transcoder to use. In general, mediators only allow specifying a single record field as a selector. This problem may be solved by overriding the ``Process()`` method of the mediator. As pointed out earlier, this method is where input records begin their journey to become EDXML output events. We can override it, modify the input record and then invoke the original method implementation. Suppose that our input records are JSON records containing two integer fields ``type`` and ``subtype``. We want to route input records to transcoders depending on the value of both fields. This can be achieved by dynamically replacing these fields with a single field that combines the two, like this:
+Sometimes, you may need to inspect multiple fields in the input records in order to decide which transcoder to use. In general, mediators only allow specifying a single record field as a selector. This problem may be solved by overriding the ``process()`` method of the mediator. As pointed out earlier, this method is where input records begin their journey to become EDXML output events. We can override it, modify the input record and then invoke the original method implementation. Suppose that our input records are JSON records containing two integer fields ``type`` and ``subtype``. We want to route input records to transcoders depending on the value of both fields. This can be achieved by dynamically replacing these fields with a single field that combines the two, like this:
 
  .. code-block:: python
 
   from edxml.transcode.json import JsonTranscoderMediator
 
-  class myMediator(JsonTranscoderMediator):
+  class MyMediator(JsonTranscoderMediator):
 
     TYPE_FIELD = 'ctype'
 
-    def Process(self, JsonData):
-      JsonData['ctype'] = str(JsonData['type']) + ':' + str(JsonData['subtype'])
-      super(myMediator, self).Process(JsonData)
+    def process(self, json):
+      json['ctype'] = str(json['type']) + ':' + str(json['subtype'])
+      super(MyMediator, self).process(json)
 
-Now we can register a transcoder using a record type of ``42:4673`` for instance. If you need even more complex record routing logic, writing a full replacement for the ``Process()`` method is the way to go.
+Now we can register a transcoder using a record type of ``42:4673`` for instance. If you need even more complex record routing logic, writing a full replacement for the ``process()`` method is the way to go.
 
 Parsing broken XML input
 ------------------------
@@ -162,14 +162,14 @@ In an ideal world, the input data for your transcoder is produced by a data sour
 1. Ask the XML parser to try and ignore errors
 2. Dynamically fix the input data using a file-like object
 
-Ignoring errors is the simplest solution and can be done by using the ``recover=True`` argument of the :func:`edxml.transcode.xml.XmlTranscoderMediator.Parse()` method. This will make the parser try to recover from errors. However, error recovery may result in data loss and other side effects. If you happen to know in what way the input data is broken, writing a file-like object that fixes the input data just before parsing may yield a more satisfactory result. The idea is that you write a Python class that acts like a file and pass an instance to the ``Parse()`` method of the XML transcoder. The transcoder will then read data from this class instance, not from the original input data. The class instance accepts read requests from the XML transcoder. It responds by reading from the original input data, fixing it and returning the resulting fixed XML data. Using a custom file-like object like this allows you to get in between the original data file and the parser reading from it.
+Ignoring errors is the simplest solution and can be done by using the ``recover=True`` argument of the :func:`edxml.transcode.xml.XmlTranscoderMediator.parse()` method. This will make the parser try to recover from errors. However, error recovery may result in data loss and other side effects. If you happen to know in what way the input data is broken, writing a file-like object that fixes the input data just before parsing may yield a more satisfactory result. The idea is that you write a Python class that acts like a file and pass an instance to the ``Parse()`` method of the XML transcoder. The transcoder will then read data from this class instance, not from the original input data. The class instance accepts read requests from the XML transcoder. It responds by reading from the original input data, fixing it and returning the resulting fixed XML data. Using a custom file-like object like this allows you to get in between the original data file and the parser reading from it.
 
 Debugging Transcoders
 ---------------------
 
 Since real life input data can be horrendously inconsistent or downright broken, debugging your transcoder is part of the effort. There are a couple of things that may get in your way while developing transcoders that you should be aware of. For instance, the EDXML writer buffers output events by default. This may lead to confusion when the EDXML output that precedes an exception is incomplete. Also, by default the mediator will catch any exceptions thrown during processing, print a warning and continue. These warnings are easily missed.
 
-By calling :func:`edxml.transcode.TranscoderMediator.Debug()`, debug mode is enabled. In debug mode, output buffering is disabled and the transcoding process will abort whenever something goes wrong. Also, the transcoding process produces more informative warning messages.
+By calling :func:`edxml.transcode.TranscoderMediator.debug()`, debug mode is enabled. In debug mode, output buffering is disabled and the transcoding process will abort whenever something goes wrong. Also, the transcoding process produces more informative warning messages.
 
 Running Transcoders in Production
 ---------------------------------
@@ -178,4 +178,4 @@ When running a transcoder in production, there is a trade-off to make between hi
 
 Generating an EDXML event that is invalid raises an exception. By default, the mediator does not handle this exception, or any other exceptions that might be raised by a transcoder. YOU CAN HANDLE THESE, OR ALLOW CRASH, OR USE IGNORE INVALID EVENTS, BELOW.
 
-The :func:`edxml.transcode.TranscoderMediator.IgnoreInvalidEvents()` method will enable skipping any EDXML output events that are not valid. Events that failed to produce due to exceptions raised during the transcoding of an input record are also considered invalid events. The invalid events will be ignored and processing will continue normally.
+The :func:`edxml.transcode.TranscoderMediator.ignore_invalid_events()` method will enable skipping any EDXML output events that are not valid. Events that failed to produce due to exceptions raised during the transcoding of an input record are also considered invalid events. The invalid events will be ignored and processing will continue normally.

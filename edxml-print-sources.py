@@ -35,40 +35,22 @@
 #  specified EDXML file.
 
 import sys
-from xml.sax import make_parser
-from xml.sax.saxutils import XMLFilterBase
-from edxml.EDXMLBase import EDXMLProcessingInterrupted
+
+from edxml.EDXMLParser import ProcessingInterrupted, EDXMLOntologyPullParser
 
 
-class EDXMLParser(XMLFilterBase):
+class EdxmlSourceParser(EDXMLOntologyPullParser):
 
-    def __init__(self, upstream, SkipEvents=False):
+    def _parsed_ontology(self, ontology):
+        self.__sources = ontology.get_event_sources().keys()
 
-        self.Sources = []
-        self.SkipEvents = SkipEvents
-        XMLFilterBase.__init__(self, upstream)
-
-    def startElement(self, name, attrs):
-
-        if name == 'source':
-            Url = attrs.get('url', "")
-            if Url not in self.Sources:
-                self.Sources.append(Url)
-
-    def endElement(self, name):
-
-        if self.SkipEvents:
-            if name == 'ontology':
-
-                # We hit the end of the ontology element,
-                # and we were instructed to skip parsing the
-                # event data, so we should abort parsing now.
-                raise EDXMLProcessingInterrupted('')
+    def get_sources(self):
+        return self.__sources
 
 
-def PrintHelp():
+def print_help():
 
-    print """
+    print("""
 
    Python script that outputs a list of source URLs that is found in
    specified EDXML file.
@@ -85,49 +67,42 @@ def PrintHelp():
 
      cat input.edxml | edxml-print-sources.py > urls.txt
 
-"""
+""")
 
 # Program starts here.
 
 
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-Input = sys.stdin
+argument_count = len(sys.argv)
+current_argument = 1
+event_input = sys.stdin
 
 # Parse commandline arguments
 
-while CurrentArgument < ArgumentCount:
+while current_argument < argument_count:
 
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[current_argument] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        Input = open(sys.argv[CurrentArgument])
+    elif sys.argv[current_argument] == '-f':
+        current_argument += 1
+        event_input = open(sys.argv[current_argument])
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
+                         sys.argv[current_argument])
         sys.exit()
 
-    CurrentArgument += 1
+    current_argument += 1
 
-
-SaxParser = make_parser()
-
-Parser = EDXMLParser(SaxParser, True)
-
-SaxParser.setContentHandler(Parser)
-
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-    SaxParser.parse(Input)
-except EDXMLProcessingInterrupted:
+    with EdxmlSourceParser() as parser:
+        parser.parse(event_input)
+        for source in parser.get_sources():
+            print(source)
+except ProcessingInterrupted:
     pass
-
-for Source in Parser.Sources:
-    print Source

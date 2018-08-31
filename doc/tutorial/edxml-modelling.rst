@@ -222,10 +222,10 @@ Having said that, let us now have a look at defining property relations. Remembe
 
  .. code-block:: python
 
-  myEventType['user'].RelateTo('has access to', 'server')\
-    .Because('a user named [[user]] issued a command on FTP server [[server]]')
+  my_event_type['user'].relate_to('has access to', 'server')\
+    .because('a user named [[user]] issued a command on FTP server [[server]]')
 
-There you have it. You can almost read it like a normal English sentence. The ``RelateTo()`` method creates and returns the actual relation between properties ``user`` and ``server``, using predicate ``has access to``. Then, the reason of the relation is set. This string is a template string, similar to the event story templates we started out with. It is another little story, answering the question:
+There you have it. You can almost read it like a normal English sentence. The ``relate_to()`` method creates and returns the actual relation between properties ``user`` and ``server``, using predicate ``has access to``. Then, the reason of the relation is set. This string is a template string, similar to the event story templates we started out with. It is another little story, answering the question:
 
   `Why are these two values related?`
 
@@ -233,9 +233,9 @@ These 'relation stories' are useful to analysts studying the structure of a data
 
  .. code-block:: python
 
-  myEventType['user'].RelateTo('has access to', 'server')\
-    .Because('a user named [[user]] issued a command on FTP server [[server]]')\
-    .SetConfidence(10)
+  my_event_type['user'].relate_to('has access to', 'server')\
+    .because('a user named [[user]] issued a command on FTP server [[server]]')\
+    .set_confidence(10)
 
 In this case, we actually don't need to specify confidence, because confidence is set to ``10`` by default. In using this confidence value, we assumed that each input record represents a command that can only be issued by users that have access permission to the FTP server.
 
@@ -254,16 +254,16 @@ Let us work through all three stages and apply them to our FTP example. First, w
 
  .. code-block:: python
 
-    myOntology.CreateConcept('computer')\
-              .SetDescription('some kind of a computing device')\
-              .SetDisplayName('computer')
+    my_ontology.create_concept('computer')\
+               .set_description('some kind of a computing device')\
+               .set_display_name('computer')
 
 Pretty straight forward and similar to defining object types. Next, we adjust the ``client`` and ``server`` property definitions to refer to the computer concept:
 
  .. code-block:: python
 
-    myEventType['client'].Identifies('computer', 9)
-    myEventType['server'].Identifies('computer', 9)
+    my_event_type['client'].identifies('computer', 9)
+    my_event_type['server'].identifies('computer', 9)
 
 In the above code, we assigned an identification confidence of ``9``. This confidence value indicates how strong of an identifier the property is for the concept. Since it is possible for two different computers to have the same IPv4 address, we chose not to stick with the default of ``10`` and set a slightly lower value. Similar to property relation confidences, this is a hint that both human analysts and computer algorithms can use to assess the accuracy of analysis results.
 
@@ -275,8 +275,8 @@ Lastly, concept properties can (and should!) be related using property relations
 
  .. code-block:: python
 
-  myEventType['client'].RelateIntra('communicates with', 'server')\
-    .Because('[[client]] connected to FTP server [[server]]')
+  my_event_type['client'].relate_intra('communicates with', 'server')\
+    .because('[[client]] connected to FTP server [[server]]')
 
 The only difference between a 'regular' property relation and an intra-concept or inter-concept relation is the name of the method used to create it. Using the semantics we expressed above, computers can use FTP records to construct network graphs showing how multiple computers are wired together.
 
@@ -291,11 +291,11 @@ Besides property objects, events may also contain event content. Event content i
 
 Event content is also frequently used to store the original input data that was used to produce the event. Besides its obvious use for reproducing the original data set from the EDXML data, there is another interesting use case This allows for for re-generating an EDXML data set using an updated version of the transcoder. When an EDXML transcoder supports reading input data from, say, a logging file *or* from a previously generated EDXML data file, the transcoder will be able to upgrade EDXML data sets that were produced by older versions of itself. This is particularly useful when :doc:`transcoding composed data sources <../patterns/composed-sources>` using a transcoder that gradually supports a greater set of input record types with each new version.
 
-Adding content to an event is simple: Just invoke its :func:`edxml.EDXMLEvent.SetContent()` method and pass it a UTF-8 string. In our FTP example, we will store the original logging message in each output event:
+Adding content to an event is simple: Just invoke its :func:`edxml.EDXMLEvent.set_content()` method and pass it a UTF-8 string. In our FTP example, we will store the original logging message in each output event:
 
 .. code-block:: python
 
-  writer.AddEvent(EDXMLEvent(properties).SetContent(line))
+  writer.add_event(EDXMLEvent(properties).set_content(line))
 
 After adding property relations, concepts and event content, the full source code for our final EDXML transcoder now looks like this:
 

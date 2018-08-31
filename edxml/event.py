@@ -26,7 +26,7 @@ class EDXMLEvent(MutableMapping):
 
     """
 
-    def __init__(self, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, content=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -35,58 +35,58 @@ class EDXMLEvent(MutableMapping):
         hashes must be specified as hex encoded strings.
 
         Args:
-          Properties (Dict[str,List[unicode]]): Dictionary of properties
-          EventTypeName (Optional[str]): Name of the event type
-          SourceUri (Optional[str]): Event source URI
-          Parents (Optional[List[str]]): List of explicit parent hashes
-          Content (Optional[unicode]): Event content
+          properties (Dict[str,List[unicode]]): Dictionary of properties
+          event_type_name (Optional[str]): Name of the event type
+          source_uri (Optional[str]): Event source URI
+          parents (Optional[List[str]]): List of explicit parent hashes
+          content (Optional[unicode]): Event content
 
         Returns:
           EDXMLEvent
         """
-        self.Properties = Properties
-        self.EventTypeName = EventTypeName
-        self.SourceUri = SourceUri
-        self.Parents = set(Parents) if Parents is not None else set()
-        self.Content = unicode(Content) if Content else u''
+        self._properties = properties
+        self._event_type_name = event_type_name
+        self._source_uri = source_uri
+        self._parents = set(parents) if parents is not None else set()
+        self._content = unicode(content) if content else u''
 
     def __str__(self):
         return "\n".join(
-            ['%20s:%s' % (Property, ','.join([unicode(Value) for Value in Values]))
-             for Property, Values in self.Properties.iteritems()]
+            ['%20s:%s' % (property_name, ','.join([unicode(value) for value in values]))
+             for property_name, values in self._properties.iteritems()]
         )
 
     def __delitem__(self, key):
-        self.Properties.pop(key, None)
+        self._properties.pop(key, None)
 
     def __setitem__(self, key, value):
         if type(value) == list:
-            self.Properties[key] = value
+            self._properties[key] = value
         else:
-            self.Properties[key] = [value]
+            self._properties[key] = [value]
 
     def __len__(self):
-        return len(self.Properties)
+        return len(self._properties)
 
     def __getitem__(self, key):
         try:
-            return self.Properties[key]
+            return self._properties[key]
         except KeyError:
             return []
 
     def __contains__(self, key):
         try:
-            self.Properties[key][0]
+            self._properties[key][0]
         except (KeyError, IndexError):
             return False
         else:
             return True
 
     def __iter__(self):
-        for PropertyName, Objects in self.Properties.items():
-            yield PropertyName
+        for property_name, objects in self._properties.items():
+            yield property_name
 
-    def getAny(self, propertyName, default=None):
+    def get_any(self, property_name, default=None):
         """
 
         Convenience method for fetching any of possibly multiple
@@ -95,13 +95,13 @@ class EDXMLEvent(MutableMapping):
         is returned in stead.
 
         Args:
-          propertyName (string): Name of requested property
+          property_name (string): Name of requested property
           default: Default return value
 
         Returns:
 
         """
-        value = self.get(propertyName)
+        value = self.get(property_name)
         try:
             return value[0]
         except IndexError:
@@ -115,10 +115,11 @@ class EDXMLEvent(MutableMapping):
         Returns:
            EDXMLEvent
         """
-        return EDXMLEvent(self.Properties.copy(), self.EventTypeName, self.SourceUri, list(self.Parents), self.Content)
+        return EDXMLEvent(self._properties.copy(), self._event_type_name, self._source_uri, list(self._parents),
+                          self._content)
 
     @classmethod
-    def Create(cls, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -131,25 +132,25 @@ class EDXMLEvent(MutableMapping):
           directly to create new events.
 
         Args:
-          Properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
-          EventTypeName (Optional[str]): Name of the event type
-          SourceUri (Optional[str]): Event source URI
-          Parents (Optional[List[str]]): List of explicit parent hashes
-          Content (Optional[unicode]): Event content
+          properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
+          event_type_name (Optional[str]): Name of the event type
+          source_uri (Optional[str]): Event source URI
+          parents (Optional[List[str]]): List of explicit parent hashes
+          content (Optional[unicode]): Event content
 
         Returns:
           EDXMLEvent:
         """
         return cls(
-            {Property: Value if type(Value) == list else [
-                Value] for Property, Value in Properties.items()},
-            EventTypeName,
-            SourceUri,
-            Parents,
-            Content
+            {property_name: value if type(value) == list else [
+                value] for property_name, value in properties.items()},
+            event_type_name,
+            source_uri,
+            parents,
+            content
         )
 
-    def GetTypeName(self):
+    def get_type_name(self):
         """
 
         Returns the name of the event type.
@@ -158,9 +159,9 @@ class EDXMLEvent(MutableMapping):
           str: The event type name
 
         """
-        return self.EventTypeName
+        return self._event_type_name
 
-    def GetSourceUri(self):
+    def get_source_uri(self):
         """
 
         Returns the URI of the event source.
@@ -169,9 +170,9 @@ class EDXMLEvent(MutableMapping):
           str: The source URI
 
         """
-        return self.SourceUri
+        return self._source_uri
 
-    def GetProperties(self):
+    def get_properties(self):
         """
 
         Returns a dictionary containing property names
@@ -181,9 +182,9 @@ class EDXMLEvent(MutableMapping):
           Dict[str, List[unicode]]: Event properties
 
         """
-        return self.Properties
+        return self._properties
 
-    def GetExplicitParents(self):
+    def get_explicit_parents(self):
         """
 
         Returns a list of sticky hashes of parent
@@ -193,9 +194,9 @@ class EDXMLEvent(MutableMapping):
           List[str]: List of parent hashes
 
         """
-        return list(self.Parents)
+        return list(self._parents)
 
-    def GetContent(self):
+    def get_content(self):
         """
 
         Returns the content of the event.
@@ -204,38 +205,38 @@ class EDXMLEvent(MutableMapping):
           unicode: Event content
 
         """
-        return self.Content
+        return self._content
 
     @classmethod
-    def Read(cls, EventTypeName, SourceUri, EventElement):
+    def create_from_xml(cls, event_type_name, source_uri, event_element):
         """
 
         Creates and returns a new EDXMLEvent instance by reading it from
         specified lxml Element instance.
 
         Args:
-          EventTypeName (str): The name of the event type
-          SourceUri (str): The URI of the EDXML event source
-          EventElement (etree.Element): The XML element containing the event
+          event_type_name (str): The name of the event type
+          source_uri (str): The URI of the EDXML event source
+          event_element (etree.Element): The XML element containing the event
 
         Returns:
           EDXMLEvent:
         """
-        Content = ''
-        PropertyObjects = {}
-        for element in EventElement:
+        content = ''
+        property_objects = {}
+        for element in event_element:
             if element.tag == 'properties':
-                for propertyElement in element:
-                    PropertyName = propertyElement.tag
-                    if PropertyName not in PropertyObjects:
-                        PropertyObjects[PropertyName] = []
-                    PropertyObjects[PropertyName].append(propertyElement.text)
+                for property_element in element:
+                    property_name = property_element.tag
+                    if property_name not in property_objects:
+                        property_objects[property_name] = []
+                    property_objects[property_name].append(property_element.text)
             elif element.tag == 'content':
-                Content = element.text
+                content = element.text
 
-        return cls(PropertyObjects, EventTypeName, SourceUri, EventElement.attrib.get('parents'), Content)
+        return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), content)
 
-    def SetProperties(self, properties):
+    def set_properties(self, properties):
         """
 
         Replaces the event properties with the properties
@@ -250,10 +251,10 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
 
         """
-        self.Properties = properties
+        self._properties = properties
         return self
 
-    def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
+    def copy_properties_from(self, source_event, property_map):
         """
 
         Copies properties from another event, mapping property names
@@ -267,28 +268,28 @@ class EDXMLEvent(MutableMapping):
         property.
 
         Args:
-         SourceEvent (EDXMLEvent):
-         PropertyMap (dict(str,str)):
+         source_event (EDXMLEvent):
+         property_map (dict(str,str)):
 
         Returns:
           EDXMLEvent:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                SourceProperties = SourceEvent.Properties[Source]
+                source_properties = source_event._properties[source]
             except KeyError:
                 # Source property does not exist.
                 continue
-            if len(SourceProperties) > 0:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self.Properties:
-                        self.Properties[Target] = []
-                        self.Properties[Target].extend(SourceProperties)
+            if len(source_properties) > 0:
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self._properties:
+                        self._properties[target] = []
+                        self._properties[target].extend(source_properties)
 
         return self
 
-    def MovePropertiesFrom(self, SourceEvent, PropertyMap):
+    def move_properties_from(self, source_event, property_map):
         """
 
         Moves properties from another event, mapping property names
@@ -302,125 +303,125 @@ class EDXMLEvent(MutableMapping):
         property.
 
         Args:
-         SourceEvent (EDXMLEvent):
-         PropertyMap (dict(str,str)):
+         source_event (EDXMLEvent):
+         property_map (dict(str,str)):
 
         Returns:
           EDXMLEvent:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self.Properties:
-                        self.Properties[Target] = []
-                    self.Properties[Target].extend(
-                        SourceEvent.Properties[Source])
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self._properties:
+                        self._properties[target] = []
+                    self._properties[target].extend(
+                        source_event._properties[source])
             except KeyError:
                 # Source property does not exist.
                 pass
             else:
-                del SourceEvent.Properties[Source]
+                del source_event._properties[source]
 
         return self
 
-    def SetType(self, EventTypeName):
+    def set_type(self, event_type_name):
         """
 
         Set the event type.
 
         Args:
-          EventTypeName (str): Name of the event type
+          event_type_name (str): Name of the event type
 
         Returns:
           EDXMLEvent:
         """
-        self.EventTypeName = EventTypeName
+        self._event_type_name = event_type_name
         return self
 
-    def SetContent(self, Content):
+    def set_content(self, content):
         """
 
         Set the event content.
 
         Args:
-          Content (unicode): Content string
+          content (unicode): Content string
 
         Returns:
           EDXMLEvent:
         """
-        self.Content = Content
+        self._content = content
         return self
 
-    def SetSource(self, SourceUri):
+    def set_source(self, source_uri):
         """
 
         Set the event source.
 
         Args:
-          SourceUri (str): EDXML source URI
+          source_uri (str): EDXML source URI
 
         Returns:
           EDXMLEvent:
         """
-        self.SourceUri = SourceUri
+        self._source_uri = source_uri
         return self
 
-    def AddParents(self, ParentHashes):
+    def add_parents(self, parent_hashes):
         """
 
         Add the specified sticky hashes to the list
         of explicit event parents.
 
         Args:
-          ParentHashes (List[str]): list of sticky hash, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hash, as hexadecimal strings
 
         Returns:
           EDXMLEvent:
         """
-        self.Parents.update(ParentHashes)
+        self._parents.update(parent_hashes)
         return self
 
-    def SetParents(self, ParentHashes):
+    def set_parents(self, parent_hashes):
         """
 
         Replace the set of explicit event parents with the specified
         list of sticky hashes.
 
         Args:
-          ParentHashes (List[str]): list of sticky hash, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hash, as hexadecimal strings
 
         Returns:
           EDXMLEvent:
         """
-        self.Parents = set(ParentHashes)
+        self._parents = set(parent_hashes)
         return self
 
-    def MergeWith(self, collidingEvents, edxmlOntology):
+    def merge_with(self, colliding_events, ontology):
         """
         Merges the event with event data from a number of colliding
         events. It returns True when the event was updated
         as a result of the merge, returns False otherwise.
 
         Args:
-          collidingEvents (List[EDXMLEvent]): Iterable yielding events
-          edxmlOntology (edxml.ontology.Ontology): The EDXML ontology
+          colliding_events (List[EDXMLEvent]): Iterable yielding events
+          ontology (edxml.ontology.Ontology): The EDXML ontology
 
         Returns:
           bool: Event was changed or not
 
         """
 
-        eventType = edxmlOntology.GetEventType(self.EventTypeName)
-        properties = eventType.GetProperties()
-        propertyNames = properties.keys()
-        uniqueProperties = eventType.GetUniqueProperties()
+        event_type = ontology.get_event_type(self._event_type_name)
+        properties = event_type.get_properties()
+        property_names = properties.keys()
+        unique_properties = event_type.get_unique_properties()
 
-        if len(uniqueProperties) == 0:
+        if len(unique_properties) == 0:
             raise TypeError(
-                "MergeEvent was called for event type %s, which is not a unique event type." % self.EventTypeName)
+                "MergeEvent was called for event type %s, which is not a unique event type." % self._event_type_name)
 
-        EventObjectsA = self.GetProperties()
+        event_objects_a = self.get_properties()
 
         # Below, we initialize three dictionaries containing
         # event object sets. All objects are complete, in the
@@ -435,122 +436,122 @@ class EDXMLEvent(MutableMapping):
         # The source event holds all object values from all
         # source events.
 
-        Original = {}
-        Source = {}
-        Target = {}
+        original = {}
+        source = {}
+        target = {}
 
-        for PropertyName in propertyNames:
-            if PropertyName in EventObjectsA:
-                Original[PropertyName] = set(EventObjectsA[PropertyName])
-                Target[PropertyName] = set(EventObjectsA[PropertyName])
+        for property_name in property_names:
+            if property_name in event_objects_a:
+                original[property_name] = set(event_objects_a[property_name])
+                target[property_name] = set(event_objects_a[property_name])
             else:
-                Original[PropertyName] = set()
-                Target[PropertyName] = set()
-            Source[PropertyName] = set()
+                original[property_name] = set()
+                target[property_name] = set()
+            source[property_name] = set()
 
-        for event in collidingEvents:
-            EventObjectsB = event.GetProperties()
-            for PropertyName in propertyNames:
-                if PropertyName in EventObjectsB:
-                    Source[PropertyName].update(EventObjectsB[PropertyName])
+        for event in colliding_events:
+            event_objects_b = event.get_properties()
+            for property_name in property_names:
+                if property_name in event_objects_b:
+                    source[property_name].update(event_objects_b[property_name])
 
         # Now we update the objects in Target
         # using the values in Source
-        for PropertyName in Source:
+        for property_name in source:
 
-            if PropertyName in uniqueProperties:
+            if property_name in unique_properties:
                 # Unique property, does not need to be merged.
                 continue
 
-            MergeStrategy = properties[PropertyName].GetMergeStrategy()
+            merge_strategy = properties[property_name].get_merge_strategy()
 
-            if MergeStrategy in ('min', 'max'):
+            if merge_strategy in ('min', 'max'):
                 # We have a merge strategy that requires us to cast
                 # the object values into numbers.
-                SplitDataType = properties[PropertyName].GetDataType(
-                ).GetSplit()
-                if SplitDataType[0] in ('number', 'datetime'):
-                    if MergeStrategy in ('min', 'max'):
-                        Values = set()
-                        if SplitDataType[0] == 'datetime':
+                split_data_type = properties[property_name].get_data_type(
+                ).get_split()
+                if split_data_type[0] in ('number', 'datetime'):
+                    if merge_strategy in ('min', 'max'):
+                        values = set()
+                        if split_data_type[0] == 'datetime':
                             # Note that we add the datetime values as
                             # regular strings and just let min() and max()
                             # use lexicographical sorting to determine which
                             # of the datetime values to pick.
-                            Values.update(Source[PropertyName])
-                            Values.update(Target[PropertyName])
+                            values.update(source[property_name])
+                            values.update(target[property_name])
                         else:
-                            if SplitDataType[1] in ('float', 'double'):
-                                Values.update(float(Value)
-                                              for Value in Source[PropertyName])
-                                Values.update(float(Value)
-                                              for Value in Target[PropertyName])
-                            elif SplitDataType[1] == 'decimal':
-                                Values.update(Decimal(Value)
-                                              for Value in Source[PropertyName])
-                                Values.update(Decimal(Value)
-                                              for Value in Target[PropertyName])
+                            if split_data_type[1] in ('float', 'double'):
+                                values.update(float(value)
+                                              for value in source[property_name])
+                                values.update(float(value)
+                                              for value in target[property_name])
+                            elif split_data_type[1] == 'decimal':
+                                values.update(Decimal(value)
+                                              for value in source[property_name])
+                                values.update(Decimal(value)
+                                              for value in target[property_name])
                             else:
-                                Values.update(int(Value)
-                                              for Value in Source[PropertyName])
-                                Values.update(int(Value)
-                                              for Value in Target[PropertyName])
+                                values.update(int(value)
+                                              for value in source[property_name])
+                                values.update(int(value)
+                                              for value in target[property_name])
 
-                        if MergeStrategy == 'min':
-                            Target[PropertyName] = {str(min(Values))}
+                        if merge_strategy == 'min':
+                            target[property_name] = {str(min(values))}
                         else:
-                            Target[PropertyName] = {str(max(Values))}
+                            target[property_name] = {str(max(values))}
 
-                        if SplitDataType[1] in ('float', 'double'):
-                            Target[PropertyName] = {
-                                str(float(next(iter(Target[PropertyName]))) + len(collidingEvents))}
-                        elif SplitDataType[1] == 'decimal':
-                            Target[PropertyName] = {
-                                str(Decimal(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+                        if split_data_type[1] in ('float', 'double'):
+                            target[property_name] = {
+                                str(float(next(iter(target[property_name]))) + len(colliding_events))}
+                        elif split_data_type[1] == 'decimal':
+                            target[property_name] = {
+                                str(Decimal(next(iter(target[property_name]))) + len(colliding_events))}
                         else:
-                            Target[PropertyName] = {
-                                str(int(next(iter(Target[PropertyName]))) + len(collidingEvents))}
+                            target[property_name] = {
+                                str(int(next(iter(target[property_name]))) + len(colliding_events))}
 
-            elif MergeStrategy == 'add':
-                Target[PropertyName].update(Source[PropertyName])
+            elif merge_strategy == 'add':
+                target[property_name].update(source[property_name])
 
-            elif MergeStrategy == 'replace':
-                Target[PropertyName] = set(
-                    collidingEvents[-1].get(PropertyName, []))
+            elif merge_strategy == 'replace':
+                target[property_name] = set(
+                    colliding_events[-1].get(property_name, []))
 
-        SourceParents = set(
-            parent for sourceEvent in collidingEvents for parent in sourceEvent.GetExplicitParents())
+        source_parents = set(
+            parent for source_event in colliding_events for parent in source_event.get_explicit_parents())
 
         # Merge the explicit event parents
-        if len(SourceParents) > 0:
-            OriginalParents = self.GetExplicitParents()
-            self.SetParents(self.GetExplicitParents() + list(SourceParents))
+        if len(source_parents) > 0:
+            original_parents = self.get_explicit_parents()
+            self.set_parents(self.get_explicit_parents() + list(source_parents))
         else:
-            OriginalParents = set()
+            original_parents = set()
 
         # Determine if anything changed
-        EventUpdated = False
-        for PropertyName in propertyNames:
-            if PropertyName not in Original and len(Target[PropertyName]) > 0:
-                EventUpdated = True
+        event_updated = False
+        for property_name in property_names:
+            if property_name not in original and len(target[property_name]) > 0:
+                event_updated = True
                 break
-            if Target[PropertyName] != Original[PropertyName]:
-                EventUpdated = True
+            if target[property_name] != original[property_name]:
+                event_updated = True
                 break
 
-        if not EventUpdated:
-            if len(SourceParents) > 0:
-                if OriginalParents != SourceParents:
-                    EventUpdated = True
+        if not event_updated:
+            if len(source_parents) > 0:
+                if original_parents != source_parents:
+                    event_updated = True
 
         # Modify event if needed
-        if EventUpdated:
-            self.SetProperties(Target)
+        if event_updated:
+            self.set_properties(target)
             return True
         else:
             return False
 
-    def ComputeStickyHash(self, edxmlOntology, encoding='hex'):
+    def compute_sticky_hash(self, ontology, encoding='hex'):
         """
 
         Computes the sticky hash of the event. By default, the hash
@@ -559,7 +560,7 @@ class EDXMLEvent(MutableMapping):
         encoding that is supported by the str.encode() method.
 
         Args:
-          edxmlOntology (edxml.ontology.Ontology): An EDXML ontology
+          ontology (edxml.ontology.Ontology): An EDXML ontology
           encoding (str): Desired output encoding
 
         Note:
@@ -571,25 +572,25 @@ class EDXMLEvent(MutableMapping):
 
         """
 
-        eventType = edxmlOntology.GetEventType(self.EventTypeName)
-        objects = self.GetProperties()
-        hashProperties = eventType.GetHashProperties()
+        event_type = ontology.get_event_type(self._event_type_name)
+        objects = self.get_properties()
+        hash_properties = event_type.get_hash_properties()
 
-        objectStrings = set('%s:%s' % (p, v)
-                            for p in objects if p in hashProperties for v in objects[p])
+        object_strings = set('%s:%s' % (p, v)
+                             for p in objects if p in hash_properties for v in objects[p])
 
         # Now we compute the SHA1 hash value of the byte
         # string representation of the event, and output in hex
 
-        if eventType.IsUnique():
+        if event_type.is_unique():
             return hashlib.sha1(
-                '%s\n%s\n%s' % (self.SourceUri, self.EventTypeName,
-                                '\n'.join(sorted(objectStrings)))
+                '%s\n%s\n%s' % (self._source_uri, self._event_type_name,
+                                '\n'.join(sorted(object_strings)))
             ).digest().encode(encoding)
         else:
             return hashlib.sha1(
-                '%s\n%s\n%s\n%s' % (self.SourceUri, self.EventTypeName, '\n'.join(
-                    sorted(objectStrings)), self.Content)
+                '%s\n%s\n%s\n%s' % (self._source_uri, self._event_type_name, '\n'.join(
+                    sorted(object_strings)), self.get_content())
             ).digest().encode(encoding)
 
 
@@ -618,15 +619,15 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         for element in props.findall(key):
             props.remove(element)
         try:
-            del self.__properties
+            del self._properties
         except AttributeError:
             pass
 
     def __setitem__(self, key, value):
         if type(value) == list:
             props = self.find('properties')
-            for existingValue in props.findall(key):
-                props.remove(existingValue)
+            for existing_value in props.findall(key):
+                props.remove(existing_value)
             for v in value:
                 try:
                     etree.SubElement(props, key).text = v
@@ -635,14 +636,14 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         props[-1].text = unicode(
-                            re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), v))
+                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), v))
                     else:
                         raise ValueError(
                             'Value of property %s is not a string: %s' % (key, repr(value)))
         else:
             props = self.find('properties')
-            for existingValue in props.findall(key):
-                props.remove(existingValue)
+            for existing_value in props.findall(key):
+                props.remove(existing_value)
             try:
                 etree.SubElement(props, key).text = value
             except (TypeError, ValueError):
@@ -650,51 +651,51 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
                     props[-1].text = unicode(
-                        re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), value))
+                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value))
                 else:
                     raise ValueError(
                         'Value of property %s is not a string: %s' % (key, repr(value)))
         try:
-            del self.__properties
+            del self._properties
         except AttributeError:
             pass
 
     def __len__(self):
         try:
-            return len(self.__properties)
+            return len(self._properties)
         except AttributeError:
-            self.__properties = defaultdict(list)
+            self._properties = defaultdict(list)
             for element in self.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return len(self.__properties)
+                self._properties[element.tag].append(element.text)
+            return len(self._properties)
 
     def __getitem__(self, key):
         try:
-            return self.__properties[key]
+            return self._properties[key]
         except AttributeError:
-            self.__properties = defaultdict(list)
+            self._properties = defaultdict(list)
             for element in self.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return self.__properties[key]
+                self._properties[element.tag].append(element.text)
+            return self._properties[key]
 
     def __contains__(self, key):
         try:
-            return key in self.__properties
+            return key in self._properties
         except AttributeError:
-            self.__properties = defaultdict(list)
+            self._properties = defaultdict(list)
             for element in self.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return key in self.__properties
+                self._properties[element.tag].append(element.text)
+            return key in self._properties
 
     def __iter__(self):
         try:
-            for p in self.__properties.keys():
+            for p in self._properties.keys():
                 yield p
         except AttributeError:
-            self.__properties = defaultdict(list)
+            self._properties = defaultdict(list)
             for element in self.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            for p in self.__properties.keys():
+                self._properties[element.tag].append(element.text)
+            for p in self._properties.keys():
                 yield p
 
     def flush(self):
@@ -710,7 +711,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
           ParsedEvent:
         """
         try:
-            del self.__properties
+            del self._properties
         except AttributeError:
             pass
 
@@ -727,10 +728,10 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         return deepcopy(self)
 
     @classmethod
-    def Create(cls, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
         """
 
-        This override of the Create() method of the EDXMLEvent class
+        This override of the create() method of the EDXMLEvent class
         only raises exceptions, because ParsedEvent objects can only
         be created by parsers.
 
@@ -742,56 +743,56 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             'ParsedEvent objects can only be created by parsers')
 
     @classmethod
-    def Read(cls, EventTypeName, SourceUri, EventElement):
+    def create_from_xml(cls, event_type_name, source_uri, event_element):
         """
 
         Creates and returns a new EDXMLEvent instance by reading it from
         specified lxml Element instance.
 
         Args:
-          EventTypeName (str): The name of the event type
-          SourceUri (str): The URI of the EDXML event source
-          EventElement (etree.Element): The XML element containing the event
+          event_type_name (str): The name of the event type
+          source_uri (str): The URI of the EDXML event source
+          event_element (etree.Element): The XML element containing the event
 
         Returns:
           EDXMLEvent:
         """
-        Content = ''
-        PropertyObjects = {}
-        for element in EventElement:
+        content = ''
+        property_objects = {}
+        for element in event_element:
             if element.tag == 'properties':
-                for propertyElement in element:
-                    PropertyName = propertyElement.tag
-                    if PropertyName not in PropertyObjects:
-                        PropertyObjects[PropertyName] = []
-                    PropertyObjects[PropertyName].append(propertyElement.text)
+                for property_element in element:
+                    property_name = property_element.tag
+                    if property_name not in property_objects:
+                        property_objects[property_name] = []
+                    property_objects[property_name].append(property_element.text)
             elif element.tag == 'content':
-                Content = element.text
+                content = element.text
 
-        return cls(PropertyObjects, EventTypeName, SourceUri, EventElement.attrib.get('parents'), Content)
+        return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), content)
 
-    def GetProperties(self):
+    def get_properties(self):
         try:
-            return self.__properties
+            return self._properties
         except AttributeError:
-            self.__properties = defaultdict(list)
+            self._properties = defaultdict(list)
             for element in self.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return self.__properties
+                self._properties[element.tag].append(element.text)
+            return self._properties
 
-    def GetContent(self):
+    def get_content(self):
         try:
             return self.find('content').text
         except AttributeError:
             return ''
 
-    def GetExplicitParents(self):
+    def get_explicit_parents(self):
         try:
             return self.attrib['parents'].split(',')
         except KeyError:
             return []
 
-    def SetProperties(self, properties):
+    def set_properties(self, properties):
         """
 
         Replaces the event properties with the properties
@@ -806,21 +807,21 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
           EDXMLEvent:
 
         """
-        propertiesElement = self.find('properties')
-        propertiesElement.clear()
+        properties_element = self.find('properties')
+        properties_element.clear()
 
-        for propertyName, values in properties.items():
+        for property_name, values in properties.items():
             for value in values:
-                etree.SubElement(propertiesElement, propertyName).text = value
+                etree.SubElement(properties_element, property_name).text = value
 
         try:
-            del self.__properties
+            del self._properties
         except AttributeError:
             pass
 
         return self
 
-    def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
+    def copy_properties_from(self, source_event, property_map):
         """
 
         Copies properties from another event, mapping property names
@@ -834,28 +835,28 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         property.
 
         Args:
-         SourceEvent (EDXMLEvent): Source event
-         PropertyMap (Dict[str,str]): Property mapping
+         source_event (EDXMLEvent): Source event
+         property_map (Dict[str,str]): Property mapping
 
         Returns:
           EDXMLEvent:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                SourceProperties = SourceEvent.Properties[Source]
+                source_properties = source_event._properties[source]
             except KeyError:
                 # Source property does not exist.
                 continue
-            if len(SourceProperties) > 0:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self:
-                        self[Target] = []
-                    self[Target].extend(SourceProperties)
+            if len(source_properties) > 0:
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self:
+                        self[target] = []
+                    self[target].extend(source_properties)
 
         return self
 
-    def MovePropertiesFrom(self, SourceEvent, PropertyMap):
+    def move_properties_from(self, source_event, property_map):
         """
 
         Moves properties from another event, mapping property names
@@ -869,80 +870,80 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         property.
 
         Args:
-         SourceEvent (EDXMLEvent): Source event
-         PropertyMap (Dict[str,str]): Property mapping
+         source_event (EDXMLEvent): Source event
+         property_map (Dict[str,str]): Property mapping
 
         Returns:
           EDXMLEvent:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self.Properties:
-                        self[Target] = []
-                    self[Target].extend(SourceEvent.Properties[Source])
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self._properties:
+                        self[target] = []
+                    self[target].extend(source_event._properties[source])
             except KeyError:
                 # Source property does not exist.
                 pass
             else:
-                del SourceEvent[Source]
+                del source_event[source]
 
         return self
 
-    def SetContent(self, Content):
+    def set_content(self, content):
         """
 
         Set the event content.
 
         Args:
-          Content (unicode): Content string
+          content (unicode): Content string
 
         Returns:
           ParsedEvent:
         """
         try:
-            self.find('content').text = Content
+            self.find('content').text = content
         except (TypeError, ValueError):
-            if type(Content) in (str, unicode):
+            if type(content) in (str, unicode):
                 # Value contains illegal characters,
                 # replace them with unicode replacement characters.
                 self.find('content').text = unicode(
-                    re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), Content))
+                    re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content))
             else:
                 raise ValueError(
-                    'Event content value is not a string: %s' % repr(Content))
+                    'Event content value is not a string: %s' % repr(content))
         return self
 
-    def AddParents(self, ParentHashes):
+    def add_parents(self, parent_hashes):
         """
 
         Add the specified sticky hashes to the list
         of explicit event parents.
 
         Args:
-          ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hashes, as hexadecimal strings
 
         Returns:
           ParsedEvent:
         """
         self.attrib.set('parents', ','.join(self.attrib.get(
-            'parents').split(',').append(ParentHashes)))
+            'parents').split(',').append(parent_hashes)))
         return self
 
-    def SetParents(self, ParentHashes):
+    def set_parents(self, parent_hashes):
         """
 
         Replace the set of explicit event parents with the specified
         list of sticky hashes.
 
         Args:
-          ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hashes, as hexadecimal strings
 
         Returns:
           ParsedEvent:
         """
-        self.attrib.set('parents', ','.join(ParentHashes))
+        self.attrib.set('parents', ','.join(parent_hashes))
         return self
 
 
@@ -955,7 +956,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     or SimpleEDXMLWriter.
     """
 
-    def __init__(self, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, content=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -964,73 +965,73 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         hashes must be specified as hex encoded strings.
 
         Args:
-          Properties (Dict(str, List[unicode])): Dictionary of properties
-          EventTypeName (Optional[str]): Name of the event type
-          SourceUri (Optional[optional]): Event source URI
-          Parents (Optional[List[str]]): List of explicit parent hashes
-          Content (Optional[unicode]): Event content
+          properties (Dict(str, List[unicode])): Dictionary of properties
+          event_type_name (Optional[str]): Name of the event type
+          source_uri (Optional[optional]): Event source URI
+          parents (Optional[List[str]]): List of explicit parent hashes
+          content (Optional[unicode]): Event content
 
         Returns:
           EventElement:
         """
-        super(EventElement, self).__init__(Properties,
-                                           EventTypeName, SourceUri, Parents, Content)
+        super(EventElement, self).__init__(properties,
+                                           event_type_name, source_uri, parents, content)
 
         # These are now kept in an etree element.
-        self.Properties = None
-        self.Parents = None
-        self.Content = None
+        self._properties = None
+        self._parents = None
+        self._content = None
 
         new = etree.Element('event')
-        if Parents:
-            new.set('parents', ','.join(Parents))
+        if parents:
+            new.set('parents', ','.join(parents))
 
         p = etree.SubElement(new, 'properties')
-        for propertyName, values in Properties.iteritems():
+        for property_name, values in properties.iteritems():
             for value in values:
                 try:
-                    etree.SubElement(p, propertyName).text = value
+                    etree.SubElement(p, property_name).text = value
                 except (TypeError, ValueError):
                     if type(value) in (str, unicode):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
-                        charFilter = EvilCharacterFilter()
+                        char_filter = EvilCharacterFilter()
                         p[-1].text = unicode(
-                            re.sub(charFilter.evilXmlCharsRegExp, unichr(0xfffd), value))
+                            re.sub(char_filter.evil_xml_chars_regexp, unichr(0xfffd), value))
                     else:
                         raise ValueError(
                             'Object value is not a string: ' + repr(value))
-        if Content:
+        if content:
             try:
-                etree.SubElement(new, 'content').text = Content
+                etree.SubElement(new, 'content').text = content
             except (TypeError, ValueError):
-                if type(Content) in (str, unicode):
+                if type(content) in (str, unicode):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
-                    charFilter = EvilCharacterFilter()
+                    char_filter = EvilCharacterFilter()
                     new[-1].text = unicode(
-                        re.sub(charFilter.evilXmlCharsRegExp, unichr(0xfffd), Content))
+                        re.sub(char_filter.evil_xml_chars_regexp, unichr(0xfffd), content))
                 else:
                     raise ValueError(
-                        'Event content is not a string: ' + repr(Content))
+                        'Event content is not a string: ' + repr(content))
 
-        self.element = new
-        self.__properties = None
+        self.__element = new
+        self._properties = None
 
     def __str__(self):
-        return etree.tostring(self.element)
+        return etree.tostring(self.__element)
 
     def __delitem__(self, key):
-        props = self.element.find('properties')
+        props = self.__element.find('properties')
         for element in props.findall(key):
             props.remove(element)
-        self.__properties = None
+        self._properties = None
 
     def __setitem__(self, key, value):
         if type(value) == list:
-            props = self.element.find('properties')
-            for existingValue in props.findall(key):
-                props.remove(existingValue)
+            props = self.__element.find('properties')
+            for existing_value in props.findall(key):
+                props.remove(existing_value)
             for v in set(value):
                 try:
                     etree.SubElement(props, key).text = v
@@ -1039,14 +1040,14 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         props[-1].text = unicode(
-                            re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), v))
+                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), v))
                     else:
                         raise ValueError(
                             'Value of property %s is not a string: %s' % (key, repr(value)))
         else:
-            props = self.element.find('properties')
-            for existingValue in props.findall(key):
-                props.remove(existingValue)
+            props = self.__element.find('properties')
+            for existing_value in props.findall(key):
+                props.remove(existing_value)
             try:
                 etree.SubElement(props, key).text = value
             except (TypeError, ValueError):
@@ -1054,49 +1055,52 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
                     props[-1].text = unicode(
-                        re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), value))
+                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value))
                 else:
                     raise ValueError(
                         'Value of property %s is not a string: %s' % (key, repr(value)))
-        self.__properties = None
+        self._properties = None
 
     def __len__(self):
         try:
-            return len(self.__properties)
+            return len(self._properties)
         except TypeError:
-            self.__properties = defaultdict(list)
-            for element in self.element.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return len(self.__properties)
+            self._properties = defaultdict(list)
+            for element in self.__element.find('properties'):
+                self._properties[element.tag].append(element.text)
+            return len(self._properties)
 
     def __getitem__(self, key):
         try:
-            return self.__properties[key]
+            return self._properties[key]
         except TypeError:
-            self.__properties = defaultdict(list)
-            for element in self.element.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return self.__properties[key]
+            self._properties = defaultdict(list)
+            for element in self.__element.find('properties'):
+                self._properties[element.tag].append(element.text)
+            return self._properties[key]
 
     def __contains__(self, key):
         try:
-            return key in self.__properties
+            return key in self._properties
         except TypeError:
-            self.__properties = defaultdict(list)
-            for element in self.element.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return key in self.__properties
+            self._properties = defaultdict(list)
+            for element in self.__element.find('properties'):
+                self._properties[element.tag].append(element.text)
+            return key in self._properties
 
     def __iter__(self):
         try:
-            for p in self.__properties.keys():
+            for p in self._properties.keys():
                 yield p
         except AttributeError:
-            self.__properties = defaultdict(list)
-            for element in self.element.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            for p in self.__properties.keys():
+            self._properties = defaultdict(list)
+            for element in self.__element.find('properties'):
+                self._properties[element.tag].append(element.text)
+            for p in self._properties.keys():
                 yield p
+
+    def get_element(self):
+        return self.__element
 
     def copy(self):
         """
@@ -1109,7 +1113,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         return deepcopy(self)
 
     @classmethod
-    def Create(cls, Properties, EventTypeName=None, SourceUri=None, Parents=None, Content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -1122,68 +1126,68 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
           directly to create new events.
 
         Args:
-          Properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
-          EventTypeName (Optional[str]): Name of the event type
-          SourceUri (Optional[str]): Event source URI
-          Parents (Optional[List[str]]): List of explicit parent hashes
-          Content (Optional[unicode]): Event content
+          properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
+          event_type_name (Optional[str]): Name of the event type
+          source_uri (Optional[str]): Event source URI
+          parents (Optional[List[str]]): List of explicit parent hashes
+          content (Optional[unicode]): Event content
 
         Returns:
           EventElement:
         """
         return cls(
-            {Property: Value if type(Value) == list else [
-                Value] for Property, Value in Properties.items()},
-            EventTypeName,
-            SourceUri,
-            Parents,
-            Content
+            {property_name: value if type(value) == list else [
+                value] for property_name, value in properties.items()},
+            event_type_name,
+            source_uri,
+            parents,
+            content
         )
 
     @classmethod
-    def Read(cls, EventTypeName, SourceUri, EventElement):
+    def create_from_xml(cls, event_type_name, source_uri, event_element):
         """
 
         Creates and returns a new EventElement instance by reading it from
         specified lxml Element instance.
 
         Args:
-          EventTypeName (str): The name of the event type
-          SourceUri (str): The URI of the EDXML event source
-          EventElement (etree.Element): The XML element containing the event
+          event_type_name (str): The name of the event type
+          source_uri (str): The URI of the EDXML event source
+          event_element (etree.Element): The XML element containing the event
 
         Returns:
           EventElement:
         """
 
         new = cls({})
-        new.element = EventElement
+        new.__element = event_element
 
         return new
 
-    def GetProperties(self):
+    def get_properties(self):
         try:
-            return dict(self.__properties)
+            return dict(self._properties)
         except TypeError:
-            self.__properties = defaultdict(list)
-            for element in self.element.find('properties'):
-                self.__properties[element.tag].append(element.text)
-            return self.__properties
+            self._properties = defaultdict(list)
+            for element in self.__element.find('properties'):
+                self._properties[element.tag].append(element.text)
+            return self._properties
 
-    def GetContent(self):
+    def get_content(self):
         try:
-            return self.element.find('content').text
+            return self.__element.find('content').text
         except AttributeError:
             # No content.
             return ''
 
-    def GetExplicitParents(self):
+    def get_explicit_parents(self):
         try:
-            return self.element.attrib['parents'].split(',')
+            return self.__element.attrib['parents'].split(',')
         except KeyError:
             return []
 
-    def SetProperties(self, properties):
+    def set_properties(self, properties):
         """
 
         Replaces the event properties with the properties
@@ -1198,29 +1202,29 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
           EventElement:
 
         """
-        propertiesElement = self.element.find('properties')
-        propertiesElement.clear()
+        properties_element = self.__element.find('properties')
+        properties_element.clear()
 
-        for propertyName, values in properties.items():
+        for property_name, values in properties.items():
             for value in values:
                 try:
-                    etree.SubElement(propertiesElement,
-                                     propertyName).text = value
+                    etree.SubElement(properties_element,
+                                     property_name).text = value
                 except (TypeError, ValueError):
                     if type(value) in (str, unicode):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
-                        propertiesElement[-1].text = unicode(
-                            re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), value))
+                        properties_element[-1].text = unicode(
+                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value))
                     else:
                         raise ValueError('Value of property %s is not a string: %s' % (
-                            propertyName, repr(value)))
+                            property_name, repr(value)))
 
-        self.__properties = None
+        self._properties = None
 
         return self
 
-    def CopyPropertiesFrom(self, SourceEvent, PropertyMap):
+    def copy_properties_from(self, source_event, property_map):
         """
 
         Copies properties from another event, mapping property names
@@ -1234,28 +1238,28 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         property.
 
         Args:
-         SourceEvent (EventElement): Source event
-         PropertyMap (Dict[str,str]): Property mapping
+         source_event (EventElement): Source event
+         property_map (Dict[str,str]): Property mapping
 
         Returns:
           EventElement:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                SourceProperties = SourceEvent.Properties[Source]
+                source_properties = source_event._properties[source]
             except KeyError:
                 # Source property does not exist.
                 continue
-            if len(SourceProperties) > 0:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self:
-                        self[Target] = []
-                    self[Target].extend(SourceProperties)
+            if len(source_properties) > 0:
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self:
+                        self[target] = []
+                    self[target].extend(source_properties)
 
         return self
 
-    def MovePropertiesFrom(self, SourceEvent, PropertyMap):
+    def move_properties_from(self, source_event, property_map):
         """
 
         Moves properties from another event, mapping property names
@@ -1269,80 +1273,80 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         property.
 
         Args:
-         SourceEvent (EventElement): Source event
-         PropertyMap (Dict[str,str]): Property mapping
+         source_event (EventElement): Source event
+         property_map (Dict[str,str]): Property mapping
 
         Returns:
           EventElement:
         """
 
-        for Source, Targets in PropertyMap.iteritems():
+        for source, targets in property_map.iteritems():
             try:
-                for Target in (Targets if isinstance(Targets, list) else [Targets]):
-                    if Target not in self.Properties:
-                        self[Target] = []
-                    self[Target].extend(SourceEvent.Properties[Source])
+                for target in (targets if isinstance(targets, list) else [targets]):
+                    if target not in self._properties:
+                        self[target] = []
+                    self[target].extend(source_event._properties[source])
             except KeyError:
                 # Source property does not exist.
                 pass
             else:
-                del SourceEvent[Source]
+                del source_event[source]
 
         return self
 
-    def SetContent(self, Content):
+    def set_content(self, content):
         """
 
         Set the event content.
 
         Args:
-          Content (unicode): Content string
+          content (unicode): Content string
 
         Returns:
           EventElement:
         """
         try:
-            self.element.find('content').text = Content
+            self.__element.find('content').text = content
         except AttributeError:
-            etree.SubElement(self.element, 'content').text = Content
+            etree.SubElement(self.__element, 'content').text = content
         except (TypeError, ValueError):
-            if type(Content) in (str, unicode):
+            if type(content) in (str, unicode):
                 # Value contains illegal characters,
                 # replace them with unicode replacement characters.
-                self.element.find('content').text = unicode(
-                    re.sub(self.evilXmlCharsRegExp, unichr(0xfffd), Content))
+                self.__element.find('content').text = unicode(
+                    re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content))
             else:
                 raise ValueError(
-                    'Event content value is not a string: %s' % repr(Content))
+                    'Event content value is not a string: %s' % repr(content))
         return self
 
-    def AddParents(self, ParentHashes):
+    def add_parents(self, parent_hashes):
         """
 
         Add the specified sticky hashes to the list
         of explicit event parents.
 
         Args:
-          ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hashes, as hexadecimal strings
 
         Returns:
           EventElement:
         """
-        self.element.attrib.set('parents', ','.join(
-            self.element.attrib.get('parents').split(',').append(ParentHashes)))
+        self.__element.attrib.set('parents', ','.join(
+            self.__element.attrib.get('parents').split(',').append(parent_hashes)))
         return self
 
-    def SetParents(self, ParentHashes):
+    def set_parents(self, parent_hashes):
         """
 
         Replace the set of explicit event parents with the specified
         list of sticky hashes.
 
         Args:
-          ParentHashes (List[str]): list of sticky hashes, as hexadecimal strings
+          parent_hashes (List[str]): list of sticky hashes, as hexadecimal strings
 
         Returns:
           EventElement:
         """
-        self.element.attrib.set('parents', ','.join(ParentHashes))
+        self.__element.attrib.set('parents', ','.join(parent_hashes))
         return self

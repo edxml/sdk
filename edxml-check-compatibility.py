@@ -38,10 +38,10 @@
 import sys
 
 from edxml.EDXMLBase import EDXMLError
-from edxml.EDXMLParser import EDXMLOntologyPullParser
+from edxml.EDXMLParser import EDXMLOntologyPullParser, ProcessingInterrupted
 
 
-def PrintHelp():
+def print_help():
 
     print """
 
@@ -74,7 +74,7 @@ InputFileNames = []
 while CurrentArgument < ArgumentCount:
 
     if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+        print_help()
         sys.exit(0)
 
     elif sys.argv[CurrentArgument] == '-f':
@@ -101,7 +101,7 @@ with EDXMLOntologyPullParser() as parser:
 
         try:
             parser.parse(open(FileName))
-        except EDXMLOntologyPullParser.ProcessingInterrupted:
+        except ProcessingInterrupted:
             pass
         except KeyboardInterrupt:
             sys.exit()

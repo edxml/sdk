@@ -17,7 +17,7 @@ class Brick(object):
     """
 
     @classmethod
-    def generateObjectTypes(cls, targetOntology):
+    def generate_object_types(cls, target_ontology):
         """
 
         Creates any object types that are defined by the
@@ -25,7 +25,7 @@ class Brick(object):
         of the created ObjectType instances.
 
         Args:
-          targetOntology (edxml.ontology.Ontology): The ontology to add to
+          target_ontology (edxml.ontology.Ontology): The ontology to add to
 
         Yields:
           List[edxml.ontology.ObjectType]:
@@ -35,7 +35,7 @@ class Brick(object):
         yield
 
     @classmethod
-    def generateConcepts(cls, targetOntology):
+    def generate_concepts(cls, target_ontology):
         """
 
         Creates any concepts that are defined by the
@@ -43,7 +43,7 @@ class Brick(object):
         of the created Concept instances.
 
         Args:
-          targetOntology (edxml.ontology.Ontology): The ontology to add to
+          target_ontology (edxml.ontology.Ontology): The ontology to add to
 
         Yields:
           List[edxml.ontology.Concept]:

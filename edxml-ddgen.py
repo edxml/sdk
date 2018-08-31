@@ -45,174 +45,174 @@ from edxml.EDXMLWriter import EDXMLWriter
 
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
-    def __init__(self, EventRate, MaxEvents, PropertySize, RandomizeProperties, EventContentSize,
-                 RandomizeEventContent, GenerateCollisions, CollisionPercentage, EventTypeName,
-                 ObjectTypeNamePrefix, EventGroupSize, Diversity, Ordered):
+    def __init__(self, event_rate, max_events, property_size, randomize_properties, event_content_size,
+                 randomize_event_content, generate_collisions, collision_percentage, event_type_name,
+                 object_type_name_prefix, event_group_size, diversity, ordered):
 
-        self.EventCounter = 0
-        self.MaxEvents = MaxEvents
-        self.EventGroupCounter = 0
-        self.CurrentEventGroupSize = 0
-        self.Ordered = Ordered
-        self.GenerateCollisions = GenerateCollisions and CollisionPercentage > 0
-        self.CollisionPercentage = CollisionPercentage
-        self.RandomizeEventContent = RandomizeEventContent
-        self.EventRate = EventRate
-        self.EventContentSize = EventContentSize
-        self.PropertyStringLength = PropertySize
-        self.RandomizeProperties = RandomizeProperties
-        self.EventTypeName = EventTypeName
-        self.ObjectTypeNamePrefix = ObjectTypeNamePrefix
-        self.Diversity = Diversity
-        self.EventGroupSize = EventGroupSize
-        self.EventSourceUriList = ('/source-a/', '/source-b/')
-        self.RandomContentCharacters = u'abcdefghijklmnop  '
-        self.RandomContentCharactersLength = len(self.RandomContentCharacters)
-        self.TimeStart = time.time()
+        self.event_counter = 0
+        self.max_events = max_events
+        self.event_group_counter = 0
+        self.current_event_group_size = 0
+        self.ordered = ordered
+        self.generate_collisions = generate_collisions and collision_percentage > 0
+        self.collision_percentage = collision_percentage
+        self.randomize_event_content = randomize_event_content
+        self.event_rate = event_rate
+        self.event_content_size = event_content_size
+        self.property_string_length = property_size
+        self.randomize_properties = randomize_properties
+        self.event_type_name = event_type_name
+        self.object_type_name_prefix = object_type_name_prefix
+        self.diversity = diversity
+        self.event_group_size = event_group_size
+        self.event_source_uri_list = ('/source-a/', '/source-b/')
+        self.random_content_characters = u'abcdefghijklmnop  '
+        self.random_content_characters_length = len(self.random_content_characters)
+        self.time_start = time.time()
 
         # Call parent class constructor
-        EDXMLWriter.__init__(self, sys.stdout, Validate=False)
+        EDXMLWriter.__init__(self, sys.stdout, validate=False)
 
-    def Start(self):
-        self.WriteDefinitions()
-        self.OpenEventGroups()
-        self.OpenEventGroup(
-            self.EventTypeName, self.EventSourceUriList[self.EventGroupCounter % 2])
-        self.WriteEvents()
-        self.Close()
+    def start(self):
+        self.write_definitions()
+        self.open_event_groups()
+        self.open_event_group(
+            self.event_type_name, self.event_source_uri_list[self.event_group_counter % 2])
+        self.write_events()
+        self.close()
 
-        TimeElapsed = time.time() - self.TimeStart + 1e-9
+        time_elapsed = time.time() - self.time_start + 1e-9
         sys.stderr.write("Wrote %d events in %d seconds, %d events per second.\n" % (
-            (self.EventCounter, TimeElapsed, (self.EventCounter / TimeElapsed))))
+            (self.event_counter, time_elapsed, (self.event_counter / time_elapsed))))
 
-    def WriteEvents(self):
+    def write_events(self):
 
-        IntervalCorrection = 0
-        RandomContentCharacters = self.RandomContentCharacters * \
-            (int(self.EventContentSize / self.RandomContentCharactersLength) + 1)
-        RandomPropertyCharacters = self.RandomContentCharacters * \
-            (int(self.PropertyStringLength / self.RandomContentCharactersLength) + 1)
+        interval_correction = 0
+        random_content_characters = self.random_content_characters * \
+            (int(self.event_content_size / self.random_content_characters_length) + 1)
+        random_property_characters = self.random_content_characters * \
+            (int(self.property_string_length / self.random_content_characters_length) + 1)
 
         # By default, event content is just a
         # string of asterisks.
-        Content = '*' * self.EventContentSize
+        content = '*' * self.event_content_size
 
         # Set the default object values
-        PropertyObjects = {
+        property_objects = {
             'property-a': [u'value'],
             'property-c': [u'value'],
             'property-g': [u'10.000000000'],
             'property-h': [u'100.000000000']
         }
 
-        if self.Ordered:
+        if self.ordered:
             # This property requires ordering to be
             # preserved.
-            PropertyObjects['property-b'] = [u'value']
+            property_objects['property-b'] = [u'value']
 
         # To prevent colliding events from accumulating arbitrary
         # numbers of property 'property-c' (which has merge
         # strategy 'add'), we generate a small collection of random
         # strings for assigning to this property.
-        AddPropertyValues = [u''.join(random.sample(
-            RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(10)]
+        add_property_values = [u''.join(random.sample(
+            random_property_characters, self.property_string_length)) for _ in range(10)]
 
-        if self.GenerateCollisions:
-            UniquePropertyValues = [u''.join(random.sample(
-                RandomPropertyCharacters, self.PropertyStringLength)) for _ in range(self.Diversity)]
-            RandomUniquePropertyValues = random.sample(range(self.Diversity), int(
-                self.Diversity * (1.0 - (self.CollisionPercentage / 100.0))))
+        if self.generate_collisions:
+            unique_property_values = [u''.join(random.sample(
+                random_property_characters, self.property_string_length)) for _ in range(self.diversity)]
+            random_unique_property_values = random.sample(range(self.diversity), int(
+                self.diversity * (1.0 - (self.collision_percentage / 100.0))))
         else:
-            RandomUniquePropertyValues = []
+            random_unique_property_values = []
 
-        if self.EventRate > 0:
-            RequestedTimeInterval = 1.0 / self.EventRate
+        if self.event_rate > 0:
+            requested_time_interval = 1.0 / self.event_rate
 
         try:
-            while self.EventCounter < self.MaxEvents or self.MaxEvents == 0:
+            while self.event_counter < self.max_events or self.max_events == 0:
 
                 # Generate random content
-                if self.RandomizeEventContent:
-                    Content = ''.join(random.sample(
-                        RandomContentCharacters, self.EventContentSize))
+                if self.randomize_event_content:
+                    content = ''.join(random.sample(
+                        random_content_characters, self.event_content_size))
 
                 # Generate random property values for the entries
                 # in the random value table that have been selected
                 # as being random.
-                if self.GenerateCollisions:
-                    for ValueIndex in RandomUniquePropertyValues:
-                        UniquePropertyValues[ValueIndex] = u''.join(random.sample(
-                            RandomPropertyCharacters, self.PropertyStringLength))
+                if self.generate_collisions:
+                    for ValueIndex in random_unique_property_values:
+                        unique_property_values[ValueIndex] = u''.join(random.sample(
+                            random_property_characters, self.property_string_length))
 
                 # Generate random property values
-                if self.RandomizeProperties:
+                if self.randomize_properties:
 
                     # The unique property is a completely random string
-                    PropertyObjects['property-a'] = [u''.join(random.sample(self.RandomContentCharacters * (int(
-                        self.PropertyStringLength / self.RandomContentCharactersLength) + 1),
-                        self.PropertyStringLength))]
+                    property_objects['property-a'] = [u''.join(random.sample(self.random_content_characters * (int(
+                        self.property_string_length / self.random_content_characters_length) + 1),
+                        self.property_string_length))]
 
-                    if self.Ordered and random.random() < 0.9:
+                    if self.ordered and random.random() < 0.9:
                         # We add the 'property-b' only if the output requires
                         # the ordering of the events to be preserved. And even
                         # then, we omit the property once in a while, removing
                         # it in case of a collision.
-                        PropertyObjects['property-b'] = [u''.join(random.sample(self.RandomContentCharacters * (int(
-                            self.PropertyStringLength / self.RandomContentCharactersLength) + 1),
-                            self.PropertyStringLength))]
+                        property_objects['property-b'] = [u''.join(random.sample(self.random_content_characters * (int(
+                            self.property_string_length / self.random_content_characters_length) + 1),
+                            self.property_string_length))]
 
                     # A random string from a fixed set
-                    PropertyObjects['property-c'] = [
-                        random.choice(AddPropertyValues)]
+                    property_objects['property-c'] = [
+                        random.choice(add_property_values)]
 
-                    for Property in ['g', 'h']:
+                    for property_name in ['g', 'h']:
                         # Random values in range [-0.5,0.5]
-                        PropertyObjects['property-' +
-                                        Property] = [u'%1.9f' % (random.random() - 0.5)]
+                        property_objects['property-' +
+                                         property_name] = [u'%1.9f' % (random.random() - 0.5)]
 
-                if self.GenerateCollisions:
+                if self.generate_collisions:
                     # For property-a, which is the unique property, we
                     # need to pick values from our random value table,
                     # which has been prepared to generate collisions
                     # at the requested rate.
-                    PropertyObjects['property-a'] = [
-                        random.choice(UniquePropertyValues)]
+                    property_objects['property-a'] = [
+                        random.choice(unique_property_values)]
                     pass
 
                 # Take time measurement for rate control
-                if self.EventRate > 0:
-                    TimeStart = time.time()
+                if self.event_rate > 0:
+                    time_start = time.time()
 
                 # Output one event
-                self.AddEvent(EDXMLEvent(PropertyObjects, Content=Content))
-                self.EventCounter += 1
-                self.CurrentEventGroupSize += 1
+                self.add_event(EDXMLEvent(property_objects, content=content))
+                self.event_counter += 1
+                self.current_event_group_size += 1
 
-                if self.EventGroupSize > 0 and self.CurrentEventGroupSize >= self.EventGroupSize:
+                if self.event_group_size > 0 and self.current_event_group_size >= self.event_group_size:
                     # Event group has grown to the desired size. We close
                     # the group, switch to another event source and open
                     # a new event group.
-                    self.EventGroupCounter += 1
-                    self.CurrentEventGroupSize = 0
-                    self.CloseEventGroup()
-                    self.OpenEventGroup(
-                        self.EventTypeName, self.EventSourceUriList[self.EventGroupCounter % 2])
+                    self.event_group_counter += 1
+                    self.current_event_group_size = 0
+                    self.close_event_group()
+                    self.open_event_group(
+                        self.event_type_name, self.event_source_uri_list[self.event_group_counter % 2])
 
-                if self.EventRate > 0:
+                if self.event_rate > 0:
                     # An event rate is specified, which means we
                     # need to keep track of time and use time.sleep()
                     # to generate delays between events.
 
-                    CurrentTime = time.time()
-                    TimeDelay = RequestedTimeInterval - \
-                        (CurrentTime - TimeStart)
-                    if TimeDelay + IntervalCorrection > 0:
+                    current_time = time.time()
+                    time_delay = requested_time_interval - \
+                        (current_time - time_start)
+                    if time_delay + interval_correction > 0:
                         sys.stdout.flush()
-                        time.sleep(TimeDelay + IntervalCorrection)
+                        time.sleep(time_delay + interval_correction)
 
                     # Check if our output rate is significantly lower than requested,
                     # print informative message is rate is too low.
-                    if (self.EventCounter / (CurrentTime - self.TimeStart)) < 0.8 * self.EventRate:
+                    if (self.event_counter / (current_time - self.time_start)) < 0.8 * self.event_rate:
                         sys.stdout.write(
                             'Cannot keep up with requested event rate!\n')
 
@@ -222,17 +222,17 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     # interval correction. We need a correction, because the accuracy of our
                     # time measurements is limited, which means time.sleep() may sleep slightly
                     # longer than necessary.
-                    MeanTimeInterval = (
-                        CurrentTime - self.TimeStart) / self.EventCounter
-                    IntervalCorrection = 0.5 * \
-                        ((IntervalCorrection + (RequestedTimeInterval -
-                                                MeanTimeInterval)) + IntervalCorrection)
+                    mean_time_interval = (
+                        current_time - self.time_start) / self.event_counter
+                    interval_correction = 0.5 * \
+                        ((interval_correction + (requested_time_interval -
+                                                 mean_time_interval)) + interval_correction)
 
         except KeyboardInterrupt:
             # Abort event generation.
             return
 
-    def WriteDefinitions(self):
+    def write_definitions(self):
 
         # In case event collisions will be generated, we will adjust
         # the merge strategies of all properties to cause collisions
@@ -241,50 +241,44 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # the product, minimum value, maximum value etc from
         # the individual objects in all input events.
 
-        if self.GenerateCollisions:
-            DropOrMatch = 'match'
-            DropOrReplace = 'replace'
-            DropOrAdd = 'add'
-            DropOrMin = 'min'
-            DropOrMax = 'max'
+        if self.generate_collisions:
+            drop_or_match = 'match'
+            drop_or_replace = 'replace'
+            drop_or_add = 'add'
+            drop_or_min = 'min'
+            drop_or_max = 'max'
         else:
-            DropOrMatch = 'drop'
-            DropOrReplace = 'drop'
-            DropOrAdd = 'drop'
-            DropOrMin = 'drop'
-            DropOrMax = 'drop'
+            drop_or_match = 'drop'
+            drop_or_replace = 'drop'
+            drop_or_add = 'drop'
+            drop_or_min = 'drop'
+            drop_or_max = 'drop'
 
         ontology = edxml.ontology.Ontology()
 
-        ontology.CreateObjectType(
-            self.ObjectTypeNamePrefix + '.a', DataType='string:%d:cs' % self.PropertyStringLength)
-        ontology.CreateObjectType(
-            self.ObjectTypeNamePrefix + '.b', DataType='number:bigint:signed')
-        ontology.CreateObjectType(
-            self.ObjectTypeNamePrefix + '.c', DataType='number:decimal:12:9:signed')
+        ontology.create_object_type(self.object_type_name_prefix + '.a',
+                                    data_type='string:%d:cs' % self.property_string_length)
+        ontology.create_object_type(self.object_type_name_prefix + '.b', data_type='number:bigint:signed')
+        ontology.create_object_type(self.object_type_name_prefix + '.c', data_type='number:decimal:12:9:signed')
 
-        eventType = ontology.CreateEventType(self.EventTypeName)
-        eventType.CreateProperty(
-            'property-a', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrMatch)
+        event_type = ontology.create_event_type(self.event_type_name)
+        event_type.create_property('property-a', self.object_type_name_prefix + '.a').set_merge_strategy(drop_or_match)
 
-        if self.Ordered:
-            eventType.CreateProperty(
-                'property-b', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrReplace)
+        if self.ordered:
+            event_type.create_property('property-b', self.object_type_name_prefix +
+                                       '.a').set_merge_strategy(drop_or_replace)
 
-        eventType.CreateProperty(
-            'property-c', self.ObjectTypeNamePrefix + '.a').SetMergeStrategy(DropOrAdd)
-        eventType.CreateProperty(
-            'property-g', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMin)
-        eventType.CreateProperty(
-            'property-h', self.ObjectTypeNamePrefix + '.c').SetMergeStrategy(DropOrMax)
+        event_type.create_property('property-c', self.object_type_name_prefix + '.a').set_merge_strategy(drop_or_add)
+        event_type.create_property('property-g', self.object_type_name_prefix + '.c').set_merge_strategy(drop_or_min)
+        event_type.create_property('property-h', self.object_type_name_prefix + '.c').set_merge_strategy(drop_or_max)
 
-        for uri in self.EventSourceUriList:
-            ontology.CreateEventSource(uri)
+        for uri in self.event_source_uri_list:
+            ontology.create_event_source(uri)
 
-        self.AddOntology(ontology)
+        self.add_ontology(ontology)
 
 
-def PrintHelp():
+def print_help():
 
     print """
 
@@ -364,86 +358,87 @@ def PrintHelp():
 """
 
 
-CurrOption = 1
-EventGroupSize = 0
-EventContentSize = 0
-PropertySize = 16
-MaxEventCount = 0
-RandomizeProperties = False
-RandomizeEventContent = False
-GenerateCollisions = False
-CollisionPercentage = 0
-EventTypeName = 'eventtype-a'
-ObjectTypeNamePrefix = 'objecttype'
-OutputDiversity = 100
-OrderedOutput = True
+curr_option = 1
+event_group_size = 0
+event_content_size = 0
+property_size = 16
+max_event_count = 0
+randomize_properties = False
+randomize_event_content = False
+generate_collisions = False
+collision_percentage = 0
+event_type_name = 'eventtype.a'
+object_type_name_prefix = 'objecttype'
+output_diversity = 100
+ordered_output = True
 
-EventRate = 0
+event_rate = 0
 
-while CurrOption < len(sys.argv):
+while curr_option < len(sys.argv):
 
-    if sys.argv[CurrOption] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[curr_option] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrOption] == '-r':
-        CurrOption += 1
-        EventRate = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-r':
+        curr_option += 1
+        event_rate = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '-c':
-        CurrOption += 1
-        GenerateCollisions = True
-        CollisionPercentage = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-c':
+        curr_option += 1
+        generate_collisions = True
+        collision_percentage = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '-d':
-        CurrOption += 1
-        OutputDiversity = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '-d':
+        curr_option += 1
+        output_diversity = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '--object-size':
-        CurrOption += 1
-        PropertySize = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '--object-size':
+        curr_option += 1
+        property_size = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '--with-content':
-        CurrOption += 1
-        EventContentSize = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '--with-content':
+        curr_option += 1
+        event_content_size = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '--limit':
-        CurrOption += 1
-        MaxEventCount = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '--limit':
+        curr_option += 1
+        max_event_count = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '--eventtype-name':
-        CurrOption += 1
-        EventTypeName = sys.argv[CurrOption]
+    elif sys.argv[curr_option] == '--eventtype-name':
+        curr_option += 1
+        event_type_name = sys.argv[curr_option]
 
-    elif sys.argv[CurrOption] == '--objecttype-name':
-        CurrOption += 1
-        ObjectTypeNamePrefix = sys.argv[CurrOption]
+    elif sys.argv[curr_option] == '--objecttype-name':
+        curr_option += 1
+        object_type_name_prefix = sys.argv[curr_option]
 
-    elif sys.argv[CurrOption] == '--unordered':
-        OrderedOutput = False
+    elif sys.argv[curr_option] == '--unordered':
+        ordered_output = False
 
-    elif sys.argv[CurrOption] == '--eventgroup-size':
-        CurrOption += 1
-        EventGroupSize = int(sys.argv[CurrOption])
+    elif sys.argv[curr_option] == '--eventgroup-size':
+        curr_option += 1
+        event_group_size = int(sys.argv[curr_option])
 
-    elif sys.argv[CurrOption] == '--random-objects':
-        RandomizeProperties = True
+    elif sys.argv[curr_option] == '--random-objects':
+        randomize_properties = True
 
-    elif sys.argv[CurrOption] == '--random-content':
-        RandomizeEventContent = True
+    elif sys.argv[curr_option] == '--random-content':
+        randomize_event_content = True
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrOption])
+                         sys.argv[curr_option])
         sys.exit()
 
-    CurrOption += 1
+    curr_option += 1
 
-generator = EDXMLDummyDataGenerator(EventRate, MaxEventCount, PropertySize, RandomizeProperties,
-                                    EventContentSize, RandomizeEventContent, GenerateCollisions,
-                                    CollisionPercentage, EventTypeName, ObjectTypeNamePrefix,
-                                    EventGroupSize, OutputDiversity, OrderedOutput)
+generator = EDXMLDummyDataGenerator(
+    event_rate, max_event_count, property_size, randomize_properties,
+    event_content_size, randomize_event_content, generate_collisions,
+    collision_percentage, event_type_name, object_type_name_prefix,
+    event_group_size, output_diversity, ordered_output)
 try:
-    generator.Start()
+    generator.start()
 except KeyboardInterrupt:
-    generator.Close()
+    generator.close()

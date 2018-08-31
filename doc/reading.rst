@@ -24,7 +24,7 @@ edxml.EDXMLParserBase
     :special-members: __init__
     :members:
     :member-order: groupwise
-    :private-members: _parsedOntology, _openEventGroup, _closeEventGroup, _parsedEvent
+    :private-members: _parsedOntology, _openEventGroup, _close_event_group, _parsedEvent
     :show-inheritance:
 
 edxml.EDXMLPushParser

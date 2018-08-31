@@ -39,7 +39,7 @@ import sys
 from edxml.EDXMLParser import EDXMLPullParser
 
 
-def PrintHelp():
+def print_help():
 
     print """
 
@@ -64,35 +64,35 @@ def PrintHelp():
 # Program starts here.
 
 
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-Input = sys.stdin
+argument_count = len(sys.argv)
+current_argument = 1
+event_input = sys.stdin
 
 # Parse commandline arguments
 
-while CurrentArgument < ArgumentCount:
+while current_argument < argument_count:
 
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        PrintHelp()
+    if sys.argv[current_argument] in ('-h', '--help'):
+        print_help()
         sys.exit(0)
 
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        Input = open(sys.argv[CurrentArgument])
+    elif sys.argv[current_argument] == '-f':
+        current_argument += 1
+        event_input = open(sys.argv[current_argument])
 
     else:
         sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
+                         sys.argv[current_argument])
         sys.exit()
 
-    CurrentArgument += 1
+    current_argument += 1
 
-if Input == sys.stdin:
+if event_input == sys.stdin:
     sys.stderr.write(
         'Waiting for EDXML data on standard input... (use --help option to get help)\n')
 
 try:
-    EDXMLPullParser().parse(Input)
+    EDXMLPullParser().parse(event_input)
 except KeyboardInterrupt:
     sys.exit()
 
