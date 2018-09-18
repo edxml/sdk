@@ -37,6 +37,18 @@ class PropertyRelation(OntologyElement):
             self.__attr[key] = value
             self._child_modified_callback()
 
+    def get_persistent_id(self):
+        """
+        Generates and returns a unique, persistent identifier for
+        the property relation.
+
+        Returns:
+            str:
+        """
+        return '{}:{}:{},{}'.format(
+            self.__event_type.get_name(), self.get_type_class(), self.get_source(), self.get_target()
+        )
+
     def get_source(self):
         """
 

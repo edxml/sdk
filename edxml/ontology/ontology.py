@@ -777,7 +777,7 @@ class Ontology(OntologyElement):
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
         for event_type_name, event_type in self.__event_types.items():
-            for relation in event_type.get_property_relations():
+            for relation in event_type.get_property_relations().values():
                 if relation.get_type_class() in ('inter', 'intra'):
                     source_concept = event_type[relation.get_source(
                     )].get_concept_name()

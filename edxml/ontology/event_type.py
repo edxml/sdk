@@ -47,9 +47,8 @@ class EventType(OntologyElement, MutableMapping):
             'version': 1
         }
 
-        # type: Dict[str, edxml.ontology.EventProperty]
-        self.__properties = {}
-        self.__relations = []       # type: List[edxml.ontology.PropertyRelation]
+        self.__properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
+        self.__relations = {}       # type: Dict[str,edxml.ontology.PropertyRelation]
         self.__parent = parent      # type: edxml.ontology.EventTypeParent
         self.__relax_ng = None       # type: etree.RelaxNG
         self.__ontology = ontology  # type: edxml.ontology.Ontology
@@ -229,11 +228,12 @@ class EventType(OntologyElement, MutableMapping):
     def get_property_relations(self):
         """
 
-        Returns the list of property relations that
-        are defined in the event type.
+        Returns a dictionary containing the property relations that
+        are defined in the event type. The keys are relation IDs that
+        should be considered opaque.
 
         Returns:
-          List[edxml.ontology.PropertyRelation]:
+          Dict[str,edxml.ontology.PropertyRelation]:
         """
         return self.__relations
 
@@ -417,7 +417,7 @@ class EventType(OntologyElement, MutableMapping):
 
         relation = edxml.ontology.PropertyRelation(self, self[source], self[target], description, type_class,
                                                    type_predicate, confidence, directed)
-        self.__relations.append(relation.validate())
+        self.__relations[relation.get_persistent_id()] = relation.validate()
 
         self._child_modified_callback()
         return relation
@@ -435,7 +435,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self.__relations.append(relation.validate())
+        self.__relations[relation.get_persistent_id()] = relation.validate()
 
         self._child_modified_callback()
         return self
@@ -1398,7 +1398,7 @@ class EventType(OntologyElement, MutableMapping):
         for propertyName, eventProperty in self.get_properties().items():
             eventProperty.validate()
 
-        for relation in self.__relations:
+        for relation in self.__relations.values():
             relation.validate()
 
         return self
@@ -1502,8 +1502,8 @@ class EventType(OntologyElement, MutableMapping):
         for Property in self.__properties.values():
             properties.append(Property.generate_xml())
         relations = etree.Element('relations')
-        for Relation in self.__relations:
-            relations.append(Relation.generate_xml())
+        for relation in self.__relations.values():
+            relations.append(relation.generate_xml())
 
         element.append(properties)
         element.append(relations)

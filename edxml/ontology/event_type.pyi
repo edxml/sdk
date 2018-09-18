@@ -21,7 +21,7 @@ class EventType(OntologyElement):
 
         self.__attr = ...              # type: Dict
         self.__properties = ...        # type: Dict[str, edxml.ontology.EventProperty]
-        self.__relations = ...         # type: List[edxml.ontology.PropertyRelation]
+        self.__relations = ...         # type: Dict[str, edxml.ontology.PropertyRelation]
         self.__parent = ...            # type: edxml.ontology.EventTypeParent
         self.__parent_description = ...  # type: str
         self.__relax_ng = None          # type: etree.RelaxNG
@@ -52,7 +52,7 @@ class EventType(OntologyElement):
 
     def get_hash_properties(self) -> Dict[str, edxml.ontology.EventProperty]: ...
 
-    def get_property_relations(self) -> List[edxml.ontology.PropertyRelation]: ...
+    def get_property_relations(self) -> Dict[str, edxml.ontology.PropertyRelation]: ...
 
     def get_version(self) -> int: ...
 
