@@ -310,15 +310,15 @@ class ObjectType(OntologyElement):
         self._set_attr('fuzzy-matching', 'phonetic')
         return self
 
-    def compress(self):
+    def compress(self, is_compressible=True):
         """
 
-        Enable compression for the object type.
+        Enable or disable compression for the object type.
 
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        self._set_attr('compress', True)
+        self._set_attr('compress', is_compressible)
         return self
 
     def generate_relaxng(self):

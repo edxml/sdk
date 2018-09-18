@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from datetime import datetime
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
@@ -56,10 +57,21 @@ class EventSource(OntologyElement):
         """
         return self._attr['description']
 
+    def get_acquisition_date(self):
+        """
+
+        Returns the acquisition date as a datetime object
+
+        Returns:
+          datetime.datetime: The date
+        """
+
+        return datetime.strptime(self._attr['date-acquired'], '%Y%m%d')
+
     def get_acquisition_date_string(self):
         """
 
-        Returns the acquisition date
+        Returns the acquisition date as a string
 
         Returns:
           str: The date in yyyymmdd format
@@ -106,6 +118,21 @@ class EventSource(OntologyElement):
         """
 
         self._set_attr('date-acquired', date_time.strftime('%Y%m01'))
+        return self
+
+    def set_acquisition_date_string(self, date_time):
+        """
+
+        Sets the acquisition date from a string value
+
+        Args:
+          date_time (str): The date in yyyymmdd format
+
+        Returns:
+          edxml.ontology.EventSource: The EventSource instance
+        """
+
+        self._set_attr('date-acquired', date_time)
         return self
 
     def set_version(self, version):

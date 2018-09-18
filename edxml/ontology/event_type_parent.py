@@ -164,7 +164,7 @@ class EventTypeParent(OntologyElement):
         Returns:
           str:
         """
-        return self._attr['eventtype']
+        return self._attr['parent-description']
 
     def get_siblings_description(self):
         """
@@ -174,7 +174,7 @@ class EventTypeParent(OntologyElement):
         Returns:
           str:
         """
-        return self._attr['eventtype']
+        return self._attr['siblings-description']
 
     def validate(self):
         """

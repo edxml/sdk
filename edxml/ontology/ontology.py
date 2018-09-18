@@ -529,6 +529,17 @@ class Ontology(OntologyElement):
         """
         return self.__object_types.keys()
 
+    def get_event_source_uris(self):
+        """
+
+        Returns the list of URIs of all defined
+        event sources.
+
+        Returns:
+           List[str]: List of source URIs
+        """
+        return self.__sources.keys()
+
     def get_concept_names(self):
         """
 

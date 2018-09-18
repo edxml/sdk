@@ -147,6 +147,22 @@ class PropertyRelation(OntologyElement):
         self._set_attr('description', reason)
         return self
 
+    def set_description(self, description):
+        """
+
+        Sets the relation description to specified string,
+        which should contain placeholders for the values
+        of both related properties.
+
+        Args:
+          description (str): Relation description
+
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
+
+        """
+        return self.because(description)
+
     def set_confidence(self, confidence):
         """
 

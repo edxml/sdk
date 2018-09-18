@@ -277,6 +277,33 @@ class EventProperty(OntologyElement):
         self._set_attr('description', description)
         return self
 
+    def set_optional(self, is_optional):
+        """
+        Set the optional flag for the property to True (property is optional)
+        or False (property is mandatory).
+
+        Args:
+            is_optional (bool):
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('optional', is_optional)
+        return self
+
+    def set_concept_confidence(self, confidence):
+        """
+        Set the concept confidence for the associated concept.
+
+        Args:
+            confidence (int):
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('concept-confidence', confidence)
+        return self
+
     def unique(self):
         """
 
