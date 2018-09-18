@@ -6,8 +6,10 @@ import edxml.ontology
 from edxml.EDXMLBase import EDXMLValidationError
 from lxml import etree
 
+from edxml.ontology import OntologyElement
 
-class EventProperty(object):
+
+class EventProperty(OntologyElement):
     """
     Class representing an EDXML event property
     """

@@ -5,8 +5,10 @@ import edxml
 from lxml import etree
 from typing import List, Dict, Union, Type
 
+from edxml.ontology import OntologyElement
 
-class Ontology(object):
+
+class Ontology(OntologyElement):
 
     TEMPLATE_PATTERN = ...
     KNOWN_FORMATTERS = ...  # type: List[str]

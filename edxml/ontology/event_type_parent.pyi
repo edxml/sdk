@@ -3,8 +3,10 @@ import edxml
 from lxml import etree
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class EventTypeParent(object):
+
+class EventTypeParent(OntologyElement):
 
     PROPERTY_MAP_PATTERN = ...
 

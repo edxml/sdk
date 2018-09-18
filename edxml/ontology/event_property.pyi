@@ -6,8 +6,10 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class EventProperty(object):
+
+class EventProperty(OntologyElement):
 
     EDXML_PROPERTY_NAME_PATTERN = ...
 

@@ -3,9 +3,10 @@ import re
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class Concept(object):
+class Concept(OntologyElement):
     """
     Class representing an EDXML concept
     """

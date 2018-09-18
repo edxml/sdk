@@ -4,10 +4,10 @@ import edxml.ontology
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import ObjectType, Concept, EventType, EventSource
+from edxml.ontology import ObjectType, Concept, EventType, EventSource, OntologyElement
 
 
-class Ontology(object):
+class Ontology(OntologyElement):
     """
     Class representing an EDXML ontology
     """

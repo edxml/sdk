@@ -6,8 +6,10 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class PropertyRelation(object):
+
+class PropertyRelation(OntologyElement):
 
     def __init__(self, event_type: edxml.ontology.EventType, source: edxml.ontology.EventProperty,
                  target: edxml.ontology.EventProperty, description: str, type_class: str, type_predicate: str,

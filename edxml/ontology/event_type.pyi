@@ -4,8 +4,10 @@ import edxml
 from typing import List, Dict, Iterable
 from lxml import etree
 
+from edxml.ontology import OntologyElement
 
-class EventType(object):
+
+class EventType(OntologyElement):
 
     NAME_PATTERN = ...
     DISPLAY_NAME_PATTERN = ...

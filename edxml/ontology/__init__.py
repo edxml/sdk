@@ -3,6 +3,9 @@ This sub-package contains classes that represent EDXML
 ontology elements, like event types, object types, event
 sources, and so on.
 
+..  autoclass:: OntologyElement
+    :members:
+    :show-inheritance:
 ..  autoclass:: ObjectType
     :members:
     :show-inheritance:
@@ -32,6 +35,7 @@ sources, and so on.
     :show-inheritance:
 """
 from __future__ import absolute_import
+from edxml.ontology.ontology_element import OntologyElement
 from edxml.ontology.data_type import DataType
 from edxml.ontology.event_type import EventType
 from edxml.ontology.event_property import EventProperty
@@ -44,5 +48,5 @@ from edxml.ontology.ontology import Ontology
 from edxml.ontology.brick import Brick
 
 
-__all__ = ['DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource', 'EventTypeParent', 'ObjectType',
-           'Concept', 'Ontology', 'Brick']
+__all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
+           'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick']

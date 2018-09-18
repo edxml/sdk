@@ -4,9 +4,10 @@ import re
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventSource(object):
+class EventSource(OntologyElement):
     """
     Class representing an EDXML event source
     """

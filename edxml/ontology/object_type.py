@@ -5,10 +5,10 @@ import sre_constants
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import DataType
+from edxml.ontology import DataType, OntologyElement
 
 
-class ObjectType(object):
+class ObjectType(OntologyElement):
     """
     Class representing an EDXML object type
     """

@@ -6,8 +6,10 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class Concept(object):
+
+class Concept(OntologyElement):
     NAME_PATTERN = ...
     DISPLAY_NAME_PATTERN = ...
     FUZZY_MATCHING_PATTERN = ...

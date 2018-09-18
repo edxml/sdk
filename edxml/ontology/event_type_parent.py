@@ -5,9 +5,10 @@ import edxml
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventTypeParent(object):
+class EventTypeParent(OntologyElement):
     """
     Class representing an EDXML event type parent
     """

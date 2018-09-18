@@ -13,9 +13,10 @@ from lxml.builder import ElementMaker
 from termcolor import colored
 
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventType(MutableMapping):
+class EventType(OntologyElement, MutableMapping):
     """
     Class representing an EDXML event type. The class provides
     access to event properties by means of a dictionary interface.
