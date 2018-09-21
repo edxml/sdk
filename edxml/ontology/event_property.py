@@ -694,34 +694,16 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventProperty: The updated EventProperty instance
 
         """
-        if self.__attr['name'] != event_property.get_name():
-            raise Exception('Attempt to update event property "%s" with event property "%s".' %
-                            (self.__attr['name'], event_property.get_name()))
+        if event_property > self:
+            # The new definition is indeed newer. Update self.
+            self.set_description(event_property.get_description())
+            self.hint_similar(event_property.get_similar_hint())
+            self.set_optional(event_property.is_optional())
+            self.set_multi_valued(event_property.is_multi_valued())
 
-        if self.__attr['description'] != event_property.get_description():
-            raise Exception('Attempt to update event property "%s", but descriptions do not match.' %
-                            self.__attr['name'],
-                            (self.__attr['description'], event_property.get_name()))
-
-        if int(self.__attr['cnp']) != event_property.get_concept_naming_priority():
-            raise Exception(
-                'Attempt to update event property "%s", but Entity Naming Priorities do not match.' %
-                self.__attr['name'],
-                (self.__attr['cnp'], event_property.get_name()))
-
-        if self.__attr['optional'] != event_property.is_optional():
-            raise Exception(
-                'Attempt to update event property "%s", but "optional" attributes do not match.' % self.__attr[
-                    'name']
-            )
-
-        if self.__attr['multivalued'] != event_property.is_multi_valued():
-            raise Exception(
-                'Attempt to update event property "%s", but "multivalued" attributes do not match.' % self.__attr[
-                    'name']
-            )
-
-        self.validate()
+            if event_property.get_concept_name() is not None:
+                self.set_concept_confidence(event_property.get_concept_confidence())
+                self.set_concept_naming_priority(event_property.get_concept_naming_priority())
 
         return self
 

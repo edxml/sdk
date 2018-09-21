@@ -308,11 +308,10 @@ class EventTypeParent(OntologyElement):
           edxml.ontology.EventTypeParent: The updated EventTypeParent instance
 
         """
-        if self._attr['eventtype'] != parent.get_event_type():
-            raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".' %
-                            (self._attr['eventtype'], parent.get_event_type()))
-
-        self.validate()
+        if parent > self:
+            # The new definition is indeed newer. Update self.
+            self.set_parent_description(parent.get_parent_description())
+            self.set_siblings_description(parent.get_siblings_description())
 
         return self
 

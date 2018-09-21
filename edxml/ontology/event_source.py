@@ -243,14 +243,11 @@ class EventSource(OntologyElement):
           edxml.ontology.EventSource: The updated EventSource instance
 
         """
-        if self._attr['uri'] != source.get_uri():
-            raise Exception('Attempt to update event source "%s" with source "%s".' %
-                            (self._attr['uri'], source.get_uri()))
-
-        if self._attr['version'] != source.get_version():
-            raise Exception('Attempt to update event source "%s", but versions do not match.' % self._attr['uri'])
-
-        self.validate()
+        if source > self:
+            # The new definition is indeed newer. Update self.
+            self.set_acquisition_date_string(source.get_acquisition_date_string())
+            self.set_description(source.get_description())
+            self.set_version(source.get_version())
 
         return self
 

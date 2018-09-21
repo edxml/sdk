@@ -363,14 +363,10 @@ class PropertyRelation(OntologyElement):
           edxml.ontology.PropertyRelation: The updated PropertyRelation instance
 
         """
-        property1 = self.__attr['property1'] != property_relation.get_source()
-        property2 = self.__attr['property2'] != property_relation.get_target()
-        if property1 or property2:
-            raise Exception('Attempt to property relation between %s -> %s with relation between %s -> %s.' %
-                            (self.__attr['property1'], self.__attr['property2'],
-                             property_relation.get_source(), property_relation.get_target()))
-
-        self.validate()
+        if property_relation > self:
+            # The new definition is indeed newer. Update self.
+            self.set_description(property_relation.get_description())
+            self.set_confidence(property_relation.get_confidence())
 
         return self
 

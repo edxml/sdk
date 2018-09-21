@@ -516,41 +516,12 @@ class ObjectType(OntologyElement):
           edxml.ontology.ObjectType: The updated ObjectType instance
 
         """
-        if self.__attr['name'] != object_type.get_name():
-            raise Exception('Attempt to update object type "%s" with object type "%s".' %
-                            (self.__attr['name'], object_type.get_name()))
-
-        if self.__attr['display-name'] != object_type.get_display_name():
-            raise Exception('Attempt to update object type "%s", but display names do not match' % self.__attr['name'],
-                            (self.__attr['display-name'], object_type.get_name()))
-
-        if self.__attr['description'] != object_type.get_description():
-            raise Exception('Attempt to update object type "%s", but descriptions do not match.' % self.__attr['name'],
-                            (self.__attr['description'], object_type.get_name()))
-
-        if self.__attr['data-type'] != str(object_type.get_data_type()):
-            raise Exception('Attempt to update object type "%s", but data types do not match.' % self.__attr['name'],
-                            (self.__attr['data-type'], object_type.get_name()))
-
-        if self.__attr['compress'] != object_type.is_compressible():
-            raise Exception(
-                'Attempt to update object type "%s", but compress flags do not match.' % self.__attr['name'],
-                (self.__attr['compress'], object_type.get_name()))
-
-        if self.__attr['fuzzy-matching'] != object_type.get_fuzzy_matching():
-            raise Exception('Attempt to update object type "%s", but fuzzy '
-                            'matching attributes do not match.' % self.__attr['name'],
-                            (self.__attr['fuzzy-matching'], object_type.get_name()))
-
-        if self.__attr['regexp'] != object_type.get_regexp():
-            raise Exception('Attempt to update object type "%s", but their '
-                            'regular expressions do not match.' % self.__attr['name'],
-                            (self.__attr['regexp'], object_type.get_name()))
-
-        if self.__attr['version'] != object_type.get_version():
-            raise Exception('Attempt to update object type "%s", but versions do not match.' % self.__attr['name'])
-
-        self.validate()
+        if object_type > self:
+            # The new definition is indeed newer. Update self.
+            self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
+            self.set_description(object_type.get_description())
+            self.compress(object_type.is_compressible())
+            self.set_version(object_type.get_version())
 
         return self
 

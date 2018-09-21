@@ -1544,45 +1544,27 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The updated EventType instance
 
         """
-        if self.__attr['name'] != event_type.get_name():
-            raise Exception('Attempt to update event type "%s" with event type "%s".' %
-                            (self.__attr['name'], event_type.get_name()))
+        if not isinstance(event_type, type(self)):
+            raise TypeError("Can only update using an ontology element of the same type.")
 
-        if self.__attr['description'] != event_type.get_description():
-            raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self.__attr['name'],
-                            (self.__attr['description'], event_type.get_name()))
+        if event_type > self:
+            # The new definition is indeed newer. Update self.
 
-        if self.__attr['version'] != event_type.get_version():
-            raise Exception('Attempt to update event type "%s", but versions do not match.' % self.__attr['name'])
-
-        if self.get_parent() is not None:
-            if event_type.get_parent() is not None:
+            if self.get_parent() is not None:
                 self.get_parent().update(event_type.get_parent())
-            else:
-                raise Exception(
-                    'Attempt to update event type "%s", but update does not define a parent.' % self.__attr['name'])
-        else:
-            if event_type.get_parent() is not None:
-                raise Exception(
-                    'Attempt to update event type "%s", but update defines a parent.' % self.__attr['name'])
 
-        update_property_names = set(event_type.get_properties().keys())
-        existing_property_names = set(self.get_properties().keys())
+            for property_name, property in self.get_properties().items():
+                self[property_name].update(event_type[property_name])
 
-        properties_added = update_property_names - existing_property_names
-        properties_removed = existing_property_names - update_property_names
+            for relation_id, relation in self.get_property_relations().items():
+                self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
 
-        if len(properties_added) > 0:
-            raise Exception(
-                'Attempt to add properties to existing definition of event type ' + self.__attr['name'])
-        if len(properties_removed) > 0:
-            raise Exception(
-                'Attempt to remove properties from existing definition of event type ' + self.__attr['name'])
-
-        for propertyName, eventProperty in self.get_properties().items():
-            eventProperty.update(event_type[propertyName])
-
-        self.validate()
+            self.set_description(event_type.get_description())
+            self.set_display_name(event_type.get_display_name_singular(), event_type.get_display_name_plural())
+            self.set_summary_template(event_type.get_summary_template())
+            self.set_story_template(event_type.get_story_template())
+            self.set_classes(set(self.get_classes()).union(event_type.get_classes()))
+            self.set_version(event_type.get_version())
 
         return self
 

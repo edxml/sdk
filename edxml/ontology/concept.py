@@ -259,23 +259,11 @@ class Concept(OntologyElement):
           edxml.ontology.Concept: The updated Concept instance
 
         """
-        if self._attr['name'] != concept.get_name():
-            raise Exception('Attempt to update concept "%s" with concept "%s".' %
-                            (self._attr['name'], concept.get_name()))
-
-        if self._attr['display-name'] != concept.get_display_name():
-            raise Exception('Attempt to update concept "%s", but display names do not match.' % self._attr['name'],
-                            (self._attr['display-name'], concept.get_name()))
-
-        if self._attr['description'] != concept.get_description():
-            raise Exception('Attempt to update concept "%s", but descriptions do not match.' % self._attr['name'],
-                            (self._attr['description'], concept.get_name()))
-
-        if self._attr['version'] != concept.get_version():
-            raise Exception('Attempt to update concept "%s", but versions do not match.' % self._attr['name'],
-                            (self._attr['version'], concept.get_name()))
-
-        self.validate()
+        if concept > self:
+            # The new definition is indeed newer. Update self.
+            self.set_display_name(concept.get_display_name_singular(), concept.get_display_name_plural())
+            self.set_description(concept.get_description())
+            self.set_version(concept.get_version())
 
         return self
 
