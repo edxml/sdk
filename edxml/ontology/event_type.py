@@ -1426,6 +1426,110 @@ class EventType(OntologyElement, MutableMapping):
 
         return event_type
 
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+        is_valid_upgrade = True
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Event types with different names are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_display_name_singular() == new.get_display_name_singular()
+        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        equal &= old.get_description() == new.get_description()
+        equal &= old.get_summary_template() == new.get_summary_template()
+        equal &= old.get_story_template() == new.get_story_template()
+
+        # Check for illegal upgrade paths:
+
+        if (old.get_parent() is None) != (new.get_parent() is None):
+            # One version has a parent, the other has not. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_properties().keys() != new.get_properties().keys():
+            # Versions do not agree on their property set. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_property_relations().keys() != new.get_property_relations().keys():
+            # Versions do not agree on their property relations set. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_classes() != new.get_classes():
+            # Adding an event type class is possible, removing one is not.
+            equal = False
+            is_valid_upgrade &= versions_differ and len(set(old.get_classes()) - set(new.get_classes())) == 0
+
+        # Check upgrade paths for sub-elements:
+
+        if old.get_parent() is not None and new.get_parent() is not None:
+            if old.get_parent() != new.get_parent():
+                # Parent definitions differ, check that new definition is
+                # a valid upgrade of the old definition.
+                equal = False
+                is_valid_upgrade &= new.get_parent() > old.get_parent()
+
+        for property_name, property in new.get_properties().items():
+            if property_name in old:
+                if old[property_name] != new[property_name]:
+                    # Property definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= new[property_name] > old[property_name]
+
+        for relation_id, relation in new.get_property_relations().items():
+            if relation_id in old.get_property_relations():
+                if new.get_property_relations()[relation_id] != old.get_property_relations()[relation_id]:
+                    # Relation definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= \
+                        new.get_property_relations()[relation_id] > old.get_property_relations()[relation_id]
+
+        if equal:
+            return 0
+
+        if is_valid_upgrade and versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Event type definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
+        )
+
+    def __eq__(self, other):
+        # We need to implement this method to override the
+        # implementation of the MutableMapping, of which the
+        # EventType class is an extension.
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        # We need to implement this method to override the
+        # implementation of the MutableMapping, of which the
+        # EventType class is an extension.
+        return self.__cmp__(other) != 0
+
     def update(self, event_type):
         """
 

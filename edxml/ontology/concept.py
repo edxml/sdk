@@ -203,6 +203,50 @@ class Concept(OntologyElement):
             type_element.attrib['description'],
         ).set_version(type_element.attrib['version'])
 
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Concepts with different names are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_display_name_singular() == new.get_display_name_singular()
+        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        equal &= old.get_description() == new.get_description()
+
+        if equal:
+            return 0
+
+        if versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Concept definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
+        )
+
     def update(self, concept):
         """
         Update the concept using information from the provided
