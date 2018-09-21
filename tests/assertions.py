@@ -30,6 +30,30 @@ def assert_valid_upgrade(old, new):
     assert old == new
 
 
+def assert_valid_ontology_upgrade(old, new):
+    """
+
+    Asserts that two given ontologies are valid
+    upgrades of one another.
+
+    Args:
+        old (edxml.Ontology.OntologyElement):
+        new (edxml.Ontology.OntologyElement):
+
+    """
+
+    # Ontologies can only be upgrades of one another
+    # in both directions, not downgrades.
+    assert new > old
+    assert old > new
+
+    # Updating the old version with the new version
+    # and vice versa should make both identical.
+    old.update(new)
+    new.update(old)
+    assert old == new
+
+
 def assert_incomparable(a, b):
     # An attempt to upgrade should now fail.
     with pytest.raises(EDXMLValidationError):
