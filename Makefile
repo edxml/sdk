@@ -1,8 +1,8 @@
 # Make file for creating the PyPI package and generating sphinx docs
 
-.PHONY: all dependencies dist doc test clean
+.PHONY: all dependencies dist doc check test clean
 
-all: dependencies dist doc test clean
+all: dependencies dist doc check test clean
 
 dependencies:
 	@echo "Installing dependencies:"
@@ -15,6 +15,10 @@ dist:
 doc:
 	pip install -e .[doc]
 	python setup.py build_sphinx
+
+check:
+	@echo "Checking your code..."
+	@python2 -m flake8 --max-line-length=120 && echo "Well done. Your code is in shiny style!"
 
 test: dependencies
 	@echo "Running tests:"
