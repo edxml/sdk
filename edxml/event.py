@@ -508,16 +508,6 @@ class EDXMLEvent(MutableMapping):
                         else:
                             target[property_name] = {str(max(values))}
 
-                        if split_data_type[1] in ('float', 'double'):
-                            target[property_name] = {
-                                str(float(next(iter(target[property_name]))) + len(colliding_events))}
-                        elif split_data_type[1] == 'decimal':
-                            target[property_name] = {
-                                str(Decimal(next(iter(target[property_name]))) + len(colliding_events))}
-                        else:
-                            target[property_name] = {
-                                str(int(next(iter(target[property_name]))) + len(colliding_events))}
-
             elif merge_strategy == 'add':
                 target[property_name].update(source[property_name])
 
