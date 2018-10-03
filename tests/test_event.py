@@ -81,3 +81,26 @@ def test_merge_unique(ontology, eventtype_unique, eventproperty_unique):
     changed4 = e3.merge_with([e1_copy], ontology)
     assert not changed4
     assert e1["testeventpropertyunique"].pop() == "testvalue"
+
+
+@pytest.fixture
+def datetimeobjecttype(ontology):
+    return ontology.create_object_type('datetimeobjecttype', data_type='datetime')
+
+
+@pytest.fixture
+def datetimeproperty(eventtype_unique, datetimeobjecttype):
+    return eventtype_unique.create_property('datetimeproperty', datetimeobjecttype.get_name()) \
+        .set_merge_strategy('max')
+
+
+def test_merge_datetime(ontology, eventtype_unique, datetimeproperty):
+    # This test case is written to debug a situation where
+    # a merge on a datetime with merge strategy 'min' or 'max'
+    # fails due to an incorrect split on the data type.
+    # The test case fails intentionally in this commit and is fixed in the next commit.
+    e1 = EDXMLEvent({'datetimeproperty': ['2018-10-03 15:15:31']}, 'testeventtypeunique')
+    e2 = EDXMLEvent({'datetimeproperty': ['2018-10-03 15:15:32']}, 'testeventtypeunique')
+    changed = e1.merge_with([e2], ontology)
+    assert changed
+    assert e1["datetimeproperty"].pop() == '2018-10-03 15:15:32'
