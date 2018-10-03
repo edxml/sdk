@@ -417,9 +417,15 @@ class EDXMLEvent(MutableMapping):
         property_names = properties.keys()
         unique_properties = event_type.get_unique_properties()
 
-        if len(unique_properties) == 0:
-            raise TypeError(
-                "MergeEvent was called for event type %s, which is not a unique event type." % self._event_type_name)
+        # There used to be a check here to count the number of unique properties and raise a TypeError if there were
+        # none. However, if the properties of an event are not unique, and it collides with another event (i.e. produce
+        # the same hash), they are the same. Merging them will result in the same event without any changes. We've
+        # removed the check altogether and the testcases that come with this comment show that these kinds of events
+        # can be merged without problems.
+        # Even events which are not the same but have no unique properties can now be merged. This will change the
+        # event data according to the normal merge strategies, and possibly the hash. This is outside of the spec
+        # but may be useful for processors, e.g. for aggregation calculations. The results of such a merge should not
+        # be considered a new valid event.
 
         event_objects_a = self.get_properties()
 
