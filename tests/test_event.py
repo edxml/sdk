@@ -45,6 +45,24 @@ def test_event_init():
     assert event.get_content() == content
 
 
+def test_event_valid(ontology, eventtype, eventproperty):
+    # Event type does not exist
+    e1 = EDXMLEvent({"testeventproperty": ["testvalue"]}, 'nonexistingvalue')
+    assert not e1.is_valid(ontology)
+
+    # Event type exists and is valid
+    e2 = EDXMLEvent({"testeventproperty": ["testvalue"]}, 'testeventtype')
+    assert e2.is_valid(ontology)
+
+    # Event type exists, but value is invalid
+    e3 = EDXMLEvent({"testeventproperty": [152]}, 'testeventtype')
+    assert not e3.is_valid(ontology)
+
+    # Event type exists, and property is valid, but contains an extra property
+    e4 = EDXMLEvent({"testeventproperty": ["testvalue"], "nonexistingproperty": ["value"]}, 'testeventtype')
+    assert not e4.is_valid(ontology)
+
+
 def test_merge_non_unique(ontology, eventtype, eventproperty):
     e1 = EDXMLEvent({"testeventproperty": ["testvalue"]}, 'testeventtype')
     e2 = EDXMLEvent({"testeventproperty": ["testvalue"]}, 'testeventtype')
@@ -92,6 +110,15 @@ def datetimeobjecttype(ontology):
 def datetimeproperty(eventtype_unique, datetimeobjecttype):
     return eventtype_unique.create_property('datetimeproperty', datetimeobjecttype.get_name()) \
         .set_merge_strategy('max')
+
+
+def test_event_datetime_valid(ontology, eventtype_unique, datetimeproperty):
+    # Incorrect date format
+    e1 = EDXMLEvent({'datetimeproperty': ['2018-10-03 15:15:31']}, 'testeventtypeunique')
+    assert not e1.is_valid(ontology)
+    # Correct date format
+    e2 = EDXMLEvent({'datetimeproperty': ['2018-10-03T15:15:32.000000Z']}, 'testeventtypeunique')
+    assert e2.is_valid(ontology)
 
 
 def test_merge_datetime(ontology, eventtype_unique, datetimeproperty):

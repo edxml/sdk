@@ -9,7 +9,7 @@ from collections import defaultdict
 from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
-from edxml.EDXMLBase import EvilCharacterFilter
+from edxml.EDXMLBase import EvilCharacterFilter, EDXMLValidationError
 
 
 class EDXMLEvent(MutableMapping):
@@ -588,6 +588,28 @@ class EDXMLEvent(MutableMapping):
                 '%s\n%s\n%s\n%s' % (self._source_uri, self._event_type_name, '\n'.join(
                     sorted(object_strings)), self.get_content())
             ).digest().encode(encoding)
+
+    def is_valid(self, ontology):
+        """
+        Check if an event is valid for a given ontology.
+
+        Args:
+            ontology (edxml.ontology.Ontology): An EDXML ontology
+
+        Returns:
+            bool: True if the event is valid
+        """
+        event_type = ontology.get_event_type(self.get_type_name())
+
+        if event_type is None:
+            return False
+
+        try:
+            event_type.validate_event_structure(self)
+            event_type.validate_event_objects(self)
+        except EDXMLValidationError:
+            return False
+        return True
 
 
 class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
