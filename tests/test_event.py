@@ -146,3 +146,58 @@ def test_merge_datetime(ontology, eventtype_unique, datetimeproperty):
     changed = e1.merge_with([e2], ontology)
     assert changed
     assert e1["datetimeproperty"].pop() == '2018-10-03T15:15:32.000000Z'
+
+
+def test_merge_parents(ontology, objecttype, eventtype_unique, eventproperty_unique):
+    parenttype = ontology.create_event_type('parenteventtype')
+    parenttype.create_property('parentproperty', objecttype.get_name()) \
+        .set_merge_strategy('replace')
+
+    e1 = EDXMLEvent({"testeventpropertyunique": ["testvalue"]}, 'testeventtypeunique')
+    e2 = EDXMLEvent({"parentproperty": ["testvalue"]}, 'parenteventtype')
+
+    e3 = EDXMLEvent({"testeventpropertyunique": ["testvalue2"]}, 'testeventtypeunique')
+    e4 = EDXMLEvent({"parentproperty": ["testvalue2"]}, 'parenteventtype')
+
+    # They have no parents yet
+    assert e1.get_explicit_parents() == []
+    assert e3.get_explicit_parents() == []
+
+    # Merging will result in still not having any parents
+    copy1 = deepcopy(e1)
+    changed1 = copy1.merge_with([deepcopy(e3)], ontology)
+    # No change, because of unique events with different values
+    assert not changed1
+    # but no parents
+    assert copy1.get_explicit_parents() == []
+
+    e1.set_parents([e2.compute_sticky_hash(ontology)])
+    e3.set_parents([e4.compute_sticky_hash(ontology)])
+
+    assert e1.get_explicit_parents() == [e2.compute_sticky_hash(ontology)]
+
+    # merge events with different parents
+    copy2 = deepcopy(e1)
+    changed2 = copy2.merge_with([deepcopy(e3)], ontology)
+
+    # The parents have changed
+    assert changed2
+    assert set(copy2.get_explicit_parents()) == set(
+        [e2.compute_sticky_hash(ontology), e4.compute_sticky_hash(ontology)])
+
+    # merge events with the same parent
+    copy3 = deepcopy(e3)
+    copy3.set_parents([e2.compute_sticky_hash(ontology)])
+    assert copy3.get_explicit_parents() == [e2.compute_sticky_hash(ontology)]
+
+    # This copy has the same parent
+    copy4 = deepcopy(e1)
+    assert copy4.get_explicit_parents() == [e2.compute_sticky_hash(ontology)]
+
+    changed3 = copy3.merge_with([copy4], ontology)
+
+    # No change in parents
+    assert copy3.get_explicit_parents() == [e2.compute_sticky_hash(ontology)]
+    # This checks fails until the next commit, because during writing
+    # we discovered a bug where it returned as being changed
+    assert not changed3
