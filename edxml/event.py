@@ -526,9 +526,6 @@ class EDXMLEvent(MutableMapping):
         # Determine if anything changed
         event_updated = False
         for property_name in property_names:
-            if property_name not in original and len(target[property_name]) > 0:
-                event_updated = True
-                break
             if target[property_name] != original[property_name]:
                 event_updated = True
                 break
