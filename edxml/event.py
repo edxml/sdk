@@ -524,23 +524,12 @@ class EDXMLEvent(MutableMapping):
         self.set_parents(original_parents | source_parents)
 
         # Determine if anything changed
-        event_updated = False
-        for property_name in property_names:
-            if target[property_name] != original[property_name]:
-                event_updated = True
-                break
-
-        if not event_updated:
-            if len(source_parents) > 0:
-                if original_parents != source_parents:
-                    event_updated = True
+        event_updated = target != original
+        event_updated |= original_parents != source_parents
 
         # Modify event if needed
-        if event_updated:
-            self.set_properties(target)
-            return True
-        else:
-            return False
+        self.set_properties(target)
+        return event_updated
 
     def compute_sticky_hash(self, ontology, encoding='hex'):
         """
