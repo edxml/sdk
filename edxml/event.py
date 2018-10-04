@@ -512,8 +512,8 @@ class EDXMLEvent(MutableMapping):
                 target[property_name].update(source[property_name])
 
             elif merge_strategy == 'replace':
-                target[property_name] = set(
-                    colliding_events[-1].get(property_name, []))
+                # Replace the property with the last value in the colliding events
+                target[property_name] = set(colliding_events[-1].get(property_name, []))
 
         source_parents = set(
             parent for source_event in colliding_events for parent in source_event.get_explicit_parents())
