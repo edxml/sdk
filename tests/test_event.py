@@ -68,6 +68,11 @@ def test_merge_non_unique(ontology, eventtype, eventproperty):
     e2 = EDXMLEvent({"testeventproperty": ["testvalue"]}, 'testeventtype')
     e3 = EDXMLEvent({"testeventproperty": ["testvalue2"]}, 'testeventtype')
 
+    # These events are the same
+    assert e1.compute_sticky_hash(ontology) == e2.compute_sticky_hash(ontology)
+    # but not these
+    assert e1.compute_sticky_hash(ontology) != e3.compute_sticky_hash(ontology)
+
     e1_copy = deepcopy(e1)
     changed1 = e1.merge_with([e2], ontology)
     assert not changed1
@@ -86,6 +91,11 @@ def test_merge_unique(ontology, eventtype_unique, eventproperty_unique):
     e1 = EDXMLEvent({"testeventpropertyunique": ["testvalue"]}, 'testeventtypeunique')
     e2 = EDXMLEvent({"testeventpropertyunique": ["testvalue"]}, 'testeventtypeunique')
     e3 = EDXMLEvent({"testeventpropertyunique": ["testvalue2"]}, 'testeventtypeunique')
+
+    # These events are the same
+    assert e1.compute_sticky_hash(ontology) == e2.compute_sticky_hash(ontology)
+    # but not these
+    assert e1.compute_sticky_hash(ontology) != e3.compute_sticky_hash(ontology)
 
     e1_copy = deepcopy(e1)
     changed1 = e1.merge_with([e2], ontology)
