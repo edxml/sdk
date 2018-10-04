@@ -519,11 +519,9 @@ class EDXMLEvent(MutableMapping):
             parent for source_event in colliding_events for parent in source_event.get_explicit_parents())
 
         # Merge the explicit event parents
-        if len(source_parents) > 0:
-            original_parents = self.get_explicit_parents()
-            self.set_parents(self.get_explicit_parents() + list(source_parents))
-        else:
-            original_parents = set()
+        original_parents = set(self.get_explicit_parents())
+        # We no longer check for empty sets because setting it again has the same effect
+        self.set_parents(original_parents | source_parents)
 
         # Determine if anything changed
         event_updated = False
