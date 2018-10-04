@@ -136,8 +136,13 @@ def test_merge_datetime(ontology, eventtype_unique, datetimeproperty):
     # a merge on a datetime with merge strategy 'min' or 'max'
     # fails due to an incorrect split on the data type.
     # The test case fails intentionally in this commit and is fixed in the next commit.
-    e1 = EDXMLEvent({'datetimeproperty': ['2018-10-03 15:15:31']}, 'testeventtypeunique')
-    e2 = EDXMLEvent({'datetimeproperty': ['2018-10-03 15:15:32']}, 'testeventtypeunique')
+    e1 = EDXMLEvent({'datetimeproperty': ['2018-10-03T15:15:31.000000Z']}, 'testeventtypeunique')
+    e2 = EDXMLEvent({'datetimeproperty': ['2018-10-03T15:15:32.000000Z']}, 'testeventtypeunique')
+    assert e1.is_valid(ontology)
+    assert e2.is_valid(ontology)
+
+    # These events are not the same
+    assert e1.compute_sticky_hash(ontology) != e2.compute_sticky_hash(ontology)
     changed = e1.merge_with([e2], ontology)
     assert changed
-    assert e1["datetimeproperty"].pop() == '2018-10-03 15:15:32'
+    assert e1["datetimeproperty"].pop() == '2018-10-03T15:15:32.000000Z'
