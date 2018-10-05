@@ -453,12 +453,9 @@ class EDXMLEvent(MutableMapping):
             original[property_name] = set(value)
             target[property_name] = set(value)
             source[property_name] = set()
-
-        for event in colliding_events:
-            event_objects_b = event.get_properties()
-            for property_name in property_names:
-                if property_name in event_objects_b:
-                    source[property_name].update(event_objects_b[property_name])
+            for event in colliding_events:
+                event_objects_b = event.get_properties()
+                source[property_name].update(event_objects_b.get(property_name, []))
 
         # Now we update the objects in Target
         # using the values in Source
