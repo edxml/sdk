@@ -316,3 +316,47 @@ def test_merge_add(ontology, eventtype_unique, eventproperty_unique, objecttype)
     assert changed
     assert copy["testeventpropertyunique"].pop() == "test"
     assert copy["testeventproperty"] == set(["value1", "value2", "value3", "value4"])
+
+
+def test_merge_replace_empty(ontology, eventtype_unique, eventproperty_unique, objecttype):
+    eventtype_unique.create_property('testeventproperty', objecttype.get_name()) \
+        .set_merge_strategy('replace')
+
+    e1 = EDXMLEvent({
+            'testeventpropertyunique': ["test"],
+            'testeventproperty': []
+        }, 'testeventtypeunique')
+    # non-empty
+    e2 = EDXMLEvent({
+            'testeventpropertyunique': ["test"],
+            'testeventproperty': ["value1"]
+        }, 'testeventtypeunique')
+    # empty value
+    e3 = EDXMLEvent({
+            'testeventpropertyunique': ["test"],
+            'testeventproperty': []
+        }, 'testeventtypeunique')
+
+    copy = deepcopy(e1)
+    # merge non-empty into empty
+    changed = copy.merge_with([e2], ontology)
+
+    assert changed
+    assert copy["testeventpropertyunique"].pop() == "test"
+    assert copy["testeventproperty"] == set(["value1"])
+
+    copy = deepcopy(e2)
+    # merge empty into non-empty
+    changed = copy.merge_with([e3], ontology)
+
+    assert changed
+    assert copy["testeventpropertyunique"].pop() == "test"
+    assert copy["testeventproperty"] == set([])
+
+    # merge multiple into e1
+    copy = deepcopy(e1)
+    changed = copy.merge_with([e2, e3], ontology)
+
+    assert not changed
+    assert copy["testeventpropertyunique"].pop() == "test"
+    assert copy["testeventproperty"] == set([])
