@@ -473,8 +473,7 @@ class EDXMLEvent(MutableMapping):
             if merge_strategy in ('min', 'max'):
                 # We have a merge strategy that requires us to cast
                 # the object values into numbers.
-                split_data_type = properties[property_name].get_data_type(
-                ).get_split()
+                split_data_type = properties[property_name].get_data_type().get_split()
                 if split_data_type[0] in ('number', 'datetime'):
                     if merge_strategy in ('min', 'max'):
                         values = set()
@@ -487,20 +486,14 @@ class EDXMLEvent(MutableMapping):
                             values.update(target[property_name])
                         else:
                             if split_data_type[1] in ('float', 'double'):
-                                values.update(float(value)
-                                              for value in source[property_name])
-                                values.update(float(value)
-                                              for value in target[property_name])
+                                values.update(float(value) for value in source[property_name])
+                                values.update(float(value) for value in target[property_name])
                             elif split_data_type[1] == 'decimal':
-                                values.update(Decimal(value)
-                                              for value in source[property_name])
-                                values.update(Decimal(value)
-                                              for value in target[property_name])
+                                values.update(Decimal(value) for value in source[property_name])
+                                values.update(Decimal(value) for value in target[property_name])
                             else:
-                                values.update(int(value)
-                                              for value in source[property_name])
-                                values.update(int(value)
-                                              for value in target[property_name])
+                                values.update(int(value) for value in source[property_name])
+                                values.update(int(value) for value in target[property_name])
 
                         if merge_strategy == 'min':
                             target[property_name] = {str(min(values))}
