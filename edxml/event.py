@@ -460,6 +460,12 @@ class EDXMLEvent(MutableMapping):
                 source[property_name].update(event_objects_b.get(property_name, []))
                 source_parents.update(event.get_explicit_parents())
 
+        value_functions = defaultdict(lambda: int)
+        value_functions['datetime'] = lambda x: x
+        value_functions['float'] = float
+        value_functions['double'] = float
+        value_functions['decimal'] = Decimal
+
         # Now we update the objects in Target
         # using the values in Source
         for property_name in source:
@@ -482,18 +488,11 @@ class EDXMLEvent(MutableMapping):
                             # regular strings and just let min() and max()
                             # use lexicographical sorting to determine which
                             # of the datetime values to pick.
-                            values.update(source[property_name])
-                            values.update(target[property_name])
+                            value_func = value_functions[split_data_type[0]]
                         else:
-                            if split_data_type[1] in ('float', 'double'):
-                                values.update(float(value) for value in source[property_name])
-                                values.update(float(value) for value in target[property_name])
-                            elif split_data_type[1] == 'decimal':
-                                values.update(Decimal(value) for value in source[property_name])
-                                values.update(Decimal(value) for value in target[property_name])
-                            else:
-                                values.update(int(value) for value in source[property_name])
-                                values.update(int(value) for value in target[property_name])
+                            value_func = value_functions[split_data_type[1]]
+                        # convert values according to their data type and add to the result
+                        values.update(map(value_func, source[property_name] | target[property_name]))
 
                         if merge_strategy == 'min':
                             target[property_name] = {str(min(values))}
