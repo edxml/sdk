@@ -9,7 +9,7 @@ from collections import defaultdict
 from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
-from edxml.EDXMLBase import EvilCharacterFilter
+from edxml.EDXMLBase import EvilCharacterFilter, EDXMLValidationError
 
 
 class EDXMLEvent(MutableMapping):
@@ -417,9 +417,15 @@ class EDXMLEvent(MutableMapping):
         property_names = properties.keys()
         unique_properties = event_type.get_unique_properties()
 
-        if len(unique_properties) == 0:
-            raise TypeError(
-                "MergeEvent was called for event type %s, which is not a unique event type." % self._event_type_name)
+        # There used to be a check here to count the number of unique properties and raise a TypeError if there were
+        # none. However, if the properties of an event are not unique, and it collides with another event (i.e. produce
+        # the same hash), they are the same. Merging them will result in the same event without any changes. We've
+        # removed the check altogether and the testcases that come with this comment show that these kinds of events
+        # can be merged without problems.
+        # Even events which are not the same but have no unique properties can now be merged. This will change the
+        # event data according to the normal merge strategies, and possibly the hash. This is outside of the spec
+        # but may be useful for processors, e.g. for aggregation calculations. The results of such a merge should not
+        # be considered a new valid event.
 
         event_objects_a = self.get_properties()
 
@@ -440,20 +446,25 @@ class EDXMLEvent(MutableMapping):
         source = {}
         target = {}
 
-        for property_name in property_names:
-            if property_name in event_objects_a:
-                original[property_name] = set(event_objects_a[property_name])
-                target[property_name] = set(event_objects_a[property_name])
-            else:
-                original[property_name] = set()
-                target[property_name] = set()
-            source[property_name] = set()
+        source_parents = set()
 
-        for event in colliding_events:
-            event_objects_b = event.get_properties()
-            for property_name in property_names:
-                if property_name in event_objects_b:
-                    source[property_name].update(event_objects_b[property_name])
+        for property_name in property_names:
+            value = event_objects_a.get(property_name, [])
+            # Note that we use separate sets for original, source and target properties.
+            # Sets are objects and assigned by reference, while we want to change them independently.
+            original[property_name] = set(value)
+            target[property_name] = set(value)
+            source[property_name] = set()
+            for event in colliding_events:
+                event_objects_b = event.get_properties()
+                source[property_name].update(event_objects_b.get(property_name, []))
+                source_parents.update(event.get_explicit_parents())
+
+        value_functions = defaultdict(lambda: int)
+        value_functions['datetime'] = lambda x: x
+        value_functions['float'] = float
+        value_functions['double'] = float
+        value_functions['decimal'] = Decimal
 
         # Now we update the objects in Target
         # using the values in Source
@@ -468,8 +479,7 @@ class EDXMLEvent(MutableMapping):
             if merge_strategy in ('min', 'max'):
                 # We have a merge strategy that requires us to cast
                 # the object values into numbers.
-                split_data_type = properties[property_name].get_data_type(
-                ).get_split()
+                split_data_type = properties[property_name].get_data_type().get_split()
                 if split_data_type[0] in ('number', 'datetime'):
                     if merge_strategy in ('min', 'max'):
                         values = set()
@@ -478,78 +488,36 @@ class EDXMLEvent(MutableMapping):
                             # regular strings and just let min() and max()
                             # use lexicographical sorting to determine which
                             # of the datetime values to pick.
-                            values.update(source[property_name])
-                            values.update(target[property_name])
+                            value_func = value_functions[split_data_type[0]]
                         else:
-                            if split_data_type[1] in ('float', 'double'):
-                                values.update(float(value)
-                                              for value in source[property_name])
-                                values.update(float(value)
-                                              for value in target[property_name])
-                            elif split_data_type[1] == 'decimal':
-                                values.update(Decimal(value)
-                                              for value in source[property_name])
-                                values.update(Decimal(value)
-                                              for value in target[property_name])
-                            else:
-                                values.update(int(value)
-                                              for value in source[property_name])
-                                values.update(int(value)
-                                              for value in target[property_name])
+                            value_func = value_functions[split_data_type[1]]
+                        # convert values according to their data type and add to the result
+                        values.update(map(value_func, source[property_name] | target[property_name]))
 
                         if merge_strategy == 'min':
                             target[property_name] = {str(min(values))}
                         else:
                             target[property_name] = {str(max(values))}
 
-                        if split_data_type[1] in ('float', 'double'):
-                            target[property_name] = {
-                                str(float(next(iter(target[property_name]))) + len(colliding_events))}
-                        elif split_data_type[1] == 'decimal':
-                            target[property_name] = {
-                                str(Decimal(next(iter(target[property_name]))) + len(colliding_events))}
-                        else:
-                            target[property_name] = {
-                                str(int(next(iter(target[property_name]))) + len(colliding_events))}
-
             elif merge_strategy == 'add':
                 target[property_name].update(source[property_name])
 
             elif merge_strategy == 'replace':
-                target[property_name] = set(
-                    colliding_events[-1].get(property_name, []))
-
-        source_parents = set(
-            parent for source_event in colliding_events for parent in source_event.get_explicit_parents())
+                # Replace the property with the last value in the colliding events
+                target[property_name] = set(colliding_events[-1].get(property_name, []))
 
         # Merge the explicit event parents
-        if len(source_parents) > 0:
-            original_parents = self.get_explicit_parents()
-            self.set_parents(self.get_explicit_parents() + list(source_parents))
-        else:
-            original_parents = set()
+        original_parents = set(self.get_explicit_parents())
+        # We no longer check for empty sets because setting it again has the same effect
+        self.set_parents(original_parents | source_parents)
 
         # Determine if anything changed
-        event_updated = False
-        for property_name in property_names:
-            if property_name not in original and len(target[property_name]) > 0:
-                event_updated = True
-                break
-            if target[property_name] != original[property_name]:
-                event_updated = True
-                break
-
-        if not event_updated:
-            if len(source_parents) > 0:
-                if original_parents != source_parents:
-                    event_updated = True
+        event_updated = target != original
+        event_updated |= original_parents != source_parents
 
         # Modify event if needed
-        if event_updated:
-            self.set_properties(target)
-            return True
-        else:
-            return False
+        self.set_properties(target)
+        return event_updated
 
     def compute_sticky_hash(self, ontology, encoding='hex'):
         """
@@ -592,6 +560,28 @@ class EDXMLEvent(MutableMapping):
                 '%s\n%s\n%s\n%s' % (self._source_uri, self._event_type_name, '\n'.join(
                     sorted(object_strings)), self.get_content())
             ).digest().encode(encoding)
+
+    def is_valid(self, ontology):
+        """
+        Check if an event is valid for a given ontology.
+
+        Args:
+            ontology (edxml.ontology.Ontology): An EDXML ontology
+
+        Returns:
+            bool: True if the event is valid
+        """
+        event_type = ontology.get_event_type(self.get_type_name())
+
+        if event_type is None:
+            return False
+
+        try:
+            event_type.validate_event_structure(self)
+            event_type.validate_event_objects(self)
+        except EDXMLValidationError:
+            return False
+        return True
 
 
 class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):

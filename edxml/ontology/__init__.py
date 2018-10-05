@@ -31,16 +31,17 @@ sources, and so on.
     :members:
     :show-inheritance:
 """
-from data_type import DataType
-from event_type import EventType
-from event_property import EventProperty
-from event_property_relation import PropertyRelation
-from event_source import EventSource
-from event_type_parent import EventTypeParent
-from object_type import ObjectType
-from concept import Concept
-from ontology import Ontology
-from brick import Brick
+from __future__ import absolute_import
+from edxml.ontology.data_type import DataType
+from edxml.ontology.event_type import EventType
+from edxml.ontology.event_property import EventProperty
+from edxml.ontology.event_property_relation import PropertyRelation
+from edxml.ontology.event_source import EventSource
+from edxml.ontology.event_type_parent import EventTypeParent
+from edxml.ontology.object_type import ObjectType
+from edxml.ontology.concept import Concept
+from edxml.ontology.ontology import Ontology
+from edxml.ontology.brick import Brick
 
 
 __all__ = ['DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource', 'EventTypeParent', 'ObjectType',
