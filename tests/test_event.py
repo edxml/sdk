@@ -1,6 +1,7 @@
 # coding=utf-8
 # the line above is required for inline unicode
-from edxml.event import EDXMLEvent
+from edxml import SimpleEDXMLWriter, EDXMLPullParser
+from edxml.event import EDXMLEvent, EventElement
 from edxml.ontology import Ontology
 import pytest
 from copy import deepcopy
@@ -360,3 +361,69 @@ def test_merge_replace_empty(ontology, eventtype_unique, eventproperty_unique, o
     assert not changed
     assert copy["testeventpropertyunique"].pop() == "test"
     assert copy["testeventproperty"] == set([])
+
+
+def create_eventelement():
+    return EventElement.create({'testeventpropertyunique': ["value1"]}, 'testeventtypeunique')
+
+
+def create_parsedevent(ontology, tmpdir):
+    ontology.create_event_source("/test/")
+    f = tmpdir.mkdir("sub").join("simplewriter.edxml")
+    f.ensure(file=True)
+
+    fa = f.open('a+')
+    w = SimpleEDXMLWriter(fa)
+    w.set_buffer_size(0)
+    w.set_event_source("/test/")
+    w.add_ontology(ontology)
+    w.add_event(create_eventelement())
+
+    w.flush()
+    w.close()
+    fa.close()
+    fr = open(fa.name, 'r')
+    p = EDXMLPullParser()
+
+    events = []
+
+    def testhandler(event):
+        events.append(event)
+
+    p.set_event_type_handler(['testeventtypeunique'], testhandler)
+    p.parse(fr)
+    return events[0]
+
+
+@pytest.fixture(params=['EventElement', 'ParsedEvent'])
+def event(request, ontology, eventtype_unique, eventproperty_unique, tmpdir):
+    if request.param == 'EventElement':
+        return create_eventelement()
+    elif request.param == 'ParsedEvent':
+        return create_parsedevent(ontology, tmpdir)
+
+
+def test_eventelement_parents(event):
+    assert event.get_explicit_parents() == []
+
+    event.add_parents(["thisisaparenthash"])
+    assert event.get_explicit_parents() == ["thisisaparenthash"]
+
+    # Add duplicate
+    event.add_parents(["thisisaparenthash"])
+    assert event.get_explicit_parents() == ["thisisaparenthash"]
+
+    event.add_parents(["thisisaparenthash2"])
+    assert event.get_explicit_parents() == ["thisisaparenthash", "thisisaparenthash2"]
+
+    # Parent hashes are a set internally, so this causes reordering
+    event.set_parents(["thisisaparenthash3", "thisisaparenthash2", "thisisaparenthash1"])
+    assert set(event.get_explicit_parents()) == set(["thisisaparenthash1", "thisisaparenthash2", "thisisaparenthash3"])
+
+    # Clear the parents, this should delete the attribute internally
+    event.set_parents([])
+    assert event.get_explicit_parents() == []
+
+    # Add parents again after clearing
+    event.add_parents(["thisisanotherparenthash"])
+    assert event.get_explicit_parents() == ["thisisanotherparenthash"]
