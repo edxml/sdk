@@ -231,6 +231,9 @@ class Ontology(object):
         later. If you do intend to create a valid definition from the start,
         it is recommended to validate it immediately.
 
+        If the URI is missing a leading and / or trailing slash, these will be
+        appended automatically.
+
         If a source with the same URI already exists in the ontology,
         the new definition is ignored and the existing one returned.
 
@@ -250,11 +253,12 @@ class Ontology(object):
         Returns:
           edxml.ontology.EventSource:
         """
+        source = EventSource(self, uri, description, acquisition_date)
 
-        if uri not in self.__sources:
-            self._add_event_source(EventSource(self, uri, description, acquisition_date), validate=False)
+        if source.get_uri() not in self.__sources:
+            self._add_event_source(source, validate=False)
 
-        return self.__sources[uri]
+        return source
 
     def delete_object_type(self, object_type_name):
         """
