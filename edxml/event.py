@@ -937,7 +937,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             # An empty value for an XML attribute produces and empty attribute,
             # e.g. parents="", but this is not valid for EDXML. If an element has no
             # parents, delete the attribute instead.
-            del self.attrib['parents']
+            if 'parents' in self.attrib:
+                del self.attrib['parents']
         else:
             self.attrib['parents'] = ','.join(set(parent_hashes))
         return self
@@ -1350,7 +1351,8 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
             # An empty value for an XML attribute produces and empty attribute,
             # e.g. parents="", but this is not valid for EDXML. If an element has no
             # parents, delete the attribute instead.
-            del self.__element.attrib['parents']
+            if 'parents' in self.__element.attrib:
+                del self.__element.attrib['parents']
         else:
             self.__element.attrib['parents'] = ','.join(set(parent_hashes))
         return self
