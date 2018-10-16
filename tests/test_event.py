@@ -424,6 +424,10 @@ def test_eventelement_parents(event):
     event.set_parents([])
     assert event.get_explicit_parents() == []
 
+    # Clearing the parents while there are none to begin with should work as well
+    event.set_parents([])
+    event.set_parents([])
+
     # Add parents again after clearing
     event.add_parents(["thisisanotherparenthash"])
     assert event.get_explicit_parents() == ["thisisanotherparenthash"]
