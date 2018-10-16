@@ -777,10 +777,11 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             return ''
 
     def get_explicit_parents(self):
-        try:
-            return self.attrib['parents'].split(',')
-        except KeyError:
-            return []
+        parent_string = self.attrib.get('parents', '')
+        # joining an empty list, e.g. ','.join([]), results in an empty string,
+        # but splitting an empty string, e.g. ''.split(','), does not results in
+        # an empty list, but [''] instead.
+        return [] if parent_string == '' else parent_string.split(',')
 
     def set_properties(self, properties):
         """
@@ -917,9 +918,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         Returns:
           ParsedEvent:
         """
-        self.attrib.set('parents', ','.join(self.attrib.get(
-            'parents').split(',').append(parent_hashes)))
-        return self
+        current = self.get_explicit_parents()
+        return self.set_parents(current + parent_hashes)
 
     def set_parents(self, parent_hashes):
         """
@@ -933,7 +933,13 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         Returns:
           ParsedEvent:
         """
-        self.attrib.set('parents', ','.join(parent_hashes))
+        if len(parent_hashes) == 0:
+            # An empty value for an XML attribute produces and empty attribute,
+            # e.g. parents="", but this is not valid for EDXML. If an element has no
+            # parents, delete the attribute instead.
+            del self.attrib['parents']
+        else:
+            self.attrib['parents'] = ','.join(set(parent_hashes))
         return self
 
 
@@ -973,6 +979,8 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         self._content = None
 
         new = etree.Element('event')
+        # We cannot simply set parents to an empty value, because this produces an empty attribute.
+        # Instead, if the value is empty, it should be left out altogether.
         if parents:
             new.set('parents', ','.join(parents))
 
@@ -1172,10 +1180,11 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
             return ''
 
     def get_explicit_parents(self):
-        try:
-            return self.__element.attrib['parents'].split(',')
-        except KeyError:
-            return []
+        parent_string = self.__element.attrib.get('parents', '')
+        # joining an empty list, e.g. ','.join([]), results in an empty string,
+        # but splitting an empty string, e.g. ''.split(','), does not results in
+        # an empty list, but [''] instead.
+        return [] if parent_string == '' else parent_string.split(',')
 
     def set_properties(self, properties):
         """
@@ -1322,9 +1331,8 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         Returns:
           EventElement:
         """
-        self.__element.attrib.set('parents', ','.join(
-            self.__element.attrib.get('parents').split(',').append(parent_hashes)))
-        return self
+        current = self.get_explicit_parents()
+        return self.set_parents(current + parent_hashes)
 
     def set_parents(self, parent_hashes):
         """
@@ -1338,5 +1346,11 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         Returns:
           EventElement:
         """
-        self.__element.attrib.set('parents', ','.join(parent_hashes))
+        if len(parent_hashes) == 0:
+            # An empty value for an XML attribute produces and empty attribute,
+            # e.g. parents="", but this is not valid for EDXML. If an element has no
+            # parents, delete the attribute instead.
+            del self.__element.attrib['parents']
+        else:
+            self.__element.attrib['parents'] = ','.join(set(parent_hashes))
         return self
