@@ -3,9 +3,10 @@ import re
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class Concept(object):
+class Concept(OntologyElement):
     """
     Class representing an EDXML concept
     """
@@ -18,7 +19,8 @@ class Concept(object):
         self._attr = {
             'name': name,
             'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
-            'description': description or name
+            'description': description or name,
+            'version': 1
         }
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
@@ -88,6 +90,17 @@ class Concept(object):
 
         return self._attr['description']
 
+    def get_version(self):
+        """
+
+        Returns the version of the concept definition.
+
+        Returns:
+          int:
+        """
+
+        return self._attr['version']
+
     def set_description(self, description):
         """
 
@@ -122,6 +135,21 @@ class Concept(object):
             plural = '%ss' % singular
 
         self._set_attr('display-name', '%s/%s' % (singular, plural))
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def validate(self):
@@ -173,6 +201,50 @@ class Concept(object):
             type_element.attrib['name'],
             type_element.attrib['display-name'],
             type_element.attrib['description'],
+        ).set_version(type_element.attrib['version'])
+
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Concepts with different names are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_display_name_singular() == new.get_display_name_singular()
+        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        equal &= old.get_description() == new.get_description()
+
+        if equal:
+            return 0
+
+        if versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Concept definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
         )
 
     def update(self, concept):
@@ -187,19 +259,11 @@ class Concept(object):
           edxml.ontology.Concept: The updated Concept instance
 
         """
-        if self._attr['name'] != concept.get_name():
-            raise Exception('Attempt to update concept "%s" with concept "%s".' %
-                            (self._attr['name'], concept.get_name()))
-
-        if self._attr['display-name'] != concept.get_display_name():
-            raise Exception('Attempt to update concept "%s", but display names do not match.' % self._attr['name'],
-                            (self._attr['display-name'], concept.get_name()))
-
-        if self._attr['description'] != concept.get_description():
-            raise Exception('Attempt to update concept "%s", but descriptions do not match.' % self._attr['name'],
-                            (self._attr['description'], concept.get_name()))
-
-        self.validate()
+        if concept > self:
+            # The new definition is indeed newer. Update self.
+            self.set_display_name(concept.get_display_name_singular(), concept.get_display_name_plural())
+            self.set_description(concept.get_description())
+            self.set_version(concept.get_version())
 
         return self
 
@@ -213,5 +277,7 @@ class Concept(object):
           etree.Element: The element
 
         """
+        attribs = dict(self._attr)
+        attribs['version'] = unicode(attribs['version'])
 
-        return etree.Element('concept', self._attr)
+        return etree.Element('concept', attribs)

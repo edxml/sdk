@@ -13,9 +13,10 @@ from lxml.builder import ElementMaker
 from termcolor import colored
 
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventType(MutableMapping):
+class EventType(OntologyElement, MutableMapping):
     """
     Class representing an EDXML event type. The class provides
     access to event properties by means of a dictionary interface.
@@ -42,12 +43,12 @@ class EventType(MutableMapping):
             'description': description or name,
             'classlist': class_list,
             'summary': summary,
-            'story': story.replace('\n', '[[NEWPAR:]]')
+            'story': story.replace('\n', '[[NEWPAR:]]'),
+            'version': 1
         }
 
-        # type: Dict[str, edxml.ontology.EventProperty]
-        self.__properties = {}
-        self.__relations = []       # type: List[edxml.ontology.PropertyRelation]
+        self.__properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
+        self.__relations = {}       # type: Dict[str,edxml.ontology.PropertyRelation]
         self.__parent = parent      # type: edxml.ontology.EventTypeParent
         self.__relax_ng = None       # type: etree.RelaxNG
         self.__ontology = ontology  # type: edxml.ontology.Ontology
@@ -227,11 +228,12 @@ class EventType(MutableMapping):
     def get_property_relations(self):
         """
 
-        Returns the list of property relations that
-        are defined in the event type.
+        Returns a dictionary containing the property relations that
+        are defined in the event type. The keys are relation IDs that
+        should be considered opaque.
 
         Returns:
-          List[edxml.ontology.PropertyRelation]:
+          Dict[str,edxml.ontology.PropertyRelation]:
         """
         return self.__relations
 
@@ -297,6 +299,17 @@ class EventType(MutableMapping):
           EventTypeParent: The parent event type
         """
         return self.__parent
+
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self.__attr['version']
 
     def create_property(self, name, object_type_name, description=None):
         """
@@ -404,7 +417,7 @@ class EventType(MutableMapping):
 
         relation = edxml.ontology.PropertyRelation(self, self[source], self[target], description, type_class,
                                                    type_predicate, confidence, directed)
-        self.__relations.append(relation.validate())
+        self.__relations[relation.get_persistent_id()] = relation.validate()
 
         self._child_modified_callback()
         return relation
@@ -422,7 +435,7 @@ class EventType(MutableMapping):
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self.__relations.append(relation.validate())
+        self.__relations[relation.get_persistent_id()] = relation.validate()
 
         self._child_modified_callback()
         return self
@@ -627,6 +640,21 @@ class EventType(MutableMapping):
 
         if story:
             self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def evaluate_template(self, edxml_event, which='story', capitalize=True, colorize=False):
@@ -1370,7 +1398,7 @@ class EventType(MutableMapping):
         for propertyName, eventProperty in self.get_properties().items():
             eventProperty.validate()
 
-        for relation in self.__relations:
+        for relation in self.__relations.values():
             relation.validate()
 
         return self
@@ -1379,7 +1407,8 @@ class EventType(MutableMapping):
     def create_from_xml(cls, type_element, ontology):
         event_type = cls(ontology, type_element.attrib['name'], type_element.attrib['display-name'],
                          type_element.attrib['description'], type_element.attrib['classlist'],
-                         type_element.attrib['summary'], type_element.attrib['story'])
+                         type_element.attrib['summary'], type_element.attrib['story'])\
+            .set_version(type_element.attrib['version'])
 
         for element in type_element:
             if element.tag == 'parent':
@@ -1397,6 +1426,110 @@ class EventType(MutableMapping):
 
         return event_type
 
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+        is_valid_upgrade = True
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Event types with different names are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_display_name_singular() == new.get_display_name_singular()
+        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        equal &= old.get_description() == new.get_description()
+        equal &= old.get_summary_template() == new.get_summary_template()
+        equal &= old.get_story_template() == new.get_story_template()
+
+        # Check for illegal upgrade paths:
+
+        if (old.get_parent() is None) != (new.get_parent() is None):
+            # One version has a parent, the other has not. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_properties().keys() != new.get_properties().keys():
+            # Versions do not agree on their property set. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_property_relations().keys() != new.get_property_relations().keys():
+            # Versions do not agree on their property relations set. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_classes() != new.get_classes():
+            # Adding an event type class is possible, removing one is not.
+            equal = False
+            is_valid_upgrade &= versions_differ and len(set(old.get_classes()) - set(new.get_classes())) == 0
+
+        # Check upgrade paths for sub-elements:
+
+        if old.get_parent() is not None and new.get_parent() is not None:
+            if old.get_parent() != new.get_parent():
+                # Parent definitions differ, check that new definition is
+                # a valid upgrade of the old definition.
+                equal = False
+                is_valid_upgrade &= new.get_parent() > old.get_parent()
+
+        for property_name, property in new.get_properties().items():
+            if property_name in old:
+                if old[property_name] != new[property_name]:
+                    # Property definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= new[property_name] > old[property_name]
+
+        for relation_id, relation in new.get_property_relations().items():
+            if relation_id in old.get_property_relations():
+                if new.get_property_relations()[relation_id] != old.get_property_relations()[relation_id]:
+                    # Relation definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= \
+                        new.get_property_relations()[relation_id] > old.get_property_relations()[relation_id]
+
+        if equal:
+            return 0
+
+        if is_valid_upgrade and versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Event type definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
+        )
+
+    def __eq__(self, other):
+        # We need to implement this method to override the
+        # implementation of the MutableMapping, of which the
+        # EventType class is an extension.
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        # We need to implement this method to override the
+        # implementation of the MutableMapping, of which the
+        # EventType class is an extension.
+        return self.__cmp__(other) != 0
+
     def update(self, event_type):
         """
 
@@ -1411,42 +1544,27 @@ class EventType(MutableMapping):
           edxml.ontology.EventType: The updated EventType instance
 
         """
-        if self.__attr['name'] != event_type.get_name():
-            raise Exception('Attempt to update event type "%s" with event type "%s".' %
-                            (self.__attr['name'], event_type.get_name()))
+        if not isinstance(event_type, type(self)):
+            raise TypeError("Can only update using an ontology element of the same type.")
 
-        if self.__attr['description'] != event_type.get_description():
-            raise Exception('Attempt to update event type "%s", but descriptions do not match.' % self.__attr['name'],
-                            (self.__attr['description'], event_type.get_name()))
+        if event_type > self:
+            # The new definition is indeed newer. Update self.
 
-        if self.get_parent() is not None:
-            if event_type.get_parent() is not None:
+            if self.get_parent() is not None:
                 self.get_parent().update(event_type.get_parent())
-            else:
-                raise Exception(
-                    'Attempt to update event type "%s", but update does not define a parent.' % self.__attr['name'])
-        else:
-            if event_type.get_parent() is not None:
-                raise Exception(
-                    'Attempt to update event type "%s", but update defines a parent.' % self.__attr['name'])
 
-        update_property_names = set(event_type.get_properties().keys())
-        existing_property_names = set(self.get_properties().keys())
+            for property_name, property in self.get_properties().items():
+                self[property_name].update(event_type[property_name])
 
-        properties_added = update_property_names - existing_property_names
-        properties_removed = existing_property_names - update_property_names
+            for relation_id, relation in self.get_property_relations().items():
+                self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
 
-        if len(properties_added) > 0:
-            raise Exception(
-                'Attempt to add properties to existing definition of event type ' + self.__attr['name'])
-        if len(properties_removed) > 0:
-            raise Exception(
-                'Attempt to remove properties from existing definition of event type ' + self.__attr['name'])
-
-        for propertyName, eventProperty in self.get_properties().items():
-            eventProperty.update(event_type[propertyName])
-
-        self.validate()
+            self.set_description(event_type.get_description())
+            self.set_display_name(event_type.get_display_name_singular(), event_type.get_display_name_plural())
+            self.set_summary_template(event_type.get_summary_template())
+            self.set_story_template(event_type.get_story_template())
+            self.set_classes(set(self.get_classes()).union(event_type.get_classes()))
+            self.set_version(event_type.get_version())
 
         return self
 
@@ -1460,16 +1578,18 @@ class EventType(MutableMapping):
           etree.Element: The element
 
         """
+        attribs = dict(self.__attr)
+        attribs['version'] = unicode(attribs['version'])
 
-        element = etree.Element('eventtype', self.__attr)
+        element = etree.Element('eventtype', attribs)
         if self.__parent:
             element.append(self.__parent.generate_xml())
         properties = etree.Element('properties')
         for Property in self.__properties.values():
             properties.append(Property.generate_xml())
         relations = etree.Element('relations')
-        for Relation in self.__relations:
-            relations.append(Relation.generate_xml())
+        for relation in self.__relations.values():
+            relations.append(relation.generate_xml())
 
         element.append(properties)
         element.append(relations)

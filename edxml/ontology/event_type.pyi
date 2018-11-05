@@ -4,8 +4,10 @@ import edxml
 from typing import List, Dict, Iterable
 from lxml import etree
 
+from edxml.ontology import OntologyElement
 
-class EventType(object):
+
+class EventType(OntologyElement):
 
     NAME_PATTERN = ...
     DISPLAY_NAME_PATTERN = ...
@@ -19,7 +21,7 @@ class EventType(object):
 
         self.__attr = ...              # type: Dict
         self.__properties = ...        # type: Dict[str, edxml.ontology.EventProperty]
-        self.__relations = ...         # type: List[edxml.ontology.PropertyRelation]
+        self.__relations = ...         # type: Dict[str, edxml.ontology.PropertyRelation]
         self.__parent = ...            # type: edxml.ontology.EventTypeParent
         self.__parent_description = ...  # type: str
         self.__relax_ng = None          # type: etree.RelaxNG
@@ -50,7 +52,9 @@ class EventType(object):
 
     def get_hash_properties(self) -> Dict[str, edxml.ontology.EventProperty]: ...
 
-    def get_property_relations(self) -> List[edxml.ontology.PropertyRelation]: ...
+    def get_property_relations(self) -> Dict[str, edxml.ontology.PropertyRelation]: ...
+
+    def get_version(self) -> int: ...
 
     def has_class(self, class_name) -> bool: ...
 
@@ -92,6 +96,8 @@ class EventType(object):
     def set_summary_template(self, summary: unicode) -> 'EventType': ...
 
     def set_story_template(self, story: unicode) -> 'EventType': ...
+
+    def set_version(self, version: int) -> 'EventType': ...
 
     def validate_template(self, template: unicode, ontology: edxml.ontology.Ontology) -> 'EventType': ...
 

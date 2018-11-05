@@ -6,8 +6,10 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class PropertyRelation(object):
+
+class PropertyRelation(OntologyElement):
 
     def __init__(self, event_type: edxml.ontology.EventType, source: edxml.ontology.EventProperty,
                  target: edxml.ontology.EventProperty, description: str, type_class: str, type_predicate: str,
@@ -19,6 +21,8 @@ class PropertyRelation(object):
     def _child_modified_callback(self) -> 'PropertyRelation': ...
 
     def _set_attr(self, key: str, value): ...
+
+    def get_persistent_id(self) -> str: ...
 
     def get_source(self) -> str: ...
 
@@ -37,6 +41,8 @@ class PropertyRelation(object):
     def is_directed(self) -> bool: ...
 
     def because(self, reason: str) -> 'PropertyRelation': ...
+
+    def set_description(self, description: str) -> 'PropertyRelation': ...
 
     def set_confidence(self, confidence: int): ...
 

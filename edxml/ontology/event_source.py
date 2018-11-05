@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import re
+from datetime import datetime
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventSource(object):
+class EventSource(OntologyElement):
     """
     Class representing an EDXML event source
     """
@@ -19,7 +21,8 @@ class EventSource(object):
         self._attr = {
             'uri': '/' + str(uri).strip('/') + '/',
             'description': str(description),
-            'date-acquired': str(acquisition_date)
+            'date-acquired': str(acquisition_date),
+            'version': 1
         }
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
@@ -54,16 +57,38 @@ class EventSource(object):
         """
         return self._attr['description']
 
+    def get_acquisition_date(self):
+        """
+
+        Returns the acquisition date as a datetime object
+
+        Returns:
+          datetime.datetime: The date
+        """
+
+        return datetime.strptime(self._attr['date-acquired'], '%Y%m%d')
+
     def get_acquisition_date_string(self):
         """
 
-        Returns the acquisition date
+        Returns the acquisition date as a string
 
         Returns:
           str: The date in yyyymmdd format
         """
 
         return self._attr['date-acquired']
+
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self._attr['version']
 
     def set_description(self, description):
         """
@@ -93,6 +118,36 @@ class EventSource(object):
         """
 
         self._set_attr('date-acquired', date_time.strftime('%Y%m01'))
+        return self
+
+    def set_acquisition_date_string(self, date_time):
+        """
+
+        Sets the acquisition date from a string value
+
+        Args:
+          date_time (str): The date in yyyymmdd format
+
+        Returns:
+          edxml.ontology.EventSource: The EventSource instance
+        """
+
+        self._set_attr('date-acquired', date_time)
+        return self
+
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
         return self
 
     def validate(self):
@@ -129,6 +184,49 @@ class EventSource(object):
             source_element.attrib['uri'],
             source_element.attrib['description'],
             source_element.attrib['date-acquired']
+        ).set_version(source_element.attrib['version'])
+
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+
+        if old.get_uri() != new.get_uri():
+            raise ValueError("Sources with different URIs are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_description() == new.get_description()
+        equal &= old.get_acquisition_date_string() == new.get_acquisition_date_string()
+
+        if equal:
+            return 0
+
+        if versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Event source definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
         )
 
     def update(self, source):
@@ -145,11 +243,11 @@ class EventSource(object):
           edxml.ontology.EventSource: The updated EventSource instance
 
         """
-        if self._attr['uri'] != source.get_uri():
-            raise Exception('Attempt to update event source "%s" with source "%s".' %
-                            (self._attr['uri'], source.get_uri()))
-
-        self.validate()
+        if source > self:
+            # The new definition is indeed newer. Update self.
+            self.set_acquisition_date_string(source.get_acquisition_date_string())
+            self.set_description(source.get_description())
+            self.set_version(source.get_version())
 
         return self
 
@@ -164,4 +262,7 @@ class EventSource(object):
 
         """
 
-        return etree.Element('source', self._attr)
+        attribs = dict(self._attr)
+        attribs['version'] = unicode(attribs['version'])
+
+        return etree.Element('source', attribs)

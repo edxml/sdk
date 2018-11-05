@@ -4,10 +4,10 @@ import edxml.ontology
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import ObjectType, Concept, EventType, EventSource
+from edxml.ontology import ObjectType, Concept, EventType, EventSource, OntologyElement
 
 
-class Ontology(object):
+class Ontology(OntologyElement):
     """
     Class representing an EDXML ontology
     """
@@ -47,6 +47,11 @@ class Ontology(object):
         Returns the current ontology version. The initial
         version of a newly created empty ontology is zero.
         On each change, the version is incremented.
+
+        Note that this has nothing to do with versioning, upgrading
+        and downgrading of EDXML ontologies. EDXML ontologies have no
+        global version. The version that we return here is for change
+        tracking.
 
         Returns:
           int: Ontology version
@@ -524,6 +529,17 @@ class Ontology(object):
         """
         return self.__object_types.keys()
 
+    def get_event_source_uris(self):
+        """
+
+        Returns the list of URIs of all defined
+        event sources.
+
+        Returns:
+           List[str]: List of source URIs
+        """
+        return self.__sources.keys()
+
     def get_concept_names(self):
         """
 
@@ -769,10 +785,20 @@ class Ontology(object):
                             event_type[childProperty].get_merge_strategy())
                     )
 
+                # Check if child property is single valued
+                if event_type[childProperty].is_multi_valued():
+                    raise EDXMLValidationError(
+                        ('Event type %s contains a parent definition which refers to child property \'%s\'. '
+                         'This property is multi-valued, which is not allowed for properties that are used in '
+                         'parent definitions.') %
+                        (event_type_name, childProperty,
+                         event_type[childProperty].get_merge_strategy())
+                    )
+
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
         for event_type_name, event_type in self.__event_types.items():
-            for relation in event_type.get_property_relations():
+            for relation in event_type.get_property_relations().values():
                 if relation.get_type_class() in ('inter', 'intra'):
                     source_concept = event_type[relation.get_source(
                     )].get_concept_name()
@@ -825,6 +851,71 @@ class Ontology(object):
                 raise TypeError('Unexpected element: "%s"' % element.tag)
 
         return ontology
+
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        self.validate()
+        other.validate()
+
+        # EDXML ontologies do not have versions, only their sub-elements do. An ontology is always a valid upgrade
+        # when all of its sub-elements are. So, comparing the object types, concepts, event types and sources
+        # contained in both ontologies should be sufficient to determine if the ontology upgrade is valid. However,
+        # in theory an ontology could contain a mix of sub-element upgrades and downgrades. When updating an
+        # ontology, we only perform upgrades. Downgrades are ignored as long as these are valid downgrades.
+        # Long story short: When two ontologies differ and the ontology elements they contain are
+        # either valid upgrades or downgrades of one another, the two ontologies are considered valud upgrades
+        # of each other. This method will only return 0 or 1 as a result.
+
+        equal = True
+
+        equal &= set(self.get_concept_names()) == set(other.get_concept_names())
+        equal &= set(self.get_object_type_names()) == set(other.get_object_type_names())
+        equal &= set(self.get_event_source_uris()) == set(other.get_event_source_uris())
+        equal &= set(self.get_event_type_names()) == set(other.get_event_type_names())
+
+        for object_type_name, object_type in self.get_object_types().items():
+            if object_type_name not in other.get_object_type_names():
+                # Other ontology does not have this object type,
+                # which is no problem for upgrading / downgrading.
+                equal = False
+                continue
+
+            equal &= other.get_object_types()[object_type_name] == object_type
+
+        for concept_name, concept in self.get_concepts().items():
+            if concept_name not in other.get_concept_names():
+                # Other ontology does not have this concept,
+                # which is no problem for upgrading / downgrading.
+                equal = False
+                continue
+
+            equal &= other.get_concepts()[concept_name] == concept
+
+        for event_type_name, event_type in self.get_event_types().items():
+            if event_type_name not in other.get_event_type_names():
+                # Other ontology does not have this event type,
+                # which is no problem for upgrading / downgrading.
+                equal = False
+                continue
+
+            equal &= other.get_event_types()[event_type_name] == event_type
+
+        for source_uri, source in self.get_event_sources().items():
+            if source_uri not in other.get_event_source_uris():
+                # Other ontology does not have this event source,
+                # which is no problem for upgrading / downgrading.
+                equal = False
+                continue
+
+            equal &= other.get_event_sources()[source_uri] == source
+
+        if equal:
+            return 0
+
+        return 1
 
     def update(self, other_ontology, validate=True):
         """

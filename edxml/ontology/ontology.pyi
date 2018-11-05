@@ -5,8 +5,10 @@ import edxml
 from lxml import etree
 from typing import List, Dict, Union, Type
 
+from edxml.ontology import OntologyElement
 
-class Ontology(object):
+
+class Ontology(OntologyElement):
 
     TEMPLATE_PATTERN = ...
     KNOWN_FORMATTERS = ...  # type: List[str]
@@ -67,6 +69,8 @@ class Ontology(object):
 
     def get_object_type_names(self) -> List[str]: ...
 
+    def get_event_source_uris(self) -> List[str]: ...
+
     def get_concept_names(self) -> List[str]: ...
 
     def get_event_type(self, name: str) -> Union[edxml.ontology.EventType, None]: ...
@@ -90,7 +94,7 @@ class Ontology(object):
     def validate(self) -> 'Ontology': ...
 
     @classmethod
-    def create_from_xml(cls, ontology_element: etree.Element) -> 'Ontology': ...
+    def create_from_xml(cls, element: etree.Element) -> 'OntologyElement': ...
 
     def update(self, other_ontology: Union[lxml.etree.Element, 'Ontology'], validate: bool = True) -> 'Ontology': ...
 

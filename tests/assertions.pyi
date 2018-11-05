@@ -1,0 +1,6 @@
+from edxml.ontology import OntologyElement
+
+
+def assert_valid_upgrade(old: OntologyElement, new: OntologyElement): ...
+
+def assert_incomparable(old: OntologyElement, new: OntologyElement): ...

@@ -5,9 +5,10 @@ import edxml
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
+from edxml.ontology import OntologyElement
 
 
-class EventTypeParent(object):
+class EventTypeParent(OntologyElement):
     """
     Class representing an EDXML event type parent
     """
@@ -163,7 +164,7 @@ class EventTypeParent(object):
         Returns:
           str:
         """
-        return self._attr['eventtype']
+        return self._attr['parent-description']
 
     def get_siblings_description(self):
         """
@@ -173,7 +174,7 @@ class EventTypeParent(object):
         Returns:
           str:
         """
-        return self._attr['eventtype']
+        return self._attr['siblings-description']
 
     def validate(self):
         """
@@ -234,6 +235,65 @@ class EventTypeParent(object):
             parent_element.attrib['siblings-description']
         )
 
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        # Note that parent definitions are part of event type definitions,
+        # so we look at the version of the event type for which this property is defined.
+        other_is_newer = other._childEventType.get_version() > self._childEventType.get_version()
+        versions_differ = other._childEventType.get_version() != self._childEventType.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+        is_valid_upgrade = True
+
+        if old._childEventType.get_name() != new._childEventType.get_name():
+            raise EDXMLValidationError(
+                "Attempt to compare event type parent definitions from two different child event types"
+            )
+
+        # Check for illegal upgrade paths:
+
+        if old.get_event_type() != new.get_event_type():
+            # The parent event types are different, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_property_map() != new.get_property_map():
+            # The property maps are different, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_parent_description() == new.get_parent_description()
+        equal &= old.get_siblings_description() == new.get_siblings_description()
+
+        if equal:
+            return 0
+
+        if is_valid_upgrade and versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Definitions of event type {} are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their parent definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                self._childEventType.get_name(),
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
+        )
+
     def update(self, parent):
         """
 
@@ -248,11 +308,10 @@ class EventTypeParent(object):
           edxml.ontology.EventTypeParent: The updated EventTypeParent instance
 
         """
-        if self._attr['eventtype'] != parent.get_event_type():
-            raise Exception('Attempt to update parent of event type "%s" with parent of event type "%s".' %
-                            (self._attr['eventtype'], parent.get_event_type()))
-
-        self.validate()
+        if parent > self:
+            # The new definition is indeed newer. Update self.
+            self.set_parent_description(parent.get_parent_description())
+            self.set_siblings_description(parent.get_siblings_description())
 
         return self
 

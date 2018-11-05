@@ -6,8 +6,10 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
+from edxml.ontology import OntologyElement
 
-class EventProperty(object):
+
+class EventProperty(OntologyElement):
 
     EDXML_PROPERTY_NAME_PATTERN = ...
 
@@ -68,6 +70,10 @@ class EventProperty(object):
     def set_merge_strategy(self, merge_strategy: str) -> 'EventProperty': ...
 
     def set_description(self, description: str) -> 'EventProperty': ...
+
+    def set_optional(self, is_optional: bool) -> 'EventProperty': ...
+
+    def set_concept_confidence(self, confidence: int) -> 'EventProperty': ...
 
     def unique(self) -> 'EventProperty': ...
 

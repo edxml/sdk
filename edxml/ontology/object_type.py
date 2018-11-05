@@ -5,10 +5,10 @@ import sre_constants
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import DataType
+from edxml.ontology import DataType, OntologyElement
 
 
-class ObjectType(object):
+class ObjectType(OntologyElement):
     """
     Class representing an EDXML object type
     """
@@ -28,7 +28,8 @@ class ObjectType(object):
             'data-type': data_type,
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
-            'regexp': regexp
+            'regexp': regexp,
+            'version': 1
         }
 
         self.__ontology = ontology  # type: edxml.ontology.Ontology
@@ -143,6 +144,17 @@ class ObjectType(object):
 
         return self.__attr['regexp']
 
+    def get_version(self):
+        """
+
+        Returns the version of the source definition.
+
+        Returns:
+          int:
+        """
+
+        return self.__attr['version']
+
     def set_description(self, description):
         """
 
@@ -226,6 +238,21 @@ class ObjectType(object):
         self._set_attr('fuzzy-matching', attribute)
         return self
 
+    def set_version(self, version):
+        """
+
+        Sets the concept version
+
+        Args:
+          version (int): Version
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+
+        self._set_attr('version', int(version))
+        return self
+
     def fuzzy_match_head(self, length):
         """
 
@@ -283,15 +310,15 @@ class ObjectType(object):
         self._set_attr('fuzzy-matching', 'phonetic')
         return self
 
-    def compress(self):
+    def compress(self, is_compressible=True):
         """
 
-        Enable compression for the object type.
+        Enable or disable compression for the object type.
 
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        self._set_attr('compress', True)
+        self._set_attr('compress', is_compressible)
         return self
 
     def generate_relaxng(self):
@@ -414,6 +441,69 @@ class ObjectType(object):
             type_element.get('compress', 'false') == 'true',
             type_element.get('fuzzy-matching', 'none'),
             type_element.get('regexp', r'[\s\S]*')
+        ).set_version(type_element.attrib['version'])
+
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        other_is_newer = other.get_version() > self.get_version()
+        versions_differ = other.get_version() != self.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+        is_valid_upgrade = True
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Object types with different names are not comparable.")
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_display_name_singular() == new.get_display_name_singular()
+        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        equal &= old.get_description() == new.get_description()
+
+        # Check for illegal upgrade paths:
+
+        if old.is_compressible() != new.is_compressible():
+            # Compression hints differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_regexp() != new.get_regexp():
+            # The regular expressions differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_data_type().get() != new.get_data_type().get():
+            # The data types differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_fuzzy_matching() != new.get_fuzzy_matching():
+            # The fuzzy matching hints differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if equal:
+            return 0
+
+        if is_valid_upgrade and versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Object type definitions are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
         )
 
     def update(self, object_type):
@@ -426,38 +516,12 @@ class ObjectType(object):
           edxml.ontology.ObjectType: The updated ObjectType instance
 
         """
-        if self.__attr['name'] != object_type.get_name():
-            raise Exception('Attempt to update object type "%s" with object type "%s".' %
-                            (self.__attr['name'], object_type.get_name()))
-
-        if self.__attr['display-name'] != object_type.get_display_name():
-            raise Exception('Attempt to update object type "%s", but display names do not match' % self.__attr['name'],
-                            (self.__attr['display-name'], object_type.get_name()))
-
-        if self.__attr['description'] != object_type.get_description():
-            raise Exception('Attempt to update object type "%s", but descriptions do not match.' % self.__attr['name'],
-                            (self.__attr['description'], object_type.get_name()))
-
-        if self.__attr['data-type'] != str(object_type.get_data_type()):
-            raise Exception('Attempt to update object type "%s", but data types do not match.' % self.__attr['name'],
-                            (self.__attr['data-type'], object_type.get_name()))
-
-        if self.__attr['compress'] != object_type.is_compressible():
-            raise Exception(
-                'Attempt to update object type "%s", but compress flags do not match.' % self.__attr['name'],
-                (self.__attr['compress'], object_type.get_name()))
-
-        if self.__attr['fuzzy-matching'] != object_type.get_fuzzy_matching():
-            raise Exception('Attempt to update object type "%s", but fuzzy '
-                            'matching attributes do not match.' % self.__attr['name'],
-                            (self.__attr['fuzzy-matching'], object_type.get_name()))
-
-        if self.__attr['regexp'] != object_type.get_regexp():
-            raise Exception('Attempt to update object type "%s", but their '
-                            'regular expressions do not match.' % self.__attr['name'],
-                            (self.__attr['regexp'], object_type.get_name()))
-
-        self.validate()
+        if object_type > self:
+            # The new definition is indeed newer. Update self.
+            self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
+            self.set_description(object_type.get_description())
+            self.compress(object_type.is_compressible())
+            self.set_version(object_type.get_version())
 
         return self
 
@@ -475,5 +539,6 @@ class ObjectType(object):
         attribs = dict(self.__attr)
 
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
+        attribs['version'] = unicode(attribs['version'])
 
         return etree.Element('objecttype', attribs)

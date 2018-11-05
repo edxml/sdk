@@ -6,8 +6,10 @@ import edxml.ontology
 from edxml.EDXMLBase import EDXMLValidationError
 from lxml import etree
 
+from edxml.ontology import OntologyElement
 
-class EventProperty(object):
+
+class EventProperty(OntologyElement):
     """
     Class representing an EDXML event property
     """
@@ -273,6 +275,33 @@ class EventProperty(object):
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('description', description)
+        return self
+
+    def set_optional(self, is_optional):
+        """
+        Set the optional flag for the property to True (property is optional)
+        or False (property is mandatory).
+
+        Args:
+            is_optional (bool):
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('optional', is_optional)
+        return self
+
+    def set_concept_confidence(self, confidence):
+        """
+        Set the concept confidence for the associated concept.
+
+        Args:
+            confidence (int):
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('concept-confidence', confidence)
         return self
 
     def unique(self):
@@ -566,6 +595,91 @@ class EventProperty(object):
             property_element.get('similar', '')
         )
 
+    def __cmp__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Cannot compare different types of ontology elements.")
+
+        # Note that property definitions are part of event type definitions,
+        # so we look at the version of the event type for which this property is defined.
+        other_is_newer = other.__event_type.get_version() > self.__event_type.get_version()
+        versions_differ = other.__event_type.get_version() != self.__event_type.get_version()
+
+        if other_is_newer:
+            new = other
+            old = self
+        else:
+            new = self
+            old = other
+
+        old.validate()
+        new.validate()
+
+        equal = not versions_differ
+        is_valid_upgrade = True
+
+        if old.__event_type.get_name() != new.__event_type.get_name():
+            raise EDXMLValidationError("Attempt to compare property definitions from two different event types")
+
+        if old.get_name() != new.get_name():
+            raise ValueError("Properties with different names are not comparable.")
+
+        # Check for illegal upgrade paths:
+
+        if old.__object_type.get_name() != new.__object_type.get_name():
+            # The object types differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_concept_name() != new.get_concept_name():
+            # The concept association differs, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_concept_name() is not None and new.get_concept_name() is not None:
+            # Both old and new are associated with a concept, so we compare the association.
+            equal &= old.get_concept_confidence() == new.get_concept_confidence()
+            equal &= old.get_concept_naming_priority() == new.get_concept_naming_priority()
+
+        if old.get_merge_strategy() != new.get_merge_strategy():
+            # The merge strategies differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.is_unique() != new.is_unique():
+            # Property uniqueness differs, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.is_multi_valued() != new.is_multi_valued():
+            # Single-valued properties can become multi-valued, while a multi-valued
+            # property cannot become single-valued.
+            equal = False
+            is_valid_upgrade &= new.is_multi_valued()
+
+        if old.is_optional() != new.is_optional():
+            # Mandatory properties can become optional, while an optional property
+            # cannot become mandatory.
+            equal = False
+            is_valid_upgrade &= new.is_optional()
+
+        # Compare attributes that cannot produce illegal upgrades because they can
+        # be changed freely between versions. We only need to know if they changed.
+
+        equal &= old.get_description() == new.get_description()
+        equal &= old.get_similar_hint() == new.get_similar_hint()
+
+        if equal:
+            return 0
+
+        if is_valid_upgrade and versions_differ:
+            return -1 if other_is_newer else 1
+
+        raise EDXMLValidationError(
+            "Definitions of event type {} are neither equal nor valid upgrades / downgrades of one another "
+            "due to the following difference in property definitions:\nOld version:\n{}\nNew version:\n{}".format(
+                self.__event_type.get_name(),
+                etree.tostring(old.generate_xml(), pretty_print=True),
+                etree.tostring(new.generate_xml(), pretty_print=True)
+            )
+        )
+
     def update(self, event_property):
         """
 
@@ -580,34 +694,16 @@ class EventProperty(object):
           edxml.ontology.EventProperty: The updated EventProperty instance
 
         """
-        if self.__attr['name'] != event_property.get_name():
-            raise Exception('Attempt to update event property "%s" with event property "%s".' %
-                            (self.__attr['name'], event_property.get_name()))
+        if event_property > self:
+            # The new definition is indeed newer. Update self.
+            self.set_description(event_property.get_description())
+            self.hint_similar(event_property.get_similar_hint())
+            self.set_optional(event_property.is_optional())
+            self.set_multi_valued(event_property.is_multi_valued())
 
-        if self.__attr['description'] != event_property.get_description():
-            raise Exception('Attempt to update event property "%s", but descriptions do not match.' %
-                            self.__attr['name'],
-                            (self.__attr['description'], event_property.get_name()))
-
-        if int(self.__attr['cnp']) != event_property.get_concept_naming_priority():
-            raise Exception(
-                'Attempt to update event property "%s", but Entity Naming Priorities do not match.' %
-                self.__attr['name'],
-                (self.__attr['cnp'], event_property.get_name()))
-
-        if self.__attr['optional'] != event_property.is_optional():
-            raise Exception(
-                'Attempt to update event property "%s", but "optional" attributes do not match.' % self.__attr[
-                    'name']
-            )
-
-        if self.__attr['multivalued'] != event_property.is_multi_valued():
-            raise Exception(
-                'Attempt to update event property "%s", but "multivalued" attributes do not match.' % self.__attr[
-                    'name']
-            )
-
-        self.validate()
+            if event_property.get_concept_name() is not None:
+                self.set_concept_confidence(event_property.get_concept_confidence())
+                self.set_concept_naming_priority(event_property.get_concept_naming_priority())
 
         return self
 
