@@ -29,7 +29,7 @@ class DataType(object):
     URI_PATTERN = re.compile("^uri:.$")
     # Expression used for matching uuid datatypes
     UUID_PATTERN = re.compile(
-        "^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
+        r"^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
 
     FAMILY_DATETIME = 'datetime'
     FAMILY_SEQUENCE = 'sequence'
@@ -395,7 +395,7 @@ class DataType(object):
             # and 6 decimal fractional seconds.
             element = e.data(
                 e.param(
-                    '(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z',
+                    r'(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z',
                     name='pattern'),
                 type='dateTime'
             )
@@ -439,12 +439,12 @@ class DataType(object):
                     # Assure that values are not zero padded, zero is
                     # not signed and no plus sign is present
                     etree.SubElement(element, 'param',
-                                     name='pattern').text = '(-?[1-9]\d*)|0'
+                                     name='pattern').text = r'(-?[1-9]\d*)|0'
                 else:
                     # Assure that values are not zero padded and no
                     # plus sign is present
                     etree.SubElement(element, 'param',
-                                     name='pattern').text = '([1-9]\d*)|0'
+                                     name='pattern').text = r'([1-9]\d*)|0'
 
             elif split_data_type[1] in ('float', 'double'):
                 if split_data_type[1] == 'float':
@@ -464,12 +464,12 @@ class DataType(object):
                     # Assure that values are in 1.234567E+001 format, no leading
                     # plus sign is present and zero is not signed.
                     etree.SubElement(
-                        element, 'param', name='pattern').text = '(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+                        element, 'param', name='pattern').text = r'(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
                 else:
                     # Assure that values are in 1.234567E+001 format and not leading
                     # plus sign is present.
                     etree.SubElement(
-                        element, 'param', name='pattern').text = '([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+                        element, 'param', name='pattern').text = r'([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
 
             elif split_data_type[1] == 'decimal':
                 digits, fractional = split_data_type[2:4]
@@ -485,13 +485,13 @@ class DataType(object):
                     # Assure that integer part is not zero padded, fractional part
                     # is padded and no plus sign is present
                     etree.SubElement(element, 'param', name='pattern').text = \
-                        '([^+0][^+]*\..{%d})|(0\..{%d})' % (
+                        r'([^+0][^+]*\..{%d})|(0\..{%d})' % (
                             int(fractional), int(fractional))
                 else:
                     # Assure that integer part is not zero padded, fractional part
                     # is padded, zero is unsigned and no plus sign is present
                     etree.SubElement(element, 'param', name='pattern').text = \
-                        '(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
+                        r'(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
                         (int(fractional), int(fractional))
             else:
                 raise TypeError
@@ -517,15 +517,15 @@ class DataType(object):
                     if num_groups > 1:
                         element = e.data(
                             e.param(
-                                '[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (group_length,
-                                                                    group_separator, group_length, num_groups - 1),
+                                r'[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (group_length,
+                                                                     group_separator, group_length, num_groups - 1),
                                 name='pattern'
                             ), type='string'
                         )
                     else:
                         element = e.data(
                             e.param(
-                                '[a-f\d]{%d}' % group_length,
+                                r'[a-f\d]{%d}' % group_length,
                                 name='pattern'
                             ), type='string'
                         )
@@ -536,12 +536,12 @@ class DataType(object):
                 # Simple hexadecimal value. Note that we restrict
                 # the character space to lowercase characters.
                 element = e.data(
-                    e.param('[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
+                    e.param(r'[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
 
         elif split_data_type[0] == 'uuid':
             # Note that we restrict the character space to lowercase characters.
             element = e.data(e.param(
-                '[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}', name='pattern'), type='string')
+                r'[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}', name='pattern'), type='string')
 
         elif split_data_type[0] == 'string':
             length = int(split_data_type[1])
@@ -555,11 +555,11 @@ class DataType(object):
             if not is_unicode:
                 if is_case_sensitive:
                     etree.SubElement(
-                        element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+                        element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
                 else:
                     etree.SubElement(
-                        element, 'param', name='pattern').text = '[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
-            if regexp != '[\s\S]*':
+                        element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
+            if regexp != r'[\s\S]*':
                 etree.SubElement(element, 'param',
                                  name='pattern').text = regexp
 
@@ -569,7 +569,7 @@ class DataType(object):
             element = e.data(
                 e.param(1, name='minLength'),
                 e.param(split_data_type[1], name='maxLength'),
-                e.param('\S*', name='pattern'),
+                e.param(r'\S*', name='pattern'),
                 type='base64Binary'
             )
 
@@ -614,8 +614,8 @@ class DataType(object):
             element = e.data(
                 e.param(
                     (
-                        '-?((([1-8][0-9]|[0-9])(\.\d+)?)|(90(\.0{0,6})?)),'
-                        '-?((([1-9][0-9]|1[0-7]\d|[0-9])(\.\d{0,6})?)|(180(\.0{0,6})?))'
+                        r'-?((([1-8][0-9]|[0-9])(\.\d+)?)|(90(\.0{0,6})?)),'
+                        r'-?((([1-9][0-9]|1[0-7]\d|[0-9])(\.\d{0,6})?)|(180(\.0{0,6})?))'
                     ),
                     name='pattern'), type='string'
             )
@@ -807,7 +807,7 @@ class DataType(object):
 
         if split_data_type[0] == 'datetime':
             if not re.match(
-                '^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$',
+                r'^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$',
                     value):
                 raise EDXMLValidationError(
                     "Invalid value for data type %s: '%s'." % (self.type, value))
