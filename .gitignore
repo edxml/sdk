@@ -7,3 +7,5 @@ edxml.egg-info/
 */.DS_Store
 .idea/
 .cache/
+.vscode/
+.coverage
