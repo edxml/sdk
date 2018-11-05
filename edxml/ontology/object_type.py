@@ -16,10 +16,10 @@ class ObjectType(object):
     NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     FUZZY_MATCHING_PATTERN = re.compile(
-        "^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
+        r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name=None, description=None, data_type='string:0:cs:u', compress=False,
-                 fuzzy_matching='none', regexp='[\s\S]*'):
+                 fuzzy_matching='none', regexp=r'[\s\S]*'):
 
         self.__attr = {
             'name': name,
@@ -413,7 +413,7 @@ class ObjectType(object):
             type_element.attrib['data-type'],
             type_element.get('compress', 'false') == 'true',
             type_element.get('fuzzy-matching', 'none'),
-            type_element.get('regexp', '[\s\S]*')
+            type_element.get('regexp', r'[\s\S]*')
         )
 
     def update(self, object_type):
