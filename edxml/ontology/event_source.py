@@ -166,9 +166,14 @@ class EventSource(OntologyElement):
                 'Event source has an invalid URI: "%s"' % self._attr['uri']
             )
 
-        if not 1 <= len(self._attr['description']) <= 128:
+        if self._attr['description'] == '':
             raise EDXMLValidationError(
-                'Event source has a description that is either empty or too long.')
+                'Event source %s has an empty description.' % self._attr['uri'])
+
+        if len(self._attr['description']) > 128:
+            raise EDXMLValidationError(
+                'Event source %s has a description that is too long: "%s"' %
+                (self._attr['uri'], self._attr['description']))
 
         if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
             raise EDXMLValidationError(
