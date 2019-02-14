@@ -999,7 +999,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                             re.sub(char_filter.evil_xml_chars_regexp, unichr(0xfffd), value))
                     else:
                         raise ValueError(
-                            'Object value is not a string: ' + repr(value))
+                            'Value of property %s is not a string: %s' % (property_name, repr(value)))
         if content:
             try:
                 etree.SubElement(new, 'content').text = content
