@@ -19,3 +19,11 @@ Multiple instances of the same logical event can be merged using the various mer
 
   my_event_type['time-end'].merge_max()
 
+Choosing unique properties
+--------------------------
+
+Choosing which event properties should uniquely identify an event is a fundamental choice in designing an event type. Some data sources already produce unique persistent identifiers for their data records like a UUID or a hash. In that case, you are lucky: All that needs to be done is storing this unique identifier in an event property and marking it as unique. Problem solved. However, there is another aspect of event uniqueness to consider here: Semantics. Using that UUID from the datasource to uniquely identify your EDXML events will work perfectly, but the resulting events will not convey what it is that makes them unique.
+
+Let us clarify the semantics problem by looking at an example. Consider a data source yielding records that contain address information comprising of a postal code and a house number. The data source produces exactly one record for each unique address. Each record also contains a unique identifier computed from the combination of postal code and house number. Modelling an event type to represent these records could be done by using the identifiers provided by the source for uniqueness. However, the fact that the combination of postal code and house number makes each event unique will be lost. Data analysis algorithms can no longer infer what makes these events unique by inspecting the event type definition. By marking the two properties that contain the postal code and the house number as unique in stead, the semantics of the event type are much stronger.
+
+The unique identifier provided by the data source can be safely omitted from the event type when a unique property combination is used in stead. When you are unsure if the property combination is sufficient to unique identify the events, the source provided identifier can be kept as one of the unique properties of the event type. It is better to have some redundancy than to risk events getting merged when they should not be.
