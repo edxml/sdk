@@ -342,7 +342,7 @@ class PropertyRelation(OntologyElement):
 
         raise EDXMLValidationError(
             "Definitions of event type {} are neither equal nor valid upgrades / downgrades of one another "
-            "due to the following difference in parent definitions:\nOld version:\n{}\nNew version:\n{}".format(
+            "due to the following difference in a property relation:\nOld version:\n{}\nNew version:\n{}".format(
                 self.__event_type.get_name(),
                 etree.tostring(old.generate_xml(), pretty_print=True),
                 etree.tostring(new.generate_xml(), pretty_print=True)
