@@ -228,6 +228,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 except GeneratorExit:
                     pass
 
+    def flush(self):
+        if isinstance(self.__output, self.OutputBuffer):
+            output = u''.join(self.__output.buffer)
+            self.__output.buffer.clear()
+            return output
+        else:
+            return u''
+
     def add_ontology(self, ontology):
         """
 
@@ -284,12 +292,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         if prev_event_type_name is not None and prev_event_source is not None:
             self.open_event_group(prev_event_type_name, prev_event_source)
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def open_event_groups(self):
         """
@@ -324,12 +327,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         self.__element_stack.append('eventgroups')
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def open_event_group(self, event_type_name, source_uri):
         """
@@ -369,12 +367,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             self.__current_event_type_name, source_uri)
         self.__event_group_xml_writer.next()
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def close(self):
         """
@@ -406,12 +399,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 (self.__num_events_repaired, self.__num_events_produced)
             )
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def close_event_group(self):
         """
@@ -432,12 +420,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         # This closes the generator, writing the closing eventgroup tag.
         self.__event_group_xml_writer.close()
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def _repair_event(self, event):
         """
@@ -544,12 +527,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         self.__num_events_produced += 1
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
 
     def close_event_groups(self):
         """
@@ -579,9 +557,4 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
 
-        if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
-            self.__output.buffer.clear()
-            return output
-        else:
-            return u''
+        return self.flush()
