@@ -286,6 +286,12 @@ class EDXMLParserBase(object):
                     __file__)) + '/schema/edxml-schema-3.0.0.rng')
             )
 
+        if self.__root_element is None:
+            # The root element is set as soon as the opening <edxml> tag
+            # is parsed. If it is not set, we either did not receive any
+            # XML tags or the input is not valid EDXML.
+            raise EDXMLValidationError('Failed to parse EDXML data. Either the data is not EDXML or it is empty.')
+
         try:
             self.__schema.assertValid(self.__root_element)
         except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
