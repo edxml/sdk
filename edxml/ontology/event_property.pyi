@@ -6,7 +6,7 @@ from lxml import etree
 from typing import Any
 from typing import Dict
 
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, PropertyConcept
 
 
 class EventProperty(OntologyElement):
@@ -35,6 +35,7 @@ class EventProperty(OntologyElement):
         self.__event_type = ...  # type: edxml.ontology.EventType
         self.__object_type = ...  # type: edxml.ontology.ObjectType
         self.__data_type = ...  # type: edxml.ontology.DataType
+        self.__concepts = ...  # type: Dict[str, edxml.ontology.PropertyConcept]
 
     def _child_modified_callback(self) -> 'EventProperty': ...
 
@@ -58,22 +59,26 @@ class EventProperty(OntologyElement):
 
     def get_data_type(self) -> edxml.ontology.DataType: ...
 
+    def get_concept_associations(self) -> Dict[str,edxml.ontology.PropertyConcept]: ...
+
     def relate_to(self, type_predicate: str, target_property_name: str, reason: str = None, confidence: int = 10,
                   directed: bool = True) -> edxml.ontology.PropertyRelation: ...
 
-    def relate_inter(self, type_predicate: str, target_property_name: str, reason: str = None, confidence: int = 10,
+    def relate_inter(self, type_predicate: str, target_property_name: str, source_concept_name=None,
+                     target_concept_name=None, reason: str = None, confidence: int = 10,
                      directed: bool = True) -> edxml.ontology.PropertyRelation: ...
 
-    def relate_intra(self, type_predicate: str, target_property_name: str, reason: str = None, confidence: int = 10,
+    def relate_intra(self, type_predicate: str, target_property_name: str, source_concept_name=None,
+                     target_concept_name=None, reason: str = None, confidence: int = 10,
                      directed: bool = True) -> edxml.ontology.PropertyRelation: ...
+
+    def add_associated_concept(self, concept_association: PropertyConcept) -> 'EventProperty': ...
 
     def set_merge_strategy(self, merge_strategy: str) -> 'EventProperty': ...
 
     def set_description(self, description: str) -> 'EventProperty': ...
 
     def set_optional(self, is_optional: bool) -> 'EventProperty': ...
-
-    def set_concept_confidence(self, confidence: int) -> 'EventProperty': ...
 
     def unique(self) -> 'EventProperty': ...
 
@@ -90,10 +95,6 @@ class EventProperty(OntologyElement):
     def identifies(self, concept_name: str, confidence: int) -> 'EventProperty': ...
 
     def set_multi_valued(self, is_multivalued:bool) -> 'EventProperty': ...
-
-    def set_concept_naming_priority(self, priority: int) -> 'EventProperty': ...
-
-    def get_concept_name(self) -> str: ...
 
     def hint_similar(self, similarity: str) -> 'EventProperty': ...
 

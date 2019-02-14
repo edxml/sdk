@@ -699,8 +699,7 @@ class Ontology(OntologyElement):
         # Check if the concepts referred to by each property exists
         for event_type_name, event_type in self.__event_types.iteritems():
             for property_name, event_property in event_type.iteritems():
-                concept_name = event_property.get_concept_name()
-                if concept_name is not None:
+                for concept_name in event_property.get_concept_associations().keys():
                     if self.get_concept(concept_name) is None:
                         # Concept is not defined, try to load it from
                         # any registered ontology bricks
@@ -708,8 +707,7 @@ class Ontology(OntologyElement):
                     if self.get_concept(concept_name) is None:
                         raise EDXMLValidationError(
                             'Property "%s" of event type "%s" refers to undefined concept "%s".' %
-                            (property_name, event_type_name,
-                             event_property.get_concept_name())
+                            (property_name, event_type_name, concept_name)
                         )
 
         # Check if merge strategies make sense for the
@@ -820,28 +818,31 @@ class Ontology(OntologyElement):
         for event_type_name, event_type in self.__event_types.items():
             for relation in event_type.get_property_relations().values():
                 if relation.get_type_class() in ('inter', 'intra'):
-                    source_concept = event_type[relation.get_source(
-                    )].get_concept_name()
-                    target_concept = event_type[relation.get_target(
-                    )].get_concept_name()
-                    if source_concept and target_concept:
-                        source_primitive = source_concept.split('.', 2)[0]
-                        target_primitive = target_concept.split('.', 2)[0]
-                        if relation.get_type_class() == 'intra':
-                            if source_primitive != target_primitive:
-                                raise EDXMLValidationError(
-                                    ('Properties %s and %s in the intra-concept relation in event type %s must both '
-                                     'refer to the same primitive concept.') %
-                                    (relation.get_source(),
-                                     relation.get_target(), event_type_name)
-                                )
-                    else:
+                    source_concepts = event_type[relation.get_source(
+                    )].get_concept_associations()
+                    target_concepts = event_type[relation.get_target(
+                    )].get_concept_associations()
+
+                    if len(source_concepts) == 0 or len(target_concepts) == 0:
                         raise EDXMLValidationError(
                             ('Both properties %s and %s in the inter/intra-concept relation in event type %s must '
                              'refer to a concept.') %
                             (relation.get_source(),
                              relation.get_target(), event_type_name)
                         )
+
+                    for source_concept_name in source_concepts:
+                        for target_concept_name in target_concepts:
+                            if relation.get_type_class() == 'intra':
+                                source_primitive = relation.get_source_concept().split('.', 2)[0]
+                                target_primitive = relation.get_target_concept().split('.', 2)[0]
+                                if source_primitive != target_primitive:
+                                    raise EDXMLValidationError(
+                                        ('Properties %s and %s in the intra-concept relation in event type %s must '
+                                         'both refer to the same primitive concept.') %
+                                        (relation.get_source(),
+                                         relation.get_target(), event_type_name)
+                                    )
 
         return self
 

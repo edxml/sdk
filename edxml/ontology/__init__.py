@@ -21,6 +21,9 @@ sources, and so on.
 ..  autoclass:: PropertyRelation
     :members:
     :show-inheritance:
+..  autoclass:: PropertyConcept
+    :members:
+    :show-inheritance:
 ..  autoclass:: EventType
     :members:
     :show-inheritance:
@@ -39,6 +42,7 @@ from edxml.ontology.ontology_element import OntologyElement
 from edxml.ontology.data_type import DataType
 from edxml.ontology.event_type import EventType
 from edxml.ontology.event_property import EventProperty
+from edxml.ontology.event_property_concept import PropertyConcept
 from edxml.ontology.event_property_relation import PropertyRelation
 from edxml.ontology.event_source import EventSource
 from edxml.ontology.event_type_parent import EventTypeParent
@@ -49,4 +53,4 @@ from edxml.ontology.brick import Brick
 
 
 __all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
-           'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick']
+           'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick', 'PropertyConcept']

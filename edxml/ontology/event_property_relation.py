@@ -13,12 +13,14 @@ class PropertyRelation(OntologyElement):
     Class representing a relation between two EDXML properties
     """
 
-    def __init__(self, event_type, source, target, description, type_class, type_predicate,
-                 confidence=10, directed=True):
+    def __init__(self, event_type, source, target, source_concept, target_concept, description,
+                 type_class, type_predicate, confidence=10, directed=True):
 
         self.__attr = {
             'property1': source.get_name(),
             'property2': target.get_name(),
+            'concept1': source_concept.get_name() if source_concept else None,
+            'concept2': target_concept.get_name() if target_concept else None,
             'description': description,
             'type': '%s:%s' % (type_class, type_predicate),
             'confidence': int(confidence),
@@ -68,6 +70,26 @@ class PropertyRelation(OntologyElement):
           str:
         """
         return self.__attr['property2']
+
+    def get_source_concept(self):
+        """
+
+        Returns the source concept.
+
+        Returns:
+          str:
+        """
+        return self.__attr['concept1']
+
+    def get_target_concept(self):
+        """
+
+        Returns the target concept.
+
+        Returns:
+          str:
+        """
+        return self.__attr['concept2']
 
     def get_description(self):
         """
@@ -260,10 +282,17 @@ class PropertyRelation(OntologyElement):
                      self.__attr['description'])
                 )
 
+        if self.get_type_class() in ('inter', 'intra'):
+            if self.__attr.get('concept1') is None or self.__attr.get('concept2') is None:
+                raise EDXMLValidationError(
+                    'The %s-concept relation between properties %s and %s does not specify both related concepts.' %
+                    (self.get_type_class(), self.__attr['property1'], self.__attr['property2'])
+                )
+
         return self
 
     @classmethod
-    def create_from_xml(cls, relation_element, event_type):
+    def create_from_xml(cls, relation_element, event_type, ontology):
         source = relation_element.attrib['property1']
         target = relation_element.attrib['property2']
 
@@ -277,6 +306,8 @@ class PropertyRelation(OntologyElement):
             event_type,
             event_type[relation_element.attrib['property1']],
             event_type[relation_element.attrib['property2']],
+            ontology.get_concept(relation_element.attrib.get('concept1')),
+            ontology.get_concept(relation_element.attrib.get('concept2')),
             relation_element.attrib['description'],
             relation_element.attrib['type'].split(':')[0],
             relation_element.attrib['type'].split(':')[1],
@@ -385,5 +416,10 @@ class PropertyRelation(OntologyElement):
 
         attribs['confidence'] = '%d' % self.__attr['confidence']
         attribs['directed'] = 'true' if self.__attr['directed'] else 'false'
+
+        if attribs['concept1'] is None:
+            del attribs['concept1']
+        if attribs['concept2'] is None:
+            del attribs['concept2']
 
         return etree.Element('relation', attribs)
