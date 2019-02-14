@@ -64,6 +64,7 @@ class SimpleEDXMLWriter(object):
         self.__previous_event_buffers = {}
         self.__ontology = Ontology()
         self.__last_written_ontology_version = self.__ontology.get_version()
+        self.__wrote_ontology_before = False
         self.__event_type_post_processors = {}
         self.__auto_merge = {}
         self.__writer = None
@@ -252,8 +253,9 @@ class SimpleEDXMLWriter(object):
             self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
         )
 
-        output += self.__writer.add_ontology(self.__ontology)
-        output += self.__writer.open_event_groups()
+        if self.__wrote_ontology_before:
+            # We wrote an ontology before, let us write it again.
+            output += self._write_ontology(open_groups=True)
 
         if isinstance(self.__writer.get_output(), self.__writer.OutputBuffer):
             # The writer is writing into a memory buffer. Since this method is
@@ -466,6 +468,15 @@ class SimpleEDXMLWriter(object):
 
         output = u''
 
+        if not self.__writer:
+            # We did not create the EDXMLWriter yet.
+            self.__writer = EDXMLWriter(
+                self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
+            )
+            # Instantiation of the writer produces output to initialize the stream,
+            # so let us flush the writer to get it.
+            output += self.__writer.flush()
+
         if self.__curr_buffer_size > self.__max_buf_size or \
            0 < self.__max_latency <= (time.time() - self.__last_write_time) or force:
             for group_id in self.__event_buffers:
@@ -482,21 +493,23 @@ class SimpleEDXMLWriter(object):
 
         return output
 
+    def _write_ontology(self, open_groups=False):
+        output = u''
+        output += self.__writer.add_ontology(self.__ontology)
+        self.__last_written_ontology_version = self.__ontology.get_version()
+        self.__wrote_ontology_before = True
+
+        if open_groups:
+            output += self.__writer.open_event_groups()
+
+        return output
+
     def _flush_buffer(self, event_type_name, event_source_uri, event_group_id, merge):
 
         if len(self.__event_buffers[event_group_id][merge]) == 0:
             return u''
 
         outputs = []
-
-        if not self.__writer:
-            # We did not create the EDXMLWriter yet.
-            self.__writer = EDXMLWriter(
-                self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
-            )
-            outputs.append(self.__writer.add_ontology(self.__ontology))
-            self.__last_written_ontology_version = self.__ontology.get_version()
-            outputs.append(self.__writer.open_event_groups())
 
         if self.__ontology.is_modified_since(self.__last_written_ontology_version):
             # TODO: Rather than outputting a complete, new
@@ -505,10 +518,9 @@ class SimpleEDXMLWriter(object):
             if self.__current_event_group_type is not None:
                 outputs.append(self.__writer.close_event_group())
                 self.__current_event_group_type = None
-            outputs.append(self.__writer.close_event_groups())
-            outputs.append(self.__writer.add_ontology(self.__ontology))
-            self.__last_written_ontology_version = self.__ontology.get_version()
-            outputs.append(self.__writer.open_event_groups())
+            if self.__wrote_ontology_before:
+                outputs.append(self.__writer.close_event_groups())
+            outputs.append(self._write_ontology(open_groups=True))
 
         if self.__current_event_group_type != event_type_name or self.__current_event_group_source != event_source_uri:
             if self.__current_event_group_type is not None:
@@ -579,17 +591,14 @@ class SimpleEDXMLWriter(object):
             self.__writer = EDXMLWriter(
                 self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
             )
-            outputs.append(self.__writer.add_ontology(self.__ontology))
-            self.__last_written_ontology_version = self.__ontology.get_version()
-            outputs.append(self.__writer.open_event_groups())
+            outputs.append(self._write_ontology(open_groups=True))
 
         if flush and self.__ontology.is_modified_since(self.__last_written_ontology_version):
             if self.__current_event_group_type is not None:
                 outputs.append(self.__writer.close_event_group())
                 outputs.append(self.__writer.close_event_groups())
                 self.__current_event_group_type = None
-            outputs.append(self.__writer.add_ontology(self.__ontology))
-            self.__last_written_ontology_version = self.__ontology.get_version()
+            outputs.append(self._write_ontology(open_groups=True))
 
         if flush:
             outputs.append(self.flush(force=True))
