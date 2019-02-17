@@ -369,7 +369,7 @@ class EventProperty(OntologyElement):
         """
         return not self.__attr['multivalued']
 
-    def identifies(self, concept_name, confidence):
+    def identifies(self, concept_name, confidence=10):
         """
 
         Marks the property as an identifier for specified
