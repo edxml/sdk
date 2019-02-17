@@ -9,7 +9,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_copies_are_identical():
@@ -47,7 +47,7 @@ def test_changing_parent_event_type_not_allowed():
     child_of_dad.make_children('of', dad.is_parent('of', child_of_dad))
 
     # Comparing two should now fail.
-    assert_incomparable(child_of_mom, child_of_dad)
+    assert_invalid_ontology_upgrade(child_of_mom, child_of_dad)
 
 
 def test_changing_property_map_not_allowed():
@@ -66,7 +66,7 @@ def test_changing_property_map_not_allowed():
     child_b.make_children('of', parent.is_parent('of', child_a)).map('b', 'a')
 
     # Comparing two should now fail.
-    assert_incomparable(child_a, child_b)
+    assert_invalid_ontology_upgrade(child_a, child_b)
 
 
 def test_add_parent_not_allowed():
@@ -83,7 +83,7 @@ def test_add_parent_not_allowed():
     child_b.make_children('of', parent.is_parent('of', child_b))
 
     # Comparing two should now fail.
-    assert_incomparable(child_a, child_b)
+    assert_invalid_ontology_upgrade(child_a, child_b)
 
 
 def test_remove_parent_not_allowed():
@@ -102,7 +102,7 @@ def test_remove_parent_not_allowed():
     child_a.make_children('of', parent.is_parent('of', child_a))
 
     # Comparing two should now fail.
-    assert_incomparable(child_a, child_b)
+    assert_invalid_ontology_upgrade(child_a, child_b)
 
 
 def test_parent_attribute_upgrade():

@@ -8,7 +8,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_copies_are_identical():
@@ -44,7 +44,7 @@ def test_parents_of_different_event_types_cannot_be_compared():
 
     # Comparing two different parents
     # makes no sense and throws an exception.
-    assert_incomparable(mom_of_child, dad_of_child)
+    assert_invalid_ontology_upgrade(mom_of_child, dad_of_child)
 
 
 def test_children_of_different_event_types_cannot_be_compared():
@@ -64,7 +64,7 @@ def test_children_of_different_event_types_cannot_be_compared():
 
     # Comparing two different children
     # makes no sense and throws an exception.
-    assert_incomparable(parent_of_brother, parent_of_sister)
+    assert_invalid_ontology_upgrade(parent_of_brother, parent_of_sister)
 
 
 def test_parent_description_upgrade():
@@ -103,8 +103,8 @@ def test_incompatible_parent_description_upgrade():
     child_copy = copy.deepcopy(child)
     child_copy.get_parent().set_parent_description('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(child, child_copy)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(child, child_copy)
 
 
 def test_siblings_description_upgrade():
@@ -143,8 +143,8 @@ def test_incompatible_siblings_description_upgrade():
     child_copy = copy.deepcopy(child)
     child_copy.get_parent().set_siblings_description('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(child, child_copy)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(child, child_copy)
 
 
 # We can run pytest directly in our debugger

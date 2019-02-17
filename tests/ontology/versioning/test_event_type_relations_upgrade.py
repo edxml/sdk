@@ -9,7 +9,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_copies_are_identical():
@@ -51,7 +51,7 @@ def test_relation_order_is_insignificant():
 
     # Both event types must be identical, even though
     # the relations are created in different order.
-    a == b
+    assert a == b
 
 
 def test_adding_relation_fails():
@@ -77,7 +77,7 @@ def test_adding_relation_fails():
 
     # The two versions of the event type are now incompatible and
     # cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_removing_relation_fails():
@@ -104,7 +104,7 @@ def test_removing_relation_fails():
 
     # The two versions of the event type are now incompatible and
     # cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_relation_attribute_upgrade():

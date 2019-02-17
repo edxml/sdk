@@ -2,7 +2,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_ontology_upgrade, assert_incomparable
+from tests.assertions import assert_valid_ontology_upgrade, assert_invalid_ontology_upgrade
 
 
 def create_test_ontology():
@@ -42,7 +42,7 @@ def test_incompatible_concept_upgrade():
 
     # We did not increment the version on the changed
     # copy, so the two instances are incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_source_upgrade():
@@ -63,7 +63,7 @@ def test_incompatible_source_upgrade():
 
     # We did not increment the version on the changed
     # copy, so the two instances are incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_object_type_upgrade():
@@ -84,7 +84,7 @@ def test_incompatible_object_type_upgrade():
 
     # We did not increment the version on the changed
     # copy, so the two instances are incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_event_type_upgrade():
@@ -105,7 +105,7 @@ def test_incompatible_event_type_upgrade():
 
     # We did not increment the version on the changed
     # copy, so the two instances are incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_add_concept():

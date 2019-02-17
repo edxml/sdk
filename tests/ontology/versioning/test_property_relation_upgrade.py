@@ -8,7 +8,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_copies_are_identical():
@@ -58,7 +58,7 @@ def test_relations_between_properties_of_different_event_types_cannot_be_compare
 
     # Comparing two relations from different event types
     # makes no sense and throws an exception.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_source_property_not_allowed():
@@ -78,7 +78,7 @@ def test_change_source_property_not_allowed():
 
     # An attempt to upgrade to a version having a different
     # source property must fail.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_target_property_not_allowed():
@@ -98,7 +98,7 @@ def test_change_target_property_not_allowed():
 
     # An attempt to upgrade to a version having a different
     # target property must fail.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_directedness_not_allowed():
@@ -116,7 +116,7 @@ def test_change_directedness_not_allowed():
 
     # An attempt to upgrade to a version having a different
     # relation directedness must fail.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_relation_type_not_allowed():
@@ -135,7 +135,7 @@ def test_change_relation_type_not_allowed():
 
     # An attempt to upgrade to a version having a different
     # relation type must fail.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_description_upgrade():

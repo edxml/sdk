@@ -2,7 +2,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology, DataType
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_different_object_types_cannot_be_compared():
@@ -42,8 +42,8 @@ def test_incompatible_description_upgrade():
     # We change the description without incrementing the version.
     b = copy.deepcopy(a).set_description('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_display_name_upgrade():
@@ -64,8 +64,8 @@ def test_incompatible_display_name_upgrade():
     # We change the display name without incrementing the version.
     b = copy.deepcopy(a).set_display_name('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_compression_hint_upgrade_fails():
@@ -76,7 +76,7 @@ def test_compression_hint_upgrade_fails():
 
     # Changing the compression hint is not allowed and makes both
     # versions incompatible, the cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_regex_upgrade_fails():
@@ -87,7 +87,7 @@ def test_regex_upgrade_fails():
 
     # Changing the regular expression is not allowed and makes both
     # versions incompatible, the cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_fuzzy_matching_upgrade_fails():
@@ -98,7 +98,7 @@ def test_fuzzy_matching_upgrade_fails():
 
     # Changing the fuzzy matching hint is not allowed and makes both
     # versions incompatible, the cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_data_type_upgrade_fails():
@@ -109,7 +109,7 @@ def test_data_type_upgrade_fails():
 
     # Changing the data type is not allowed and makes both
     # versions incompatible, the cannot be compared.
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 # We can run pytest directly in our debugger

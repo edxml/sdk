@@ -8,7 +8,7 @@ import copy
 import pytest
 
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_incomparable, assert_invalid_ontology_upgrade
 
 
 def test_different_properties_cannot_be_compared():
@@ -21,8 +21,7 @@ def test_different_properties_cannot_be_compared():
 
     # Comparing two properties with different names
     # makes no sense and throws an exception.
-    with pytest.raises(Exception):
-        a > b
+    assert_incomparable(a, b)
 
 
 def test_properties_of_different_event_types_cannot_be_compared():
@@ -34,8 +33,7 @@ def test_properties_of_different_event_types_cannot_be_compared():
 
     # Comparing two properties with different names
     # makes no sense and throws an exception.
-    with pytest.raises(Exception):
-        a > b
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_copies_are_identical():
@@ -73,8 +71,8 @@ def test_incompatible_description_upgrade():
     b = copy.deepcopy(a)
     b['a'].set_description('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_similar_upgrade():
@@ -101,7 +99,7 @@ def test_incompatible_similar_upgrade():
     b = copy.deepcopy(a)
     b['a'].hint_similar('changed')
 
-    assert_incomparable(a, b)
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_single_valued_to_multi_valued_upgrade():
@@ -127,8 +125,8 @@ def test_single_valued_to_multi_valued_upgrade_not_allowed():
     b['a'].set_multi_valued(False)
 
     # Single-valued properties can become multi-valued, while a multi-valued
-    # property cannot become single-valued. The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # property cannot become single-valued. The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_mandatory_to_optional_upgrade():
@@ -154,8 +152,8 @@ def test_mandatory_to_optional_upgrade_not_allowed():
     b['a'].set_optional(False)
 
     # Mandatory properties can become optional, while a optional
-    # property cannot become mandatory. The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # property cannot become mandatory. The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_confidence_upgrade():
@@ -227,8 +225,8 @@ def test_object_type_upgrade_not_allowed():
     b = o2.create_event_type('a').set_version(2)
     b.create_property('a', 'b')
 
-    # Property object types differ, the versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # Property object types differ, the versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_set_concept_not_allowed():
@@ -245,8 +243,8 @@ def test_set_concept_not_allowed():
     b.create_property('a', 'a').identifies('a', 1)
 
     # New property has a concept association while the old one did not,
-    # the versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # the versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_concept_not_allowed():
@@ -264,8 +262,8 @@ def test_change_concept_not_allowed():
     b.create_property('a', 'a').identifies('b', 1)
 
     # New property is associated with a different concept than the old one,
-    # the versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # the versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_merge_strategy_not_allowed():
@@ -279,8 +277,8 @@ def test_change_merge_strategy_not_allowed():
     b = copy.deepcopy(a).set_version(2)
     b['a'].merge_max()
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_change_uniqueness_not_allowed():
@@ -294,8 +292,8 @@ def test_change_uniqueness_not_allowed():
     b = copy.deepcopy(a).set_version(2)
     b['a'].unique()
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 # We can run pytest directly in our debugger

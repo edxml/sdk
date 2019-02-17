@@ -3,7 +3,7 @@ import pytest
 
 from datetime import datetime
 from edxml.ontology import Ontology
-from tests.assertions import assert_valid_upgrade, assert_incomparable
+from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
 def test_different_sources_cannot_be_compared():
@@ -43,8 +43,8 @@ def test_incompatible_description_upgrade():
     # We change the description without incrementing the version.
     b = copy.deepcopy(a).set_description('changed')
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 def test_acquisition_date_upgrade():
@@ -65,8 +65,8 @@ def test_incompatible_acquisition_date_upgrade():
     # We change the acquisition date without incrementing the version.
     b = copy.deepcopy(a).set_acquisition_date(datetime.strptime('1978-06-17', '%Y-%m-%d'))
 
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
 
 
 # We can run pytest directly in our debugger

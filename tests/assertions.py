@@ -54,7 +54,12 @@ def assert_valid_ontology_upgrade(old, new):
     assert old == new
 
 
+def assert_invalid_ontology_upgrade(old, new):
+    with pytest.raises(EDXMLValidationError):
+        new > old
+
+
 def assert_incomparable(a, b):
     # An attempt to upgrade should now fail.
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(ValueError):
         a == b
