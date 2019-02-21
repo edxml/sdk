@@ -29,19 +29,16 @@ class EventProperty(OntologyElement):
     MERGE_MAX = 'max'
     """Merge strategy 'max'"""
 
-    def __init__(self, event_type, name, object_type, description=None, concept_name=None, concept_confidence=0,
-                 cnp=128, unique=False, optional=True, multivalued=True, merge='drop', similar=''):
+    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=True, multivalued=True,
+                 merge='drop', similar=''):
 
         self.__attr = {
             'name': name,
             'object-type': object_type.get_name(),
             'description': description or name.replace('-', ' '),
-            'concept': concept_name,
-            'concept-confidence': int(concept_confidence),
             'unique': bool(unique),
             'optional': bool(optional),
             'multivalued': bool(multivalued),
-            'cnp': int(cnp),
             'merge': merge,
             'similar': similar
         }
@@ -49,6 +46,7 @@ class EventProperty(OntologyElement):
         self.__event_type = event_type  # type: edxml.ontology.EventType
         self.__object_type = object_type  # type: edxml.ontology.ObjectType
         self.__data_type = object_type.get_data_type()  # type: edxml.ontology.ObjectType
+        self.__concepts = {}      # type: Dict[str, edxml.ontology.PropertyConcept]
 
     def _set_event_type(self, event_type):
         self.__event_type = event_type
@@ -104,16 +102,6 @@ class EventProperty(OntologyElement):
         """
         return self.__attr['merge']
 
-    def get_concept_confidence(self):
-        """
-
-        Returns the concept identification confidence.
-
-        Returns:
-          int:
-        """
-        return self.__attr['concept-confidence']
-
     def get_similar_hint(self):
         """
 
@@ -146,16 +134,16 @@ class EventProperty(OntologyElement):
         """
         return self.__data_type
 
-    def get_concept_naming_priority(self):
+    def get_concept_associations(self):
         """
 
-        Returns concept naming priority of the event property.
+        Returns a dictionary containing the names of all associated
+        concepts as keys and the PropertyConcept instances as values.
 
         Returns:
-          int:
+          Dict[str,edxml.ontology.PropertyConcept]:
         """
-
-        return self.__attr['cnp']
+        return self.__concepts
 
     def relate_to(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
         """
@@ -179,15 +167,21 @@ class EventProperty(OntologyElement):
 
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence, directed)
+            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence=confidence,
+                                                 directed=directed)
 
-    def relate_inter(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
+    def relate_inter(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
+                     reason=None, confidence=10, directed=True):
         """
 
         Creates and returns a relation between this property and
         the specified target property. The relation is an 'inter'
         relation, indicating that the related objects belong to
         different, related concept instances.
+
+        When any of the related properties is associated with more
+        than one concept, you are required to specify which of the
+        associated concepts is involved in the relation.
 
         When no reason is specified, the reason is constructed by
         wrapping the type predicate with the place holders for
@@ -196,6 +190,8 @@ class EventProperty(OntologyElement):
         Args:
           type_predicate (str): free form predicate
           target_property_name (str): Name of the related property
+          source_concept_name (str): Name of the source concept
+          target_concept_name (str): Name of the target concept
           reason (str): Relation description, with property placeholders
           confidence (int): Relation confidence [0,10]
           directed (bool): Directed relation True / False
@@ -205,9 +201,12 @@ class EventProperty(OntologyElement):
 
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'inter', type_predicate, confidence, directed)
+            self.get_name(), type_predicate, target_property_name), 'inter',
+            type_predicate, source_concept_name, target_concept_name, confidence, directed
+        )
 
-    def relate_intra(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
+    def relate_intra(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
+                     reason=None, confidence=10, directed=True):
         """
 
         Creates and returns a relation between this property and
@@ -231,7 +230,20 @@ class EventProperty(OntologyElement):
 
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'intra', type_predicate, confidence, directed)
+            self.get_name(), type_predicate, target_property_name), 'intra', type_predicate, source_concept_name,
+                                                 target_concept_name, confidence, directed)
+
+    def add_associated_concept(self, concept_association):
+        """
+        Add the specified concept association.
+
+        Args:
+          concept_association (edxml.ontology.PropertyConcept): Property concept association
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self.__concepts[concept_association.get_concept_name()] = concept_association
+        return self
 
     def set_merge_strategy(self, merge_strategy):
         """
@@ -289,19 +301,6 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('optional', is_optional)
-        return self
-
-    def set_concept_confidence(self, confidence):
-        """
-        Set the concept confidence for the associated concept.
-
-        Args:
-            confidence (int):
-
-        Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
-        """
-        self._set_attr('concept-confidence', confidence)
         return self
 
     def unique(self):
@@ -370,7 +369,7 @@ class EventProperty(OntologyElement):
         """
         return not self.__attr['multivalued']
 
-    def identifies(self, concept_name, confidence):
+    def identifies(self, concept_name, confidence=10):
         """
 
         Marks the property as an identifier for specified
@@ -381,11 +380,12 @@ class EventProperty(OntologyElement):
           confidence (int): concept identification confidence [0, 10]
 
         Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
+          edxml.ontology.PropertyConcept: The PropertyConcept association
         """
-        self._set_attr('concept', concept_name)
-        self._set_attr('concept-confidence', int(confidence))
-        return self
+        self.__concepts[concept_name] = edxml.ontology.PropertyConcept(
+            self.__event_type, self, concept_name, confidence
+        )
+        return self.__concepts[concept_name]
 
     def set_multi_valued(self, is_multivalued):
         """
@@ -400,33 +400,6 @@ class EventProperty(OntologyElement):
         """
         self._set_attr('multivalued', is_multivalued)
         return self
-
-    def set_concept_naming_priority(self, priority):
-        """
-
-        Configure the concept naming priority of
-        the property. When the value is not explicitly
-        specified using this method, it's value is 128.
-
-        Args:
-          priority (int): The EDXML cnp attribute
-
-        Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
-        """
-        self._set_attr('cnp', int(priority))
-        return self
-
-    def get_concept_name(self):
-        """
-
-        Returns the name of the concept if the property is an
-        identifier for a concept, returns None otherwise.
-
-        Returns:
-          str:
-        """
-        return self.__attr['concept']
 
     def hint_similar(self, similarity):
         """
@@ -529,12 +502,6 @@ class EventProperty(OntologyElement):
             raise EDXMLValidationError(
                 'Property attribute is too long: similar="%s"' % self.__attr['similar'])
 
-        if not 0 <= int(self.__attr['cnp']) < 256:
-            raise EDXMLValidationError(
-                'Property "%s" has an invalid concept naming priority: "%d"' % (
-                    self.__attr['name'], self.__attr['cnp'])
-            )
-
         if self.is_unique():
             if self.is_optional():
                 raise EDXMLValidationError(
@@ -562,9 +529,8 @@ class EventProperty(OntologyElement):
             raise EDXMLValidationError(
                 'Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
-        if self.__attr['concept-confidence'] < 0 or self.__attr['concept-confidence'] > 10:
-            raise EDXMLValidationError(
-                'Invalid property concept confidence: "%d"' % self.__attr['concept-confidence'])
+        for concept_association in self.__concepts.values():
+            concept_association.validate()
 
         return self
 
@@ -580,20 +546,25 @@ class EventProperty(OntologyElement):
                 (name, parent_event_type.get_name(), object_type_name)
             )
 
-        return cls(
+        property = cls(
             parent_event_type,
             property_element.attrib['name'],
             object_type,
             property_element.attrib['description'],
-            property_element.get('concept'),
-            property_element.get('concept-confidence', 0),
-            int(property_element.get('cnp', 0)),
             property_element.get('unique', 'false') == 'true',
             property_element.get('optional') == 'true',
             property_element.get('multivalued') == 'true',
             property_element.get('merge', 'drop'),
             property_element.get('similar', '')
         )
+
+        for element in property_element:
+            if element.tag == 'property_concept':
+                property.add_associated_concept(
+                    edxml.ontology.PropertyConcept.create_from_xml(element, parent_event_type, property)
+                )
+
+        return property
 
     def __cmp__(self, other):
 
@@ -630,15 +601,6 @@ class EventProperty(OntologyElement):
             # The object types differ, no upgrade possible.
             equal = is_valid_upgrade = False
 
-        if old.get_concept_name() != new.get_concept_name():
-            # The concept association differs, no upgrade possible.
-            equal = is_valid_upgrade = False
-
-        if old.get_concept_name() is not None and new.get_concept_name() is not None:
-            # Both old and new are associated with a concept, so we compare the association.
-            equal &= old.get_concept_confidence() == new.get_concept_confidence()
-            equal &= old.get_concept_naming_priority() == new.get_concept_naming_priority()
-
         if old.get_merge_strategy() != new.get_merge_strategy():
             # The merge strategies differ, no upgrade possible.
             equal = is_valid_upgrade = False
@@ -658,6 +620,19 @@ class EventProperty(OntologyElement):
             # cannot become mandatory.
             equal = False
             is_valid_upgrade &= new.is_optional()
+
+        if old.get_concept_associations().keys() != new.get_concept_associations().keys():
+            # Versions do not agree on their concept associations. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        for concept_name, associations in new.get_concept_associations().items():
+            if concept_name in old.get_concept_associations():
+                if old.get_concept_associations()[concept_name] != new.get_concept_associations()[concept_name]:
+                    # Association definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= new.get_concept_associations()[concept_name] > \
+                        old.get_concept_associations()[concept_name]
 
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
@@ -701,9 +676,8 @@ class EventProperty(OntologyElement):
             self.set_optional(event_property.is_optional())
             self.set_multi_valued(event_property.is_multi_valued())
 
-            if event_property.get_concept_name() is not None:
-                self.set_concept_confidence(event_property.get_concept_confidence())
-                self.set_concept_naming_priority(event_property.get_concept_naming_priority())
+            for concept_name, association in self.__concepts.items():
+                association.update(event_property.get_concept_associations()[concept_name])
 
         return self
 
@@ -720,15 +694,13 @@ class EventProperty(OntologyElement):
 
         attribs = dict(self.__attr)
 
-        attribs['concept-confidence'] = '%d' % self.__attr['concept-confidence']
         attribs['unique'] = 'true' if self.__attr['unique'] else 'false'
         attribs['optional'] = 'true' if self.__attr['optional'] else 'false'
         attribs['multivalued'] = 'true' if self.__attr['multivalued'] else 'false'
-        attribs['cnp'] = '%d' % attribs['cnp']
 
-        if attribs['concept'] is None:
-            del attribs['concept']
-            del attribs['concept-confidence']
-            del attribs['cnp']
+        prop = etree.Element('property', attribs)
 
-        return etree.Element('property', attribs)
+        for concept_name, association in self.get_concept_associations().items():
+            prop.append(association.generate_xml())
+
+        return prop

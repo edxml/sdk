@@ -156,60 +156,17 @@ def test_mandatory_to_optional_upgrade_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_confidence_upgrade():
+def test_concept_association_confidence_upgrade():
     o = Ontology()
     o.create_object_type('a')
 
     a = o.create_event_type('a')
     a.create_property('a', 'a').identifies('some.concept', 1)
     b = copy.deepcopy(a).set_version(2)
-    b['a'].set_concept_confidence(2)
+    b['a'].get_concept_associations()['some.concept'].set_confidence(2)
 
     # Now, b should be a valid upgrade of a and vice versa.
     assert_valid_upgrade(a, b)
-
-
-def test_incompatible_confidence_upgrade():
-    o = Ontology()
-    o.create_object_type('a')
-
-    a = o.create_event_type('a')
-    a.create_property('a', 'a').identifies('some.concept', 1)
-
-    # We change the concept confidence hint without incrementing the version.
-    b = copy.deepcopy(a)
-    b['a'].set_concept_confidence(2)
-
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
-
-
-def test_concept_naming_priority_upgrade():
-    o = Ontology()
-    o.create_object_type('a')
-
-    a = o.create_event_type('a')
-    a.create_property('a', 'a').identifies('some.concept', 1).set_concept_naming_priority(1)
-    b = copy.deepcopy(a).set_version(2)
-    b['a'].set_concept_naming_priority(2)
-
-    # Now, b should be a valid upgrade of a and vice versa.
-    assert_valid_upgrade(a, b)
-
-
-def test_incompatible_concept_naming_priority_upgrade():
-    o = Ontology()
-    o.create_object_type('a')
-
-    a = o.create_event_type('a')
-    a.create_property('a', 'a').identifies('some.concept', 1).set_concept_naming_priority(1)
-
-    # We change the concept naming priority without incrementing the version.
-    b = copy.deepcopy(a)
-    b['a'].set_concept_naming_priority(2)
-
-    # The versions are now incompatible and cannot be compared.
-    assert_incomparable(a, b)
 
 
 def test_object_type_upgrade_not_allowed():

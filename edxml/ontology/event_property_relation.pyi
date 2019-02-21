@@ -12,7 +12,8 @@ from edxml.ontology import OntologyElement
 class PropertyRelation(OntologyElement):
 
     def __init__(self, event_type: edxml.ontology.EventType, source: edxml.ontology.EventProperty,
-                 target: edxml.ontology.EventProperty, description: str, type_class: str, type_predicate: str,
+                 target: edxml.ontology.EventProperty, source_concept: edxml.ontology.Concept,
+                 target_concept: edxml.ontology.Concept, description: str, type_class: str, type_predicate: str,
                  confidence: float = 10, directed: bool = True) -> None:
 
         self.__attr = ...      # type: Dict[str, Any]
@@ -27,6 +28,10 @@ class PropertyRelation(OntologyElement):
     def get_source(self) -> str: ...
 
     def get_target(self) -> str: ...
+
+    def get_source_concept(self) -> str: ...
+
+    def get_target_concept(self) -> str: ...
 
     def get_description(self) -> str: ...
 
@@ -54,7 +59,8 @@ class PropertyRelation(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, relation_element: etree.Element,
-                        event_type: edxml.ontology.EventType) -> 'PropertyRelation': ...
+                        event_type: edxml.ontology.EventType,
+                        ontology: edxml.ontology.Ontology) -> 'PropertyRelation': ...
 
     def update(self, property_relation: 'PropertyRelation') -> 'PropertyRelation': ...
 
