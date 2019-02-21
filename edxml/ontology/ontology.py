@@ -101,15 +101,14 @@ class Ontology(OntologyElement):
     def _import_object_type_from_brick(self, object_type_name):
 
         if Ontology.__bricks['object_types'] is not None:
-            object_type = Ontology.__bricks['object_types'].get_object_type(
-                object_type_name)
+            object_type = Ontology.__bricks['object_types'].get_object_type(object_type_name, False)
             if object_type:
                 self._add_object_type(object_type)
 
     def _import_concept_from_brick(self, concept_name):
 
         if Ontology.__bricks['concepts'] is not None:
-            brick_concept = Ontology.__bricks['concepts'].get_concept(concept_name)
+            brick_concept = Ontology.__bricks['concepts'].get_concept(concept_name, False)
             if brick_concept:
                 self._add_concept(brick_concept)
 
@@ -567,34 +566,54 @@ class Ontology(OntologyElement):
         """
         return self.__event_types.get(name)
 
-    def get_object_type(self, name):
+    def get_object_type(self, name, import_brick=True):
         """
 
         Returns the ObjectType instance having
         specified object type name, or None if
         no object type with that name exists.
 
+        When the ontology does not contain the
+        requested concept it will attempt to find
+        the concept in any registered ontology
+        bricks and import it. This can be turned
+        off by setting import_brick to False.
+
         Args:
           name (str): Object type name
+          import_brick (bool): Brick import flag
 
         Returns:
           edxml.ontology.ObjectType: The object type instance
         """
+        if import_brick and name not in self.__object_types.keys():
+            self._import_object_type_from_brick(name)
+
         return self.__object_types.get(name)
 
-    def get_concept(self, name):
+    def get_concept(self, name, import_brick=True):
         """
 
         Returns the Concept instance having
         specified concept name, or None if
         no concept with that name exists.
 
+        When the ontology does not contain the
+        requested concept it will attempt to find
+        the concept in any registered ontology
+        bricks and import it. This can be turned
+        off by setting import_brick to False.
+
         Args:
           name (str): Concept name
+          import_brick (bool): Brick import flag
 
         Returns:
           edxml.ontology.Concept: The Concept instance
         """
+        if import_brick and name not in self.__concepts.keys():
+            self._import_concept_from_brick(name)
+
         return self.__concepts.get(name)
 
     def get_event_source(self, uri):
