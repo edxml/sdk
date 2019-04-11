@@ -554,6 +554,35 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         return self.flush()
 
+    def add_foreign_element(self, element):
+        """
+
+        Adds specified foreign element to the output data stream.
+
+        If no output was specified while instantiating this class,
+        the generated XML data will be returned as unicode string.
+
+        Args:
+          element (etree._Element): The element
+
+        Returns:
+          unicode: Generated output XML data
+
+        """
+        if self.__element_stack[-1] != 'eventgroup':
+            self.error(
+                'A foreign element must be child of an <eventgroup> tag. Did you forget to call open_event_group()?')
+
+        try:
+            self.__event_group_xml_writer.send(element)
+        except StopIteration:
+            # When the co-routine dropped out of its wrote loop while
+            # processing data, the next attempt to send() anything
+            # raises this exception.
+            raise IOError('Failed to write EDXML data to output.')
+
+        return self.flush()
+
     def close_event_groups(self):
         """
 

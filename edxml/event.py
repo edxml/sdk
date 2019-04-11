@@ -49,6 +49,7 @@ class EDXMLEvent(MutableMapping):
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
         self._content = unicode(content) if content else u''
+        self._foreign_attribs = {}
 
     def __str__(self):
         return "\n".join(
@@ -206,6 +207,19 @@ class EDXMLEvent(MutableMapping):
 
         """
         return self._content
+
+    def get_foreign_attributes(self):
+        """
+        Returns any non-edxml event attributes as a dictionary having
+        the attribute names as keys and their associated values. The
+        namespace is prepended to the keys in James Clark notation:
+
+        {'{http://some/foreign/namespace}attribute': 'value'
+
+        Returns: Dict[str, str]
+
+        """
+        return self._foreign_attribs
 
     @classmethod
     def create_from_xml(cls, event_type_name, source_uri, event_element):
@@ -403,6 +417,26 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
         """
         self._parents = set(parent_hashes)
+        return self
+
+    def set_foreign_attributes(self, attribs):
+        """
+
+        Sets foreign attributes. Foreign attributes are XML attributes
+        not specified by EDXML and have a namespace that is not the
+        EDXML namespace. The attributes can be passed as a dictionary.
+        The keys in the dictionary must include the namespace in James
+        Clark notation. Example:
+
+        {'{http://some/namespace}attribute_name': 'attribute_value'}
+
+        Args:
+            attribs (Dict[str,str]): Attribute dictionary
+
+        Returns:
+          EDXMLEvent:
+        """
+        self._foreign_attribs = attribs
         return self
 
     def merge_with(self, colliding_events, ontology):
@@ -786,6 +820,19 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         except AttributeError:
             return ''
 
+    def get_foreign_attributes(self):
+        """
+        Returns any non-edxml event attributes as a dictionary having
+        the attribute names as keys and their associated values. The
+        namespace is prepended to the keys in James Clark notation:
+
+        {'{http://some/foreign/namespace}attribute': 'value'
+
+        Returns: Dict[str, str]
+
+        """
+        return {name: value for name, value in self.attrib.items() if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
+
     def get_explicit_parents(self):
         parent_string = self.attrib.get('parents', '')
         # joining an empty list, e.g. ','.join([]), results in an empty string,
@@ -955,6 +1002,10 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         else:
             self.attrib['parents'] = ','.join(set(parent_hashes))
         return self
+
+    def set_foreign_attributes(self, attribs):
+        for key, value in attribs.items():
+            self.attrib[key] = value
 
 
 class EventElement(EDXMLEvent, EvilCharacterFilter):
@@ -1193,6 +1244,10 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
             # No content.
             return ''
 
+    def get_foreign_attributes(self):
+        attr = self.__element.attrib.items()
+        return {name: value for name, value in attr if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
+
     def get_explicit_parents(self):
         parent_string = self.__element.attrib.get('parents', '')
         # joining an empty list, e.g. ','.join([]), results in an empty string,
@@ -1368,4 +1423,9 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                 del self.__element.attrib['parents']
         else:
             self.__element.attrib['parents'] = ','.join(set(parent_hashes))
+        return self
+
+    def set_foreign_attributes(self, attribs):
+        for key, value in attribs.items():
+            self.__element.attrib[key] = value
         return self
