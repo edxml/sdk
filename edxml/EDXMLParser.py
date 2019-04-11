@@ -412,9 +412,8 @@ class EDXMLParserBase(object):
                     if int(version[0]) != 3 or int(version[1]) > 0:
                         raise EDXMLValidationError(
                             'Unsupported EDXML version: "%s"' % version_string)
-                continue
 
-            if elem.tag == '{http://edxml.org/edxml}event':
+            elif elem.tag == '{http://edxml.org/edxml}event':
                 if type(elem) != ParsedEvent:
                     raise TypeError("The parser instantiated a regular lxml Element in stead of a ParsedEvent")
                 if elem.getparent().tag == '{http://edxml.org/edxml}eventgroup':
@@ -436,9 +435,8 @@ class EDXMLParserBase(object):
                             # not like that.
                             del self.__current_group_element[0]
                             pass
-                continue
 
-            if elem.tag == '{http://edxml.org/edxml}eventgroup':
+            elif elem.tag == '{http://edxml.org/edxml}eventgroup':
                 if elem.getparent().tag == '{http://edxml.org/edxml}eventgroups':
                     if self.__current_group_element is not None:
                         self._close_event_group(
@@ -448,12 +446,17 @@ class EDXMLParserBase(object):
                     self.__current_event_type = None
                     self.__current_event_source = None
                     self.__current_event_source_uri = None
-                continue
 
-            if elem.tag == '{http://edxml.org/edxml}ontology':
+            elif elem.tag == '{http://edxml.org/edxml}ontology':
                 if elem.getparent().tag == '{http://edxml.org/edxml}edxml':
                     self.__process_ontology(elem)
-                continue
+
+            elif not elem.tag.startswith('{http://edxml.org/edxml}'):
+                # We have a foreign element.
+                self._parse_foreign_element(elem)
+
+            else:
+                raise ValueError('Parser received unexpected element with tag %s' % elem.tag)
 
     def __parse_event_group(self, group_element):
 
@@ -616,6 +619,20 @@ class EDXMLParserBase(object):
         """
         pass
 
+    def _parse_foreign_element(self, element):
+        """
+
+        Callback that is invoked for foreign elements that are parsed
+        from the input EDXML stream. While these elements are probably
+        not EDXML events, they are still represented by ParsedEvent
+        instances.
+
+        Args:
+          element (edxml.ParsedEvent): The parsed element
+
+        """
+        pass
+
 
 class EDXMLPullParser(EDXMLParserBase):
     """
@@ -629,7 +646,7 @@ class EDXMLPullParser(EDXMLParserBase):
 
     """
 
-    def parse(self, input_file):
+    def parse(self, input_file, foreign_element_tags=[]):
         """
 
         Parses the specified file. The file can be any
@@ -638,22 +655,32 @@ class EDXMLPullParser(EDXMLParserBase):
         to the various callback methods in the base class,
         allowing the parsed data to be processed.
 
+        Optionally, a list of tags of foreign elements can be
+        supplied. The tags must prepend the namespace in James
+        Clark notation. Example:
+
+        ['{http://some/foreign/namespace}attribute']
+
+        These elements will be passed to the _parse_foreign_element() when encountered.
+
         Notes:
           Passing a file name rather than a file-like object
           is preferred and may result in a small performance gain.
 
         Args:
           input_file (Union[io.TextIOBase, file, str]):
+          foreign_element_tags (List[str])
 
         """
         self._element_iterator = etree.iterparse(
             input_file,
             events=['end'],
-            tag=(
+            tag=[
                 '{http://edxml.org/edxml}edxml',
                 '{http://edxml.org/edxml}ontology',
                 '{http://edxml.org/edxml}eventgroup',
-                '{http://edxml.org/edxml}event'),
+                '{http://edxml.org/edxml}event'
+            ] + foreign_element_tags,
             no_network=True, resolve_entities=False
         )
 
@@ -677,14 +704,23 @@ class EDXMLPushParser(EDXMLParserBase):
     dries up. It needs to be actively fed with stings,
     allowing full control of the input process.
 
+    Optionally, a list of tags of foreign elements can be
+    supplied. The tags must prepend the namespace in James
+    Clark notation. Example:
+
+    ['{http://some/foreign/namespace}attribute']
+
+    These elements will be passed to the _parse_foreign_element() when encountered.
+
     Note:
       This class extends EDXMLParserBase, refer to that
       class for more details about the EDXML parsing interface.
 
     """
 
-    def __init__(self, validate=True):
+    def __init__(self, validate=True, foreign_element_tags=[]):
         super(EDXMLPushParser, self).__init__(validate)
+        self.__foreign_element_tags = foreign_element_tags
         self.__inputParser = None
         self.__feed_target = None
 
@@ -708,7 +744,7 @@ class EDXMLPushParser(EDXMLParserBase):
                     '{http://edxml.org/edxml}ontology',
                     '{http://edxml.org/edxml}eventgroup',
                     '{http://edxml.org/edxml}event'
-                ],
+                ] + self.__foreign_element_tags,
                 target=self.__feed_target, no_network=True, resolve_entities=False
             )
 

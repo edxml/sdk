@@ -1811,6 +1811,34 @@ class EventType(OntologyElement, MutableMapping):
         """
         e = ElementMaker()
 
+        # Define a recursive 'anything' pattern
+        anything = e.zeroOrMore(
+            e.choice(
+                e.element(
+                    e.anyName(),
+                    e.ref(name='anything')
+                ),
+                e.attribute(
+                    e.anyName()
+                )
+            )
+        )
+
+        # Use the 'anything' pattern to define a pattern
+        # that allows any element attributes as long as they
+        # have a namespace that is not the EDXML namespace.
+        # We will use that pattern in the event definition.
+        foreign_attribs = e.zeroOrMore(
+            e.attribute(
+                e.anyName(
+                    getattr(e, 'except')(
+                        e.nsName(ns=''),
+                        e.nsName(ns='http://edxml.org/edxml')
+                    )
+                )
+            )
+        )
+
         properties = []
 
         for property_name, event_property in self.__properties.items():
@@ -1833,6 +1861,7 @@ class EventType(OntologyElement, MutableMapping):
                         e.element(object_type.generate_relaxng(), name=property_name)))
 
         schema = e.element(
+            e.ref(name='foreign-attributes'),
             e.optional(
                 e.attribute(
                     e.data(
@@ -1848,9 +1877,23 @@ class EventType(OntologyElement, MutableMapping):
             ) if len(properties) > 0 else e.element('', name='properties'),
             e.optional(e.element(e.text(), name='content')),
             name='event',
+            **{'ns': 'http://edxml.org/edxml'} if namespaced else {}
+        )
+
+        schema = e.grammar(
+            e.start(
+                schema
+            ),
+            e.define(
+                anything,
+                name='anything'
+            ),
+            e.define(
+                foreign_attribs,
+                name='foreign-attributes'
+            ),
             xmlns='http://relaxng.org/ns/structure/1.0',
             datatypeLibrary='http://www.w3.org/2001/XMLSchema-datatypes',
-            **{'ns': 'http://edxml.org/edxml'} if namespaced else {}
         )
 
         # Note that, for some reason, using a programmatically built ElementTree
