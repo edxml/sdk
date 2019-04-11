@@ -1456,18 +1456,18 @@ class EventType(OntologyElement, MutableMapping):
             .set_version(type_element.attrib['version'])
 
         for element in type_element:
-            if element.tag == 'parent':
+            if element.tag == '{http://edxml.org/edxml}parent':
                 event_type.set_parent(
                     edxml.ontology.EventTypeParent.create_from_xml(element, event_type))
-            elif element.tag == 'properties':
+            elif element.tag == '{http://edxml.org/edxml}properties':
                 for propertyElement in element:
                     event_type.add_property(
                         edxml.ontology.EventProperty.create_from_xml(propertyElement, ontology, event_type))
 
-            elif element.tag == 'relations':
+            elif element.tag == '{http://edxml.org/edxml}relations':
                 for relationElement in element:
                     event_type.add_relation(
-                        edxml.ontology.PropertyRelation.create_from_xml(relationElement, event_type))
+                        edxml.ontology.PropertyRelation.create_from_xml(relationElement, event_type, ontology))
 
         return event_type
 
@@ -1790,7 +1790,7 @@ class EventType(OntologyElement, MutableMapping):
 
         return self
 
-    def generate_relax_ng(self, ontology):
+    def generate_relax_ng(self, ontology, namespaced=True):
         """
 
         Returns an ElementTree containing a RelaxNG schema for validating
@@ -1798,8 +1798,13 @@ class EventType(OntologyElement, MutableMapping):
         obtaining the definitions of objects types referred to by the
         properties of the event type.
 
+        By default, the schema expects the events to be namespaced. This can
+        be turned off for validating events that will be added into an EDXML
+        data stream that has a default namespace that events will inherit.
+
         Args:
           ontology (edxml.ontology.Ontology): Ontology containing the event type
+          namespaced (bool): Require a namespace specification or not
 
         Returns:
           ElementTree: The schema
@@ -1844,7 +1849,8 @@ class EventType(OntologyElement, MutableMapping):
             e.optional(e.element(e.text(), name='content')),
             name='event',
             xmlns='http://relaxng.org/ns/structure/1.0',
-            datatypeLibrary='http://www.w3.org/2001/XMLSchema-datatypes'
+            datatypeLibrary='http://www.w3.org/2001/XMLSchema-datatypes',
+            **{'ns': 'http://edxml.org/edxml'} if namespaced else {}
         )
 
         # Note that, for some reason, using a programmatically built ElementTree

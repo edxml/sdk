@@ -231,7 +231,15 @@ class EDXMLEvent(MutableMapping):
                     if property_name not in property_objects:
                         property_objects[property_name] = []
                     property_objects[property_name].append(property_element.text)
+            elif element.tag == '{http://edxml.org/edxml}properties':
+                for property_element in element:
+                    property_name = property_element.tag[24:]
+                    if property_name not in property_objects:
+                        property_objects[property_name] = []
+                    property_objects[property_name].append(property_element.text)
             elif element.tag == 'content':
+                content = element.text
+            elif element.tag == '{http://edxml.org/edxml}content':
                 content = element.text
 
         return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), content)
@@ -605,8 +613,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         return etree.tostring(self)
 
     def __delitem__(self, key):
-        props = self.find('properties')
-        for element in props.findall(key):
+        props = self.find('{http://edxml.org/edxml}properties')
+        for element in props.findall('{http://edxml.org/edxml}' + key):
             props.remove(element)
         try:
             del self._properties
@@ -615,12 +623,12 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
     def __setitem__(self, key, value):
         if type(value) == list:
-            props = self.find('properties')
-            for existing_value in props.findall(key):
+            props = self.find('{http://edxml.org/edxml}properties')
+            for existing_value in props.findall('{http://edxml.org/edxml}' + key):
                 props.remove(existing_value)
             for v in value:
                 try:
-                    etree.SubElement(props, key).text = v
+                    etree.SubElement(props, '{http://edxml.org/edxml}' + key).text = v
                 except (TypeError, ValueError):
                     if type(v) in (str, unicode):
                         # Value contains illegal characters,
@@ -631,11 +639,11 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                         raise ValueError(
                             'Value of property %s is not a string: %s' % (key, repr(value)))
         else:
-            props = self.find('properties')
-            for existing_value in props.findall(key):
+            props = self.find('{http://edxml.org/edxml}properties')
+            for existing_value in props.findall('{http://edxml.org/edxml}' + key):
                 props.remove(existing_value)
             try:
-                etree.SubElement(props, key).text = value
+                etree.SubElement(props, '{http://edxml.org/edxml}' + key).text = value
             except (TypeError, ValueError):
                 if type(value) in (str, unicode):
                     # Value contains illegal characters,
@@ -655,8 +663,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             return len(self._properties)
         except AttributeError:
             self._properties = defaultdict(list)
-            for element in self.find('properties'):
-                self._properties[element.tag].append(element.text)
+            for element in self.find('{http://edxml.org/edxml}properties'):
+                self._properties[element.tag[24:]].append(element.text)
             return len(self._properties)
 
     def __getitem__(self, key):
@@ -664,8 +672,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             return self._properties[key]
         except AttributeError:
             self._properties = defaultdict(list)
-            for element in self.find('properties'):
-                self._properties[element.tag].append(element.text)
+            for element in self.find('{http://edxml.org/edxml}properties'):
+                self._properties[element.tag[24:]].append(element.text)
             return self._properties[key]
 
     def __contains__(self, key):
@@ -673,8 +681,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             return key in self._properties
         except AttributeError:
             self._properties = defaultdict(list)
-            for element in self.find('properties'):
-                self._properties[element.tag].append(element.text)
+            for element in self.find('{http://edxml.org/edxml}properties'):
+                self._properties[element.tag[24:]].append(element.text)
             return key in self._properties
 
     def __iter__(self):
@@ -683,8 +691,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                 yield p
         except AttributeError:
             self._properties = defaultdict(list)
-            for element in self.find('properties'):
-                self._properties[element.tag].append(element.text)
+            for element in self.find('{http://edxml.org/edxml}properties'):
+                self._properties[element.tag[24:]].append(element.text)
             for p in self._properties.keys():
                 yield p
 
@@ -750,13 +758,13 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         content = ''
         property_objects = {}
         for element in event_element:
-            if element.tag == 'properties':
+            if element.tag == '{http://edxml.org/edxml}properties':
                 for property_element in element:
-                    property_name = property_element.tag
+                    property_name = property_element.tag[24:]
                     if property_name not in property_objects:
                         property_objects[property_name] = []
                     property_objects[property_name].append(property_element.text)
-            elif element.tag == 'content':
+            elif element.tag == '{http://edxml.org/edxml}content':
                 content = element.text
 
         return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), content)
@@ -766,13 +774,15 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             return self._properties
         except AttributeError:
             self._properties = defaultdict(list)
-            for element in self.find('properties'):
-                self._properties[element.tag].append(element.text)
+            for element in self.find('{http://edxml.org/edxml}properties'):
+                self._properties[element.tag[24:]].append(element.text)
             return self._properties
 
     def get_content(self):
         try:
-            return self.find('content').text
+            # Note: The text attribute is None for <content/> tags
+            content = self.find('{http://edxml.org/edxml}content').text
+            return content if content is not None else ''
         except AttributeError:
             return ''
 
@@ -798,12 +808,12 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
           EDXMLEvent:
 
         """
-        properties_element = self.find('properties')
+        properties_element = self.find('{http://edxml.org/edxml}properties')
         properties_element.clear()
 
         for property_name, values in properties.items():
             for value in values:
-                etree.SubElement(properties_element, property_name).text = value
+                etree.SubElement(properties_element, '{http://edxml.org/edxml}' + property_name).text = value
 
         try:
             del self._properties
@@ -894,12 +904,15 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
           ParsedEvent:
         """
         try:
-            self.find('content').text = content
+            self.find('{http://edxml.org/edxml}content').text = content
+        except AttributeError:
+            etree.SubElement(self, '{http://edxml.org/edxml}content')
+            self.set_content(content)
         except (TypeError, ValueError):
             if type(content) in (str, unicode):
                 # Value contains illegal characters,
                 # replace them with unicode replacement characters.
-                self.find('content').text = unicode(
+                self.find('{http://edxml.org/edxml}content').text = unicode(
                     re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content))
             else:
                 raise ValueError(

@@ -860,13 +860,13 @@ class Ontology(OntologyElement):
         ontology = cls()
 
         for element in ontology_element:
-            if element.tag == 'eventtypes':
+            if element.tag == '{http://edxml.org/edxml}eventtypes':
                 ontology.__parse_event_types(element)
-            elif element.tag == 'objecttypes':
+            elif element.tag == '{http://edxml.org/edxml}objecttypes':
                 ontology.__parse_object_types(element)
-            elif element.tag == 'concepts':
+            elif element.tag == '{http://edxml.org/edxml}concepts':
                 ontology.__parse_concepts(element)
-            elif element.tag == 'sources':
+            elif element.tag == '{http://edxml.org/edxml}sources':
                 ontology.__parse_sources(element)
             else:
                 raise TypeError('Unexpected element: "%s"' % element.tag)
@@ -971,13 +971,13 @@ class Ontology(OntologyElement):
 
         elif isinstance(other_ontology, etree._Element):
             for element in other_ontology:
-                if element.tag == 'objecttypes':
+                if element.tag == '{http://edxml.org/edxml}objecttypes':
                     self.__parse_object_types(element, validate)
-                elif element.tag == 'concepts':
+                elif element.tag == '{http://edxml.org/edxml}concepts':
                     self.__parse_concepts(element, validate)
-                elif element.tag == 'eventtypes':
+                elif element.tag == '{http://edxml.org/edxml}eventtypes':
                     self.__parse_event_types(element, validate)
-                elif element.tag == 'sources':
+                elif element.tag == '{http://edxml.org/edxml}sources':
                     self.__parse_sources(element, validate)
                 else:
                     raise EDXMLValidationError(

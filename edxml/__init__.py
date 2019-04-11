@@ -12,6 +12,7 @@ from EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 import ontology
 import transcode
 
+namespace = {None: 'http://edxml.org/edxml'}
 
 __all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EDXMLWriter', 'SimpleEDXMLWriter',
            'EDXMLPullParser', 'EDXMLPushParser', 'EDXMLOntologyPullParser', 'EDXMLOntologyPushParser',

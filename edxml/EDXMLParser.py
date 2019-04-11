@@ -270,9 +270,9 @@ class EDXMLParserBase(object):
         # find this way is the eventgroup tag that
         # contains the current event.
         self.__root_element = event_element.getparent()
-        while self.__root_element is not None and self.__root_element.tag != 'edxml':
+        while self.__root_element is not None and self.__root_element.tag != '{http://edxml.org/edxml}edxml':
             self.__root_element = self.__root_element.getparent()
-        if self.__root_element is None or self.__root_element.tag != 'edxml':
+        if self.__root_element is None or self.__root_element.tag != '{http://edxml.org/edxml}edxml':
             raise EDXMLValidationError(
                 'Invalid EDXML structure detected: Could not find the edxml root tag.')
 
@@ -314,9 +314,9 @@ class EDXMLParserBase(object):
         # we integrate the ontology element into a
         # skeleton tree, yielding a complete, valid
         # EDXML structure.
-        skeleton = etree.Element('edxml', attrib=self.__root_element.attrib)
+        skeleton = etree.Element('{http://edxml.org/edxml}edxml', attrib=self.__root_element.attrib)
         skeleton.append(deepcopy(ontology_element))
-        etree.SubElement(skeleton, 'eventgroups')
+        etree.SubElement(skeleton, '{http://edxml.org/edxml}eventgroups')
 
         try:
             self.__schema.assertValid(skeleton)
@@ -399,7 +399,7 @@ class EDXMLParserBase(object):
             if self.__root_element is None:
                 self.__find_root_element(elem)
 
-            if elem.tag == 'edxml':
+            if elem.tag == '{http://edxml.org/edxml}edxml':
                 if elem.getparent() is None:
                     version_string = elem.attrib['version']
                     if version_string is None:
@@ -414,8 +414,10 @@ class EDXMLParserBase(object):
                             'Unsupported EDXML version: "%s"' % version_string)
                 continue
 
-            if elem.tag == 'event':
-                if elem.getparent().tag == 'eventgroup':
+            if elem.tag == '{http://edxml.org/edxml}event':
+                if type(elem) != ParsedEvent:
+                    raise TypeError("The parser instantiated a regular lxml Element in stead of a ParsedEvent")
+                if elem.getparent().tag == '{http://edxml.org/edxml}eventgroup':
                     if self.__current_group_element is None:
                         # Apparently, we did not parse the current event group
                         # yet.
@@ -436,8 +438,8 @@ class EDXMLParserBase(object):
                             pass
                 continue
 
-            if elem.tag == 'eventgroup':
-                if elem.getparent().tag == 'eventgroups':
+            if elem.tag == '{http://edxml.org/edxml}eventgroup':
+                if elem.getparent().tag == '{http://edxml.org/edxml}eventgroups':
                     if self.__current_group_element is not None:
                         self._close_event_group(
                             self.__current_event_type, self.__current_event_source_uri)
@@ -448,8 +450,8 @@ class EDXMLParserBase(object):
                     self.__current_event_source_uri = None
                 continue
 
-            if elem.tag == 'ontology':
-                if elem.getparent().tag == 'edxml':
+            if elem.tag == '{http://edxml.org/edxml}ontology':
+                if elem.getparent().tag == '{http://edxml.org/edxml}edxml':
                     self.__process_ontology(elem)
                 continue
 
@@ -647,7 +649,11 @@ class EDXMLPullParser(EDXMLParserBase):
         self._element_iterator = etree.iterparse(
             input_file,
             events=['end'],
-            tag=('edxml', 'ontology', 'eventgroup', 'event'),
+            tag=(
+                '{http://edxml.org/edxml}edxml',
+                '{http://edxml.org/edxml}ontology',
+                '{http://edxml.org/edxml}eventgroup',
+                '{http://edxml.org/edxml}event'),
             no_network=True, resolve_entities=False
         )
 
@@ -655,9 +661,9 @@ class EDXMLPullParser(EDXMLParserBase):
         # representing event elements
         lookup = etree.ElementNamespaceClassLookup()
         if self._event_class is not None:
-            lookup.get_namespace('')['event'] = self._event_class
+            lookup.get_namespace('http://edxml.org/edxml')['event'] = self._event_class
         else:
-            lookup.get_namespace('')['event'] = ParsedEvent
+            lookup.get_namespace('http://edxml.org/edxml')['event'] = ParsedEvent
         self._element_iterator.set_element_class_lookup(lookup)
         self._parse_edxml()
 
@@ -697,7 +703,12 @@ class EDXMLPushParser(EDXMLParserBase):
         if self._element_iterator is None:
             self.__inputParser = etree.XMLPullParser(
                 events=['end'],
-                tag=('event', 'eventgroup', 'ontology'),
+                tag=[
+                    '{http://edxml.org/edxml}edxml',
+                    '{http://edxml.org/edxml}ontology',
+                    '{http://edxml.org/edxml}eventgroup',
+                    '{http://edxml.org/edxml}event'
+                ],
                 target=self.__feed_target, no_network=True, resolve_entities=False
             )
 
@@ -705,9 +716,9 @@ class EDXMLPushParser(EDXMLParserBase):
             # representing event elements
             lookup = etree.ElementNamespaceClassLookup()
             if self._event_class is not None:
-                lookup.get_namespace('')['event'] = self._event_class
+                lookup.get_namespace('http://edxml.org/edxml')['event'] = self._event_class
             else:
-                lookup.get_namespace('')['event'] = ParsedEvent
+                lookup.get_namespace('http://edxml.org/edxml')['event'] = ParsedEvent
             self.__inputParser.set_element_class_lookup(lookup)
 
             self._element_iterator = self.__inputParser.read_events()
