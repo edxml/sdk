@@ -88,7 +88,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__ontology = None
         self.__schema = None                 # type: etree.RelaxNG
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
+        self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema = None        # type: etree.RelaxNG
+        self.__event_type_schema_ns = None     # type: etree.RelaxNG
         self.__just_wrote_ontology = False
         self.__ignore_invalid_objects = ignore_invalid_objects
         self.__log_repaired_events = log_repaired_events
@@ -147,14 +149,23 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
     def get_output(self):
         return self.__output
 
-    def get_event_type_schema(self, event_type_name):
+    def get_event_type_schema(self, event_type_name, namespaced):
         if event_type_name not in self.__event_type_schema_cache:
             self.__event_type_schema_cache[event_type_name] = etree.RelaxNG(
-                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology)
+                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology, namespaced=False)
             )
-        return self.__event_type_schema_cache.get(event_type_name)
 
-    def __generate_event_validation_exception(self, event, event_element):
+        if event_type_name not in self.__event_type_schema_cache_ns:
+            self.__event_type_schema_cache_ns[event_type_name] = etree.RelaxNG(
+                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology, namespaced=True)
+            )
+
+        if namespaced:
+            return self.__event_type_schema_cache_ns.get(event_type_name)
+        else:
+            return self.__event_type_schema_cache.get(event_type_name)
+
+    def __generate_event_validation_exception(self, event, event_element, schema):
         try:
             self.__ontology.get_event_type(self.__current_event_type_name).validate_event_structure(event)
 
@@ -166,8 +177,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             raise EDXMLValidationError(
                 "At xpath location %s: %s" %
                 (
-                    self.__event_type_schema.error_log.last_error.path,
-                    self.__event_type_schema.error_log.last_error.message
+                    schema.error_log.last_error.path,
+                    schema.error_log.last_error.message
                 )
             )
 
@@ -186,7 +197,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 raise Exception(
                     'The installed version of lxml is too old. Please install version >= 3.4.')
             writer.write_declaration()
-            with writer.element('edxml', version='3.0.0'):
+            with writer.element('edxml', version='3.0.0', nsmap=edxml.namespace):
                 writer.flush()
                 try:
                     while True:
@@ -285,6 +296,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             raise IOError('Failed to write EDXML data to output.')
 
         self.__event_type_schema_cache = {}
+        self.__event_type_schema_cache_ns = {}
         self.__just_wrote_ontology = True
 
         if reopen_event_groups:
@@ -360,8 +372,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__current_event_source_uri = source_uri
 
         if self.__validate:
-            self.__event_type_schema = self.get_event_type_schema(
-                self.__current_event_type_name)
+            self.__event_type_schema = self.get_event_type_schema(self.__current_event_type_name, False)
+            self.__event_type_schema_ns = self.get_event_type_schema(self.__current_event_type_name, True)
 
         self.__event_group_xml_writer = self.__inner_xml_serializer_coroutine(
             self.__current_event_type_name, source_uri)
@@ -422,7 +434,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         return self.flush()
 
-    def _repair_event(self, event):
+    def _repair_event(self, event, schema):
         """
 
         Tries to repair an invalid event by normalizing object
@@ -435,12 +447,13 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         Args:
             event (edxml.EventElement): The event
+            schema (ElementTree): The RelaxNG schema for the event
 
         Returns:
             edxml.EventElement
         """
 
-        while not self.__event_type_schema.validate(event.get_element()):
+        while not schema.validate(event.get_element()):
 
             original_event = deepcopy(event)
 
@@ -452,14 +465,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                     raise EDXMLValidationError("Normalization did not change anything.")
             except EDXMLValidationError:
                 # normalization failed.
-                last_error = self.__event_type_schema.error_log.last_error
+                last_error = schema.error_log.last_error
 
                 if last_error.path is None or \
                         not last_error.path.startswith('/event/properties') or \
                         not self.__ignore_invalid_objects:
                     # Either we have no idea what is wrong, or we cannot do anything about it.
                     # Raise a validation exception.
-                    self.__generate_event_validation_exception(event, event.get_element())
+                    self.__generate_event_validation_exception(event, event.get_element(), schema)
 
                 # Try removing the offending property object.
                 for invalid_element in event.get_element().xpath(last_error.path):
@@ -513,9 +526,21 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             raise TypeError('Unknown type of event: %s' % str(type(event)))
 
         if self.__validate:
-            if not self.__event_type_schema.validate(event_element):
+            if isinstance(event, ParsedEvent):
+                # Parsed events inherit the global namespace from the
+                # EDXML data stream that they originate from. Unfortunately,
+                # the lxml XML generator (specifically etree.xmlfile) is not
+                # so clever as to filter out these namespaces when writing into
+                # an output stream that already has a global namespace. So,
+                # for this specific case, we must write explicitly namespaced
+                # events and use a separate validation schema.
+                schema = self.__event_type_schema_ns
+            else:
+                schema = self.__event_type_schema
+
+            if not schema.validate(event_element):
                 # Event does not validate.
-                event = self._repair_event(event)
+                event = self._repair_event(event, schema)
 
         try:
             self.__event_group_xml_writer.send(event_element)

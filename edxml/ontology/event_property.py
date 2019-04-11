@@ -559,7 +559,7 @@ class EventProperty(OntologyElement):
         )
 
         for element in property_element:
-            if element.tag == 'property_concept':
+            if element.tag == '{http://edxml.org/edxml}property-concept':
                 property.add_associated_concept(
                     edxml.ontology.PropertyConcept.create_from_xml(element, parent_event_type, property)
                 )
