@@ -210,6 +210,22 @@ class Transcoder(EDXMLBase):
       Please refer to the EDXML specification for details about how parent property mappings work.
     """
 
+    TYPE_TIMESPANS = {}
+    """
+    The TYPE_TIMESPANS attribute contains the names of the properties that define the start and the end
+    of the time spans of the events. When no property is set that defines the start or end of the
+    event time spans, the start or end is implicitly defined to be the smallest or largest datetime
+    value in the event, regardless of the property that contains the datetime value. By setting
+    specific properties for the start and / or end of the time span, only the datetime values of
+    that property define the start or end of the event timespan.
+
+    The attribute is a dictionary mapping EDXML event type names to tuples that define the time
+    span properties. The first value in each tuple is the name of the property that defines the
+    start of the event time spans, the second defines the end. By default, both are unset. Example::
+
+      {'event_type_name': ['timespan-start', 'timespan-end']}
+    """
+
     def __init__(self):
         super(Transcoder, self).__init__()
 
@@ -315,7 +331,9 @@ class Transcoder(EDXMLBase):
                 .set_description(self.TYPE_DESCRIPTIONS.get(EventTypeName)) \
                 .set_display_name(*self.TYPE_DISPLAY_NAMES.get(EventTypeName, [None, None])) \
                 .set_summary_template(self.TYPE_SUMMARIES.get(EventTypeName))\
-                .set_story_template(self.TYPE_STORIES.get(EventTypeName))
+                .set_story_template(self.TYPE_STORIES.get(EventTypeName))\
+                .set_timespan_property_name_start(self.TYPE_TIMESPANS.get(EventTypeName, [None, None])[0])\
+                .set_timespan_property_name_end(self.TYPE_TIMESPANS.get(EventTypeName, [None, None])[1])
 
             if EventTypeName in self.TYPE_PROPERTIES:
                 for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():

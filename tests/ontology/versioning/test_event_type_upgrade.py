@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-from edxml.ontology import Ontology
+from edxml.ontology import Ontology, DataType
 from tests.assertions import assert_valid_upgrade, assert_incomparable, assert_invalid_ontology_upgrade
 
 
@@ -104,6 +104,66 @@ def test_remove_class_not_allowed():
 
     # Create a copy that is missing one class while adding another.
     b = copy.deepcopy(a).set_classes(['a', 'c']).set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_set_timespan_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('datetime')
+    a = o.create_event_type('a')
+    a.create_property('start', 'datetime')
+    a.create_property('end', 'datetime')
+
+    # Create a copy that sets the timespan start property.
+    b = copy.deepcopy(a).set_timespan_property_name_start('start').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+    # Create a copy that sets the timespan end property.
+    b = copy.deepcopy(a).set_timespan_property_name_end('end').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_change_timespan_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('datetime')
+    a = o.create_event_type('a')
+    a.create_property('start', 'datetime')
+    a.create_property('end', 'datetime')
+    a.set_timespan_property_name_start('start')
+    a.set_timespan_property_name_end('end')
+
+    # Create a copy that changes the timespan start property.
+    b = copy.deepcopy(a).set_timespan_property_name_start('end').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+    # Create a copy that changes the timespan end property.
+    b = copy.deepcopy(a).set_timespan_property_name_end('start').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_timeless_to_timeful_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('string')
+    o.create_object_type('datetime', data_type=DataType.FAMILY_DATETIME)
+    a = o.create_event_type('a')
+    a.create_property('string', object_type_name='string')
+
+    # Create a copy adding a datetime property.
+    b = copy.deepcopy(a).set_version(2)
+    b.create_property('datetime', object_type_name='datetime').make_optional()
 
     # The versions are now incompatible.
     assert_invalid_ontology_upgrade(a, b)
