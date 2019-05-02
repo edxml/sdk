@@ -45,6 +45,8 @@ class EventType(OntologyElement, MutableMapping):
             'classlist': class_list,
             'summary': summary,
             'story': story.replace('\n', '[[NEWPAR:]]'),
+            'timespan-start': None,
+            'timespan-end': None,
             'version': 1
         }
 
@@ -157,9 +159,33 @@ class EventType(OntologyElement, MutableMapping):
         Returns the event type display name, in plural form.
 
         Returns:
-          str:
+          Optional[str]:
         """
         return self.__attr['display-name'].split('/')[1]
+
+    def get_timespan_property_name_start(self):
+        """
+
+        Returns the name of the property that defines the start
+        of the time span of the events. Returns None when the start
+        of the event time span is the smallest of the event timestamps.
+
+        Returns:
+            Optional[str]:
+        """
+        return self.__attr['timespan-start']
+
+    def get_timespan_property_name_end(self):
+        """
+
+        Returns the name of the property that defines the end
+        of the time span of the events. Returns None when the end
+        of the event time span is the largest of the event timestamps.
+
+        Returns:
+            str:
+        """
+        return self.__attr['timespan-end']
 
     def get_classes(self):
         """
@@ -269,6 +295,49 @@ class EventType(OntologyElement, MutableMapping):
                     self.__cachedUniqueProperties[propertyName] = eventProperty
 
         return len(self.__cachedUniqueProperties) > 0
+
+    def get_timespan_property_names(self):
+        """
+        Returns a tuple containing the names of the properties that
+        determine the start and end of the event time spans, in that order.
+        Note that either may be None.
+
+        Returns:
+            Tuple[Optional[str], Optional[str]]
+
+        """
+        return self.__attr['timespan-start'], self.__attr['timespan-end']
+
+    def is_timeless(self):
+        """
+
+        Returns True when the event type is timeless, which
+        means that it has no properties that are associated with
+        the datetime data type. Returns False otherwise.
+
+        Returns:
+            bool:
+        """
+        if self.__cached_is_timeless is None:
+            self.__cached_is_timeless = True
+            for propertyName, eventProperty in self.__properties.items():
+                if eventProperty.get_data_type().is_datetime():
+                    self.__cached_is_timeless = False
+
+        return self.__cached_is_timeless
+
+    def is_timeful(self):
+        """
+
+        Returns True when the event type is timeful, which
+        means that it has at least one property that is
+        associated with the datetime data type. Returns
+        False otherwise.
+
+        Returns:
+            bool:
+        """
+        return not self.is_timeless()
 
     def get_summary_template(self):
         """
@@ -700,6 +769,38 @@ class EventType(OntologyElement, MutableMapping):
         """
 
         self._set_attr('version', int(version))
+        return self
+
+    def set_timespan_property_name_start(self, property_name):
+        """
+
+        Sets the name of the property that defines the start of
+        the time spans of the events.
+
+        Args:
+            property_name (str):
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+
+        """
+        self._set_attr('timespan-start', property_name)
+        return self
+
+    def set_timespan_property_name_end(self, property_name):
+        """
+
+        Sets the name of the property that defines the end of
+        the time spans of the events.
+
+        Args:
+            property_name (str):
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+
+        """
+        self._set_attr('timespan-end', property_name)
         return self
 
     def evaluate_template(self, edxml_event, which='story', capitalize=True, colorize=False):
@@ -1440,6 +1541,34 @@ class EventType(OntologyElement, MutableMapping):
                 (self.__attr['name'], self.__attr['classlist'])
             )
 
+        if self.__attr['timespan-start'] is not None:
+            if not self.__attr['timespan-start'] in self.get_properties().keys():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the start of its event time spans '
+                    'by means of property "%s", which does not exist.' %
+                    (self.__attr['name'], self.__attr['timespan-start'])
+                )
+            if not self.get_properties()[self.__attr['timespan-start']].get_data_type().is_datetime():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the start of its event time spans '
+                    'by means of property "%s", which does not have a datetime data type.' %
+                    (self.__attr['name'], self.__attr['timespan-start'])
+                )
+
+        if self.__attr['timespan-end'] is not None:
+            if not self.__attr['timespan-end'] in self.get_properties().keys():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the end of its event time spans '
+                    'by means of property "%s", which does not exist.' %
+                    (self.__attr['name'], self.__attr['timespan-end'])
+                )
+            if not self.get_properties()[self.__attr['timespan-end']].get_data_type().is_datetime():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the end of its event time spans '
+                    'by means of property "%s", which does not have a datetime data type.' %
+                    (self.__attr['name'], self.__attr['timespan-end'])
+                )
+
         for propertyName, eventProperty in self.get_properties().items():
             eventProperty.validate()
 
@@ -1450,10 +1579,13 @@ class EventType(OntologyElement, MutableMapping):
 
     @classmethod
     def create_from_xml(cls, type_element, ontology):
-        event_type = cls(ontology, type_element.attrib['name'], type_element.attrib['display-name'],
-                         type_element.attrib['description'], type_element.attrib['classlist'],
-                         type_element.attrib['summary'], type_element.attrib['story'])\
-            .set_version(type_element.attrib['version'])
+        event_type = cls(
+            ontology, type_element.attrib['name'], type_element.attrib['display-name'],
+            type_element.attrib['description'], type_element.attrib['classlist'],
+            type_element.attrib['summary'], type_element.attrib['story']
+        ).set_version(type_element.attrib['version'])\
+         .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
+         .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))
 
         for element in type_element:
             if element.tag == '{http://edxml.org/edxml}parent':
@@ -1522,6 +1654,14 @@ class EventType(OntologyElement, MutableMapping):
             # Adding an event type class is possible, removing one is not.
             equal = False
             is_valid_upgrade &= versions_differ and len(set(old.get_classes()) - set(new.get_classes())) == 0
+
+        if old.get_timespan_property_name_start() != new.get_timespan_property_name_start():
+            # Versions do not agree on their timespan definitions. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_timespan_property_name_end() != new.get_timespan_property_name_end():
+            # Versions do not agree on their timespan definitions. No upgrade possible.
+            equal = is_valid_upgrade = False
 
         # Check upgrade paths for sub-elements:
 
@@ -1626,7 +1766,7 @@ class EventType(OntologyElement, MutableMapping):
         attribs = dict(self.__attr)
         attribs['version'] = unicode(attribs['version'])
 
-        element = etree.Element('eventtype', attribs)
+        element = etree.Element('eventtype', {k: v for k, v in attribs.items() if v})
         if self.__parent:
             element.append(self.__parent.generate_xml())
         properties = etree.Element('properties')
