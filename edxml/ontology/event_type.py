@@ -421,18 +421,18 @@ class EventType(OntologyElement, MutableMapping):
         self._child_modified_callback()
         return self.__properties[name]
 
-    def add_property(self, property_name):
+    def add_property(self, prop):
         """
 
         Add specified property
 
         Args:
-          property_name (edxml.ontology.EventProperty): EventProperty instance
+          prop (edxml.ontology.EventProperty): EventProperty instance
 
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self.__properties[property_name.get_name()] = property_name.validate()
+        self.__properties[prop.get_name()] = prop.validate()
         self._child_modified_callback()
         return self
 
