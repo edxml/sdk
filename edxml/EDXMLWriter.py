@@ -159,12 +159,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             self.__ontology.get_event_type(self.__current_event_type_name).validate_event_objects(event)
 
             # EventType validation did not find the issue. We have
-            # no other option than to raise a RelaxNG error containing
-            # a undoubtedly cryptic error message.
-            # TODO: In lxml 3.8, the error_log has a path attribute, which is an xpath
-            # pointing to the exact location of the problem. Show that in the exception.
+            # no other option than to raise a RelaxNG validation error.
             raise EDXMLValidationError(
-                self.__event_type_schema.error_log.last_error.message)
+                "At xpath location %s: %s" %
+                (
+                    self.__event_type_schema.error_log.last_error.path,
+                    self.__event_type_schema.error_log.last_error.message
+                )
+            )
 
         except EDXMLValidationError as exception:
             self.__invalid_event_count += 1
