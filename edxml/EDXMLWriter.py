@@ -38,6 +38,8 @@ to generate EDXML streams.
 from collections import deque
 import sys
 
+from typing import Dict
+
 import edxml
 
 from lxml import etree
@@ -79,7 +81,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # actually unicode data.
             self.buffer.append(unicode(data, encoding='utf-8'))
 
-    def __init__(self, output=None, validate=True, log_repaired_events=False):
+    def __init__(self, output=None, validate=True, log_repaired_events=False, ignore_invalid_objects=False):
 
         super(EDXMLWriter, self).__init__()
 
@@ -88,6 +90,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema = None        # type: etree.RelaxNG
         self.__just_wrote_ontology = False
+        self.__ignore_invalid_objects = ignore_invalid_objects
         self.__log_repaired_events = log_repaired_events
         self.__invalid_event_count = 0
         self.__validate = validate
@@ -159,12 +162,14 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             self.__ontology.get_event_type(self.__current_event_type_name).validate_event_objects(event)
 
             # EventType validation did not find the issue. We have
-            # no other option than to raise a RelaxNG error containing
-            # a undoubtedly cryptic error message.
-            # TODO: In lxml 3.8, the error_log has a path attribute, which is an xpath
-            # pointing to the exact location of the problem. Show that in the exception.
+            # no other option than to raise a RelaxNG validation error.
             raise EDXMLValidationError(
-                self.__event_type_schema.error_log.last_error.message)
+                "At xpath location %s: %s" %
+                (
+                    self.__event_type_schema.error_log.last_error.path,
+                    self.__event_type_schema.error_log.last_error.message
+                )
+            )
 
         except EDXMLValidationError as exception:
             self.__invalid_event_count += 1
@@ -434,6 +439,65 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         else:
             return u''
 
+    def _repair_event(self, event):
+        """
+
+        Tries to repair an invalid event by normalizing object
+        values. In case the writer is configured to ignore invalid
+        objects, it may try to remove invalid objects in case
+        normalization fails.
+
+        Returns repaired event or raises EDXMLValidationError in
+        case repair failed.
+
+        Args:
+            event (edxml.EventElement): The event
+
+        Returns:
+            edxml.EventElement
+        """
+
+        while not self.__event_type_schema.validate(event.get_element()):
+
+            original_event = deepcopy(event)
+
+            try:
+                # Try to repair the event by normalizing the object values. This throws
+                # an EDXMLValidationError in case any value does not make sense.
+                self.__ontology.get_event_type(self.__current_event_type_name).normalize_event_objects(event)
+                if event.get_properties() == original_event.get_properties():
+                    raise EDXMLValidationError("Normalization did not change anything.")
+            except EDXMLValidationError:
+                # normalization failed.
+                last_error = self.__event_type_schema.error_log.last_error
+
+                if last_error.path is None or \
+                        not last_error.path.startswith('/event/properties') or \
+                        not self.__ignore_invalid_objects:
+                    # Either we have no idea what is wrong, or we cannot do anything about it.
+                    # Raise a validation exception.
+                    self.__generate_event_validation_exception(event, event.get_element())
+
+                # Try removing the offending property object.
+                for invalid_element in event.get_element().xpath(last_error.path):
+                    invalid_element.getparent().remove(invalid_element)
+                    if self.__log_repaired_events:
+                        sys.stderr.write(
+                            "Removed invalid object '%s' of property '%s'.\n" %
+                            (invalid_element.text, invalid_element.tag)
+                        )
+
+                if self.__log_repaired_events:
+                    for property_name in original_event.keys():
+                        if event[property_name] != original_event[property_name]:
+                            sys.stderr.write(
+                                'Repaired invalid property %s of event type %s: %s => %s\n' %
+                                (property_name, self.__current_event_type_name, repr(
+                                    original_event[property_name]), repr(event[property_name]))
+                            )
+
+        self.__num_events_repaired += 1
+
     def add_event(self, event):
         """
 
@@ -468,35 +532,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         if self.__validate:
             if not self.__event_type_schema.validate(event_element):
                 # Event does not validate.
-                try:
-                    # Try to repair the event by normalizing the object
-                    # values.
-                    if self.__log_repaired_events:
-                        original_event = deepcopy(event)
-                        self.__ontology.get_event_type(self.__current_event_type_name).normalize_event_objects(event)
-                        for property_name in original_event.keys():
-                            if event[property_name] != original_event[property_name]:
-                                sys.stderr.write(
-                                    'Repaired invalid property %s of event type %s: %s => %s\n' %
-                                    (property_name, self.__current_event_type_name, repr(
-                                        original_event[property_name]), repr(event[property_name]))
-                                )
-                    else:
-                        self.__ontology.get_event_type(self.__current_event_type_name).normalize_event_objects(event)
-
-                except EDXMLValidationError:
-                    # Repairing failed.
-                    self.__generate_event_validation_exception(
-                        event, event_element)
-                else:
-                    # Repairing succeeded. For the time being, just to be sure,
-                    # we validate the event again.
-                    # TODO: Remove this second validation once normalize_event_objects()
-                    # is known to yield valid object values in all cases.
-                    if not self.__event_type_schema.validate(event_element):
-                        self.__generate_event_validation_exception(
-                            event, event_element)
-                    self.__num_events_repaired += 1
+                event = self._repair_event(event)
 
         try:
             self.__event_group_xml_writer.send(event_element)

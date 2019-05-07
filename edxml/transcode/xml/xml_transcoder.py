@@ -2,6 +2,9 @@
 
 import re
 import unicodedata
+
+from typing import Dict
+
 import edxml.transcode
 
 from edxml import EventElement

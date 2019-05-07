@@ -248,7 +248,10 @@ class SimpleEDXMLWriter(object):
 
         output = u''
 
-        self.__writer = EDXMLWriter(self.__output, self.__validate, self.__log_repaired_events)
+        self.__writer = EDXMLWriter(
+            self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
+        )
+
         output += self.__writer.add_ontology(self.__ontology)
         output += self.__writer.open_event_groups()
 
@@ -488,7 +491,9 @@ class SimpleEDXMLWriter(object):
 
         if not self.__writer:
             # We did not create the EDXMLWriter yet.
-            self.__writer = EDXMLWriter(self.__output, self.__validate, self.__log_repaired_events)
+            self.__writer = EDXMLWriter(
+                self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
+            )
             outputs.append(self.__writer.add_ontology(self.__ontology))
             self.__last_written_ontology_version = self.__ontology.get_version()
             outputs.append(self.__writer.open_event_groups())
@@ -571,7 +576,9 @@ class SimpleEDXMLWriter(object):
 
         if not self.__writer:
             # We did not create the EDXMLWriter yet.
-            self.__writer = EDXMLWriter(self.__output, self.__validate, self.__log_repaired_events)
+            self.__writer = EDXMLWriter(
+                self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
+            )
             outputs.append(self.__writer.add_ontology(self.__ontology))
             self.__last_written_ontology_version = self.__ontology.get_version()
             outputs.append(self.__writer.open_event_groups())

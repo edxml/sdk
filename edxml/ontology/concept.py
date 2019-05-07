@@ -2,6 +2,8 @@
 import re
 
 from lxml import etree
+
+import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import OntologyElement
 

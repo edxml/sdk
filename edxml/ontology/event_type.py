@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Dict
 
 import edxml
 import re
@@ -50,7 +51,7 @@ class EventType(OntologyElement, MutableMapping):
         self.__properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
         self.__relations = {}       # type: Dict[str,edxml.ontology.PropertyRelation]
         self.__parent = parent      # type: edxml.ontology.EventTypeParent
-        self.__relax_ng = None       # type: etree.RelaxNG
+        self.__relax_ng = None      # type: etree.RelaxNG
         self.__ontology = ontology  # type: edxml.ontology.Ontology
 
         self.__parent_description = None  # type: str
