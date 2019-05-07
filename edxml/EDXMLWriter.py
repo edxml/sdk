@@ -79,7 +79,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # actually unicode data.
             self.buffer.append(unicode(data, encoding='utf-8'))
 
-    def __init__(self, output=None, validate=True, log_repaired_events=False):
+    def __init__(self, output=None, validate=True, log_repaired_events=False, ignore_invalid_objects=False):
 
         super(EDXMLWriter, self).__init__()
 
@@ -88,6 +88,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema = None        # type: etree.RelaxNG
         self.__just_wrote_ontology = False
+        self.__ignore_invalid_objects = ignore_invalid_objects
         self.__log_repaired_events = log_repaired_events
         self.__invalid_event_count = 0
         self.__validate = validate
