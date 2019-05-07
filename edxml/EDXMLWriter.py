@@ -38,6 +38,8 @@ to generate EDXML streams.
 from collections import deque
 import sys
 
+from typing import Dict
+
 import edxml
 
 from lxml import etree

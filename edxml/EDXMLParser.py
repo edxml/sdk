@@ -34,6 +34,9 @@ This module offers various classes for incremental parsing of EDXML data streams
 import os
 import re
 import sys
+
+from typing import Dict, List, Any
+
 import edxml
 
 from collections import defaultdict

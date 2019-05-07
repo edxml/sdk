@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import edxml
 from edxml.EDXMLBase import EDXMLBase
 from edxml.ontology import EventTypeParent
 

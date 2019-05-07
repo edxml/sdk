@@ -4,6 +4,8 @@ import re
 import sre_constants
 
 from lxml import etree
+
+import edxml
 from edxml.EDXMLBase import EDXMLValidationError
 from edxml.ontology import DataType, OntologyElement
 
