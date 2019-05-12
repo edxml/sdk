@@ -34,85 +34,57 @@
 #
 #  Python script that checks if the ontologies in de <ontology>
 #  sections in all specified EDXML files are compatible.
-
+import argparse
 import sys
 
 from edxml.EDXMLBase import EDXMLError
 from edxml.EDXMLParser import EDXMLOntologyPullParser, ProcessingInterrupted
 
 
-def print_help():
+def main():
+    argparser = argparse.ArgumentParser(
+        description="This utility checks if the ontologies contained in all specified EDXML files are mutually "
+                    "compatible or not. Only files that have compatible ontologies can be merged. If all files "
+                    "prove compatible, the exit status is zero."
+    )
 
-    print """
+    argparser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        action='append',
+        help='The name of an EDXML file.'
+    )
 
-   This utility checks if the ontologies in de <ontology>
-   elements in all specified EDXML files are compatible or not.
-   Only compatible EDXML files can be merged. If all files prove
-   compatible, the exit status is zero.
+    args = argparser.parse_args()
 
-   Options:
+    if not args.file or len(args.file) < 2:
+        argparser.error('You must specify at least two files.')
 
-     -h, --help        Prints this help text
+    all_compatible = True
 
-     -f                This option must be followed by a filename, which
-                       will be used as input. It must be specified at
-                       least twice.
+    with EDXMLOntologyPullParser() as parser:
+        for file_name in args.file:
+            print("Checking %s" % file_name)
 
-   Example:
+            try:
+                parser.parse(open(file_name))
+                break
+            except ProcessingInterrupted:
+                pass
+            except KeyboardInterrupt:
+                sys.exit()
+            except EDXMLError as error:
+                all_compatible = False
+                print("EDXML file %s is incompatible with previous files:\n%s" % (file_name, unicode(error)))
+            except Exception:
+                raise
 
-     edxml-check-compatibility.py -f input01.edxml -f input02.edxml
-
-"""
-
-
-ArgumentCount = len(sys.argv)
-CurrentArgument = 1
-InputFileNames = []
-
-# Parse commandline arguments
-
-while CurrentArgument < ArgumentCount:
-
-    if sys.argv[CurrentArgument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[CurrentArgument] == '-f':
-        CurrentArgument += 1
-        InputFileNames.append(sys.argv[CurrentArgument])
-
+    if all_compatible:
+        print("Files are compatible.")
     else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[CurrentArgument])
-        sys.exit()
+        sys.exit(255)
 
-    CurrentArgument += 1
 
-if len(InputFileNames) < 2:
-    sys.stderr.write(
-        "Please specify at least two EDXML files. Use the --help argument to get help.\n")
-    sys.exit()
-
-AllCompatible = True
-
-with EDXMLOntologyPullParser() as parser:
-    for FileName in InputFileNames:
-        print("Checking %s" % FileName)
-
-        try:
-            parser.parse(open(FileName))
-        except ProcessingInterrupted:
-            pass
-        except KeyboardInterrupt:
-            sys.exit()
-        except EDXMLError as Error:
-            AllCompatible = False
-            print("EDXML file %s is incompatible with previous files:\n%s" %
-                  (FileName, unicode(Error)))
-        except Exception:
-            raise
-
-if AllCompatible:
-    print("Files are compatible.")
-else:
-    sys.exit(255)
+if __name__ == "__main__":
+    main()

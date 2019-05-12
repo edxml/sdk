@@ -34,76 +34,41 @@
 #  This python script outputs various statistics for a set of EDXML files.
 #  It prints event counts, lists defined event types, object types, source
 #  URLs, and so on.
-
+import argparse
 import string
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
 
-
-def print_help():
-
-    print("""
-
-   This utility outputs various statistics for a set of EDXML files. It
-   prints event counts, lists defined event types, object types, source
-   URLs, and so on.
-
-   Options:
-
-     -h, --help        Prints this help text
-
-     -f                This option must be followed by a filename, which
-                       will be used as input. It can be specified multiple
-                       times to get aggregated statistics for multiple
-                       input files. If the argument is not used, input
-                       data is read from standard input.
-
-   Example:
-
-     edxml-stats.py -f input01.edxml -f input02.edxml
-
-""")
-
 # Program starts here.
 
+parser = argparse.ArgumentParser(
+    description="This utility prints various statistics for a given EDXML input file."
+)
 
-argument_count = len(sys.argv)
-current_argument = 1
-input_files = []
+parser.add_argument(
+    '-f',
+    '--file',
+    type=str,
+    action='append',
+    help='By default, input is read from standard input. This option can be used to read from a'
+         'file in stead. The argument can be used multiple times to compute aggregate statistics'
+         'of multiple input files.'
+)
 
-# Parse commandline arguments
+args = parser.parse_args()
 
-while current_argument < argument_count:
+if args.file is None:
 
-    if sys.argv[current_argument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[current_argument] == '-f':
-        current_argument += 1
-        input_files.append((current_argument, sys.argv[current_argument]))
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[current_argument])
-        sys.exit()
-
-    current_argument += 1
+    # Feed the parser from standard input.
+    args.file = [sys.stdin]
 
 parser = EDXMLPullParser(validate=False)
 
-if len(input_files) == 0:
-
-    # Feed the parser from standard input.
-    input_files = [('standard input', sys.stdin)]
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
 # We repeatedly use the same parser to process all EDXML files in succession.
 
-for file_name, file in input_files:
-    sys.stderr.write("Processing %s..." % file_name)
+for file in args.file:
+    sys.stderr.write("edxml-stats: processing %s..." % (file if isinstance(file, str) else 'data from standard input'))
 
     try:
         parser.parse(file)

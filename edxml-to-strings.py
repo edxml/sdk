@@ -33,7 +33,7 @@
 #
 #  This script prints an evaluated event story or summary for each event in a given
 #  EDXML file or input stream. The strings are printed to standard output.
-
+import argparse
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
@@ -41,85 +41,61 @@ from edxml.EDXMLParser import EDXMLPullParser
 
 class EDXMLEventPrinter(EDXMLPullParser):
 
-    def __init__(self, which='story', print_colorized=False):
+    def __init__(self, print_summaries=False, print_colorized=False):
 
         super(EDXMLEventPrinter, self).__init__()
-        self.__which = which
+        self.__print_summaries = print_summaries
         self.__colorize = print_colorized
 
     def _parsed_event(self, event):
 
         print(self.get_ontology().get_event_type(event.get_type_name()).evaluate_template(
-            event, which=self.__which, colorize=self.__colorize
+            event, which='summary' if self.__print_summaries else 'story', colorize=self.__colorize
         ))
 
 
-def print_help():
+def main():
+    parser = argparse.ArgumentParser(
+        description="This utility outputs evaluated event story or summary templates for every event "
+                    "in a given EDXML file or input stream. The strings are printed to standard output."
+    )
 
-    print("""
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a'
+             'file in stead.'
+    )
 
-   This utility outputs evaluated event story or summary templates for every event in a given
-   EDXML file or input stream. The strings are printed to standard output.
+    parser.add_argument(
+        '-c',
+        '--colored',
+        action='store_true',
+        help='Produce colored output, highlighting object values.'
+    )
 
-   Options:
+    parser.add_argument(
+        '-s',
+        '--short',
+        action='store_true',
+        help='By default, the event story is rendered. This option switches to shorter summary rendering.'
+    )
 
-     -h, --help        Prints this help text
+    args = parser.parse_args()
 
-     -f                This option must be followed by a filename, which
-                       will be used as input. If this option is not specified,
-                       input will be read from standard input.
+    if args.file is None:
+        sys.stderr.write(
+            'Waiting for EDXML data on standard input... (use --help option to get help)\n'
+        )
 
-     --summary         By default, the event story will be printed. When
-                       this switch is added, the summary will be printed in stead.
+    input = open(args.file) if args.file else sys.stdin
 
-     -c                Adding this switch will cause the object values in the
-                       printed stories and summaries to be highlighted.
-
-   Example:
-
-     cat input.edxml | edxml-to-strings.py -c
-
-""")
-
-# Program starts here.
+    try:
+        EDXMLEventPrinter(print_summaries=args.short, print_colorized=args.colored).parse(input)
+    except KeyboardInterrupt:
+        pass
 
 
-argument_count = len(sys.argv)
-current_argument = 1
-event_input = sys.stdin
-which = 'story'
-colorize = False
-
-# Parse commandline arguments
-
-while current_argument < argument_count:
-
-    if sys.argv[current_argument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[current_argument] == '-f':
-        current_argument += 1
-        event_input = open(sys.argv[current_argument])
-
-    elif sys.argv[current_argument] == '--summary':
-        which = 'summary'
-
-    elif sys.argv[current_argument] == '-c':
-        colorize = True
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[current_argument])
-        sys.exit()
-
-    current_argument += 1
-
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-try:
-    EDXMLEventPrinter(which=which, print_colorized=colorize).parse(event_input)
-except KeyboardInterrupt:
-    pass
+if __name__ == "__main__":
+    main()

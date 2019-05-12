@@ -33,67 +33,52 @@
 #  This script checks EDXML data against the specification requirements. Its exit
 #  status will be zero if the provided data is valid EDXML. The utility accepts both
 #  regular files and EDXML data streams on standard input.
-
+import argparse
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
+from edxml.error import EDXMLValidationError
 
 
-def print_help():
+def main():
 
-    print """
+    parser = argparse.ArgumentParser(
+        description="This utility checks EDXML data against the specification requirements. Its exit "
+                    "status will be zero if the provided data is valid EDXML."
+    )
 
-   This utility checks EDXML data against the specification requirements. Its exit
-   status will be zero if the provided data is valid EDXML. The utility accepts both
-   regular files and EDXML data streams on standard input.
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a'
+             'file in stead.'
+    )
 
-   Options:
+    args = parser.parse_args()
 
-     -h, --help        Prints this help text
+    if args.file is None:
 
-     -f                This option must be followed by a filename, which
-                       will be used as input. If this option is not specified,
-                       input will be read from standard input.
+        # Feed the parser from standard input.
+        args.file = [sys.stdin]
 
-   Example:
+    with EDXMLPullParser() as parser:
+        try:
+            parser.parse(args.file)
+        except KeyboardInterrupt:
+            return
+        except EDXMLValidationError as e:
+            # The string representations of exceptions do not
+            # interpret newlines. As validation exceptions
+            # may contain pretty printed XML snippets, this
+            # does not yield readable exception messages.
+            # So, we only print the message passed to the
+            # constructor of the exception.
+            print(e.args[0])
+            exit(1)
 
-     cat input.edxml | edxml-test.py
-
-"""
-
-# Program starts here.
+    print("Input data is valid.\n")
 
 
-argument_count = len(sys.argv)
-current_argument = 1
-event_input = sys.stdin
-
-# Parse commandline arguments
-
-while current_argument < argument_count:
-
-    if sys.argv[current_argument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[current_argument] == '-f':
-        current_argument += 1
-        event_input = open(sys.argv[current_argument])
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[current_argument])
-        sys.exit()
-
-    current_argument += 1
-
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-try:
-    EDXMLPullParser().parse(event_input)
-except KeyboardInterrupt:
-    sys.exit()
-
-sys.stdout.write("Input data is valid.\n")
+if __name__ == "__main__":
+    main()

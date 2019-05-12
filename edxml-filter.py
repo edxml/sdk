@@ -33,20 +33,9 @@
 #
 #  This utility reads an EDXML stream from standard input and filters it according
 #  to the user supplied parameters. The result is sent to standard output.
-#
-#  Parameters:
-#
-#  -s    Takes a regular expression for filtering source URIs (optional).
-#  -e    Takes an event type name for filtering on events of a certain type (optional).
-#
-#  Examples:
-#
-# cat test.edxml | edxml-filter -s "/offices/stuttgart/.*"
-# cat test.edxml | edxml-filter -s ".*clientrecords.*" -e "client-supportticket"
-# cat test.edxml | edxml-filter -e "client-order"
-#
-#
 
+
+import argparse
 import sys
 import re
 from edxml.EDXMLFilter import EDXMLPullFilter
@@ -113,78 +102,41 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
             super(EDXMLEventGroupFilter, self)._parsed_event(event)
 
 
-def print_help():
+parser = argparse.ArgumentParser(
+    description='This utility reads an EDXML stream from standard input and filters it according '
+                'to the user supplied parameters. The result is sent to standard output.'
+)
 
-    print("""
+parser.add_argument(
+    '-f',
+    '--file',
+    type=str,
+    help='By default, input is read from standard input. This option can be used to read from a'
+         'file in stead.'
+)
 
-   This utility reads an EDXML stream from standard input and filters it according
-   to the user supplied parameters. The result is sent to standard output.
+parser.add_argument(
+    '-s',
+    '--source-uri',
+    type=str,
+    help='A regular expression that will be used to filter the event source URI in the input events.'
+)
 
-   Options:
+parser.add_argument(
+    '-e',
+    '--event-type',
+    type=str,
+    help='An event type name that will be used to filter the event types in the input events.'
+)
 
-     -h, --help        Prints this help text
+# Program starts here. Check commandline arguments.
+args = parser.parse_args()
 
-     -f                This option must be followed by a filename, which
-                       will be used as input. If this option is not specified,
-                       input will be read from standard input.
+event_input = open(args.file) if args.file else sys.stdin.buffer
 
-     -s                When specified, this option must be followed by a regular
-                       expression. Only events that have a source URL that matches
-                       this expression will be copied to the output stream.
+source_filter = re.compile(args.source_uri or '.*')
 
-     -e                When specified, this option must be followed by an EDXML
-                       event type name. Only events of specified type will be
-                       copied to the output stream.
-
-   Examples:
-
-     cat test.edxml | edxml-filter.py -s "/offices/stuttgart/.*"
-     cat test.edxml | edxml-filter.py -s ".*clientrecords.*" -e "client-supportticket"
-     cat test.edxml | edxml-filter.py -e "client-order"
-
-""")
-
-# Program starts here.
-
-
-argument_count = len(sys.argv)
-current_argument = 1
-event_input = sys.stdin
-source_filter = re.compile('.*')
-event_type_filter = None
-
-# Parse commandline arguments
-
-while current_argument < argument_count:
-
-    if sys.argv[current_argument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[current_argument] == '-s':
-        current_argument += 1
-        source_filter = re.compile(sys.argv[current_argument])
-
-    elif sys.argv[current_argument] == '-e':
-        current_argument += 1
-        event_type_filter = sys.argv[current_argument]
-
-    elif sys.argv[current_argument] == '-f':
-        current_argument += 1
-        event_input = open(sys.argv[current_argument])
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[current_argument])
-        sys.exit()
-
-    current_argument += 1
-
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-with EDXMLEventGroupFilter(source_filter, event_type_filter) as eventFilter:
+with EDXMLEventGroupFilter(source_filter, args.event_type) as eventFilter:
     try:
         eventFilter.parse(event_input)
     except KeyboardInterrupt:

@@ -33,16 +33,12 @@
 #
 #  This script outputs sticky hashes for every event in a given
 #  EDXML file or input stream. The hashes are printed to standard output.
-
+import argparse
 import sys
 from edxml.EDXMLParser import EDXMLPullParser
 
 
 class EDXMLEventHasher(EDXMLPullParser):
-
-    def __init__(self):
-
-        super(EDXMLEventHasher, self).__init__(sys.stdout)
 
     def _parsed_event(self, event):
 
@@ -50,58 +46,29 @@ class EDXMLEventHasher(EDXMLPullParser):
         print(event.compute_sticky_hash(ontology))
 
 
-def print_help():
+def main():
+    parser = argparse.ArgumentParser(
+        description='This utility outputs sticky hashes for every event in a given '
+                    'EDXML file or input stream. The hashes are printed to standard output.'
+    )
 
-    print("""
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a '
+             'file in stead.'
+    )
 
-   This utility outputs sticky hashes for every event in a given
-   EDXML file or input stream. The hashes are printed to standard output.
+    args = parser.parse_args()
 
-   Options:
+    event_input = args.file or sys.stdin.buffer
 
-     -h, --help        Prints this help text
-
-     -f                This option must be followed by a filename, which
-                       will be used as input. If this option is not specified,
-                       input will be read from standard input.
-
-   Example:
-
-     cat input.edxml | edxml-hash-calculator.py > hashes.txt
-
-""")
-
-# Program starts here.
-
-
-argument_count = len(sys.argv)
-current_argument = 1
-event_input = sys.stdin
-
-# Parse commandline arguments
-
-while current_argument < argument_count:
-
-    if sys.argv[current_argument] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[current_argument] == '-f':
-        current_argument += 1
-        event_input = open(sys.argv[current_argument])
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[current_argument])
+    try:
+        EDXMLEventHasher().parse(event_input)
+    except KeyboardInterrupt:
         sys.exit()
 
-    current_argument += 1
 
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-try:
-    EDXMLEventHasher().parse(event_input)
-except KeyboardInterrupt:
-    sys.exit()
+if __name__ == "__main__":
+    main()

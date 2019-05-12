@@ -40,7 +40,7 @@
 #
 #  The script demonstrates the use of EDXMLStreamFilter and merging of
 #  <ontology> elements from multiple EDXML sources.
-
+import argparse
 import sys
 from xml.sax import make_parser
 from xml.sax.xmlreader import AttributesImpl
@@ -149,52 +149,24 @@ class EDXMLMerger(EDXMLPullFilter):
         # Call parent implementation
         EDXMLPullFilter.end_element(self, name)
 
+parser = argparse.ArgumentParser(
+    description='This utility outputs sticky hashes for every event in a given '
+                'EDXML file or input stream. The hashes are printed to standard output.'
+)
 
-def print_help():
-
-    print("""
-
-   This utility reads multiple compatible EDXML files and merges them into
-   one new EDXML file, which is then printed on standard output.
-
-   Options:
-
-     -h, --help        Prints this help text
-
-     -f                This option must be followed by a filename, which
-                       will be used as input.
-
-   Example:
-
-     edxml-merge.py -f input1.edxml -f input2.edxml > output.edxml
-
-""")
+parser.add_argument(
+    '-f',
+    '--file',
+    type=str,
+    action='append',
+    help='A file name to be used as input for the merge operation.'
+)
 
 # Program starts here. Check commandline arguments.
 
+args = parser.parse_args()
 
-curr_option = 1
-input_file_names = []
-
-while curr_option < len(sys.argv):
-
-    if sys.argv[curr_option] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[curr_option] == '-f':
-        curr_option += 1
-        input_file_names.append(sys.argv[curr_option])
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[curr_option])
-        sys.exit()
-
-    curr_option += 1
-
-
-if len(input_file_names) < 2:
+if len(args.file) < 2:
     sys.stderr.write("Please specify at least two EDXML files for merging.\n")
     sys.exit()
 
@@ -213,7 +185,7 @@ sax_parser.setContentHandler(edxml_parser)
 # and merge all event type, object type
 # and source definitions in the EDXML files.
 
-for file_name in input_file_names:
+for file_name in args.file:
     sys.stderr.write("\nParsing file %s:" % file_name)
 
     try:

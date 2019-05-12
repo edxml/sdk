@@ -33,7 +33,7 @@
 #
 #  This script generates dummy EDXML data streams, which may be useful for stress
 #  testing EDXML processing systems and storage back ends.
-
+import argparse
 import sys
 import time
 import random
@@ -45,26 +45,15 @@ from edxml.EDXMLWriter import EDXMLWriter
 
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
-    def __init__(self, event_rate, max_events, property_size, randomize_properties, event_content_size,
-                 randomize_event_content, generate_collisions, collision_percentage, event_type_name,
-                 object_type_name_prefix, event_group_size, diversity, ordered):
+    def __init__(self, args):
 
         self.event_counter = 0
-        self.max_events = max_events
         self.event_group_counter = 0
         self.current_event_group_size = 0
-        self.ordered = ordered
-        self.generate_collisions = generate_collisions and collision_percentage > 0
-        self.collision_percentage = collision_percentage
-        self.randomize_event_content = randomize_event_content
-        self.event_rate = event_rate
-        self.event_content_size = event_content_size
-        self.property_string_length = property_size
-        self.randomize_properties = randomize_properties
-        self.event_type_name = event_type_name
-        self.object_type_name_prefix = object_type_name_prefix
-        self.diversity = diversity
-        self.event_group_size = event_group_size
+
+        self.args = args
+
+        self.generate_collisions = args.collision_rate > 0
         self.event_source_uri_list = ('/source-a/', '/source-b/')
         self.random_content_characters = u'abcdefghijklmnop  '
         self.random_content_characters_length = len(self.random_content_characters)
@@ -77,7 +66,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         self.write_definitions()
         self.open_event_groups()
         self.open_event_group(
-            self.event_type_name, self.event_source_uri_list[self.event_group_counter % 2])
+            self.args.eventtype_name, self.event_source_uri_list[self.event_group_counter % 2])
         self.write_events()
         self.close()
 
@@ -89,13 +78,13 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         interval_correction = 0
         random_content_characters = self.random_content_characters * \
-            (int(self.event_content_size / self.random_content_characters_length) + 1)
+            (int(self.args.content_size / self.random_content_characters_length) + 1)
         random_property_characters = self.random_content_characters * \
-            (int(self.property_string_length / self.random_content_characters_length) + 1)
+            (int(self.args.object_size / self.random_content_characters_length) + 1)
 
         # By default, event content is just a
         # string of asterisks.
-        content = '*' * self.event_content_size
+        content = '*' * self.args.content_size
 
         # Set the default object values
         property_objects = {
@@ -105,7 +94,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
             'property-h': [u'100.000000000']
         }
 
-        if self.ordered:
+        if not self.args.unordered:
             # This property requires ordering to be
             # preserved.
             property_objects['property-b'] = [u'value']
@@ -115,26 +104,26 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # strategy 'add'), we generate a small collection of random
         # strings for assigning to this property.
         add_property_values = [u''.join(random.sample(
-            random_property_characters, self.property_string_length)) for _ in range(10)]
+            random_property_characters, self.args.object_size)) for _ in range(10)]
 
         if self.generate_collisions:
             unique_property_values = [u''.join(random.sample(
-                random_property_characters, self.property_string_length)) for _ in range(self.diversity)]
-            random_unique_property_values = random.sample(range(self.diversity), int(
-                self.diversity * (1.0 - (self.collision_percentage / 100.0))))
+                random_property_characters, self.args.object_size)) for _ in range(self.args.collision_diversity)]
+            random_unique_property_values = random.sample(range(self.args.collision_diversity), int(
+                self.args.collision_diversity * (1.0 - (self.args.collision_rate / 100.0))))
         else:
             random_unique_property_values = []
 
-        if self.event_rate > 0:
-            requested_time_interval = 1.0 / self.event_rate
+        if self.args.rate > 0:
+            requested_time_interval = 1.0 / self.args.rate
 
         try:
-            while self.event_counter < self.max_events or self.max_events == 0:
+            while self.event_counter < self.args.limit or self.args.limit == 0:
 
                 # Generate random content
-                if self.randomize_event_content:
+                if self.args.random_content:
                     content = ''.join(random.sample(
-                        random_content_characters, self.event_content_size))
+                        random_content_characters, self.args.content_size))
 
                 # Generate random property values for the entries
                 # in the random value table that have been selected
@@ -142,24 +131,24 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                 if self.generate_collisions:
                     for ValueIndex in random_unique_property_values:
                         unique_property_values[ValueIndex] = u''.join(random.sample(
-                            random_property_characters, self.property_string_length))
+                            random_property_characters, self.args.object_size))
 
                 # Generate random property values
-                if self.randomize_properties:
+                if self.args.random_objects:
 
                     # The unique property is a completely random string
                     property_objects['property-a'] = [u''.join(random.sample(self.random_content_characters * (int(
-                        self.property_string_length / self.random_content_characters_length) + 1),
-                        self.property_string_length))]
+                        self.args.object_size / self.random_content_characters_length) + 1),
+                        self.args.object_size))]
 
-                    if self.ordered and random.random() < 0.9:
+                    if not self.args.unordered and random.random() < 0.9:
                         # We add the 'property-b' only if the output requires
                         # the ordering of the events to be preserved. And even
                         # then, we omit the property once in a while, removing
                         # it in case of a collision.
                         property_objects['property-b'] = [u''.join(random.sample(self.random_content_characters * (int(
-                            self.property_string_length / self.random_content_characters_length) + 1),
-                            self.property_string_length))]
+                            self.args.object_size / self.random_content_characters_length) + 1),
+                            self.args.object_size))]
 
                     # A random string from a fixed set
                     property_objects['property-c'] = [
@@ -180,7 +169,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     pass
 
                 # Take time measurement for rate control
-                if self.event_rate > 0:
+                if self.args.rate > 0:
                     time_start = time.time()
 
                 # Output one event
@@ -188,7 +177,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                 self.event_counter += 1
                 self.current_event_group_size += 1
 
-                if self.event_group_size > 0 and self.current_event_group_size >= self.event_group_size:
+                if self.args.group_size > 0 and self.current_event_group_size >= self.args.group_size:
                     # Event group has grown to the desired size. We close
                     # the group, switch to another event source and open
                     # a new event group.
@@ -196,9 +185,9 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     self.current_event_group_size = 0
                     self.close_event_group()
                     self.open_event_group(
-                        self.event_type_name, self.event_source_uri_list[self.event_group_counter % 2])
+                        self.args.eventtype_name, self.event_source_uri_list[self.event_group_counter % 2])
 
-                if self.event_rate > 0:
+                if self.args.rate > 0:
                     # An event rate is specified, which means we
                     # need to keep track of time and use time.sleep()
                     # to generate delays between events.
@@ -212,7 +201,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
                     # Check if our output rate is significantly lower than requested,
                     # print informative message is rate is too low.
-                    if (self.event_counter / (current_time - self.time_start)) < 0.8 * self.event_rate:
+                    if (self.event_counter / (current_time - self.time_start)) < 0.8 * self.args.rate:
                         sys.stdout.write(
                             'Cannot keep up with requested event rate!\n')
 
@@ -256,21 +245,21 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         ontology = edxml.ontology.Ontology()
 
-        ontology.create_object_type(self.object_type_name_prefix + '.a',
-                                    data_type='string:%d:cs' % self.property_string_length)
-        ontology.create_object_type(self.object_type_name_prefix + '.b', data_type='number:bigint:signed')
-        ontology.create_object_type(self.object_type_name_prefix + '.c', data_type='number:decimal:12:9:signed')
+        ontology.create_object_type(self.args.objecttype_name + '.a',
+                                    data_type='string:%d:cs' % self.args.object_size)
+        ontology.create_object_type(self.args.objecttype_name + '.b', data_type='number:bigint:signed')
+        ontology.create_object_type(self.args.objecttype_name + '.c', data_type='number:decimal:12:9:signed')
 
-        event_type = ontology.create_event_type(self.event_type_name)
-        event_type.create_property('property-a', self.object_type_name_prefix + '.a').set_merge_strategy(drop_or_match)
+        event_type = ontology.create_event_type(self.args.eventtype_name)
+        event_type.create_property('property-a', self.args.objecttype_name + '.a').set_merge_strategy(drop_or_match)
 
-        if self.ordered:
-            event_type.create_property('property-b', self.object_type_name_prefix +
+        if not self.args.unordered:
+            event_type.create_property('property-b', self.args.objecttype_name +
                                        '.a').set_merge_strategy(drop_or_replace)
 
-        event_type.create_property('property-c', self.object_type_name_prefix + '.a').set_merge_strategy(drop_or_add)
-        event_type.create_property('property-g', self.object_type_name_prefix + '.c').set_merge_strategy(drop_or_min)
-        event_type.create_property('property-h', self.object_type_name_prefix + '.c').set_merge_strategy(drop_or_max)
+        event_type.create_property('property-c', self.args.objecttype_name + '.a').set_merge_strategy(drop_or_add)
+        event_type.create_property('property-g', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_min)
+        event_type.create_property('property-h', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_max)
 
         for uri in self.event_source_uri_list:
             ontology.create_event_source(uri)
@@ -278,167 +267,131 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         self.add_ontology(ontology)
 
 
-def print_help():
+def main():
+    parser = argparse.ArgumentParser(description="Generate dummy events for testing purposes.")
 
-    print """
+    parser.add_argument(
+        '-r',
+        '--rate',
+        default=0,
+        type=float,
+        help='By default, events will be generated at fast as possible. This option can be used to limit the '
+             'rate to the specified number of events per second.'
+    )
 
-   This utility generates dummy EDXML data streams, which may be useful for
-   stress testing EDXML processing systems and storage backends. The generated EDXML
-   stream is written to standard output.
+    parser.add_argument(
+        '-c',
+        '--collision-rate',
+        default=0,
+        type=int,
+        help='This option triggers generation of event collisions. It must be followed '
+             'by an integer percentage, which configures how often an event will collide '
+             'with a previously generated event. A value of 100 makes all events collide, '
+             'while a value of zero effectively disables collision generation. By default, '
+             'no event collisions will be generated. Note: This has a performance impact.'
+    )
 
-   Options:
+    parser.add_argument(
+        '-d',
+        '--collision-diversity',
+        default=100,
+        type=int,
+        help='This option controls the number of different colliding events that will '
+             'be generated. It has no effect, unless -c is used as well. For example, '
+             'using a collision percentage of 100%% and a diversity of 1, the output '
+             'stream will represent a stream of updates for a single event. A collision '
+             'percentage of 50%% and a diversity of 10 generates a stream of which half '
+             'of the output events are updates of just 10 distinct events.'
+    )
 
-     -h, --help        Prints this help text
+    parser.add_argument(
+        '--limit',
+        default=0,
+        type=int,
+        help='By default, data will be generated until interrupted. This option allows '
+             'you to limit the number of output events to the specified amount. A limit '
+             'of zero is interpreted as no limit.'
+    )
 
-     -r                By default, events will be generated at fast as possible. This option
-                       can be used to limit the rate to the specified number of events per
-                       second.
+    parser.add_argument(
+        '--content-size',
+        default=0,
+        type=int,
+        help='Used to indicate that event content should be generated. This option '
+             'requires the desired content size (in bytes) as argument. If this '
+             'option is omitted, no event content will be generated.'
+    )
 
-     -c                This option triggers generation of event collisions. It must be followed
-                       by an integer percentage, which configures how often an event will collide
-                       with a previously generated event. A value of 100 makes all events collide,
-                       while a value of zero effectively disables collision generation. By default,
-                       no event collisions will be generated. Note: This has a performance impact.
+    parser.add_argument(
+        '--group-size',
+        default=0,
+        type=int,
+        help='By default, only one event group is generated. This option allows the size '
+             'of generated event groups to be limited. In general, smaller event groups '
+             'makes efficient processing of the EDXML streams more difficult. The option '
+             'expects the desired size (event count) as its argument.'
+    )
 
-     -d                This option controls the number of different colliding events that will
-                       be generated. It has no effect, unless -c is used as well. For example,
-                       using a collision percentage of 100% and a diversity of 1, the output
-                       stream will represent a stream of updates for a single event. A collision
-                       percentage of 50% and a diversity of 10 generates a stream of which half
-                       of the output events are updates of just 10 distinct events.
+    parser.add_argument(
+        '--object-size',
+        default=16,
+        type=int,
+        help='By default, all generated object values are strings with a length of 16'
+             'characters. You can use this option to override this length by specifying'
+             'a length (in bytes) following the option argument.'
+    )
 
-     --with-content    Used to indicate that event content should be generated. This option
-                       requires the desired content size (in bytes) as argument. If this
-                       option is omitted, no event content will be generated.
+    parser.add_argument(
+        '--random-objects',
+        action='store_true',
+        help='By default, all generated object values are fixed valued strings. This option '
+             'enables generation of random object values. Note that when event collisions '
+             'are generated, the unique property of each event is more or less random, '
+             'ragardless of the use of the --random-objects option. Note: This has a '
+             'performance impact.'
+    )
 
-     --eventgroup-size By default, only one event group is generated. This option allows the size
-                       of generated event groups to be limited. In general, smaller event groups
-                       makes efficient processing of the EDXML streams more difficult. The option
-                       expects the desired size (event count) as its argument.
+    parser.add_argument(
+        '--random-content',
+        action='store_true',
+        help='By default, all generated event content values are fixed valued strings. '
+             'This option enables generation of random event content. Note: This has a '
+             'performance impact.'
+    )
 
-     --object-size     By default, all generated object values are strings with a length of 16
-                       characters. You can use this option to override this length by specifying
-                       a length (in bytes) following the option argument.
+    parser.add_argument(
+        '--eventtype-name',
+        default='eventtype.a',
+        type=str,
+        help='By default, all generated events are of event type "eventtype.a". This '
+             'option allows the default event type name to be overridden, which may be '
+             'useful when running multiple instances in parallel. The option expects the '
+             'desired name as its argument.'
+    )
 
-     --random-objects  By default, all generated object values are fixed valued strings. This option
-                       enables generation of random object values. Note that when event collisions
-                       are generated, the unique property of each event is more or less random,
-                       ragardless of the use of the --random-objects option. Note: This has a
-                       performance impact.
+    parser.add_argument(
+        '--objecttype-name',
+        default='objecttype.a',
+        type=str,
+        help='By default, all generated objects are of object types that have names '
+             'prefixed with "objecttype" (for instance "objecttype.a"). This option allows '
+             'the default object type name prefix to be overridden, which may be '
+             'useful when running multiple instances in parallel. The option expects the '
+             'desired object type name prefix as its argument.'
+    )
 
-     --random-content  By default, all generated event content values are fixed valued strings.
-                       This option enables generation of random event content. Note: This has a
-                       performance impact.
+    parser.add_argument(
+        '--unordered',
+        action='store_true',
+        help='By default, output events will feature an implicit ordering in case event '
+             'collisions are generated. When this switch is added, no event properties '
+             'with merge strategy "replace" will be generated, which means that colliding '
+             'events will not change when they are merged in a different order. This may be '
+             'useful for testing parallel EDXML stream processing.'
+    )
 
-     --eventtype-name  By default, all generated events are of event type 'eventtype-a'. This
-                       option allows the default event type name to be overridden, which may be
-                       useful when running multiple instances in parallel. The option expects the
-                       desired name as its argument.
-
-     --objecttype-name By default, all generated objects are of object types that have names
-                       prefixed with 'objecttype' (for instance 'objecttype.a'). This option allows
-                       the default object type name prefix to be overridden, which may be
-                       useful when running multiple instances in parallel. The option expects the
-                       desired object type name prefix as its argument.
-
-     --unordered       By default, output events will feature an implicit ordering in case event
-                       collisions are generated. When this switch is added, no event properties
-                       with merge strategy 'replace' will be generated, which means that colliding
-                       events will not change when they are merged in a different order. This may be
-                       useful for testing parallel EDXML stream processing.
-
-     --limit           By default, data will be generated until interrupted. This option allows
-                       you to limit the number of output events to the specified amount. A limit
-                       of zero is interpreted as no limit.
-
-   Example:
-
-     edxml-ddgen.py -r 1000 -c 25 --with-content 1024 --eventtype-name 'my.custom.eventtype'
-
-"""
+    EDXMLDummyDataGenerator(parser.parse_args()).start()
 
 
-curr_option = 1
-event_group_size = 0
-event_content_size = 0
-property_size = 16
-max_event_count = 0
-randomize_properties = False
-randomize_event_content = False
-generate_collisions = False
-collision_percentage = 0
-event_type_name = 'eventtype.a'
-object_type_name_prefix = 'objecttype'
-output_diversity = 100
-ordered_output = True
-
-event_rate = 0
-
-while curr_option < len(sys.argv):
-
-    if sys.argv[curr_option] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[curr_option] == '-r':
-        curr_option += 1
-        event_rate = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '-c':
-        curr_option += 1
-        generate_collisions = True
-        collision_percentage = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '-d':
-        curr_option += 1
-        output_diversity = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '--object-size':
-        curr_option += 1
-        property_size = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '--with-content':
-        curr_option += 1
-        event_content_size = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '--limit':
-        curr_option += 1
-        max_event_count = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '--eventtype-name':
-        curr_option += 1
-        event_type_name = sys.argv[curr_option]
-
-    elif sys.argv[curr_option] == '--objecttype-name':
-        curr_option += 1
-        object_type_name_prefix = sys.argv[curr_option]
-
-    elif sys.argv[curr_option] == '--unordered':
-        ordered_output = False
-
-    elif sys.argv[curr_option] == '--eventgroup-size':
-        curr_option += 1
-        event_group_size = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '--random-objects':
-        randomize_properties = True
-
-    elif sys.argv[curr_option] == '--random-content':
-        randomize_event_content = True
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[curr_option])
-        sys.exit()
-
-    curr_option += 1
-
-generator = EDXMLDummyDataGenerator(
-    event_rate, max_event_count, property_size, randomize_properties,
-    event_content_size, randomize_event_content, generate_collisions,
-    collision_percentage, event_type_name, object_type_name_prefix,
-    event_group_size, output_diversity, ordered_output)
-try:
-    generator.start()
-except KeyboardInterrupt:
-    generator.close()
+if __name__ == "__main__":
+    main()

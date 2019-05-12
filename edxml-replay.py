@@ -35,7 +35,7 @@
 #  output. Timestamps of input events are shifted to the current time. This is useful
 #  for simulating live EDXML data sources using previously recorded data. Note that
 #  the script assumes that the events in the input stream are time ordered.
-
+import argparse
 import sys
 import time
 from datetime import datetime
@@ -117,7 +117,7 @@ class EDXMLReplay(EDXMLPullFilter):
                 delay = (current_event_date_time - datetime.now(pytz.UTC)
                          ).total_seconds() + self.time_shift
                 if delay >= 0:
-                    time.sleep(delay * speed_multiplier)
+                    time.sleep(delay * self.speed_multiplier)
 
                     # If SpeedMultiplier < 1, it means we will wait shorter
                     # than the time between current and previous event. That
@@ -127,7 +127,7 @@ class EDXMLReplay(EDXMLPullFilter):
                     # speed will drop. To compensate for this effect, we also
                     # shift the entire dataset back in time. If SpeedMultiplier
                     # is larger than 1, the opposite effect occurs.
-                    self.time_shift += (speed_multiplier - 1.0) * delay
+                    self.time_shift += (self.speed_multiplier - 1.0) * delay
             else:
                 # Determine the global time shift between
                 # the input dataset and the current time.
@@ -143,73 +143,56 @@ class EDXMLReplay(EDXMLPullFilter):
         EDXMLPullFilter._parsed_event(self, event)
 
 
-def print_help():
+def main():
+    parser = argparse.ArgumentParser(
+        description="This utility accepts EDXML data as input and writes time shifted events to standard "
+                    "output. Timestamps of input events are shifted to the current time. This is useful "
+                    "for simulating live EDXML data sources using previously recorded data. Note that "
+                    "the script assumes that the events in the input stream are time ordered."
+    )
 
-    print("""
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a'
+             'file in stead.'
+    )
 
-   This script accepts EDXML data as input and writes time shifted events to standard
-   output. Timestamps of input events are shifted to the current time. This is useful
-   for simulating live EDXML data sources using previously recorded data. Note that
-   the script assumes that the events in the input stream are time ordered.
+    parser.add_argument(
+        '-s',
+        '--speed',
+        default=1.0,
+        type=float,
+        help='Optional speed multiplier. A value greater than 1.0 will make time appear to pass '
+             'faster, a value smaller than 1.0 slows down event output. Default value is 1.0.'
+    )
 
-   Options:
+    parser.add_argument(
+        '-b',
+        '--with-buffer-stuffer',
+        action='store_true',
+        help='Enable the "Buffer Stuffer", which inserts bogus comments between the output events. '
+             'Some applications may buffer their input, resulting in high response latency when '
+             'feeding them with events at very low rates. This option may help to "write through" '
+             'their input buffer.'
+    )
 
-     -h, --help       Prints this help text
+    args = parser.parse_args()
 
-     -f               Used to specify an input EDXML file. If omitted, EDXML data
-                      is expected on standard input.
+    if args.file is None:
+        sys.stderr.write(
+            'Waiting for EDXML data on standard input... (use --help option to get help)\n'
+        )
 
-     -s               Optional speed multiplier. A value greater than 1.0 will make
-                      time appear to pass faster, a value smaller than 1.0 slows down
-                      event output. Default value is 1.0.
+    input = open(args.file) if args.file else sys.stdin
 
-     -b               Enable the "Buffer Stuffer", which inserts bogus comments between
-                      the output events. Some applications may buffer their input, resulting
-                      in high response latency when feeding them with events at very low rates.
-                      This option may help to "write through" their input buffer.
-
-   Example:
-
-     cat data.edxml | edxml-replay.py -s 10
-
-""")
+    with EDXMLReplay(args.speed, args.with_buffer_stuffer) as replay:
+        try:
+            replay.parse(input)
+        except KeyboardInterrupt:
+            sys.exit()
 
 
-event_input = sys.stdin
-speed_multiplier = 1.0
-curr_option = 1
-buffer_stuffer_enabled = False
-
-while curr_option < len(sys.argv):
-
-    if sys.argv[curr_option] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[curr_option] == '-f':
-        curr_option += 1
-        event_input = open(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '-s':
-        curr_option += 1
-        speed_multiplier = 1.0 / (1e-9 + float(sys.argv[curr_option]))
-
-    elif sys.argv[curr_option] == '-b':
-        buffer_stuffer_enabled = True
-
-    else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[curr_option])
-        sys.exit()
-
-    curr_option += 1
-
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-with EDXMLReplay(speed_multiplier, buffer_stuffer_enabled) as Replay:
-    try:
-        Replay.parse(event_input)
-    except KeyboardInterrupt:
-        sys.exit()
+if __name__ == "__main__":
+    main()

@@ -41,10 +41,14 @@
 #  with many different sticky hashes, it will eventually run out of memory. Extending
 #  this example to use an external storage backend in order to overcome this limitation
 #  is left as an exercise to the user.
-
+import argparse
 import sys
 import time
+from typing import Dict, List
+
+from edxml import EDXMLEvent
 from edxml.EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
+from edxml.error import EDXMLValidationError
 
 
 class EDXMLEventMerger(EDXMLPullFilter):
@@ -75,7 +79,7 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
         self.__max_latency = latency
         self.__max_buffer_size = event_buffer_size
         self.__last_output_time = time.time()
-        self.__hash_buffer = {}
+        self.__hash_buffer = {}  # type: Dict[str, List[EDXMLEvent]]
 
     def _close_event_group(self, event_type_name, event_source_id):
 
@@ -116,97 +120,79 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
         self.Buffer = {}
 
 
-def print_help():
+def main():
+    parser = argparse.ArgumentParser(
+        description='This utility reads an EDXML stream from standard input or from a file and outputs '
+                    'that same stream after resolving event hash collisions in the input.'
+    )
 
-    print("""
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='Reads specified EDXML file as input. When this argument is omitted, input will be read '
+             'from standard input.'
+    )
 
-   This utility reads an EDXML stream from standard input or from a file and outputs
-   that same stream after resolving event hash collisions in the input.
+    parser.add_argument(
+        '-l',
+        '--max-latency',
+        type=float,
+        help='When input events are buffered, input event streams having low '
+             'event throughput may result in output streams that stay silent '
+             'for a long time. Setting this option to a number of (fractional) '
+             'seconds, the output latency can be controlled, forcing it to '
+             'flush its buffer at regular intervals.'
+    )
 
-   Options:
+    parser.add_argument(
+        '-b',
+        '--buffer',
+        type=int,
+        help='By default, input events are not buffered, which means that '
+             'every input event is either passed through unmodified or '
+             'results in a merged version of input event. By setting this '
+             'option to a positive integer, the specified number of input '
+             'events will be buffed and merged when the buffer is full. That '
+             'means that, depending on the buffer size, the number of output '
+             'events may be significantly reduced.'
+    )
 
-     -h, --help        Prints this help text
+    args = parser.parse_args()
 
-     -f                This option must be followed by a filename, which
-                       will be used as input. If this option is not specified,
-                       input will be read from standard input.
-
-     -b                By default, input events are not buffered, which means that
-                       every input event is either passed through unmodified or
-                       results in a merged version of input event. By setting this
-                       option to a positive integer, the specified number of input
-                       events will be buffed and merged when the buffer is full. That
-                       means that, depending on the buffer size, the number of output
-                       events may be significantly reduced.
-
-     -l                When input events are buffered, input event streams having low
-                       event throughput may result in output streams that stay silent
-                       for a long time. Setting this option to a number of (fractional)
-                       seconds, the output latency can be controlled, forcing it to
-                       flush its buffer at regular intervals.
-   Example:
-
-     edxml-event-merger.py -b 1000 -l 10 -f input.edxml > output.edxml
-
-""")
-
-
-curr_option = 1
-buffer_size = 1
-output_latency = 0
-input_file_name = None
-
-while curr_option < len(sys.argv):
-
-    if sys.argv[curr_option] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[curr_option] == '-f':
-        curr_option += 1
-        input_file_name = sys.argv[curr_option]
-
-    elif sys.argv[curr_option] == '-b':
-        curr_option += 1
-        buffer_size = int(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] == '-l':
-        curr_option += 1
-        output_latency = float(sys.argv[curr_option])
-
+    if not args.file:
+        args.file = sys.stdin
     else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[curr_option])
-        sys.exit()
+        args.file = open(args.file)
 
-    curr_option += 1
+    if args.buffer and args.buffer > 1:
+        # We need to read input with minimal
+        # input buffering. This works best
+        # when using the readline() method.
+        with BufferingEDXMLEventMerger(args.buffer, args.max_latency) as merger:
+            try:
+                while 1:
+                    line = args.file.readline()
+                    if not line:
+                        break
+                    merger.feed(line)
+            except KeyboardInterrupt:
+                sys.exit()
+    else:
+        with EDXMLEventMerger() as merger:
+            try:
+                merger.parse(args.file)
+            except KeyboardInterrupt:
+                sys.exit()
+            except EDXMLValidationError as e:
+                # The string representations of exceptions do not
+                # interpret newlines. As validation exceptions
+                # may contain pretty printed XML snippets, this
+                # does not yield readable exception messages.
+                # So, we only print the message passed to the
+                # constructor of the exception.
+                print(e.args[0])
 
-if input_file_name is None:
-    sys.stderr.write(
-        "\nNo filename was given, waiting for EDXML data on STDIN...(use --help to get help)")
-    event_input = sys.stdin
-else:
-    sys.stderr.write("\nProcessing file %s:" % input_file_name)
-    event_input = open(input_file_name)
 
-sys.stdout.flush()
-
-if buffer_size > 1:
-    # We need to read input with minimal
-    # input buffering. This works best
-    # when using the readline() method.
-    with BufferingEDXMLEventMerger(buffer_size, output_latency) as merger:
-        try:
-            while 1:
-                Line = event_input.readline()
-                if not Line:
-                    break
-                merger.feed(Line)
-        except KeyboardInterrupt:
-            sys.exit()
-else:
-    with EDXMLEventMerger() as merger:
-        try:
-            merger.parse(open('demo.edxml'))
-        except KeyboardInterrupt:
-            sys.exit()
+if __name__ == "__main__":
+    main()

@@ -35,7 +35,7 @@
 #  output, formatted in rows and columns. For every event property, a output
 #  column is generated. If one property has multiple objects, multiple output
 #  lines are generated.
-
+import argparse
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
@@ -139,84 +139,58 @@ class EDXML2CSV(EDXMLPullParser):
 
             sys.stdout.write(unicode(line + line_end + '\n').encode('utf-8'))
 
+def main():
+    parser = argparse.ArgumentParser(
+        description='This utility accepts EDXML data as input and writes the events to standard output, formatted '
+                    'in rows and columns. For every event property, a output column is generated. If one property '
+                    'has multiple objects, multiple  output lines are generated.'
+    )
 
-def print_help():
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a '
+             'file in stead.'
+    )
 
-    print("""
+    parser.add_argument(
+        '-c',
+        '--columns',
+        type=str,
+        help='Specifies which columns to produce, and in what order. By default, all columns are printed. '
+             'When this option is used, only the specified columns are printed, in the order you specify. '
+             'The argument should be a comma separated list of property names.'
+    )
 
-   This utility accepts EDXML data as input and writes the events to standard
-   output, formatted in rows and columns. For every event property, a output
-   column is generated. If one property has multiple objects, multiple  output
-   lines are generated.
+    parser.add_argument(
+        '-s',
+        '--separator',
+        type=str,
+        default='\t',
+        help='By default, columns are separated by tabs. Using this option, you can specify a different separator.'
+    )
 
-   Options:
+    parser.add_argument(
+        '--with-header',
+        action='store_true',
+        help='Prints a header row containing the names of each of the columns.'
+    )
 
-     -h, --help       Prints this help text
+    args = parser.parse_args()
 
-     -f               This option must be followed by a filename, which will be
-                      used as input. If this option is not specified, EDXML data
-                      will be read from standard input.
+    event_input = args.file or sys.stdin
 
-     -c, --columns    Specifies which columns to produce, and in what order. By
-                      default, all columns are printed. When this option is used,
-                      only the specified columns are printed, in the order you
-                      specify. The argument should be a comma separated list of
-                      property names.
-
-     -s --separator   By default, columns are separated by tabs. Using this option,
-                      you can specify a different separator.
-
-     -s --noheader    By default, the first row is a header containing the names of
-                      each column. Using this option, this header will be suppressed.
-
-   Example:
-
-     cat data.edxml | edxml-to-csv.py -c property-a,property-b -s ';'
-
-""")
-
-
-output_columns = []
-event_input = sys.stdin
-column_separator = '\t'
-suppress_header_line = False
-curr_option = 1
-
-while curr_option < len(sys.argv):
-
-    if sys.argv[curr_option] in ('-h', '--help'):
-        print_help()
-        sys.exit(0)
-
-    elif sys.argv[curr_option] == '-f':
-        curr_option += 1
-        event_input = open(sys.argv[curr_option])
-
-    elif sys.argv[curr_option] in ('-c', '--columns'):
-        curr_option += 1
-        output_columns = sys.argv[curr_option].split(',')
-
-    elif sys.argv[curr_option] in ('-s', '--separator'):
-        curr_option += 1
-        column_separator = sys.argv[curr_option]
-
-    elif sys.argv[curr_option] == '--noheader':
-        curr_option += 1
-        suppress_header_line = True
-
+    if args.columns is None or args.columns == '':
+        columns = None
     else:
-        sys.stderr.write("Unknown commandline argument: %s\n" %
-                         sys.argv[curr_option])
+        columns = args.columns.split(',')
+
+    try:
+        EDXML2CSV(columns, args.separator, args.with_header).parse(event_input)
+    except KeyboardInterrupt:
         sys.exit()
 
-    curr_option += 1
 
-if event_input == sys.stdin:
-    sys.stderr.write(
-        'Waiting for EDXML data on standard input... (use --help option to get help)\n')
-
-try:
-    EDXML2CSV(output_columns, column_separator,
-              not suppress_header_line).parse(event_input)
-except KeyboardInterrupt:
-    sys.exit()
+if __name__ == "__main__":
+    main()
