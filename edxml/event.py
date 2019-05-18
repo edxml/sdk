@@ -1051,6 +1051,8 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
 
         p = etree.SubElement(new, 'properties')
         for property_name, values in properties.iteritems():
+            if property_name == '':
+                raise ValueError('Attempt to create event containing a property having an empty property name.')
             for value in values:
                 try:
                     etree.SubElement(p, property_name).text = value
