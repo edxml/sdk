@@ -1535,7 +1535,7 @@ class EventType(OntologyElement, MutableMapping):
                     self.__attr['name'], self.__attr['description'])
             )
 
-        if not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
+        if self.__attr['classlist'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid class list: "%s"' %
                 (self.__attr['name'], self.__attr['classlist'])
@@ -1581,7 +1581,7 @@ class EventType(OntologyElement, MutableMapping):
     def create_from_xml(cls, type_element, ontology):
         event_type = cls(
             ontology, type_element.attrib['name'], type_element.attrib['display-name'],
-            type_element.attrib['description'], type_element.attrib['classlist'],
+            type_element.attrib['description'], type_element.attrib.get('classlist', ''),
             type_element.attrib['summary'], type_element.attrib['story']
         ).set_version(type_element.attrib['version'])\
          .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
@@ -1765,6 +1765,9 @@ class EventType(OntologyElement, MutableMapping):
         """
         attribs = dict(self.__attr)
         attribs['version'] = unicode(attribs['version'])
+
+        if attribs['classlist'] == '':
+            del attribs['classlist']
 
         element = etree.Element('eventtype', {k: v for k, v in attribs.items() if v})
         if self.__parent:
