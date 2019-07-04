@@ -4,7 +4,7 @@ import edxml
 
 from collections import MutableMapping
 from lxml import etree
-from typing import Dict, Union, Generator, List, Set
+from typing import Dict, Union, Generator, List, Set, Iterable
 from edxml.EDXMLBase import EvilCharacterFilter
 
 
@@ -13,7 +13,7 @@ class EDXMLEvent(MutableMapping):
     def __init__(self, properties: Dict[str, List[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, content: unicode = None) -> None:
 
-        self._properties = ...    # type: Dict[str, List[unicode]]
+        self._properties = ...    # type: Dict[str, Set[unicode]]
         self._event_type_name = ...  # type: str
         self._source_uri = ...     # type: str
         self._parents = ...       # type: Set[str]
@@ -24,29 +24,29 @@ class EDXMLEvent(MutableMapping):
 
     def __delitem__(self, key: str) -> None: ...
 
-    def __setitem__(self, key: str, value: Union[str, List[unicode]]) -> None: ...
+    def __setitem__(self, key: str, value: Union[str, Iterable[unicode]]) -> None: ...
 
     def __len__(self) -> int: ...
 
-    def __getitem__(self, key: str) -> List[unicode]: ...
+    def __getitem__(self, key: str) -> Set[unicode]: ...
 
     def __contains__(self, key: str) -> bool: ...
 
-    def __iter__(self) -> Generator[Dict[str, List[unicode]], None, None]: ...
+    def __iter__(self) -> Generator[Dict[str, Set[unicode]], None, None]: ...
 
     def get_any(self, property_name: str, default: str=None) -> Union[unicode, None]: ...
 
     def copy(self) -> 'EDXMLEvent': ...
 
     @classmethod
-    def create(cls, properties: Dict[str, List[unicode]], event_type_name: str = None, source_uri: str = None,
+    def create(cls, properties: Dict[str, Iterable[unicode]], event_type_name: str = None, source_uri: str = None,
                parents: List[str] = None, content: unicode = None) -> 'EDXMLEvent': ...
 
     def get_type_name(self) -> str: ...
 
     def get_source_uri(self) -> str: ...
 
-    def get_properties(self) -> Dict[str, List[unicode]]: ...
+    def get_properties(self) -> Dict[str, Set[unicode]]: ...
 
     def get_explicit_parents(self) -> List[str]: ...
 
@@ -57,7 +57,7 @@ class EDXMLEvent(MutableMapping):
     @classmethod
     def create_from_xml(cls, event_type_name: str, source_uri: str, event_element: etree.Element) -> 'EDXMLEvent': ...
 
-    def set_properties(self, properties: Dict[str, List[unicode]]) -> 'EDXMLEvent': ...
+    def set_properties(self, properties: Dict[str, Iterable[unicode]]) -> 'EDXMLEvent': ...
 
     def copy_properties_from(self, source_event: 'EDXMLEvent', property_map: Dict[str, str]) -> 'EDXMLEvent': ...
 
@@ -82,17 +82,17 @@ class EDXMLEvent(MutableMapping):
 
 class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
-    def __init__(self, properties: Dict[str, List[unicode]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Dict[str, Iterable[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, content: unicode = None) -> None:
         super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, content)
-        self.__properties = ...  # type: Dict[str, List[unicode]]
+        self.__properties = ...  # type: Dict[str, Set[unicode]]
 
     def flush(self) -> 'ParsedEvent': ...
 
     def copy(self) -> 'ParsedEvent': ...
 
     @classmethod
-    def create_element(cls, properties: Dict[str, List[unicode]], parents: List[str] = None,
+    def create_element(cls, properties: Dict[str, Iterable[unicode]], parents: List[str] = None,
                        content: unicode = None) -> etree.Element: ...
 
     def get_type_name(self) -> str: ...
@@ -106,7 +106,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     @classmethod
     def create_from_xml(cls, event_type_name: str, source_uri: str, event_element: etree.Element) -> 'ParsedEvent': ...
 
-    def set_properties(self, properties: Dict[str, List[unicode]]) -> 'ParsedEvent': ...
+    def set_properties(self, properties: Dict[str, Iterable[unicode]]) -> 'ParsedEvent': ...
 
     def copy_properties_from(self, source_event: 'ParsedEvent', property_map: Dict[str, str]) -> 'ParsedEvent': ...
 
@@ -131,10 +131,10 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
 class EventElement(EDXMLEvent, EvilCharacterFilter):
 
-    def __init__(self, properties: Dict[str, List[unicode]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Dict[str, Iterable[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, content: unicode = None) -> None:
         super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, content)
-        self.__properties = ...  # type: Dict[str, List[unicode]]
+        self.__properties = ...  # type: Dict[str, Set[unicode]]
         self.__element = ...      # type: etree.Element
 
     def get_element(self) -> etree.Element: ...
@@ -156,7 +156,10 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     @classmethod
     def create_from_xml(cls, event_type_name: str, source_uri: str, event_element: etree.Element) -> 'EventElement': ...
 
-    def set_properties(self, properties: Dict[str, List[unicode]]) -> 'EventElement': ...
+    @classmethod
+    def create_from_event(cls, event: EDXMLEvent) -> 'EventElement': ...
+
+    def set_properties(self, properties: Dict[str, Iterable[unicode]]) -> 'EventElement': ...
 
     def copy_properties_from(self, source_event: 'EventElement', property_map: Dict[str, str]) -> 'EventElement': ...
 
