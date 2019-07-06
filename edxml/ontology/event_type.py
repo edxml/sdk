@@ -25,7 +25,7 @@ class EventType(OntologyElement, MutableMapping):
     the event property, the value is the property itself.
     """
 
-    NAME_PATTERN = re.compile("^[a-z0-9.]*$")
+    NAME_PATTERN = re.compile("^[a-z0-9.-]*$")
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
     TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
