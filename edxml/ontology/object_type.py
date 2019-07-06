@@ -15,7 +15,7 @@ class ObjectType(OntologyElement):
     Class representing an EDXML object type
     """
 
-    NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
+    NAME_PATTERN = re.compile('^[a-z0-9.-]{1,64}$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     FUZZY_MATCHING_PATTERN = re.compile(
         r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")

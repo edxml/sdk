@@ -13,7 +13,7 @@ class Concept(OntologyElement):
     Class representing an EDXML concept
     """
 
-    NAME_PATTERN = re.compile('^[a-z0-9.]{1,64}$')
+    NAME_PATTERN = re.compile('^[a-z0-9.-]{1,64}$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
 
     def __init__(self, ontology, name, display_name=None, description=None):
