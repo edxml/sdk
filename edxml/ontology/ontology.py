@@ -817,7 +817,7 @@ class Ontology(OntologyElement):
         # properties that refer to concepts, in the right way
         for event_type_name, event_type in self.__event_types.items():
             for relation in event_type.get_property_relations().values():
-                if relation.get_type_class() in ('inter', 'intra'):
+                if relation.get_type() in ('inter', 'intra'):
                     source_concepts = event_type[relation.get_source(
                     )].get_concept_associations()
                     target_concepts = event_type[relation.get_target(
@@ -833,7 +833,7 @@ class Ontology(OntologyElement):
 
                     for source_concept_name in source_concepts:
                         for target_concept_name in target_concepts:
-                            if relation.get_type_class() == 'intra':
+                            if relation.get_type() == 'intra':
                                 source_primitive = relation.get_source_concept().split('.', 2)[0]
                                 target_primitive = relation.get_target_concept().split('.', 2)[0]
                                 if source_primitive != target_primitive:

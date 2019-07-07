@@ -91,8 +91,8 @@ for object_type_name in sorted(parser.get_ontology().get_object_type_names()):
 
 predicates = set()
 for event_type_name, event_type in parser.get_ontology().get_event_types().items():
-    for relation in event_type.get_property_relations():
-        predicates.add(relation.get_type_predicate())
+    for relation in event_type.get_property_relations().values():
+        predicates.add(relation.get_predicate())
 
 print("\nProperty relation predicates:\n")
 for Predicate in sorted(predicates):
