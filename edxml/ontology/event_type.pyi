@@ -77,7 +77,7 @@ class EventType(OntologyElement):
     def remove_property(self, property_name: str) -> 'EventType': ...
 
     def create_relation(
-            self, source: str, target: str, description: str, type_class: str, type_predicate: str,
+            self, source: str, target: str, description: str, type: str, predicate: str,
             source_concept_name=None, target_concept_name=None, confidence: float = 1.0, directed: bool = True
     ) -> edxml.ontology.PropertyRelation: ...
 

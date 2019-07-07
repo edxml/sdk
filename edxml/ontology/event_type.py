@@ -459,7 +459,7 @@ class EventType(OntologyElement, MutableMapping):
 
         return self
 
-    def create_relation(self, source, target, description, type_class, type_predicate, source_concept_name=None,
+    def create_relation(self, source, target, description, type, predicate, source_concept_name=None,
                         target_concept_name=None, confidence=1.0, directed=True):
         """
 
@@ -469,8 +469,8 @@ class EventType(OntologyElement, MutableMapping):
           source (str): Name of source property
           target (str): Name of target property
           description (str): Relation description, with property placeholders
-          type_class (str): Relation type class ('inter', 'intra' or 'other')
-          type_predicate (str): free form predicate
+          type (str): Relation type ('inter', 'intra', ...)
+          predicate (str): free form predicate
           source_concept_name (str): Name of the source concept
           target_concept_name (str): Name of the target concept
           confidence (float): Relation confidence [0.0,1.0]
@@ -488,13 +488,13 @@ class EventType(OntologyElement, MutableMapping):
             raise KeyError('Cannot find property %s in event type %s.' %
                            (target, self.__attr['name']))
 
-        if type_class in ('inter', 'intra'):
+        if type in ('inter', 'intra'):
             if source_concept_name is None:
                 if len(self[source].get_concept_associations()) == 0:
                     raise ValueError(
                         "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
                         "the source property (%s) is not associated with any concepts." %
-                        (type_class, source, target, self.get_display_name_singular(), source)
+                        (type, source, target, self.get_display_name_singular(), source)
                     )
 
                 if len(self[source].get_concept_associations()) > 1:
@@ -502,7 +502,7 @@ class EventType(OntologyElement, MutableMapping):
                         "Attempt to create an %s-concept relation between the %s and %s of a %s while "
                         "the source property (%s) is associated with multiple concepts. Creation failed because "
                         "it was not specified  which concept to relate to." %
-                        (type_class, source, target, self.get_display_name_singular(), source)
+                        (type, source, target, self.get_display_name_singular(), source)
                     )
 
                 source_concept_name = self[source].get_concept_associations().keys()[0]
@@ -512,7 +512,7 @@ class EventType(OntologyElement, MutableMapping):
                     raise ValueError(
                         "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
                         "the target property (%s) is not associated with any concepts." %
-                        (type_class, source, target, self.get_display_name_singular(), target)
+                        (type, source, target, self.get_display_name_singular(), target)
                     )
 
                 if len(self[target].get_concept_associations()) > 1:
@@ -520,15 +520,15 @@ class EventType(OntologyElement, MutableMapping):
                         "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
                         "the target property (%s) is associated with multiple concepts. Creation failed because "
                         "it was not specified which concept to relate to." %
-                        (type_class, source, target, self.get_display_name_singular(), target)
+                        (type, source, target, self.get_display_name_singular(), target)
                     )
 
                 target_concept_name = self[target].get_concept_associations().keys()[0]
 
         relation = edxml.ontology.PropertyRelation(
             self, self[source], self[target], self.__ontology.get_concept(source_concept_name, True),
-            self.__ontology.get_concept(target_concept_name, True), description, type_class,
-            type_predicate, confidence, directed
+            self.__ontology.get_concept(target_concept_name, True), description, type,
+            predicate, confidence, directed
         )
 
         self.__relations[relation.get_persistent_id()] = relation.validate()

@@ -16,6 +16,7 @@ class PropertyRelation(OntologyElement):
                  target_concept: edxml.ontology.Concept, description: str, type_class: str, type_predicate: str,
                  confidence: float = 10, directed: bool = True) -> None:
 
+        self._type = ...         # type: str
         self.__attr = ...      # type: Dict[str, Any]
         self.__event_type = ...  # type: edxml.ontology.EventType
 
@@ -37,9 +38,7 @@ class PropertyRelation(OntologyElement):
 
     def get_type(self) -> str: ...
 
-    def get_type_class(self) -> str: ...
-
-    def get_type_predicate(self) -> str: ...
+    def get_predicate(self) -> str: ...
 
     def get_confidence(self) -> int: ...
 

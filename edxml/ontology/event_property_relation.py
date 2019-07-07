@@ -16,13 +16,15 @@ class PropertyRelation(OntologyElement):
     def __init__(self, event_type, source, target, source_concept, target_concept, description,
                  type_class, type_predicate, confidence=10, directed=True):
 
+        self._type = type_class
+
         self.__attr = {
             'property1': source.get_name(),
             'property2': target.get_name(),
             'concept1': source_concept.get_name() if source_concept else None,
             'concept2': target_concept.get_name() if target_concept else None,
             'description': description,
-            'type': '%s:%s' % (type_class, type_predicate),
+            'predicate': type_predicate,
             'confidence': int(confidence),
             'directed': bool(directed),
         }
@@ -48,7 +50,7 @@ class PropertyRelation(OntologyElement):
             str:
         """
         return '{}:{}:{},{}'.format(
-            self.__event_type.get_name(), self.get_type_class(), self.get_source(), self.get_target()
+            self.__event_type.get_name(), self.get_type(), self.get_source(), self.get_target()
         )
 
     def get_source(self):
@@ -109,27 +111,17 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['type']
+        return self._type
 
-    def get_type_class(self):
+    def get_predicate(self):
         """
 
-        Returns the class part of the relation type.
+        Returns the relation predicate.
 
         Returns:
           str:
         """
-        return self.__attr['type'].split(':')[0]
-
-    def get_type_predicate(self):
-        """
-
-        Returns the predicate part of the relation type.
-
-        Returns:
-          str:
-        """
-        return self.__attr['type'].split(':')[1]
+        return self.__attr['predicate']
 
     def get_confidence(self):
         """
@@ -249,9 +241,13 @@ class PropertyRelation(OntologyElement):
             raise EDXMLValidationError(
                 'Property relation description is too long: "%s"' % self.__attr['description'])
 
-        if not re.match('^(intra|inter|other):.+', self.__attr['type']):
+        if not len(self.__attr['predicate']) <= 32:
             raise EDXMLValidationError(
-                'Invalid property relation type: "%s"' % self.__attr['type'])
+                'Property relation predicate is too long: "%s"' % self.__attr['predicate'])
+
+        if self._type not in ['inter', 'intra', 'other']:
+            raise EDXMLValidationError(
+                'Invalid property relation type: "%s"' % self._type)
 
         if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
             raise EDXMLValidationError(
@@ -282,11 +278,11 @@ class PropertyRelation(OntologyElement):
                      self.__attr['description'])
                 )
 
-        if self.get_type_class() in ('inter', 'intra'):
+        if self.get_type() in ('inter', 'intra'):
             if self.__attr.get('concept1') is None or self.__attr.get('concept2') is None:
                 raise EDXMLValidationError(
                     'The %s-concept relation between properties %s and %s does not specify both related concepts.' %
-                    (self.get_type_class(), self.__attr['property1'], self.__attr['property2'])
+                    (self.get_type(), self.__attr['property1'], self.__attr['property2'])
                 )
 
         return self
@@ -309,8 +305,8 @@ class PropertyRelation(OntologyElement):
             ontology.get_concept(relation_element.attrib.get('concept1')),
             ontology.get_concept(relation_element.attrib.get('concept2')),
             relation_element.attrib['description'],
-            relation_element.attrib['type'].split(':')[0],
-            relation_element.attrib['type'].split(':')[1],
+            relation_element.tag[24:],
+            relation_element.attrib['predicate'],
             relation_element.attrib['confidence'],
             relation_element.get('directed', 'true') == 'true'
         )
@@ -357,6 +353,10 @@ class PropertyRelation(OntologyElement):
 
         if old.get_type() != new.get_type():
             # The relation types are different, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_predicate() != new.get_predicate():
+            # The relation predicates are different, no upgrade possible.
             equal = is_valid_upgrade = False
 
         # Compare attributes that cannot produce illegal upgrades because they can
@@ -417,9 +417,8 @@ class PropertyRelation(OntologyElement):
         attribs['confidence'] = '%d' % self.__attr['confidence']
         attribs['directed'] = 'true' if self.__attr['directed'] else 'false'
 
-        if attribs['concept1'] is None:
+        if self._type not in ['inter', 'intra']:
             del attribs['concept1']
-        if attribs['concept2'] is None:
             del attribs['concept2']
 
-        return etree.Element('relation', attribs)
+        return etree.Element(self._type, attribs)
