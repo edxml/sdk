@@ -1772,15 +1772,17 @@ class EventType(OntologyElement, MutableMapping):
         element = etree.Element('eventtype', {k: v for k, v in attribs.items() if v})
         if self.__parent:
             element.append(self.__parent.generate_xml())
-        properties = etree.Element('properties')
-        for Property in self.__properties.values():
-            properties.append(Property.generate_xml())
-        relations = etree.Element('relations')
-        for relation in self.__relations.values():
-            relations.append(relation.generate_xml())
 
+        properties = etree.Element('properties')
+        for prop in self.__properties.values():
+            properties.append(prop.generate_xml())
         element.append(properties)
-        element.append(relations)
+
+        if len(self.__relations) > 0:
+            relations = etree.Element('relations')
+            for relation in self.__relations.values():
+                relations.append(relation.generate_xml())
+            element.append(relations)
 
         return element
 
