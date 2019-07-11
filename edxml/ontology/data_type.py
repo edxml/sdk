@@ -630,7 +630,7 @@ class DataType(object):
 
         Converts each of the provided values into unicode strings
         that are valid string representations for the data type.
-        It takes an iterable as input and returns a list of
+        It takes an iterable as input and returns a set of
         normalized unicode strings.
 
         The object values must be appropriate for the data type.
@@ -648,27 +648,28 @@ class DataType(object):
           EDXMLValidationError
 
         Returns:
-          List[unicode]. The normalized object values
+          Set[unicode]. The normalized object values
         """
 
         split_data_type = self.type.split(':')
 
         if split_data_type[0] == 'datetime':
-            for i, value in enumerate(values):
+            normalized = set()
+            for value in values:
                 if isinstance(value, datetime):
-                    values[i] = self.format_utc_datetime(value)
+                    normalized.add(self.format_utc_datetime(value))
                 elif type(value) in (str, unicode):
                     try:
-                        values[i] = self.format_utc_datetime(parse(value))
+                        normalized.add(self.format_utc_datetime(parse(value)))
                     except Exception:
                         raise EDXMLValidationError(
                             'Invalid datetime string: %s' % value)
-            return values
+            return normalized
         elif split_data_type[0] == 'number':
             if split_data_type[1] == 'decimal':
                 decimal_precision = split_data_type[3]
                 try:
-                    return [unicode('%.' + decimal_precision + 'f') % Decimal(value) for value in values]
+                    return {unicode('%.' + decimal_precision + 'f') % Decimal(value) for value in values}
                 except TypeError:
                     raise EDXMLValidationError(
                         'Invalid decimal value in list: "%s"' % '","'.join(
@@ -676,7 +677,7 @@ class DataType(object):
                     )
             elif split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
                 try:
-                    return [u'%d' % int(value) for value in values]
+                    return {u'%d' % int(value) for value in values}
                 except (TypeError, ValueError):
                     raise EDXMLValidationError(
                         'Invalid integer value in list: "%s"' % '","'.join(
@@ -684,24 +685,25 @@ class DataType(object):
                     )
             elif split_data_type[1] in ['float', 'double']:
                 try:
-                    for i, value in enumerate(values):
-                        values[i] = u'%.6E' % float(value)
-                        mantissa, exponent = values[i].split('E')
+                    normalized = set()
+                    for value in values:
+                        value = u'%.6E' % float(value)
+                        mantissa, exponent = value.split('E')
                         if mantissa in ('0.000000', '-0.000000'):
-                            values[i] = '0.000000E+000'
+                            normalized.add('0.000000E+000')
                         else:
-                            values[i] = '%sE%+04d' % (mantissa, int(exponent))
+                            normalized.add('%sE%+04d' % (mantissa, int(exponent)))
                 except ValueError:
                     raise EDXMLValidationError(
                         'Invalid floating point value in list: "%s"' % '","'.join(
                             [repr(value) for value in values])
                     )
                 else:
-                    return values
+                    return normalized
 
         elif split_data_type[0] == 'hex':
             try:
-                return [unicode(value.lower()) for value in values]
+                return {unicode(value.lower()) for value in values}
             except AttributeError:
                 raise EDXMLValidationError(
                     'Invalid hexadecimal value in list: "%s"' % '","'.join(
@@ -710,7 +712,8 @@ class DataType(object):
 
         elif split_data_type[0] == 'uri':
             path_separator = ':' if split_data_type[1] == '' else split_data_type[1]
-            for i, value in enumerate(values):
+            normalized = set()
+            for value in values:
                 # Note that we cannot safely re-quote URIs in case there
                 # is a problem with quoting of special characters. For example,
                 # the path may contain both literal slashes and escaped ones. The
@@ -727,19 +730,20 @@ class DataType(object):
                         # Quote the query part.
                         qs = urllib.quote_plus(qs, ':&=')
                         # Reconstruct normalized value.
-                        values[i] = urlunsplit(
+                        normalized.add(urlunsplit(
                             (scheme, netloc, path, qs, anchor))
+                        )
                     else:
                         raise EDXMLValidationError(
                             'Invalid uri value: "%s" appears to be percent-encoded'
                             'but also contains illegal characters.' % repr(
                                 value)
                         )
-            return values
+            return normalized
 
         elif split_data_type[0] == 'ip':
             try:
-                return [u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values]
+                return {u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values}
             except (ValueError, TypeError):
                 raise EDXMLValidationError(
                     'Invalid IPv4 address in list: "%s"' % '","'.join(
@@ -748,7 +752,7 @@ class DataType(object):
         elif split_data_type[0] == 'geo':
             if split_data_type[1] == 'point':
                 try:
-                    return [u'%.6f,%.6f' % tuple(float(coord) for coord in value.split(',')) for value in values]
+                    return {u'%.6f,%.6f' % tuple(float(coord) for coord in value.split(',')) for value in values}
                 except (ValueError, TypeError):
                     raise EDXMLValidationError(
                         'Invalid geo:point value in list: "%s"' % '","'.join(
@@ -757,9 +761,9 @@ class DataType(object):
         elif split_data_type[0] == 'string':
             try:
                 if split_data_type[2] == 'ci':
-                    return [unicode(value.lower()) for value in values]
+                    return {unicode(value.lower()) for value in values}
                 else:
-                    return [unicode(value) for value in values]
+                    return {unicode(value) for value in values}
             except AttributeError:
                 raise EDXMLValidationError(
                     'Invalid string value in list: "%s"' % '","'.join(
@@ -767,7 +771,7 @@ class DataType(object):
                 )
         elif split_data_type[0] == 'base64':
             try:
-                [value.decode('base64') for value in values]
+                {value.decode('base64') for value in values}
             except (AttributeError, ValueError):
                 raise EDXMLValidationError(
                     'Invalid byte string value in list: "%s"' % '","'.join(
@@ -775,10 +779,10 @@ class DataType(object):
                 )
             return values
         elif split_data_type[0] == 'boolean':
-            return ['true' if value in (True, 'true', 'True', 1) else 'false' for value in values]
+            return {'true' if value in (True, 'true', 'True', 1) else 'false' for value in values}
         else:
             try:
-                return [unicode(value) for value in values]
+                return {unicode(value) for value in values}
             except AttributeError:
                 raise EDXMLValidationError(
                     'Invalid string value in list: "%s"' % '","'.join(

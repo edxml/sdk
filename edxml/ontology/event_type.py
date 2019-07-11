@@ -954,9 +954,7 @@ class EventType(OntologyElement, MutableMapping):
                     if self[property_name].get_data_type().get_split()[1] in ('float', 'double'):
                         # Floating point numbers are normalized in scientific notation,
                         # here we format it to whatever is the most suitable for the value.
-                        for index, value in enumerate(values):
-                            event_object_values[property_name][index] = '%f' % float(
-                                value)
+                        event_object_values[property_name] = {'%f' % float(value) for value in values}
 
             for placeholder in placeholders:
 
