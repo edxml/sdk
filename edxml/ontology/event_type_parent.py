@@ -16,14 +16,14 @@ class EventTypeParent(OntologyElement):
     PROPERTY_MAP_PATTERN = re.compile(
         "^[a-z0-9-]{1,64}:[a-z0-9-]{1,64}(,[a-z0-9-]{1,64}:[a-z0-9-]{1,64})*$")
 
-    def __init__(self, child_event_type, parent_event_type_name, property_map, parent_description=None,
-                 siblings_description=None):
+    def __init__(self, child_event_type, parent_event_type_name, property_map, parent_description='belonging to',
+                 siblings_description='sharing'):
 
         self._attr = {
             'eventtype': parent_event_type_name,
             'propertymap': property_map,
-            'parent-description': parent_description or 'belonging to',
-            'siblings-description': siblings_description or 'sharing'
+            'parent-description': parent_description,
+            'siblings-description': siblings_description
         }
 
         self._childEventType = child_event_type
@@ -39,16 +39,13 @@ class EventTypeParent(OntologyElement):
             self._child_modified_callback()
 
     @classmethod
-    def create(cls, child_event_type, parent_event_type_name, property_map, parent_description=None,
-               siblings_description=None):
+    def create(cls, child_event_type, parent_event_type_name, property_map, parent_description='belonging to',
+               siblings_description='sharing'):
         """
 
         Creates a new event type parent. The PropertyMap argument is a dictionary
         mapping property names of the child event type to property names of the
         parent event type.
-
-        If no ParentDescription is specified, it will be set to 'belonging to'.
-        If no SiblingsDescription is specified, it will be set to 'sharing'.
 
         Note:
            All unique properties of the parent event type must appear in
