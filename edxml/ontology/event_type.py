@@ -53,6 +53,7 @@ class EventType(OntologyElement, MutableMapping):
         self.__properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
         self.__relations = {}       # type: Dict[str,edxml.ontology.PropertyRelation]
         self.__parent = parent      # type: edxml.ontology.EventTypeParent
+        self.__attachments = {}     # type: Dict[str, edxml.ontology.EventTypeAttachment]
         self.__relax_ng = None      # type: etree.RelaxNG
         self.__ontology = ontology  # type: edxml.ontology.Ontology
 
@@ -263,6 +264,30 @@ class EventType(OntologyElement, MutableMapping):
           Dict[str,edxml.ontology.PropertyRelation]:
         """
         return self.__relations
+
+    def get_attachment(self, name):
+        """
+
+        Returns the specified attachment definition.
+
+        Raises:
+            KeyError
+
+        Returns:
+          edxml.ontology.EventTypeAttachment:
+        """
+        return self.__attachments[name]
+
+    def get_attachments(self):
+        """
+
+        Returns a dictionary containing the attachments that
+        are defined for the event type. The keys are attachment IDs.
+
+        Returns:
+          Dict[str,edxml.ontology.EventTypeAttachment]:
+        """
+        return self.__attachments
 
     def has_class(self, class_name):
         """
@@ -550,6 +575,41 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
         self.__relations[relation.get_persistent_id()] = relation.validate()
+
+        self._child_modified_callback()
+        return self
+
+    def create_attachment(self, name):
+        """
+
+        Create a new attachment and add it to the event type. The description
+        and singular display name are set to the attachment name. The plural
+        form of the display name is constructed by appending an 's' to the
+        singular form.
+
+        Args:
+            name (str): attachment name
+
+        Returns:
+            edxml.ontology.EventTypeAttachment
+        """
+        attachment = edxml.ontology.EventTypeAttachment(self, name)
+        self.add_attachment(attachment)
+
+        return attachment
+
+    def add_attachment(self, attachment):
+        """
+
+        Add specified attachment definition to the event type.
+
+        Args:
+            attachment (edxml.ontology.EventTypeAttachment): attachment definition
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+        """
+        self.__attachments[attachment.get_name()] = attachment
 
         self._child_modified_callback()
         return self
@@ -1575,6 +1635,9 @@ class EventType(OntologyElement, MutableMapping):
         for relation in self.__relations.values():
             relation.validate()
 
+        for attachment in self.__attachments.values():
+            attachment.validate()
+
         return self
 
     @classmethod
@@ -1600,6 +1663,11 @@ class EventType(OntologyElement, MutableMapping):
                 for relationElement in element:
                     event_type.add_relation(
                         edxml.ontology.PropertyRelation.create_from_xml(relationElement, event_type, ontology))
+
+            elif element.tag == '{http://edxml.org/edxml}attachments':
+                for attachmentElement in element:
+                    event_type.add_attachment(
+                        edxml.ontology.EventTypeAttachment.create_from_xml(attachmentElement, event_type))
 
         return event_type
 
@@ -1650,6 +1718,10 @@ class EventType(OntologyElement, MutableMapping):
             # Versions do not agree on their property relations set. No upgrade possible.
             equal = is_valid_upgrade = False
 
+        if set(old.get_attachments().keys()) - set(new.get_attachments().keys()) != set():
+            # New version removes attachments. No upgrade possible.
+            equal = is_valid_upgrade = False
+
         if old.get_classes() != new.get_classes():
             # Adding an event type class is possible, removing one is not.
             equal = False
@@ -1688,6 +1760,15 @@ class EventType(OntologyElement, MutableMapping):
                     equal = False
                     is_valid_upgrade &= \
                         new.get_property_relations()[relation_id] > old.get_property_relations()[relation_id]
+
+        for name, attachment in new.get_attachments().items():
+            if name in old.get_attachments():
+                if new.get_attachments()[name] != old.get_attachments()[name]:
+                    # Attachment definitions differ, check that new definition is
+                    # a valid upgrade of the old definition.
+                    equal = False
+                    is_valid_upgrade &= \
+                        new.get_attachments()[name] > old.get_attachments()[name]
 
         if equal:
             return 0
@@ -1744,6 +1825,12 @@ class EventType(OntologyElement, MutableMapping):
             for relation_id, relation in self.get_property_relations().items():
                 self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
 
+            for attachment_name, attachment in event_type.get_attachments().items():
+                if attachment_name in self.get_attachments().keys():
+                    self.get_attachments()[attachment_name].update(event_type.get_attachments()[attachment_name])
+                else:
+                    self.add_attachment(attachment)
+
             self.set_description(event_type.get_description())
             self.set_display_name(event_type.get_display_name_singular(), event_type.get_display_name_plural())
             self.set_summary_template(event_type.get_summary_template())
@@ -1783,6 +1870,12 @@ class EventType(OntologyElement, MutableMapping):
             for relation in self.__relations.values():
                 relations.append(relation.generate_xml())
             element.append(relations)
+
+        if len(self.__attachments) > 0:
+            attachments = etree.Element('attachments')
+            for attachment in self.__attachments.values():
+                attachments.append(attachment.generate_xml())
+            element.append(attachments)
 
         return element
 
@@ -1903,6 +1996,13 @@ class EventType(OntologyElement, MutableMapping):
 
         return self
 
+    def validate_event_attachments(self, event):
+        for name, attachment in event.get_attachments().items():
+            if name not in self.get_attachments().keys():
+                raise EDXMLValidationError(
+                    'Event type %s has no attachment named %s.' % (self.__attr['name'], name)
+                )
+
     def normalize_event_objects(self, event):
         """
 
@@ -2005,6 +2105,24 @@ class EventType(OntologyElement, MutableMapping):
                     properties.append(e.zeroOrMore(
                         e.element(object_type.generate_relaxng(), name=property_name)))
 
+        attachments = []
+        for attachment_name, attachment in self.get_attachments().items():
+            if attachment.is_base64_string():
+                attachments.append(
+                    e.optional(
+                        e.element(
+                            e.data('', type='base64Binary'),
+                            name=attachment_name
+                        )
+                    )
+                )
+            else:
+                attachments.append(
+                    e.optional(
+                        e.element(e.text(), name=attachment_name)
+                    )
+                )
+
         schema = e.element(
             e.ref(name='foreign-attributes'),
             e.optional(
@@ -2019,8 +2137,13 @@ class EventType(OntologyElement, MutableMapping):
             e.element(
                 e.interleave(*properties),
                 name='properties'
-            ) if len(properties) > 0 else e.element('', name='properties'),
-            e.optional(e.element(e.text(), name='content')),
+            ) if len(properties) > 0 else e.element(e.empty, name='properties'),
+            e.optional(
+                e.element(
+                    e.interleave(*attachments),
+                    name='attachments'
+                ) if len(attachments) > 0 else e.element(e.empty, name='attachments'),
+            ),
             name='event',
             **{'ns': 'http://edxml.org/edxml'} if namespaced else {}
         )

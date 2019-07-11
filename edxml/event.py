@@ -27,7 +27,7 @@ class EDXMLEvent(MutableMapping):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -35,12 +35,15 @@ class EDXMLEvent(MutableMapping):
         must be lists of one or multiple object values. Explicit parent
         hashes must be specified as hex encoded strings.
 
+        Attachments are specified by means of a dictionary mapping attachment
+        names to strings.
+
         Args:
           properties (Dict[str,List[unicode]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          content (Optional[unicode]): Event content
+          attachments (Optional[Dict[str, str]]): Event attachments dictionary
 
         Returns:
           EDXMLEvent
@@ -49,7 +52,7 @@ class EDXMLEvent(MutableMapping):
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
-        self._content = unicode(content) if content else u''
+        self._attachments = attachments
         self._foreign_attribs = {}
 
     def __str__(self):
@@ -115,17 +118,21 @@ class EDXMLEvent(MutableMapping):
         Returns:
            EDXMLEvent
         """
-        return EDXMLEvent(self._properties.copy(), self._event_type_name, self._source_uri, list(self._parents),
-                          self._content)
+        return EDXMLEvent(
+            self._properties.copy(), self._event_type_name, self._source_uri, list(self._parents), self._attachments
+        )
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
         dictionary mapping property names to object values. Object values
         may be single values or a list of multiple object values. Explicit parent
         hashes must be specified as hex encoded strings.
+
+        Attachments are specified by means of a dictionary mapping attachment
+        names to strings.
 
         Note:
           For a slight performance gain, use the EDXMLEvent constructor
@@ -136,18 +143,17 @@ class EDXMLEvent(MutableMapping):
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          content (Optional[unicode]): Event content
+          attachments (Optional[unicode]): Event attachments dictionary
 
         Returns:
           EDXMLEvent:
         """
         return cls(
-            {property_name: value if type(value) == list else [
-                value] for property_name, value in properties.items()},
+            {property_name: set(values) for property_name, values in properties.items()},
             event_type_name,
             source_uri,
             parents,
-            content
+            attachments
         )
 
     def get_type_name(self):
@@ -196,16 +202,17 @@ class EDXMLEvent(MutableMapping):
         """
         return list(self._parents)
 
-    def get_content(self):
+    def get_attachments(self):
         """
 
-        Returns the content of the event.
+        Returns the attachments of the event as a dictionary mapping
+        attachment names to the attachment values
 
         Returns:
-          unicode: Event content
+          Dict[str, str]: Event attachments
 
         """
-        return self._content
+        return self._attachments
 
     def get_foreign_attributes(self):
         """
@@ -235,7 +242,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent:
         """
-        content = ''
+        attachments = {}
         property_objects = {}
         for element in event_element:
             if element.tag == 'properties':
@@ -250,12 +257,14 @@ class EDXMLEvent(MutableMapping):
                     if property_name not in property_objects:
                         property_objects[property_name] = []
                     property_objects[property_name].append(property_element.text)
-            elif element.tag == 'content':
-                content = element.text
-            elif element.tag == '{http://edxml.org/edxml}content':
-                content = element.text
+            elif element.tag == 'attachments':
+                for attachment in element:
+                    attachments[attachment.tag] = attachment.text
+            elif element.tag == '{http://edxml.org/edxml}attachments':
+                for attachment in element:
+                    attachments[attachment.tag[24:]] = attachment.text
 
-        return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), content)
+        return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), attachments)
 
     def set_properties(self, properties):
         """
@@ -362,18 +371,19 @@ class EDXMLEvent(MutableMapping):
         self._event_type_name = event_type_name
         return self
 
-    def set_content(self, content):
+    def set_attachments(self, attachments):
         """
 
-        Set the event content.
+        Set the event attachments. Attachments are specified
+        as a dictionary mapping attachment names to strings.
 
         Args:
-          content (unicode): Content string
+          attachments (Dict[str, str]): Attachment dictionary
 
         Returns:
           EDXMLEvent:
         """
-        self._content = content
+        self._attachments = attachments
         return self
 
     def set_source(self, source_uri):
@@ -600,10 +610,17 @@ class EDXMLEvent(MutableMapping):
                 ).encode("utf-8")
             ).digest().encode(encoding)
         else:
+            attachment_strings = [
+                '%s:%s' % (name, attachment.replace('\n', '\\n')) for name, attachment in self.get_attachments().items()
+            ]
             return hashlib.sha1(
                 (
-                    '%s\n%s\n%s\n%s' %
-                    (self._source_uri, self._event_type_name, '\n'.join(sorted(object_strings)), self.get_content())
+                    '%s\n%s\n%s\n%s' % (
+                        self._source_uri,
+                        self._event_type_name,
+                        '\n'.join(sorted(object_strings)),
+                        '\n'.join(sorted(attachment_strings))
+                    )
                 ).encode("utf-8")
             ).digest().encode(encoding)
 
@@ -625,6 +642,7 @@ class EDXMLEvent(MutableMapping):
         try:
             event_type.validate_event_structure(self)
             event_type.validate_event_objects(self)
+            event_type.validate_event_attachments(self)
         except EDXMLValidationError:
             return False
         return True
@@ -647,7 +665,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
         raise NotImplementedError('ParsedEvent objects can only be created by parsers')
 
     def __str__(self):
@@ -773,7 +791,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         return deepcopy(self)
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         This override of the create() method of the EDXMLEvent class
@@ -817,13 +835,13 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                 self._properties[tag].add(element.text)
             return self._properties
 
-    def get_content(self):
-        try:
-            # Note: The text attribute is None for <content/> tags
-            content = self.find('{http://edxml.org/edxml}content').text
-            return content if content is not None else ''
-        except AttributeError:
-            return ''
+    def get_attachments(self):
+        attachments_element = self.find('{http://edxml.org/edxml}attachments')
+
+        attachments = {}
+        for attachment in attachments_element if attachments_element is not None else []:
+            attachments[attachment.tag[24:]] = attachment.text
+        return attachments
 
     def get_foreign_attributes(self):
         """
@@ -951,33 +969,39 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
 
         return self
 
-    def set_content(self, content):
+    def set_attachments(self, attachments):
         """
 
-        Set the event content.
+        Set the event attachments. Attachments are specified
+        as a dictionary mapping attachment names to strings.
 
         Args:
-          content (unicode): Content string
+          attachments (Dict[str, str]): Attachment dictionary
 
         Returns:
           ParsedEvent:
         """
-        try:
-            self.find('{http://edxml.org/edxml}content').text = content
-        except AttributeError:
-            etree.SubElement(self, '{http://edxml.org/edxml}content')
-            self.set_content(content)
-        except (TypeError, ValueError):
-            if type(content) in (str, unicode):
-                # Value contains illegal characters,
-                # replace them with unicode replacement characters.
-                if not hasattr(self, 'evil_xml_chars_regexp'):
-                    super(EDXMLEvent, self).__init__()
-                self.find('{http://edxml.org/edxml}content').text = unicode(
-                    re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content))
-            else:
-                raise ValueError(
-                    'Event content value is not a string: %s' % repr(content))
+        attachments_element = self.find('{http://edxml.org/edxml}attachments')
+
+        if attachments_element is None:
+            etree.SubElement(self, '{http://edxml.org/edxml}attachments')
+            return self.set_attachments(attachments)
+
+        for name, attachment in attachments.items():
+            try:
+                etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + name).text = attachment
+            except (TypeError, ValueError):
+                if type(attachment) in (str, unicode):
+                    # Attachment contains illegal characters,
+                    # replace them with unicode replacement characters.
+                    if not hasattr(self, 'evil_xml_chars_regexp'):
+                        super(EDXMLEvent, self).__init__()
+                    attachments_element.find('{http://edxml.org/edxml}' + name).text = unicode(
+                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
+                    )
+                else:
+                    raise ValueError(
+                        'Event attachment %s is not a string: %s' % (name, repr(attachment)))
         return self
 
     def add_parents(self, parent_hashes):
@@ -1031,7 +1055,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     or SimpleEDXMLWriter.
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -1044,20 +1068,18 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[optional]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          content (Optional[unicode]): Event content
+          attachments (Optional[Dict[str, str]]): Event attachments dictionary
 
         Returns:
           EventElement:
         """
-        super(EventElement, self).__init__(properties,
-                                           event_type_name, source_uri, parents, content)
-
+        super(EventElement, self).__init__(properties, event_type_name, source_uri, parents, attachments)
         super(EDXMLEvent, self).__init__()
 
         # These are now kept in an etree element.
         self._properties = None
         self._parents = None
-        self._content = None
+        self._attachments = None
 
         new = etree.Element('event')
         # We cannot simply set parents to an empty value, because this produces an empty attribute.
@@ -1082,19 +1104,21 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                     else:
                         raise ValueError(
                             'Value of property %s is not a string: %s' % (property_name, repr(value)))
-        if content:
-            try:
-                etree.SubElement(new, 'content').text = content
-            except (TypeError, ValueError):
-                if type(content) in (str, unicode):
-                    # Value contains illegal characters,
-                    # replace them with unicode replacement characters.
-                    new[-1].text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content)
-                    )
-                else:
-                    raise ValueError(
-                        'Event content is not a string: ' + repr(content))
+        if attachments != {}:
+            attachments_element = etree.SubElement(new, 'attachments')
+            for attachment_name, attachment in attachments.items():
+                try:
+                    etree.SubElement(attachments_element, attachment_name).text = attachment
+                except (TypeError, ValueError):
+                    if type(attachments) in (str, unicode):
+                        # Value contains illegal characters,
+                        # replace them with unicode replacement characters.
+                        attachments_element[-1].text = unicode(
+                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
+                        )
+                    else:
+                        raise ValueError(
+                            'Event attachment is not a string: ' + repr(attachment))
 
         self.__element = new
         self._properties = None
@@ -1190,7 +1214,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         return deepcopy(self)
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, content=None):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -1207,18 +1231,17 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          content (Optional[unicode]): Event content
+          attachments (Optional[Dict[str, str]]): Event attachments dictionary
 
         Returns:
           EventElement:
         """
         return cls(
-            {property_name: value if type(value) == list else [
-                value] for property_name, value in properties.items()},
+            {property_name: set(values) for property_name, values in properties.items()},
             event_type_name,
             source_uri,
             parents,
-            content
+            attachments
         )
 
     @classmethod
@@ -1253,12 +1276,14 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                 self._properties[element.tag].add(element.text)
             return self._properties
 
-    def get_content(self):
-        try:
-            return self.__element.find('content').text
-        except AttributeError:
-            # No content.
-            return ''
+    def get_attachments(self):
+        attachments_element = self.__element.find('attachments')
+
+        attachments = {}
+        for attachment in attachments_element if attachments_element is not None else []:
+            attachments[attachment.tag] = attachment.text
+
+        return attachments
 
     def get_foreign_attributes(self):
         attr = self.__element.attrib.items()
@@ -1374,34 +1399,39 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
 
         return self
 
-    def set_content(self, content):
+    def set_attachments(self, attachments):
         """
 
-        Set the event content.
+        Set the event attachments. Attachments are specified
+        as a dictionary mapping attachment names to strings.
 
         Args:
-          content (unicode): Content string
+          attachments (Dict[str, str]): Attachment dictionary
 
         Returns:
           EventElement:
         """
-        try:
-            self.__element.find('content').text = content
-        except AttributeError:
+        attachments_element = self.__element.find('attachments')
+
+        if attachments_element is None:
+            etree.SubElement(self.__element, 'attachments')
+            return self.set_attachments(attachments)
+
+        for name, attachment in attachments.items():
             try:
-                etree.SubElement(self.__element, 'content').text = content
+                etree.SubElement(attachments_element, name).text = attachment
             except (TypeError, ValueError):
-                if type(content) in (str, unicode):
-                    # Value contains illegal characters,
+                if type(attachment) in (str, unicode):
+                    # Attachment contains illegal characters,
                     # replace them with unicode replacement characters.
-                    self.__element.find('content').text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), content)
+                    attachments_element.find(name).text = unicode(
+                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
                     )
                 else:
                     raise ValueError(
-                        'Event content value is not a string: %s' % repr(content)
+                        'Event attachment %s is not a string: %s' % (name, repr(attachments))
                     )
-            return self
+        return self
 
     def add_parents(self, parent_hashes):
         """

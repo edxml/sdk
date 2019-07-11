@@ -172,6 +172,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # EventType structure checks out alright. Let us check the object values.
             self.__ontology.get_event_type(self.__current_event_type_name).validate_event_objects(event)
 
+            # Objects also appear to be OK. Let us check the attachments.
+            self.__ontology.get_event_type(self.__current_event_type_name).validate_event_attachments(event)
+
             # EventType validation did not find the issue. We have
             # no other option than to raise a RelaxNG validation error.
             raise EDXMLValidationError(

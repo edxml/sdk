@@ -48,7 +48,7 @@ def test_set_non_string_property_value_fails(event_element):
 
 def test_set_non_string_content_fails(event_element):
     with pytest.raises(ValueError):
-        event_element.set_content(True)
+        event_element.set_attachments({'attachment': True})
 
 
 def test_object_character_replacement(event_element):
@@ -66,8 +66,8 @@ def test_object_character_replacement(event_element):
 
 def test_set_invalid_content(event_element):
     unicode_replacement_character = unichr(0xfffd)
-    event_element.set_content(chr(0))
-    assert event_element.get_content() == unicode_replacement_character
+    event_element.set_attachments({'attachment': chr(0)})
+    assert event_element.get_attachments() == {'attachment': unicode_replacement_character}
 
 
 def test_cast_to_string(event_element):
