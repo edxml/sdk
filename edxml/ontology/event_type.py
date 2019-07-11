@@ -1291,12 +1291,11 @@ class EventType(OntologyElement, MutableMapping):
         return _process_split_template(_split_template(unicode(self.__attr[which]))[
             1], edxml_event.get_properties(), capitalize)
 
-    def validate_template(self, template, ontology):
+    def validate_template(self, template):
         """Checks if given template makes sense.
 
         Args:
           template (unicode): The template
-          ontology (edxml.ontology.Ontology): The corresponding ontology
 
         Raises:
           EDXMLValidationError
