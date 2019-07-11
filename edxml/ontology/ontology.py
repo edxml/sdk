@@ -665,12 +665,9 @@ class Ontology(OntologyElement):
         for object_type_name, object_type in self.__object_types.items():
             object_type.validate()
 
-        # Validate all event types and their
-        # story / summary templates
+        # Validate all event types
         for event_type_name, event_type in self.__event_types.items():
             event_type.validate()
-            event_type.validate_template(event_type.get_summary_template())
-            event_type.validate_template(event_type.get_story_template())
 
         # Check if all event type parents are defined
         for event_type_name, event_type in self.__event_types.items():

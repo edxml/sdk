@@ -1566,6 +1566,9 @@ class EventType(OntologyElement, MutableMapping):
                     (self.__attr['name'], self.__attr['timespan-end'])
                 )
 
+        self.validate_template(self.__attr['summary'])
+        self.validate_template(self.__attr['story'])
+
         for propertyName, eventProperty in self.get_properties().items():
             eventProperty.validate()
 
