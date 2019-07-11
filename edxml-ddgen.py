@@ -173,7 +173,14 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     time_start = time.time()
 
                 # Output one event
-                self.add_event(EDXMLEvent(property_objects, content=content))
+                self.add_event(
+                    EDXMLEvent(
+                        property_objects,
+                        event_type_name=self.args.eventtype_name,
+                        source_uri=self.event_source_uri_list[self.event_counter % 2],
+                        attachments={'content': content}
+                    )
+                )
                 self.event_counter += 1
                 self.current_event_group_size += 1
 
@@ -260,6 +267,8 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         event_type.create_property('property-c', self.args.objecttype_name + '.a').set_merge_strategy(drop_or_add)
         event_type.create_property('property-g', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_min)
         event_type.create_property('property-h', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_max)
+
+        event_type.create_attachment('content')
 
         for uri in self.event_source_uri_list:
             ontology.create_event_source(uri)

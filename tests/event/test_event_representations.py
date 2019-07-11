@@ -22,9 +22,10 @@ def another_sha1_hash():
 def ontology():
     ontology = Ontology()
     ontology.create_object_type("a")
+    ontology.create_event_source("/a/")
     event_type = ontology.create_event_type("a")
     event_type.create_property("smiley", "a")
-    ontology.create_event_source("/a/")
+    event_type.create_attachment("attachment")
 
     return ontology
 
@@ -54,7 +55,7 @@ def create_event_element(event):
         event_type_name=event.get_type_name(),
         source_uri=event.get_source_uri(),
         parents=event.get_explicit_parents(),
-        content=event.get_content()
+        attachments=event.get_attachments()
     ).set_foreign_attributes(event.get_foreign_attributes())
 
 
@@ -75,12 +76,12 @@ def event(request, ontology, sha1_hash):
 
 
 @pytest.fixture(params=('EdxmlEvent', 'ParsedEvent', 'EventElement'))
-def event_with_content(request, ontology, sha1_hash):
+def event_with_attachment(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
         properties={"smiley": u"😀"},
         event_type_name="a",
         source_uri="/a/",
-        content="test"
+        attachments={'attachment': 'test'}
     )
 
     if request.param == 'EdxmlEvent':
@@ -239,20 +240,20 @@ def test_move_property_values(event):
     assert source.get_properties() == {"b": {"bar"}}
 
 
-def test_read_content(event, event_with_content):
-    assert event.get_content() == ''
-    assert event_with_content.get_content() == 'test'
+def test_get_attachments(event, event_with_attachment):
+    assert event.get_attachments() == {}
+    assert event_with_attachment.get_attachments() == {'attachment': 'test'}
 
 
-def test_set_content(event):
-    assert event.get_content() == ''
-    event.set_content('test')
-    assert event.get_content() == 'test'
+def test_set_attachments(event):
+    assert event.get_attachments() == {}
+    event.set_attachments({'attachment': 'test'})
+    assert event.get_attachments() == {'attachment': 'test'}
 
 
-def test_change_content(event):
-    event.set_content("changed")
-    assert event.get_content() == "changed"
+def test_change_attachments(event):
+    event.set_attachments({'attachment': "changed"})
+    assert event.get_attachments() == {'attachment': "changed"}
 
 
 def test_read_parents(event_with_explicit_parent, sha1_hash):

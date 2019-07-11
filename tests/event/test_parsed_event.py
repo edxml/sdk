@@ -78,7 +78,7 @@ def test_set_non_string_property_value_fails(parsed_event):
 
 def test_set_non_string_content_fails(parsed_event):
     with pytest.raises(ValueError):
-        parsed_event.set_content(True)
+        parsed_event.set_attachments({'attachment': True})
 
 
 def test_object_character_replacement(parsed_event):
@@ -96,8 +96,8 @@ def test_object_character_replacement(parsed_event):
 
 def test_set_invalid_content(parsed_event):
     unicode_replacement_character = unichr(0xfffd)
-    parsed_event.set_content(chr(0))
-    assert parsed_event.get_content() == unicode_replacement_character
+    parsed_event.set_attachments({'attachment': chr(0)})
+    assert parsed_event.get_attachments() == {'attachment': unicode_replacement_character}
 
 
 def test_direct_xml_element_manipulation(parsed_event):

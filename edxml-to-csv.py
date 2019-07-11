@@ -36,6 +36,7 @@
 #  column is generated. If one property has multiple objects, multiple output
 #  lines are generated.
 import argparse
+import json
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
@@ -78,8 +79,12 @@ class EDXML2CSV(EDXMLPullParser):
     def _parsed_event(self, event):
 
         property_objects = {}
-        escaped_event_content = event.get_content().replace(
-            '\n', '\\n').replace(self.__column_separator, '\\' + self.__column_separator)
+        escaped_event_content = json.dumps(
+            {name: attachment
+                .replace('\n', '\\n')
+                .replace(self.__column_separator, '\\' + self.__column_separator)
+             for name, attachment in event.get_attachments().items()}
+        )
 
         for property_name in self.__property_names:
             property_objects[property_name] = []

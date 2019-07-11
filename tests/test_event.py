@@ -40,10 +40,10 @@ def eventproperty_unique(eventtype_unique, objecttype):
 
 
 def test_event_init():
-    content = u"Två dagar kvar🎉🎉"
-    event = EDXMLEvent({}, event_type_name=None, source_uri=None, parents=None, content=content)
+    attachments = {"test": u"Två dagar kvar🎉🎉"}
+    event = EDXMLEvent({}, event_type_name=None, source_uri=None, parents=None, attachments=attachments)
 
-    assert event.get_content() == content
+    assert event.get_attachments() == attachments
 
 
 def test_event_valid(ontology, eventtype, eventproperty):

@@ -226,6 +226,55 @@ class Transcoder(EDXMLBase):
       {'event_type_name': ['timespan-start', 'timespan-end']}
     """
 
+    TYPE_ATTACHMENTS = {}
+    """
+    The TYPE_ATTACHMENTS attribute is a dictionary mapping EDXML event type names to attachment names.
+    Example::
+
+      {'event_type_name': ['my-attachment', 'another-attachment']}
+    """
+
+    TYPE_ATTACHMENT_MEDIA_TYPES = {}
+    """
+    The TYPE_ATTACHMENT_MEDIA_TYPES attribute is a dictionary mapping EDXML event type names to attachment media
+    types. The attachment media types are a dictionary mapping attachment names to its RFC 6838 media type.
+    Example::
+
+      {'event_type_name': {'my-attachment': 'text/plain'}}
+    """
+
+    TYPE_ATTACHMENT_DISPLAY_NAMES = {}
+    """
+    The TYPE_ATTACHMENT_DISPLAY_NAMES attribute is a dictionary mapping EDXML event type names
+    to attachment display names. The attachment display names are a dictionary mapping attachment names
+    to display names. Each display name is a list, containing the singular form, optionally followed
+    by the plural form, like this:
+
+        {'event-type-name': {'my-attachment': ['attachment', 'attachments']}}
+
+    The plural form may be omitted. In that case, the plural form will be assumed
+    to be the singular form with an additional 's' appended.
+    """
+
+    TYPE_ATTACHMENT_DESCRIPTIONS = {}
+    """
+    The TYPE_ATTACHMENT_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to attachment
+    descriptions. The attachment descriptions are a dictionary mapping attachment names to its description.
+    Example::
+
+      {'event_type_name': {'my-attachment': 'Just some attachment'}}
+    """
+
+    TYPE_ATTACHMENT_ENCODINGS = {}
+    """
+    The TYPE_ATTACHMENT_ENCODINGS attribute is a dictionary mapping EDXML event type names to attachment
+    encodings. The attachment encodings are a dictionary mapping attachment names their encodings. Valid
+    encodings are either 'unicode' or 'base64'
+    Example::
+
+      {'event_type_name': {'my-attachment': 'unicode'}}
+    """
+
     def __init__(self):
         super(Transcoder, self).__init__()
 
@@ -349,6 +398,24 @@ class Transcoder(EDXMLBase):
                             self.TYPE_PROPERTY_MERGE_STRATEGIES[EventTypeName][PropertyName])
                     if PropertyName in self.TYPE_UNIQUE_PROPERTIES.get(EventTypeName, {}):
                         event_type[PropertyName].unique()
+
+        for EventTypeName in self.TYPES:
+            if EventTypeName not in self.TYPE_ATTACHMENTS:
+                continue
+            for attachment_name in self.TYPE_ATTACHMENTS[EventTypeName]:
+                attachment = event_type.create_attachment(attachment_name)
+                if attachment_name in self.TYPE_ATTACHMENT_DESCRIPTIONS.get(EventTypeName, {}):
+                    attachment.set_description(self.TYPE_ATTACHMENT_DESCRIPTIONS[EventTypeName][attachment_name])
+                if attachment_name in self.TYPE_ATTACHMENT_DISPLAY_NAMES.get(EventTypeName, {}):
+                    attachment.set_display_name(
+                        self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name][0],
+                        self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name][1]
+                        if len(self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name]) > 1 else None
+                    )
+                if attachment_name in self.TYPE_ATTACHMENT_MEDIA_TYPES.get(EventTypeName, {}):
+                    attachment.set_media_type(self.TYPE_ATTACHMENT_MEDIA_TYPES[EventTypeName][attachment_name])
+                if attachment_name in self.TYPE_ATTACHMENT_ENCODINGS.get(EventTypeName, {}):
+                    attachment.set_encoding(self.TYPE_ATTACHMENT_ENCODINGS[EventTypeName][attachment_name])
 
         for EventTypeName in self.TYPES:
             if EventTypeName in self.PARENT_MAPPINGS:
