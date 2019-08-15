@@ -4,7 +4,7 @@ import re
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class EventTypeAttachment(OntologyElement):
@@ -36,12 +36,14 @@ class EventTypeAttachment(OntologyElement):
             encode_base64 (bool): Encode as base64 string yes / no
         """
 
-        display_name_singular = display_name_singular or name
+        display_name_singular = display_name_singular or name.replace('-', ' ')
+        display_name_plural = display_name_plural or display_name_singular + 's'
 
         self._attr = {
             'name': name,
             'media-type': media_type,
-            'display-name': '%s/%s' % (display_name_singular, display_name_plural or display_name_singular + 's'),
+            'display-name-singular': display_name_singular,
+            'display-name-plural': display_name_plural,
             'description': description or display_name_singular,
             'encoding': 'baes64' if encode_base64 else 'unicode'
         }
@@ -87,9 +89,8 @@ class EventTypeAttachment(OntologyElement):
           edxml.ontology.EventTypeAttachment: The EventTypeAttachment instance
         """
 
-        if plural is None:
-            plural = '%ss' % singular
-        self._set_attr('display-name', '%s/%s' % (singular, plural))
+        self._set_attr('display-name-singular', singular)
+        self._set_attr('display-name-plural', plural or (singular + 's'))
         return self
 
     def set_media_type(self, media_type):
@@ -176,7 +177,7 @@ class EventTypeAttachment(OntologyElement):
         Returns:
           str:
         """
-        return self._attr['display-name'].split('/')[0]
+        return self._attr['display-name-singular']
 
     def get_display_name_plural(self):
         """
@@ -186,7 +187,7 @@ class EventTypeAttachment(OntologyElement):
         Returns:
           str:
         """
-        return self._attr['display-name'].split('/')[1]
+        return self._attr['display-name-plural']
 
     def get_media_type(self):
         """
@@ -260,16 +261,28 @@ class EventTypeAttachment(OntologyElement):
                 % self._attr['description']
             )
 
-        if not len(self._attr['display-name']) <= 64:
+        if not len(self._attr['display-name-singular']) <= 32:
             raise EDXMLValidationError(
-                'The display name of attachment "%s" is too long: "%s"' % (
-                    self._attr['name'], self._attr['display-name'])
+                'The singular display name of attachment "%s" is too long: "%s"' % (
+                    self._attr['name'], self._attr['display-name-singular'])
             )
 
-        if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+        if not len(self._attr['display-name-plural']) <= 32:
             raise EDXMLValidationError(
-                'Attachment definition of "%s" has an invalid display-name attribute: "%s"' % (
-                    self._attr['name'], self._attr['display-name'])
+                'The plural display name of attachment "%s" is too long: "%s"' % (
+                    self._attr['name'], self._attr['display-name-plural'])
+            )
+
+        if normalize_xml_token(self._attr['display-name-singular']) != self._attr['display-name-singular']:
+            raise EDXMLValidationError(
+                'The singular display name of attachment "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['display-name-singular'])
+            )
+
+        if normalize_xml_token(self._attr['display-name-plural']) != self._attr['display-name-plural']:
+            raise EDXMLValidationError(
+                'The plural display name of attachment "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['display-name-plural'])
             )
 
         self._event_type.validate_template(self._attr['description'])
@@ -278,13 +291,12 @@ class EventTypeAttachment(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, element, event_type):
-        display_name_singular, display_name_plural = element.attrib['display-name'].split('/')
         return cls(
             event_type,
             element.attrib['name'],
             element.attrib['media-type'],
-            display_name_singular,
-            display_name_plural,
+            element.attrib['display-name-singular'],
+            element.attrib['display-name-plural'],
             element.attrib['description'],
             element.attrib['encoding']
         )

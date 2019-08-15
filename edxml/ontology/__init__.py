@@ -41,6 +41,8 @@ sources, and so on.
     :show-inheritance:
 """
 from __future__ import absolute_import
+
+from edxml.ontology.util import normalize_xml_token
 from edxml.ontology.ontology_element import OntologyElement
 from edxml.ontology.data_type import DataType
 from edxml.ontology.event_type import EventType
@@ -57,4 +59,5 @@ from edxml.ontology.brick import Brick
 
 
 __all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
-           'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick', 'PropertyConcept', 'EventTypeAttachment']
+           'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick', 'PropertyConcept', 'EventTypeAttachment',
+           'normalize_xml_token']

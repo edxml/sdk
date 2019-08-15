@@ -10,12 +10,12 @@ from edxml.ontology import OntologyElement
 class EventType(OntologyElement):
 
     NAME_PATTERN = ...
-    DISPLAY_NAME_PATTERN = ...
     CLASS_LIST_PATTERN = ...
     TEMPLATE_PATTERN = ...
     KNOWN_FORMATTERS = ...  # type: List[str]
 
-    def __init__(self, ontology: edxml.ontology.Ontology, name: str, display_name: str = None, description: str = None,
+    def __init__(self, ontology: edxml.ontology.Ontology, name: str, display_name_singular: str = None,
+                 display_name_plural: str = None, description: str = None,
                  class_list: str = '', summary: str = 'no description available',
                  story: str = 'no description available', parent: edxml.ontology.EventTypeParent = None) -> None:
 

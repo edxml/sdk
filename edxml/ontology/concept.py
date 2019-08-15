@@ -5,7 +5,7 @@ from lxml import etree
 
 import edxml
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class Concept(OntologyElement):
@@ -14,13 +14,16 @@ class Concept(OntologyElement):
     """
 
     NAME_PATTERN = re.compile('^[a-z0-9.-]{1,64}$')
-    DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
 
-    def __init__(self, ontology, name, display_name=None, description=None):
+    def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None):
+
+        display_name_singular = display_name_singular or name.replace('.', ' ')
+        display_name_plural = display_name_plural or display_name_singular + 's'
 
         self._attr = {
             'name': name,
-            'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
+            'display-name-singular': display_name_singular,
+            'display-name-plural': display_name_plural,
             'description': description or name,
             'version': 1
         }
@@ -48,17 +51,6 @@ class Concept(OntologyElement):
 
         return self._attr['name']
 
-    def get_display_name(self):
-        """
-
-        Returns the display-name attribute of the concept.
-
-        Returns:
-          str:
-        """
-
-        return self._attr['display-name']
-
     def get_display_name_singular(self):
         """
 
@@ -68,7 +60,7 @@ class Concept(OntologyElement):
           str:
         """
 
-        return self._attr['display-name'].split('/')[0]
+        return self._attr['display-name-singular']
 
     def get_display_name_plural(self):
         """
@@ -79,7 +71,7 @@ class Concept(OntologyElement):
           str:
         """
 
-        return self._attr['display-name'].split('/')[1]
+        return self._attr['display-name-plural']
 
     def get_description(self):
         """
@@ -133,10 +125,9 @@ class Concept(OntologyElement):
           edxml.ontology.Concept: The Concept instance
         """
 
-        if plural is None:
-            plural = '%ss' % singular
+        self._set_attr('display-name-singular', singular)
+        self._set_attr('display-name-plural', plural or (singular + 's'))
 
-        self._set_attr('display-name', '%s/%s' % (singular, plural))
         return self
 
     def set_version(self, version):
@@ -177,15 +168,28 @@ class Concept(OntologyElement):
             raise EDXMLValidationError(
                 'Concept "%s" has an invalid name.' % self._attr['name'])
 
-        if not len(self._attr['display-name']) <= 64:
+        if not len(self._attr['display-name-singular']) <= 32:
             raise EDXMLValidationError(
-                'The display name of concept "%s" is too long: "%s".' % (
-                    self._attr['name'], self._attr['display-name'])
+                'The singular display name of concept "%s" is too long: "%s".' % (
+                    self._attr['name'], self._attr['display-name-singular'])
             )
-        if not re.match(self.DISPLAY_NAME_PATTERN, self._attr['display-name']):
+
+        if not len(self._attr['display-name-plural']) <= 32:
             raise EDXMLValidationError(
-                'Concept "%s" has an invalid display name: "%s"' % (
-                    self._attr['name'], self._attr['display-name'])
+                'The plural display name of concept "%s" is too long: "%s".' % (
+                    self._attr['name'], self._attr['display-name-plural'])
+            )
+
+        if normalize_xml_token(self._attr['display-name-singular']) != self._attr['display-name-singular']:
+            raise EDXMLValidationError(
+                'Singular display name of concept "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['display-name-singular'])
+            )
+
+        if normalize_xml_token(self._attr['display-name-plural']) != self._attr['display-name-plural']:
+            raise EDXMLValidationError(
+                'Plural display name of concept "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['display-name-plural'])
             )
 
         if not len(self._attr['description']) <= 128:
@@ -201,7 +205,8 @@ class Concept(OntologyElement):
         return cls(
             ontology,
             type_element.attrib['name'],
-            type_element.attrib['display-name'],
+            type_element.attrib['display-name-singular'],
+            type_element.attrib['display-name-plural'],
             type_element.attrib['description'],
         ).set_version(type_element.attrib['version'])
 

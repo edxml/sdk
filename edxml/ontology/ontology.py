@@ -140,14 +140,12 @@ class Ontology(OntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
 
-        if display_name_singular:
-            display_name = '%s/%s' % (display_name_singular,
-                                      display_name_plural if display_name_plural else '%ss' % display_name_singular)
-        else:
-            display_name = None
-
         if name not in self.__object_types:
-            self._add_object_type(ObjectType(self, name, display_name, description, data_type), validate=False)
+            self._add_object_type(
+                ObjectType(
+                    self, name, display_name_singular, display_name_plural, description, data_type
+                ), validate=False
+            )
 
         return self.__object_types[name]
 
