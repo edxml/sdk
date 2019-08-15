@@ -5,7 +5,7 @@ import edxml.ontology
 
 from edxml.EDXMLBase import EDXMLValidationError
 from lxml import etree
-
+from typing import Dict
 from edxml.ontology import OntologyElement
 
 
