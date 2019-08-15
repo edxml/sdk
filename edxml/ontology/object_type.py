@@ -7,7 +7,7 @@ from lxml import etree
 
 import edxml
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import DataType, OntologyElement
+from edxml.ontology import DataType, OntologyElement, normalize_xml_token
 
 
 class ObjectType(OntologyElement):
@@ -20,12 +20,16 @@ class ObjectType(OntologyElement):
     FUZZY_MATCHING_PATTERN = re.compile(
         r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
-    def __init__(self, ontology, name, display_name=None, description=None, data_type='string:0:cs:u', compress=False,
-                 fuzzy_matching='none', regexp=r'[\s\S]*'):
+    def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
+                 data_type='string:0:cs:u', compress=False, fuzzy_matching='none', regexp=r'[\s\S]*'):
+
+        display_name_singular = display_name_singular or name.replace('.', ' ')
+        display_name_plural = display_name_plural or display_name_singular + 's'
 
         self.__attr = {
             'name': name,
-            'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
+            'display-name-singular': display_name_singular,
+            'display-name-plural': display_name_plural,
             'description': description or name,
             'data-type': data_type,
             'compress': bool(compress),
@@ -57,17 +61,6 @@ class ObjectType(OntologyElement):
 
         return self.__attr['name']
 
-    def get_display_name(self):
-        """
-
-        Returns the display-name attribute of the object type.
-
-        Returns:
-          str:
-        """
-
-        return self.__attr['display-name']
-
     def get_display_name_singular(self):
         """
 
@@ -77,7 +70,7 @@ class ObjectType(OntologyElement):
           str:
         """
 
-        return self.__attr['display-name'].split('/')[0]
+        return self.__attr['display-name-singular']
 
     def get_display_name_plural(self):
         """
@@ -88,7 +81,7 @@ class ObjectType(OntologyElement):
           str:
         """
 
-        return self.__attr['display-name'].split('/')[1]
+        return self.__attr['display-name-plural']
 
     def get_description(self):
         """
@@ -201,10 +194,8 @@ class ObjectType(OntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
 
-        if plural is None:
-            plural = '%ss' % singular
-
-        self._set_attr('display-name', '%s/%s' % (singular, plural))
+        self._set_attr('display-name-singular', singular)
+        self._set_attr('display-name-plural', plural or (singular + 's'))
         return self
 
     def set_regexp(self, pattern):
@@ -385,15 +376,28 @@ class ObjectType(OntologyElement):
             raise EDXMLValidationError(
                 'Object type "%s" has an invalid name.' % self.__attr['name'])
 
-        if not len(self.__attr['display-name']) <= 64:
+        if not len(self.__attr['display-name-singular']) <= 32:
             raise EDXMLValidationError(
-                'The display name of object type "%s" is too long: "%s".' % (
-                    self.__attr['name'], self.__attr['display-name'])
+                'The singular display name of object type "%s" is too long: "%s".' % (
+                    self.__attr['name'], self.__attr['display-name-singular'])
             )
-        if not re.match(self.DISPLAY_NAME_PATTERN, self.__attr['display-name']):
+
+        if not len(self.__attr['display-name-plural']) <= 32:
             raise EDXMLValidationError(
-                'Object type "%s" has an invalid display name: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name'])
+                'The plural display name of object type "%s" is too long: "%s".' % (
+                    self.__attr['name'], self.__attr['display-name-plural'])
+            )
+
+        if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
+            raise EDXMLValidationError(
+                'The singular display name of object type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-singular'])
+            )
+
+        if normalize_xml_token(self.__attr['display-name-plural']) != self.__attr['display-name-plural']:
+            raise EDXMLValidationError(
+                'The plural display name of object type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-plural'])
             )
 
         if not len(self.__attr['description']) <= 128:
@@ -437,7 +441,8 @@ class ObjectType(OntologyElement):
         return cls(
             ontology,
             type_element.attrib['name'],
-            type_element.attrib['display-name'],
+            type_element.attrib['display-name-singular'],
+            type_element.attrib['display-name-plural'],
             type_element.attrib['description'],
             type_element.attrib['data-type'],
             type_element.get('compress', 'false') == 'true',

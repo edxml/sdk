@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <edxml version="3.0.0"><ontology>
   <objecttypes>
-    <objecttype version="1" compress="false" data-type="number:decimal:12:9:signed" description="objecttype.c" display-name="objecttype c/objecttype c" fuzzy-matching="none" name="objecttype.c" regexp="[\s\S]*"/>
-    <objecttype version="1" compress="false" data-type="number:bigint:signed" description="objecttype.b" display-name="objecttype b/objecttype b" fuzzy-matching="none" name="objecttype.b" regexp="[\s\S]*"/>
-    <objecttype version="1" compress="false" data-type="string:16:cs" description="objecttype.a" display-name="objecttype a/objecttype a" fuzzy-matching="none" name="objecttype.a" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="number:decimal:12:9:signed" description="objecttype.c" display-name-singular="objecttype c" display-name-plural="objecttype c" fuzzy-matching="none" name="objecttype.c" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="number:bigint:signed" description="objecttype.b" display-name-singular="objecttype b" display-name-plural="objecttype b" fuzzy-matching="none" name="objecttype.b" regexp="[\s\S]*"/>
+    <objecttype version="1" compress="false" data-type="string:16:cs" description="objecttype.a" display-name-singular="objecttype a" display-name-plural="objecttype a" fuzzy-matching="none" name="objecttype.a" regexp="[\s\S]*"/>
   </objecttypes>
   <concepts/>
   <eventtypes>
-    <eventtype version="1" classlist="" description="eventtype.a" display-name="eventtype a/eventtype a" name="eventtype.a" story="no description available" summary="no description available">
+    <eventtype version="1" classlist="" description="eventtype.a" display-name-singular="eventtype a" display-name-plural="eventtype a" name="eventtype.a" story="no description available" summary="no description available">
       <properties>
         <property description="property f" merge="drop" optional="true" multivalued="true" name="property-f" object-type="objecttype.c" similar="" unique="false"/>
         <property description="property g" merge="drop" optional="true" multivalued="true" name="property-g" object-type="objecttype.c" similar="" unique="false"/>

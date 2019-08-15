@@ -14,7 +14,7 @@ from lxml.builder import ElementMaker
 from termcolor import colored
 
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class EventType(OntologyElement, MutableMapping):
@@ -26,7 +26,6 @@ class EventType(OntologyElement, MutableMapping):
     """
 
     NAME_PATTERN = re.compile("^[a-z0-9.-]*$")
-    DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
     TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
     KNOWN_FORMATTERS = (
@@ -35,12 +34,16 @@ class EventType(OntologyElement, MutableMapping):
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
     )
 
-    def __init__(self, ontology, name, display_name=None, description=None, class_list='',
-                 summary='no description available', story='no description available', parent=None):
+    def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
+                 class_list='', summary='no description available', story='no description available', parent=None):
+
+        display_name_singular = display_name_singular or name.replace('.', ' ')
+        display_name_plural = display_name_plural or display_name_singular + 's'
 
         self.__attr = {
             'name': name,
-            'display-name': display_name or ' '.join(('%s/%s' % (name, name)).split('.')),
+            'display-name-singular': display_name_singular,
+            'display-name-plural': display_name_plural,
             'description': description or name,
             'classlist': class_list,
             'summary': summary,
@@ -152,7 +155,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           str:
         """
-        return self.__attr['display-name'].split('/')[0]
+        return self.__attr['display-name-singular']
 
     def get_display_name_plural(self):
         """
@@ -162,7 +165,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           Optional[str]:
         """
-        return self.__attr['display-name'].split('/')[1]
+        return self.__attr['display-name-plural']
 
     def get_timespan_property_name_start(self):
         """
@@ -778,9 +781,8 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        if plural is None:
-            plural = '%ss' % singular
-        self._set_attr('display-name', '%s/%s' % (singular, plural))
+        self._set_attr('display-name-singular', singular)
+        self._set_attr('display-name-plural', plural or (singular + 's'))
         return self
 
     def set_summary_template(self, summary):
@@ -1575,15 +1577,28 @@ class EventType(OntologyElement, MutableMapping):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
-        if not len(self.__attr['display-name']) <= 64:
+        if not len(self.__attr['display-name-singular']) <= 32:
             raise EDXMLValidationError(
-                'The display name of object type "%s" is too long: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name'])
+                'The singular display name of event type "%s" is too long: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-singular'])
             )
-        if not re.match(self.DISPLAY_NAME_PATTERN, self.__attr['display-name']):
+
+        if not len(self.__attr['display-name-plural']) <= 32:
             raise EDXMLValidationError(
-                'Object type "%s" has an invalid display-name attribute: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name'])
+                'The plural display name of event type "%s" is too long: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-plural'])
+            )
+
+        if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
+            raise EDXMLValidationError(
+                'The singular display name of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-singular'])
+            )
+
+        if normalize_xml_token(self.__attr['display-name-plural']) != self.__attr['display-name-plural']:
+            raise EDXMLValidationError(
+                'The plural display name of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['display-name-plural'])
             )
 
         if not len(self.__attr['description']) <= 128:
@@ -1643,9 +1658,14 @@ class EventType(OntologyElement, MutableMapping):
     @classmethod
     def create_from_xml(cls, type_element, ontology):
         event_type = cls(
-            ontology, type_element.attrib['name'], type_element.attrib['display-name'],
-            type_element.attrib['description'], type_element.attrib.get('classlist', ''),
-            type_element.attrib['summary'], type_element.attrib['story']
+            ontology,
+            type_element.attrib['name'],
+            type_element.attrib['display-name-singular'],
+            type_element.attrib['display-name-plural'],
+            type_element.attrib['description'],
+            type_element.attrib.get('classlist', ''),
+            type_element.attrib['summary'],
+            type_element.attrib['story']
         ).set_version(type_element.attrib['version'])\
          .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
          .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))
