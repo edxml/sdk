@@ -29,7 +29,6 @@
 
 """This module contains generic (base)classes used throughout the SDK."""
 import sys
-import re
 
 
 class EDXMLError(Exception):
@@ -121,7 +120,4 @@ class EvilCharacterFilter(object):
         regexp_ranges = ["%s-%s" % (unichr(low), unichr(high))
                          for (low, high) in ranges]
 
-        self.evil_xml_chars_regexp = re.compile(u'[%s]' % u''.join(regexp_ranges))
-        """
-    This is the compiled regular expression.
-    """
+        self.evil_xml_chars_regexp = u'[%s]' % u''.join(regexp_ranges)
