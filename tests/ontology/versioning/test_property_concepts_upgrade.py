@@ -82,6 +82,25 @@ def test_associations_with_different_properties_cannot_be_compared():
     assert_invalid_ontology_upgrade(a, b)
 
 
+def test_remove_concept_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('b')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    a['a'].identifies('a')
+
+    # An attempt to upgrade to a version missing the
+    # concept association must fail.
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_change_associated_concept_not_allowed():
 
     o = Ontology()
@@ -100,6 +119,25 @@ def test_change_associated_concept_not_allowed():
     # An attempt to upgrade to a version having a different
     # concept association must fail.
     assert_invalid_ontology_upgrade(a, b)
+
+
+def test_add_concept_association():
+
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('b')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+    a['a'].identifies('a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    b['a'].identifies('b')
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
 
 
 def test_confidence_upgrade():
