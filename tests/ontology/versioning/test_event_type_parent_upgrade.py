@@ -69,7 +69,7 @@ def test_changing_property_map_not_allowed():
     assert_invalid_ontology_upgrade(child_a, child_b)
 
 
-def test_add_parent_not_allowed():
+def test_add_parent():
 
     o = Ontology()
     o.create_object_type('a')
@@ -82,8 +82,8 @@ def test_add_parent_not_allowed():
     child_b = copy.deepcopy(child_a).set_version(2)
     child_b.make_children('of', parent.is_parent('of', child_b))
 
-    # Comparing two should now fail.
-    assert_invalid_ontology_upgrade(child_a, child_b)
+    # Now, child_b should be a valid upgrade of child_a and vice versa.
+    assert_valid_upgrade(child_a, child_b)
 
 
 def test_remove_parent_not_allowed():
