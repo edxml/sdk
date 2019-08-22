@@ -1728,8 +1728,13 @@ class EventType(OntologyElement, MutableMapping):
 
         # Check for illegal upgrade paths:
 
-        if (old.get_parent() is None) != (new.get_parent() is None):
-            # One version has a parent, the other has not. No upgrade possible.
+        if old.get_parent() is None and new.get_parent() is not None:
+            # New version adds a parent.
+            equal = False
+
+        if new.get_parent() is None and old.get_parent() is not None:
+            # New version is missing the parent definition that
+            # the old one has. No upgrade possible.
             equal = is_valid_upgrade = False
 
         if old.get_properties().keys() != new.get_properties().keys():
@@ -1851,8 +1856,11 @@ class EventType(OntologyElement, MutableMapping):
         if event_type > self:
             # The new definition is indeed newer. Update self.
 
-            if self.get_parent() is not None:
-                self.get_parent().update(event_type.get_parent())
+            if event_type.get_parent() is not None:
+                if self.get_parent() is not None:
+                    self.get_parent().update(event_type.get_parent())
+                else:
+                    self.set_parent(event_type.get_parent())
 
             for property_name, property in self.get_properties().items():
                 self[property_name].update(event_type[property_name])
