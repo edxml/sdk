@@ -486,8 +486,10 @@ class ObjectType(OntologyElement):
         # Check for illegal upgrade paths:
 
         if old.get_regexp() != new.get_regexp():
-            # The regular expressions differ, no upgrade possible.
-            equal = is_valid_upgrade = False
+            equal = False
+            if old.get_regexp() != '[\s\S]*' and new.get_regexp().find(old.get_regexp() + "|") != 0:
+                # The new expression is not a valid extension of the old one.
+                is_valid_upgrade = False
 
         if old.get_data_type().get() != new.get_data_type().get():
             # The data types differ, no upgrade possible.
@@ -522,6 +524,7 @@ class ObjectType(OntologyElement):
             self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
+            self.set_regexp(object_type.get_regexp())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
 
