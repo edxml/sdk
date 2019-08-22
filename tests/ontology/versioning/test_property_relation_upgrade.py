@@ -156,6 +156,24 @@ def test_description_upgrade():
     assert_valid_upgrade(a, b)
 
 
+def test_predicate_upgrade():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+    a.create_property('b', 'a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    a['a'].relate_to('associated with', 'b')
+    b['a'].relate_to('related to', 'b')
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
 def test_confidence_upgrade():
     o = Ontology()
     o.create_object_type('a')
