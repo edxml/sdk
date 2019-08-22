@@ -54,7 +54,7 @@ def test_relation_order_is_insignificant():
     assert a == b
 
 
-def test_adding_relation_fails():
+def test_add_relation():
 
     o1 = Ontology()
     o1.create_object_type("a")
@@ -75,9 +75,8 @@ def test_adding_relation_fails():
     b["a"].relate_to('related to', 'b')
     b["b"].relate_to('related to', 'c')
 
-    # The two versions of the event type are now incompatible and
-    # cannot be compared.
-    assert_invalid_ontology_upgrade(a, b)
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
 
 
 def test_removing_relation_fails():

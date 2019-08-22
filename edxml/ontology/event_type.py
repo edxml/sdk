@@ -1747,8 +1747,11 @@ class EventType(OntologyElement, MutableMapping):
                     is_valid_upgrade &= new.is_timeless()
 
         if old.get_property_relations().keys() != new.get_property_relations().keys():
-            # Versions do not agree on their property relations set. No upgrade possible.
-            equal = is_valid_upgrade = False
+            # Adding a relation is possible, removing one is not.
+            equal = False
+            missing_relation_ids = set(old.get_property_relations().keys()) - set(new.get_property_relations().keys())
+            new_relation_ids = set(new.get_property_relations().keys()) - set(old.get_property_relations().keys())
+            is_valid_upgrade &= versions_differ and len(missing_relation_ids) == 0
 
         if set(old.get_attachments().keys()) - set(new.get_attachments().keys()) != set():
             # New version removes attachments. No upgrade possible.
@@ -1859,6 +1862,9 @@ class EventType(OntologyElement, MutableMapping):
 
             for relation_id, relation in self.get_property_relations().items():
                 self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
+
+            for relation_id in set(event_type.get_property_relations().keys()) - set(self.get_property_relations().keys()):
+                self.add_relation(event_type.get_property_relations()[relation_id])
 
             for attachment_name, attachment in event_type.get_attachments().items():
                 if attachment_name in self.get_attachments().keys():
