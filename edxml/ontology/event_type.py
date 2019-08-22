@@ -65,6 +65,7 @@ class EventType(OntologyElement, MutableMapping):
         # type: Dict[str, edxml.ontology.EventProperty]
         self.__cachedUniqueProperties = None
         # type: Dict[str, edxml.ontology.EventProperty]
+        self.__cached_is_timeless = None
         self.__cachedHashProperties = None
 
     def __delitem__(self, property_name):
@@ -118,6 +119,7 @@ class EventType(OntologyElement, MutableMapping):
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__cachedUniqueProperties = None
+        self.__cached_is_timeless = None
         self.__cachedHashProperties = None
         self.__ontology._child_modified_callback()
         return self
@@ -1731,8 +1733,18 @@ class EventType(OntologyElement, MutableMapping):
             equal = is_valid_upgrade = False
 
         if old.get_properties().keys() != new.get_properties().keys():
-            # Versions do not agree on their property set. No upgrade possible.
-            equal = is_valid_upgrade = False
+            # Adding a property is possible, removing one is not.
+            equal = False
+            missing_property_names = set(old.get_properties().keys()) - set(new.get_properties().keys())
+            new_property_names = set(new.get_properties().keys()) - set(old.get_properties().keys())
+            is_valid_upgrade &= versions_differ and len(missing_property_names) == 0
+
+            for property_name in new_property_names:
+                # Newly added properties must be optional.
+                is_valid_upgrade &= new.get_properties()[property_name].is_optional()
+                # A timeless event type must remain timeless.
+                if old.is_timeless():
+                    is_valid_upgrade &= new.is_timeless()
 
         if old.get_property_relations().keys() != new.get_property_relations().keys():
             # Versions do not agree on their property relations set. No upgrade possible.
@@ -1841,6 +1853,9 @@ class EventType(OntologyElement, MutableMapping):
 
             for property_name, property in self.get_properties().items():
                 self[property_name].update(event_type[property_name])
+
+            for property_name in set(event_type.get_properties().keys()) - set(self.get_properties().keys()):
+                self.add_property(event_type.get_properties()[property_name])
 
             for relation_id, relation in self.get_property_relations().items():
                 self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])

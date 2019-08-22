@@ -8,7 +8,7 @@ of an event type.
 import copy
 import pytest
 
-from edxml.ontology import Ontology
+from edxml.ontology import Ontology, DataType
 from tests.assertions import assert_valid_upgrade, assert_invalid_ontology_upgrade
 
 
@@ -52,14 +52,14 @@ def test_removing_property_fails():
     a.create_property("b", "a")
 
     o2 = copy.deepcopy(o1)
-    b = o2.get_event_type("a").remove_property("a")
+    b = o2.get_event_type("a").set_version(2).remove_property("a")
 
     # The two versions of the event type are now incompatible and
     # cannot be compared.
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_adding_property_fails():
+def test_add_property():
 
     o1 = Ontology()
     o1.create_object_type("a")
@@ -67,8 +67,40 @@ def test_adding_property_fails():
     a.create_property("a", "a")
 
     o2 = copy.deepcopy(o1)
-    b = o2.get_event_type("a")
-    b.create_property("b", "a")
+    b = o2.get_event_type("a").set_version(2)
+    b.create_property("b", "a").make_optional()
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_adding_mandatory_property_fails():
+
+    o1 = Ontology()
+    o1.create_object_type("a")
+    a = o1.create_event_type("a")
+    a.create_property("a", "a")
+
+    o2 = copy.deepcopy(o1)
+    b = o2.get_event_type("a").set_version(2)
+    b.create_property("b", "a").make_mandatory()
+
+    # The two versions of the event type are now incompatible and
+    # cannot be compared.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_adding_datetime_to_timeless_event_type_fails():
+
+    o1 = Ontology()
+    o1.create_object_type("a")
+    o1.create_object_type("b").set_data_type(DataType.datetime())
+    a = o1.create_event_type("a")
+    a.create_property("a", "a")
+
+    o2 = copy.deepcopy(o1)
+    b = o2.get_event_type("a").set_version(2)
+    b.create_property("b", "b")
 
     # The two versions of the event type are now incompatible and
     # cannot be compared.
