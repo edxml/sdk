@@ -177,6 +177,21 @@ class PropertyRelation(OntologyElement):
         """
         return self.because(description)
 
+    def set_predicate(self, predicate):
+        """
+
+        Sets the relation predicate to specified string.
+
+        Args:
+          predicate (str): Relation predicate
+
+        Returns:
+          edxml.ontology.PropertyRelation: The PropertyRelation instance
+
+        """
+        self._set_attr('predicate', predicate)
+        return self
+
     def set_confidence(self, confidence):
         """
 
@@ -355,14 +370,11 @@ class PropertyRelation(OntologyElement):
             # The relation types are different, no upgrade possible.
             equal = is_valid_upgrade = False
 
-        if old.get_predicate() != new.get_predicate():
-            # The relation predicates are different, no upgrade possible.
-            equal = is_valid_upgrade = False
-
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
         equal &= old.get_description() == new.get_description()
+        equal &= old.get_predicate() == new.get_predicate()
         equal &= old.get_confidence() == new.get_confidence()
 
         if equal:
@@ -397,6 +409,7 @@ class PropertyRelation(OntologyElement):
         if property_relation > self:
             # The new definition is indeed newer. Update self.
             self.set_description(property_relation.get_description())
+            self.set_predicate(property_relation.get_predicate())
             self.set_confidence(property_relation.get_confidence())
 
         return self
