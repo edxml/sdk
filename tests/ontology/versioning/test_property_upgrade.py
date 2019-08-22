@@ -186,24 +186,6 @@ def test_object_type_upgrade_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_set_concept_not_allowed():
-    o1 = Ontology()
-    o1.create_object_type('a')
-    o1.create_concept('a')
-
-    o2 = copy.deepcopy(o1)
-
-    a = o1.create_event_type('a')
-    a.create_property('a', 'a')
-
-    b = o2.create_event_type('a').set_version(2)
-    b.create_property('a', 'a').identifies('a', 1)
-
-    # New property has a concept association while the old one did not,
-    # the versions are now incompatible.
-    assert_invalid_ontology_upgrade(a, b)
-
-
 def test_change_concept_not_allowed():
     o1 = Ontology()
     o1.create_object_type('a')

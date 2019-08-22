@@ -642,8 +642,11 @@ class EventProperty(OntologyElement):
             is_valid_upgrade &= new.is_optional()
 
         if old.get_concept_associations().keys() != new.get_concept_associations().keys():
-            # Versions do not agree on their concept associations. No upgrade possible.
-            equal = is_valid_upgrade = False
+            # Adding a concept association is possible, removing one is not.
+            equal = False
+            missing_concept_names = set(old.get_concept_associations().keys()) - \
+                set(new.get_concept_associations().keys())
+            is_valid_upgrade &= versions_differ and len(missing_concept_names) == 0
 
         for concept_name, associations in new.get_concept_associations().items():
             if concept_name in old.get_concept_associations():
@@ -698,6 +701,13 @@ class EventProperty(OntologyElement):
 
             for concept_name, association in self.__concepts.items():
                 association.update(event_property.get_concept_associations()[concept_name])
+
+            new_concept_names = \
+                set(event_property.get_concept_associations().keys()) - \
+                set(self.get_concept_associations().keys())
+
+            for concept_name in new_concept_names:
+                self.add_associated_concept(event_property.get_concept_associations()[concept_name])
 
         return self
 
