@@ -289,6 +289,26 @@ class EventProperty(OntologyElement):
         self._set_attr('description', description)
         return self
 
+    def make_optional(self):
+        """
+        Make the property optional.
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('optional', True)
+        return self
+
+    def make_mandatory(self):
+        """
+        Make the property mandatory.
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('optional', False)
+        return self
+
     def set_optional(self, is_optional):
         """
         Set the optional flag for the property to True (property is optional)
