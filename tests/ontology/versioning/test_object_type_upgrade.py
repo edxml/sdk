@@ -68,15 +68,14 @@ def test_incompatible_display_name_upgrade():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_compression_hint_upgrade_fails():
+def test_compression_hint_upgrade():
 
     o = Ontology()
     a = o.create_object_type('a')
     b = copy.deepcopy(a).compress().set_version(2)
 
-    # Changing the compression hint is not allowed and makes both
-    # versions incompatible, the cannot be compared.
-    assert_invalid_ontology_upgrade(a, b)
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
 
 
 def test_regex_upgrade_fails():

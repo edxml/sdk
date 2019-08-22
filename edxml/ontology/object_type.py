@@ -480,12 +480,9 @@ class ObjectType(OntologyElement):
         equal &= old.get_display_name_singular() == new.get_display_name_singular()
         equal &= old.get_display_name_plural() == new.get_display_name_plural()
         equal &= old.get_description() == new.get_description()
+        equal &= old.is_compressible() == new.is_compressible()
 
         # Check for illegal upgrade paths:
-
-        if old.is_compressible() != new.is_compressible():
-            # Compression hints differ, no upgrade possible.
-            equal = is_valid_upgrade = False
 
         if old.get_regexp() != new.get_regexp():
             # The regular expressions differ, no upgrade possible.
