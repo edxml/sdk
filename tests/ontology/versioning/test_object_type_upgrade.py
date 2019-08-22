@@ -89,15 +89,14 @@ def test_regex_upgrade_fails():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_fuzzy_matching_upgrade_fails():
+def test_fuzzy_matching_upgrade():
 
     o = Ontology()
     a = o.create_object_type('a')
     b = copy.deepcopy(a).fuzzy_match_phonetic().set_version(2)
 
-    # Changing the fuzzy matching hint is not allowed and makes both
-    # versions incompatible, the cannot be compared.
-    assert_invalid_ontology_upgrade(a, b)
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
 
 
 def test_data_type_upgrade_fails():

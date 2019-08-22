@@ -481,6 +481,7 @@ class ObjectType(OntologyElement):
         equal &= old.get_display_name_plural() == new.get_display_name_plural()
         equal &= old.get_description() == new.get_description()
         equal &= old.is_compressible() == new.is_compressible()
+        equal &= old.get_fuzzy_matching() == new.get_fuzzy_matching()
 
         # Check for illegal upgrade paths:
 
@@ -490,10 +491,6 @@ class ObjectType(OntologyElement):
 
         if old.get_data_type().get() != new.get_data_type().get():
             # The data types differ, no upgrade possible.
-            equal = is_valid_upgrade = False
-
-        if old.get_fuzzy_matching() != new.get_fuzzy_matching():
-            # The fuzzy matching hints differ, no upgrade possible.
             equal = is_valid_upgrade = False
 
         if equal:
@@ -525,6 +522,7 @@ class ObjectType(OntologyElement):
             self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
+            self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
 
         return self
