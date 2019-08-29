@@ -89,14 +89,6 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
             super(EDXMLEventGroupFilter, self)._open_event_group(
                 event_type_name, event_source_uri)
 
-    def _close_event_group(self, event_type_name, event_source_id):
-
-        if self.__pass_through:
-            super(EDXMLEventGroupFilter, self)._close_event_group(
-                event_type_name, event_source_id)
-        else:
-            self.__pass_through = True
-
     def _parsed_event(self, event):
         if self.__pass_through:
             super(EDXMLEventGroupFilter, self)._parsed_event(event)

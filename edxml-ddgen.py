@@ -48,8 +48,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     def __init__(self, args):
 
         self.event_counter = 0
-        self.event_group_counter = 0
-        self.current_event_group_size = 0
 
         self.args = args
 
@@ -64,9 +62,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
     def start(self):
         self.write_definitions()
-        self.open_event_groups()
-        self.open_event_group(
-            self.args.eventtype_name, self.event_source_uri_list[self.event_group_counter % 2])
         self.write_events()
         self.close()
 
@@ -182,17 +177,6 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     )
                 )
                 self.event_counter += 1
-                self.current_event_group_size += 1
-
-                if self.args.group_size > 0 and self.current_event_group_size >= self.args.group_size:
-                    # Event group has grown to the desired size. We close
-                    # the group, switch to another event source and open
-                    # a new event group.
-                    self.event_group_counter += 1
-                    self.current_event_group_size = 0
-                    self.close_event_group()
-                    self.open_event_group(
-                        self.args.eventtype_name, self.event_source_uri_list[self.event_group_counter % 2])
 
                 if self.args.rate > 0:
                     # An event rate is specified, which means we
@@ -329,16 +313,6 @@ def main():
         help='Used to indicate that event content should be generated. This option '
              'requires the desired content size (in bytes) as argument. If this '
              'option is omitted, no event content will be generated.'
-    )
-
-    parser.add_argument(
-        '--group-size',
-        default=0,
-        type=int,
-        help='By default, only one event group is generated. This option allows the size '
-             'of generated event groups to be limited. In general, smaller event groups '
-             'makes efficient processing of the EDXML streams more difficult. The option '
-             'expects the desired size (event count) as its argument.'
     )
 
     parser.add_argument(

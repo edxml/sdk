@@ -51,7 +51,6 @@ class EDXMLFilter(EDXMLParserBase):
     def __init__(self):
         super(EDXMLFilter, self).__init__()
         self._writer = None  # type: EDXMLWriter
-        self.__groupOpen = False
 
     def __enter__(self):
         return self
@@ -76,41 +75,6 @@ class EDXMLFilter(EDXMLParserBase):
         """
         super(EDXMLFilter, self)._parsed_ontology(parsed_ontology)
         self._writer.add_ontology(parsed_ontology)
-
-    def _open_event_group(self, event_type_name, event_source_uri):
-        """
-
-        Callback that writes a new <eventgroup> opening tag
-        into the output. By overriding this method and calling
-        the parent method after changing the method arguments,
-        the event type name or source identifier of the events
-        in the event group can be modified.
-
-        Args:
-          event_type_name (str): The name of the event type
-          event_source_uri: The source URI
-
-        """
-        super(EDXMLFilter, self)._open_event_group(event_type_name, event_source_uri)
-        self._writer.open_event_group(event_type_name, event_source_uri)
-        self.__groupOpen = True
-
-    def _close_event_group(self, event_type_name, event_source_id):
-        """
-
-        Callback that writes a closing <eventgroup> tag into
-        the output. By overriding this method, the _openEventGroup
-        method and the _parsedEvent method, entire event groups can
-        be omitted in the output.
-
-        Args:
-          event_type_name (str): The name of the event type
-          event_source_id: The source identifier
-
-        """
-        super(EDXMLFilter, self)._close_event_group(event_type_name, event_source_id)
-        self._writer.close_event_group()
-        self.__groupOpen = False
 
     def _parsed_event(self, event):
         """

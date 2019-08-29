@@ -279,6 +279,8 @@ class XmlTranscoderMediator(TranscoderMediator):
                 )
 
             for Event in transcoder.generate(element, matching_element_xpath):
+                if self._output_source_uri:
+                    Event.set_source_uri(self._output_source_uri)
                 if not self._writer:
                     # Apparently, this is the first event that
                     # is generated. Create an EDXML writer and

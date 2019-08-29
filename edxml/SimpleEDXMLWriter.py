@@ -56,10 +56,6 @@ class SimpleEDXMLWriter(object):
         self.__ignore_invalid_events = False
         self.__log_invalid_events = False
         self.__log_repaired_events = False
-        self.__current_source_uri = None
-        self.__current_event_type = None
-        self.__current_event_group_source = None
-        self.__current_event_group_type = None
         self.__event_buffers = {}
         self.__previous_event_buffers = {}
         self.__ontology = Ontology()
@@ -255,7 +251,7 @@ class SimpleEDXMLWriter(object):
 
         if self.__wrote_ontology_before:
             # We wrote an ontology before, let us write it again.
-            output += self._write_ontology(open_groups=True)
+            output += self._write_ontology()
 
         if isinstance(self.__writer.get_output(), self.__writer.OutputBuffer):
             # The writer is writing into a memory buffer. Since this method is
@@ -268,8 +264,6 @@ class SimpleEDXMLWriter(object):
 
         # Reset state to reflect starting from scratch
         self.__last_written_ontology_version = self.__ontology.get_version()
-        self.__current_event_group_type = None
-        self.__current_event_group_source = None
 
         if self.__previous_event_buffers is None or recover is False:
             # Nothing to do
@@ -296,40 +290,6 @@ class SimpleEDXMLWriter(object):
 
         return self
 
-    def set_event_type(self, event_type_name):
-        """
-
-        Set the default output event type. If no explicit event type
-        is used in calls to add_event(), the default event type will
-        be used.
-
-        Args:
-          event_type_name (str): The event type name
-
-        Returns:
-          SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-        """
-        self.__current_event_type = event_type_name
-
-        return self
-
-    def set_event_source(self, source_uri):
-        """
-
-        Set the default event source for the output events. If no explicit
-        source is specified in calls to add_event(), the default source will
-        be used.
-
-        Args:
-          source_uri (str): The event source URI
-
-        Returns:
-          SimpleEDXMLWriter: The SimpleEDXMLWriter instance
-        """
-        self.__current_source_uri = source_uri
-
-        return self
-
     def add_event(self, event, auto_source=True, auto_type=True):
         """
 
@@ -353,7 +313,7 @@ class SimpleEDXMLWriter(object):
         """
 
         if auto_source:
-            event_source_uri = event.get_source_uri() or self.__current_source_uri
+            event_source_uri = event.get_source_uri()
             if event_source_uri is None:
                 if len(self.__ontology.get_event_sources()) == 1:
                     # The ontology contains only one source, so we just pick that one.
@@ -367,11 +327,12 @@ class SimpleEDXMLWriter(object):
                             "An output event did not have a configured source, no default output source has "
                             "been configured and the ontology contains multiple sources. "
                             "You do not want me to just pick one, do you?")
+                event.set_source(event_source_uri)
         else:
             event_source_uri = event.get_source_uri()
 
         if auto_type:
-            event_type_name = event.get_type_name() or self.__current_event_type
+            event_type_name = event.get_type_name()
             if event_type_name is None:
                 if len(self.__ontology.get_event_type_names()) == 1:
                     # The ontology contains only one event type, so we just pick that one.
@@ -382,16 +343,20 @@ class SimpleEDXMLWriter(object):
                             'Failed to output an event, no event types have been defined in the output ontology.')
                     else:
                         raise EDXMLError(
-                            "An output event did not have a configured event type, no default output event type has "
+                            "An output event did not have a configured event type, no default output type has "
                             "been configured and the ontology contains multiple event type definitions. "
                             "You do not want me to just pick one, do you?")
+                event.set_type(event_type_name)
         else:
             event_type_name = event.get_type_name()
 
         if event_type_name in self.__event_type_post_processors:
             self.__event_type_post_processors[event_type_name](event)
 
-        event_group = '%s:%s' % (event_type_name, event_source_uri)
+        # TODO: We used to group events by type and source URI because the EDXML
+        #       output format required it. This is no longer the case and the
+        #       event group keys can be removed.
+        event_group = 'group'
         if event_group not in self.__event_buffers:
             self.__event_buffers[event_group] = {True: {}, False: []}
 
@@ -480,10 +445,8 @@ class SimpleEDXMLWriter(object):
         if self.__curr_buffer_size > self.__max_buf_size or \
            0 < self.__max_latency <= (time.time() - self.__last_write_time) or force:
             for group_id in self.__event_buffers:
-                event_type_name, event_source_uri = group_id.split(':')
-                for Merge in self.__event_buffers[group_id]:
-                    output += self._flush_buffer(event_type_name,
-                                                 event_source_uri, group_id, Merge)
+                for merge in self.__event_buffers[group_id]:
+                    output += self._flush_buffer(merge)
 
             self.__curr_buffer_size = 0
             self.__event_buffers = {}
@@ -493,18 +456,17 @@ class SimpleEDXMLWriter(object):
 
         return output
 
-    def _write_ontology(self, open_groups=False):
+    def _write_ontology(self):
         output = u''
         output += self.__writer.add_ontology(self.__ontology)
         self.__last_written_ontology_version = self.__ontology.get_version()
         self.__wrote_ontology_before = True
 
-        if open_groups:
-            output += self.__writer.open_event_groups()
-
         return output
 
-    def _flush_buffer(self, event_type_name, event_source_uri, event_group_id, merge):
+    def _flush_buffer(self, merge):
+
+        event_group_id = "group"
 
         if len(self.__event_buffers[event_group_id][merge]) == 0:
             return u''
@@ -515,20 +477,7 @@ class SimpleEDXMLWriter(object):
             # TODO: Rather than outputting a complete, new
             # ontology, we should only output the ontology
             # elements that are new or updated.
-            if self.__current_event_group_type is not None:
-                outputs.append(self.__writer.close_event_group())
-                self.__current_event_group_type = None
-            if self.__wrote_ontology_before:
-                outputs.append(self.__writer.close_event_groups())
-            outputs.append(self._write_ontology(open_groups=True))
-
-        if self.__current_event_group_type != event_type_name or self.__current_event_group_source != event_source_uri:
-            if self.__current_event_group_type is not None:
-                outputs.append(self.__writer.close_event_group())
-            outputs.append(self.__writer.open_event_group(
-                event_type_name, event_source_uri))
-            self.__current_event_group_type = event_type_name
-            self.__current_event_group_source = event_source_uri
+            outputs.append(self._write_ontology())
 
         if merge:
             for event_hash, events in self.__event_buffers[event_group_id][merge].items():
@@ -591,21 +540,13 @@ class SimpleEDXMLWriter(object):
             self.__writer = EDXMLWriter(
                 self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
             )
-            outputs.append(self._write_ontology(open_groups=True))
+            outputs.append(self._write_ontology())
 
         if flush and self.__ontology.is_modified_since(self.__last_written_ontology_version):
-            if self.__current_event_group_type is not None:
-                outputs.append(self.__writer.close_event_group())
-                outputs.append(self.__writer.close_event_groups())
-                self.__current_event_group_type = None
-            outputs.append(self._write_ontology(open_groups=True))
+            outputs.append(self._write_ontology())
 
         if flush:
             outputs.append(self.flush(force=True))
-
-        if self.__current_event_group_type is not None:
-            outputs.append(self.__writer.close_event_group())
-            self.__current_event_group_type = None
 
         outputs.append(self.__writer.close())
         return u''.join(outputs)

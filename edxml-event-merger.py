@@ -81,12 +81,6 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
         self.__last_output_time = time.time()
         self.__hash_buffer = {}  # type: Dict[str, List[EDXMLEvent]]
 
-    def _close_event_group(self, event_type_name, event_source_id):
-
-        self._flush_buffer()
-
-        EDXMLPushFilter._close_event_group(self, event_type_name, event_source_id)
-
     def _parsed_event(self, event):
 
         event_hash = event.compute_sticky_hash(self.get_ontology())

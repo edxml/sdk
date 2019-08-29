@@ -63,14 +63,16 @@ event_type['client'].relate_intra('communicates with', 'server') \
 source = ontology.create_event_source('/myorganization/logs/ftp/')
 
 with SimpleEDXMLWriter(sys.stdout) as writer:
-    writer.set_ontology(ontology)\
-          .set_event_type('org.myorganization.logs.ftp')\
-          .set_event_source('/myorganization/logs/ftp/')
+    writer.set_ontology(ontology)
 
     for line in sys.stdin:
         properties = json.loads(line)
         del properties['source']
         del properties['offset']
         writer.add_event(
-            EDXMLEvent(properties).set_attachments({'log-line': line})
+            EDXMLEvent(
+                properties,
+                event_type_name='org.myorganization.logs.ftp',
+                source_uri='/myorganization/logs/ftp/'
+            ).set_attachments({'log-line': line})
         )

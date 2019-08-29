@@ -180,9 +180,6 @@ if csv_input == sys.stdin:
 writer = edxml.EDXMLWriter(sys.stdout)
 writer.add_ontology(parser.get_ontology())
 
-# We will start outputting event groups now.
-writer.open_event_groups()
-
 current_output_event_type = None
 column_property_mapping = None
 previous_split_line = None
@@ -272,10 +269,7 @@ for line in csv_input:
                         # Invalid event, just skip it.
                         sys.stderr.write(
                             "WARNING: Skipped one output event: %s\n" % Error)
-                writer.close_event_group()
-                writer.open_event_group(output_event_type, output_source_uri)
             else:
-                writer.open_event_group(output_event_type, output_source_uri)
                 if previous_line_properties is not None:
                     try:
                         writer.add_event(
@@ -299,9 +293,6 @@ for line in csv_input:
 
 if previous_split_line is not None:
     if output_event_type != current_output_event_type:
-        if current_output_event_type is not None:
-            writer.close_event_group()
-        writer.open_event_group(output_event_type, output_source_uri)
         current_output_event_type = output_event_type
         if output_event_type not in output_properties:
             output_properties[output_event_type] = parser.get_ontology(
@@ -320,8 +311,5 @@ if previous_split_line is not None:
     except EDXMLValidationError as Error:
         # Invalid event, just skip it.
         sys.stderr.write("WARNING: Skipped one output event: %s\n" % Error)
-
-if current_output_event_type is not None:
-    writer.close_event_group()
 
 writer.close()

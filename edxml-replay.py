@@ -75,10 +75,6 @@ class EDXMLReplay(EDXMLPullFilter):
         super(EDXMLReplay, self).__init__(
             EDXMLReplay.UnbufferedStdout(sys.stdout))
 
-    def _open_event_group(self, event_type_name, event_source_uri):
-        self.current_event_type_name = event_type_name
-        EDXMLPullFilter._open_event_group(self, event_type_name, event_source_uri)
-
     def _parsed_event(self, event):
 
         date_time_strings = []
