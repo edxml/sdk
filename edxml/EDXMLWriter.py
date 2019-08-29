@@ -516,14 +516,12 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             self.error(
                 'A <event> tag must be child of an <eventgroup> tag. Did you forget to call OpenEventGroup()?')
 
-        if isinstance(event, etree._Element):
+        if isinstance(event, ParsedEvent):
             event_element = event
-        elif isinstance(event, edxml.EDXMLEvent):
-            event = edxml.EventElement(
-                event.get_properties(), parents=event.get_explicit_parents(), content=event.get_content()
-            )
-            event_element = event.get_element()
         elif isinstance(event, edxml.EventElement):
+            event_element = event.get_element()
+        elif isinstance(event, edxml.EDXMLEvent):
+            event = edxml.EventElement.create_from_event(event)
             event_element = event.get_element()
         else:
             raise TypeError('Unknown type of event: %s' % str(type(event)))

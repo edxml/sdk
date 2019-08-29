@@ -1245,6 +1245,28 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         )
 
     @classmethod
+    def create_from_event(cls, event):
+        """
+
+        Creates and returns a new EventElement instance by reading it from
+        another EDXML event.
+
+        Args:
+          event (EDXMLEvent): The EDXML event to copy data from
+
+        Returns:
+          EventElement:
+        """
+
+        return cls(
+            event.get_properties(),
+            event_type_name=event.get_type_name(),
+            source_uri=event.get_source_uri(),
+            attachments=event.get_attachments(),
+            parents=event.get_explicit_parents()
+        ).set_foreign_attributes(event.get_foreign_attributes())
+
+    @classmethod
     def create_from_xml(cls, event_type_name, source_uri, event_element):
         """
 
