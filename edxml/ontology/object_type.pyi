@@ -3,7 +3,7 @@
 import edxml
 
 from lxml import etree
-from typing import Any
+from typing import Any, Optional
 from typing import Dict
 
 from edxml.ontology import OntologyElement
@@ -39,7 +39,7 @@ class ObjectType(OntologyElement):
 
     def get_fuzzy_matching(self) -> str: ...
 
-    def get_regexp(self) -> str: ...
+    def get_regexp(self) -> Optional[str]: ...
 
     def get_version(self) -> int: ...
 

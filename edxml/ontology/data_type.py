@@ -559,9 +559,8 @@ class DataType(object):
                 else:
                     etree.SubElement(
                         element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
-            if regexp != r'[\s\S]*':
-                etree.SubElement(element, 'param',
-                                 name='pattern').text = regexp
+            if regexp is not None:
+                etree.SubElement(element, 'param', name='pattern').text = regexp
 
         elif split_data_type[0] == 'base64':
             # Because we do not allow whitespace in base64 values,
