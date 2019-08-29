@@ -32,12 +32,12 @@ class TranscoderMediator(EDXMLBase):
     _warn_invalid_events = False
     _ignore_invalid_objects = False
     _ignore_invalid_events = False
+    _output_source_uri = None
 
     __disable_buffering = False
     __validate_events = True
     __log_repaired_events = False
     __auto_merge_eventtypes = []
-    __defaultSourceUri = None
 
     def __init__(self, output=None):
         """
@@ -232,9 +232,8 @@ class TranscoderMediator(EDXMLBase):
     def set_event_source(self, source_uri):
         """
 
-        Set the default event source for the output events. If no explicit
-        source is set on an output event, the default source will
-        be used.
+        Set the event source for the output events. This source will
+        automatically be set on every output event.
 
         Args:
           source_uri (str): The event source URI
@@ -242,10 +241,7 @@ class TranscoderMediator(EDXMLBase):
         Returns:
           TranscoderMediator:
         """
-        self.__defaultSourceUri = source_uri
-        if self._writer:
-            self._writer.set_event_source(source_uri)
-
+        self._output_source_uri = source_uri
         return self
 
     @classmethod
@@ -333,8 +329,6 @@ class TranscoderMediator(EDXMLBase):
 
     def _create_writer(self):
         self._writer = SimpleEDXMLWriter(self.__output, self.__validate_events)
-        if self.__defaultSourceUri:
-            self._writer.set_event_source(self.__defaultSourceUri)
         if self.__disable_buffering:
             self._writer.set_buffer_size(0)
         if self._ignore_invalid_objects:

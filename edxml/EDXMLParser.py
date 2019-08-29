@@ -40,7 +40,6 @@ from typing import Dict, List, Any
 import edxml
 
 from collections import defaultdict
-from copy import deepcopy
 from lxml import etree
 from EDXMLBase import EDXMLValidationError
 from edxml import ParsedEvent
@@ -69,20 +68,14 @@ class EDXMLParserBase(object):
         self._element_iterator = None         # type: etree.Element
         self._event_class = None
 
-        self.__current_event_type = None       # type: str
-        self.__current_event_source_uri = None  # type: str
-        self.__current_event_source = None     # type: edxml.ontology.EventSource
-        self.__current_group_event_count = 0    # type: int
+        self.__previous_event = None            # type: etree.Element
         self.__root_element = None            # type: etree.Element
-        self.__current_group_element = None    # type: etree.Element
-        self.__event_groups_element = None     # type: etree.Element
-        self.__previous_root_length = None
         self.__num_parsed_events = 0           # type: int
         self.__num_parsed_event_types = {}      # type: Dict[str, int]
         self.__event_type_handlers = {}        # type: Dict[str, callable]
         self.__event_source_handlers = {}      # type: Dict[str, callable]
-        self.__current_event_handlers = []     # type: List[callable]
         self.__source_uri_pattern_map = {}      # type: Dict[Any, List[str]]
+        self.__parsed_initial_ontology = False
 
         self.__schema = None                 # type: etree.RelaxNG
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
@@ -266,9 +259,7 @@ class EDXMLParserBase(object):
 
     def __find_root_element(self, event_element):
         # Find the root element by traversing up the
-        # tree. The first parent element that we will
-        # find this way is the eventgroup tag that
-        # contains the current event.
+        # tree until the <edxml> tag is found.
         self.__root_element = event_element.getparent()
         while self.__root_element is not None and self.__root_element.tag != '{http://edxml.org/edxml}edxml':
             self.__root_element = self.__root_element.getparent()
@@ -301,53 +292,11 @@ class EDXMLParserBase(object):
                 (etree.tostring(self.__root_element), str(ValidationError))
             )
 
-    def __validate_definitions_element(self, ontology_element):
-        if not self.__schema:
-            self.__schema = etree.RelaxNG(
-                etree.parse(os.path.dirname(os.path.realpath(
-                    __file__)) + '/schema/edxml-schema-3.0.0.rng')
-            )
-
-        # Since lxml iterparse gives us partial XML
-        # trees, elements from which we have not seen
-        # its closing tag yet may not be valid yet. So,
-        # we integrate the ontology element into a
-        # skeleton tree, yielding a complete, valid
-        # EDXML structure.
-        skeleton = etree.Element('{http://edxml.org/edxml}edxml', attrib=self.__root_element.attrib)
-        skeleton.append(deepcopy(ontology_element))
-        etree.SubElement(skeleton, '{http://edxml.org/edxml}eventgroups')
-
-        try:
-            self.__schema.assertValid(skeleton)
-        except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
-            # XML structure is invalid.
-            raise EDXMLValidationError(
-                "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-                (etree.tostring(self.__root_element), str(ValidationError))
-            )
-
     def __process_ontology(self, ontology_element):
-        preceding_event_groups_element = ontology_element.getprevious()
-        if preceding_event_groups_element is not None:
-            preceding_definitions_element = preceding_event_groups_element.getprevious()
-            if preceding_definitions_element is None:
-                # XML structure is invalid, because there must be
-                # an ontology element preceding the eventgroups element.
-                raise EDXMLValidationError(
-                    "EDXML structure contains an ontology element without a preceding eventgroups element: %s\n" %
-                    (etree.tostring(self.__root_element))
-                )
-
-            # We have one complete pair of an ontology and
-            # an eventgroups element preceding the current ontology
-            # element. We can safely delete them.
-            del self.__root_element[0:2]
-
         # Before parsing the ontology information, we validate
         # the generic structure of the ontology element, using
         # the RelaxNG schema.
-        self.__validate_definitions_element(ontology_element)
+        self.__validate_root_element()
 
         # We survived XML structure validation. We can proceed
         # and process the new ontology information.
@@ -416,40 +365,51 @@ class EDXMLParserBase(object):
             elif elem.tag == '{http://edxml.org/edxml}event':
                 if type(elem) != ParsedEvent:
                     raise TypeError("The parser instantiated a regular lxml Element in stead of a ParsedEvent")
-                if elem.getparent().tag == '{http://edxml.org/edxml}eventgroup':
-                    if self.__current_group_element is None:
-                        # Apparently, we did not parse the current event group
-                        # yet.
-                        self.__parse_event_group(elem.getparent())
 
-                    if self.__current_event_type is not None and self.__current_event_source_uri is not None:
-                        elem.set_type(self.__current_event_type).set_source(
-                            self.__current_event_source_uri)
-                        self.__parse_event(elem)
-                        self.__current_group_event_count += 1
-                        if self.__current_group_event_count > 1:
-                            # Delete the event tag, unless it is
-                            # the first event tag in the event group.
-                            # We do not want to delete the event that
-                            # we are currently processing, lxml does
-                            # not like that.
-                            del self.__current_group_element[0]
-                            pass
+                if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
+                    # We expect <event> tags to be children of the root <edxml>
+                    # tag. This is not the case here.
+                    self._parse_misplaced_event(elem)
 
-            elif elem.tag == '{http://edxml.org/edxml}eventgroup':
-                if elem.getparent().tag == '{http://edxml.org/edxml}eventgroups':
-                    if self.__current_group_element is not None:
-                        self._close_event_group(
-                            self.__current_event_type, self.__current_event_source_uri)
-                        self.__current_group_event_count = 0
-                    self.__current_group_element = None
-                    self.__current_event_type = None
-                    self.__current_event_source = None
-                    self.__current_event_source_uri = None
+                if self._ontology is None:
+                    # We are about to parse an event without any preceding
+                    # ontology element. This is not valid EDXML.
+                    raise EDXMLValidationError("Found an <event> element while no <ontology> has been read yet.")
+
+                self.__parse_event(elem)
+
+                # The first child of the root is always an <ontology> element. We do not
+                # clean that one, because that would render our EDXML tree structure invalid.
+                # This means that the events that we are processing are always the second
+                # child of the root element. However, deleting the element that we are
+                # currently processing can lead to crashes in lxml. So, we only delete
+                # the second event, which is the third child of the root.
+                if self.__num_parsed_events > 1:
+                    del self.__root_element[1]
 
             elif elem.tag == '{http://edxml.org/edxml}ontology':
-                if elem.getparent().tag == '{http://edxml.org/edxml}edxml':
-                    self.__process_ontology(elem)
+                if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
+                    raise EDXMLValidationError("Found a misplaced <ontology> element.")
+                self.__process_ontology(elem)
+                # Now that we parsed an <ontology> element, we want to delete it from
+                # the XML tree. Unless it is the first <ontology> element we come across,
+                # because deleting that element yields an invalid EDXML structure. Since
+                # we never delete the initial <ontology> element and always delete events
+                # after processing them, any subsequent <ontology> elements will be the
+                # second child in the tree:
+                #
+                # <edxml>
+                #   <ontology/>   # <-- initial ontology
+                #   <ontology/>   # <-- second / third / ... ontology
+                #   ...
+                # </edxml>
+                #
+                # So, we delete the second child of the root element unless it is the
+                # initial <ontology> element.
+                if self.__parsed_initial_ontology:
+                    del self.__root_element[1]
+                else:
+                    self.__parsed_initial_ontology = True
 
             elif not elem.tag.startswith('{http://edxml.org/edxml}'):
                 # We have a foreign element.
@@ -458,111 +418,47 @@ class EDXMLParserBase(object):
             else:
                 raise ValueError('Parser received unexpected element with tag %s' % elem.tag)
 
-    def __parse_event_group(self, group_element):
-
-        if self.__current_group_element is not None:
-            self._close_event_group(self.__current_event_type,
-                                    self.__current_event_source_uri)
-
-        # Since lxml iterparse gives us partial XML
-        # trees, elements from which we have not seen
-        # its closing tag yet may not be valid yet. For
-        # that reason, we cannot use the EDXML RelaxNG
-        # schema to validate the full XML structure while
-        # parsing is still in progress. Hence the explicit
-        # attribute validation here.
-
-        event_type_name = group_element.attrib.get('event-type', '')
-        source_uri = group_element.attrib.get('source-uri', '')
-        if not re.match(edxml.ontology.EventType.NAME_PATTERN.pattern, event_type_name):
+    def _parse_misplaced_event(self, elem):
+        # We expect <event> tags to be children of the root <edxml>
+        # tag. When this is not the case, there are two possibilities.
+        # either we hit an event property that just happens to be
+        # named 'event' or we have invalid EDXML. In case of an event
+        # property, we just ignore it here. Otherwise, we fail.
+        parents = []
+        while elem is not None:
+            parents.append(elem.tag)
+            elem = elem.getparent()
+        if parents != [
+            '{http://edxml.org/edxml}event',
+            '{http://edxml.org/edxml}properties',
+            '{http://edxml.org/edxml}event',
+            '{http://edxml.org/edxml}edxml'
+        ]:
             raise EDXMLValidationError(
-                'An eventgroup tag has an invalid event-type attribute: "%s"' % event_type_name)
-        if not re.match(edxml.ontology.EventSource.SOURCE_URI_PATTERN.pattern, source_uri):
-            raise EDXMLValidationError(
-                'An eventgroup tag has an invalid source-uri attribute: "%s"' % source_uri)
-
-        self.__current_group_element = group_element
-        self._open_event_group(
-            group_element.attrib['event-type'], group_element.attrib['source-uri'])
-
-        if self.__current_event_type is None and self.__current_event_source_uri is None:
-            # This may happen when an extension of this
-            # class 'swallows' an event group.
-            self.__current_event_source = None
-            self.__current_event_source_uri = None
-            self.__event_type_schema = None
-            return
-
-        self.__current_event_source = self._ontology.get_event_source(
-            self.__current_event_source_uri)
-
-        if self.__current_event_source is None:
-            raise EDXMLValidationError(
-                "An eventgroup refers to Source URI %s, which is not defined." % self.__current_event_source_uri
-            )
-        if self._ontology.get_event_type(self.__current_event_type) is None:
-            raise EDXMLValidationError(
-                "An eventgroup refers to eventtype %s, which is not defined." % self.__current_event_type
+                'Unexpected <event> tag. This is neither an EDXML event '
+                'nor an event property named "event".'
             )
 
-        self.__current_event_source_uri = self.__current_event_source.get_uri()
-
-        if self.__validate:
-            self.__event_type_schema = self.get_event_type_schema(
-                self.__current_event_type)
-
-    def _close_event_group(self, event_type_name, event_source_uri):
+    def _get_event_handlers(self, event_type_name, event_source_uri):
         """
-
-        Callback that is invoked whenever an open event group
-        is closed. The event type name and source URI match the
-        values that were passed to _open_event_group().
+        Returns a list of handlers for parsed events of specified type
+        and source. When no explicit handlers are registered and the class
+        contains a custom implementation of the _parsed_event method, this
+        method will be used as fallback handler for all parsed events.
 
         Args:
           event_type_name (str): The event type name
           event_source_uri (str): URI of the event source
 
         """
-        pass
+        handlers = self.__event_type_handlers.get(event_type_name, [])
 
-    def _open_event_group(self, event_type_name, event_source_uri):
-        """
+        # Add handlers for the event source
+        for pattern, source_handlers in self.__event_source_handlers.items():
+            if event_source_uri in self.__source_uri_pattern_map[pattern]:
+                handlers.extend(source_handlers)
 
-        Callback that is invoked whenever a new event group
-        is opened, containing events of the specified event type
-        and source. Extensions may override this method and call
-        this parent method to change the event type or event source
-        of the event group.
-
-        When both the event type and source in the call to the
-        parent method are None, the parser will ignore the entire
-        event group. This implies that no callbacks will be generated
-        for the events contained inside it. When the closing tag of
-        the group is parsed, the _close_event_group callback is
-        invoked normally.
-
-        Args:
-          event_type_name (str): The event type name
-          event_source_uri (str): URI of the event source
-
-        """
-        self.__current_event_type = event_type_name
-        self.__current_event_source_uri = event_source_uri
-
-        self.__current_event_handlers = []
-
-        if self.__current_event_type and self.__current_event_source_uri:
-
-            # Add handlers for the event type
-            self.__current_event_handlers.extend(
-                self.__event_type_handlers.get(self.__current_event_type, ()))
-
-            # Add handlers for the event source
-            for pattern, handlers in self.__event_source_handlers.iteritems():
-                if self.__current_event_source_uri in self.__source_uri_pattern_map[pattern]:
-                    self.__current_event_handlers.extend(handlers)
-
-        if len(self.__current_event_handlers) == 0:
+        if len(handlers) == 0:
             # No handlers found, check if the empty
             # _parsed_event() method has been overridden
             # by a class extension, so we can use that
@@ -570,42 +466,57 @@ class EDXMLParserBase(object):
             this_method = getattr(self, '_parsed_event')
             base_method = getattr(EDXMLParserBase, '_parsed_event')
             if this_method.__func__ is not base_method.__func__:
-                self.__current_event_handlers.append(self._parsed_event)
+                handlers = [self._parsed_event]
+
+        return handlers
 
     def __parse_event(self, event):
-        if self.__validate and self.__event_type_schema is not None:
-            if not self.__event_type_schema.validate(event):
+        event_type_name = event.get_type_name()
+        event_source_uri = event.get_source_uri()
+        schema = self.get_event_type_schema(event_type_name)
+
+        # TODO: To make things more efficient, we should keep lists of event types
+        #       sources and validation schemas that we update whenever we receive
+        #       and ontology element. That will make event parsing more lightweight.
+
+        if self._ontology.get_event_source(event_source_uri) is None:
+            raise EDXMLValidationError(
+                "An input event refers to source URI %s, which is not defined." % event_source_uri
+            )
+        if self._ontology.get_event_type(event_type_name) is None:
+            raise EDXMLValidationError(
+                "An input event refers to event type %s, which is not defined." % event_type_name
+            )
+
+        if self.__validate and schema is not None:
+            if not schema.validate(event):
                 # Event does not validate. Try to generate a validation
                 # exception that is more readable than the RelaxNG
                 # error is, by validating using the EventType class.
                 try:
-                    self._ontology.get_event_type(self.__current_event_type).validate_event_structure(event)
+                    self._ontology.get_event_type(event_type_name).validate_event_structure(event)
 
                     # EventType structure checks out alright. Let us check the object values.
-                    self._ontology.get_event_type(self.__current_event_type).validate_event_objects(event)
+                    self._ontology.get_event_type(event_type_name).validate_event_objects(event)
 
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
                     # a undoubtedly cryptic error message.
-                    raise EDXMLValidationError(
-                        self.__event_type_schema.error_log)
+                    raise EDXMLValidationError(schema.error_log)
 
                 except EDXMLValidationError as exception:
-                    schema = self._ontology.get_event_type(
-                        self.__current_event_type
-                    ).generate_relax_ng(self._ontology)
+                    schema = self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
                     raise EDXMLValidationError('Event failed to validate:\n%s\n\n%s\nSchema:\n%s' % (
                         etree.tostring(event, pretty_print=True).encode(
                             'utf-8'), exception,
                         etree.tostring(schema, pretty_print=True)), sys.exc_info()[2])
 
         # Call all event handlers in order
-        for handler in self.__current_event_handlers:
+        for handler in self._get_event_handlers(event_type_name, event_source_uri):
             handler(event)
 
         self.__num_parsed_events += 1
-        if self.__current_event_type:
-            self.__num_parsed_event_types[self.__current_event_type] += 1
+        self.__num_parsed_event_types[event_type_name] += 1
 
     def _parsed_event(self, event):
         """
@@ -678,7 +589,6 @@ class EDXMLPullParser(EDXMLParserBase):
             tag=[
                 '{http://edxml.org/edxml}edxml',
                 '{http://edxml.org/edxml}ontology',
-                '{http://edxml.org/edxml}eventgroup',
                 '{http://edxml.org/edxml}event'
             ] + foreign_element_tags,
             no_network=True, resolve_entities=False
@@ -742,7 +652,6 @@ class EDXMLPushParser(EDXMLParserBase):
                 tag=[
                     '{http://edxml.org/edxml}edxml',
                     '{http://edxml.org/edxml}ontology',
-                    '{http://edxml.org/edxml}eventgroup',
                     '{http://edxml.org/edxml}event'
                 ] + self.__foreign_element_tags,
                 target=self.__feed_target, no_network=True, resolve_entities=False

@@ -593,7 +593,7 @@ class EDXMLEvent(MutableMapping):
 
         """
 
-        event_type = ontology.get_event_type(self._event_type_name)
+        event_type = ontology.get_event_type(self.get_type_name())
         objects = self.get_properties()
         hash_properties = event_type.get_hash_properties()
 
@@ -616,8 +616,8 @@ class EDXMLEvent(MutableMapping):
             return hashlib.sha1(
                 (
                     '%s\n%s\n%s\n%s' % (
-                        self._source_uri,
-                        self._event_type_name,
+                        self.get_source_uri(),
+                        self.get_type_name(),
                         '\n'.join(sorted(object_strings)),
                         '\n'.join(sorted(attachment_strings))
                     )
@@ -1045,6 +1045,18 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         for key, value in attribs.items():
             self.attrib[key] = value
 
+    def get_type_name(self):
+        return self.attrib['event-type']
+
+    def get_source_uri(self):
+        return self.attrib['source-uri']
+
+    def set_type(self, event_type_name):
+        self.attrib['event-type'] = event_type_name
+
+    def set_source(self, source_uri):
+        self.attrib['source-uri'] = source_uri
+
 
 class EventElement(EDXMLEvent, EvilCharacterFilter):
     """
@@ -1082,6 +1094,12 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         self._attachments = None
 
         new = etree.Element('event')
+
+        if event_type_name is not None:
+            new.set('event-type', event_type_name)
+        if source_uri is not None:
+            new.set('source-uri', source_uri)
+
         # We cannot simply set parents to an empty value, because this produces an empty attribute.
         # Instead, if the value is empty, it should be left out altogether.
         if parents:
@@ -1318,6 +1336,18 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         # an empty list, but [''] instead.
         return [] if parent_string == '' else parent_string.split(',')
 
+    def get_type_name(self):
+        try:
+            return self.__element.attrib['event-type']
+        except KeyError:
+            return None
+
+    def get_source_uri(self):
+        try:
+            return self.__element.attrib['source-uri']
+        except KeyError:
+            return None
+
     def set_properties(self, properties):
         """
 
@@ -1496,3 +1526,9 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         for key, value in attribs.items():
             self.__element.attrib[key] = value
         return self
+
+    def set_type(self, event_type_name):
+        self.__element.attrib['event-type'] = event_type_name
+
+    def set_source(self, source_uri):
+        self.__element.attrib['source-uri'] = source_uri

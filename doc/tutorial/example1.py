@@ -47,8 +47,6 @@ source = ontology.create_event_source('/myorganization/logs/ftp/')
 
 writer = SimpleEDXMLWriter(sys.stdout)
 writer.set_ontology(ontology)
-writer.set_event_type('org.myorganization.logs.ftp')
-writer.set_event_source('/myorganization/logs/ftp/')
 
 for line in sys.stdin:
     properties = json.loads(line)
@@ -61,6 +59,12 @@ for line in sys.stdin:
     properties['datetime'] = DataType.format_utc_datetime(
         parse(properties['datetime']))
 
-    writer.add_event(EDXMLEvent(properties))
+    writer.add_event(
+        EDXMLEvent(
+            properties,
+            event_type_name='org.myorganization.logs.ftp',
+            source_uri='/myorganization/logs/ftp/'
+        )
+    )
 
 writer.close()

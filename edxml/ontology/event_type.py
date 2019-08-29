@@ -2174,6 +2174,23 @@ class EventType(OntologyElement, MutableMapping):
 
         schema = e.element(
             e.ref(name='foreign-attributes'),
+            e.attribute(
+                e.data(
+                    e.param('1', name='minLength'),
+                    e.param('64', name='maxLength'),
+                    e.param('[a-z0-9.-]*', name='pattern'),
+                    type='token'
+                ),
+                name='event-type'
+            ),
+            e.attribute(
+                e.data(
+                    e.param('1', name='minLength'),
+                    e.param('(/[a-z0-9-]+)*/', name='pattern'),
+                    type='token'
+                ),
+                name='source-uri'
+            ),
             e.optional(
                 e.attribute(
                     e.data(

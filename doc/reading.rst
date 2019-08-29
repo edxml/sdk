@@ -1,7 +1,7 @@
 Reading EDXML Data Streams
 ==========================
 
-The EDXML SDK features several classes and subpackages for parsing EDXML data streams, all based on the excellent `lxml library <http://lxml.de/>`_. All EDXML parsers are incremental, which allows for developing efficient system components that process a never ending stream of input events. All EDXML parsers are based on the EDXMLParserBase_ class, which has several subclasses for specific purposes. During parsing, the parser generates calls to a set of callback methods which can be overridden to process input data. There are callbacks for processing events, ontology information and tracking the event groups that events are contained in.
+The EDXML SDK features several classes and subpackages for parsing EDXML data streams, all based on the excellent `lxml library <http://lxml.de/>`_. All EDXML parsers are incremental, which allows for developing efficient system components that process a never ending stream of input events. All EDXML parsers are based on the EDXMLParserBase_ class, which has several subclasses for specific purposes. During parsing, the parser generates calls to a set of callback methods which can be overridden to process input data. There are callbacks for processing events and tracking ontology updates.
 
 Besides extending a parser class and overriding callbacks, there is secondary mechanism specifically for processing events. EDXML parsers allow callbacks to be registered for specific event types or events from specific sources. These callbacks can be any Python callable. This allows EDXML data streams to be processed using a set of classes, each of which registered with the parser to process specific event data. The parser takes care of routing the events to the appropriate class.
 
@@ -24,7 +24,7 @@ edxml.EDXMLParserBase
     :special-members: __init__
     :members:
     :member-order: groupwise
-    :private-members: _parsedOntology, _openEventGroup, _close_event_group, _parsedEvent
+    :private-members: _parsedOntology, _parsedEvent
     :show-inheritance:
 
 edxml.EDXMLPushParser
