@@ -21,7 +21,7 @@ class ObjectType(OntologyElement):
         r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:cs:u', compress=False, fuzzy_matching='none', regexp=r'[\s\S]*'):
+                 data_type='string:0:cs:u', compress=False, fuzzy_matching='none', regexp=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -132,9 +132,17 @@ class ObjectType(OntologyElement):
         """
 
         Returns the regular expression that object values must match.
+        Returns None in case no regular expression is associated with
+        the object type.
+
+        Note that the regular expression is not anchored to the start
+        and end of the object value string even though object values
+        must fully matches the expression from start to end. Be sure
+        to wrap the expression in anchors where full string matching
+        is needed.
 
         Returns:
-          str:
+          Optional[str]:
         """
 
         return self.__attr['regexp']
@@ -210,7 +218,7 @@ class ObjectType(OntologyElement):
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        self._set_attr('regexp', str(pattern))
+        self._set_attr('regexp', pattern)
         return self
 
     def set_fuzzy_matching_attribute(self, attribute):
@@ -347,7 +355,7 @@ class ObjectType(OntologyElement):
             if len(split_data_type) >= 4 and 'i' in split_data_type[3]:
                 # Perform regex matching on lower case string
                 value = value.lower()
-            if not re.match(self.__attr['regexp'], value):
+            if self.__attr['regexp'] is not None and not re.match(self.__attr['regexp'], value):
                 raise EDXMLValidationError(
                     "Object value '%s' of object type %s does not match regexp '%s' of the object type."
                     % (value, self.__attr['name'], self.__attr['regexp'])
@@ -426,11 +434,14 @@ class ObjectType(OntologyElement):
                     self.__attr['name'], repr(self.__attr['compress']))
             )
 
-        try:
-            re.compile(self.__attr['regexp'])
-        except sre_constants.error:
-            raise EDXMLValidationError('Object type "%s" contains invalid regular expression: "%s"' %
-                                       (self.__attr['name'], self.__attr['regexp']))
+        if self.__attr['regexp'] is not None:
+            try:
+                re.compile(self.__attr['regexp'])
+            except sre_constants.error:
+                raise EDXMLValidationError(
+                    'Object type "%s" contains invalid regular expression: "%s"' %
+                    (self.__attr['name'], self.__attr['regexp'])
+                )
 
         DataType(self.__attr['data-type']).validate()
 
@@ -447,7 +458,7 @@ class ObjectType(OntologyElement):
             type_element.attrib['data-type'],
             type_element.get('compress', 'false') == 'true',
             type_element.get('fuzzy-matching', 'none'),
-            type_element.get('regexp', r'[\s\S]*')
+            type_element.get('regexp')
         ).set_version(type_element.attrib['version'])
 
     def __cmp__(self, other):
@@ -487,7 +498,7 @@ class ObjectType(OntologyElement):
 
         if old.get_regexp() != new.get_regexp():
             equal = False
-            if old.get_regexp() != '[\s\S]*' and new.get_regexp().find(old.get_regexp() + "|") != 0:
+            if old.get_regexp() is not None and new.get_regexp().find(old.get_regexp() + "|") != 0:
                 # The new expression is not a valid extension of the old one.
                 is_valid_upgrade = False
 
@@ -545,5 +556,8 @@ class ObjectType(OntologyElement):
 
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
         attribs['version'] = unicode(attribs['version'])
+
+        if attribs['regexp'] is None:
+            del attribs['regexp']
 
         return etree.Element('objecttype', attribs)
