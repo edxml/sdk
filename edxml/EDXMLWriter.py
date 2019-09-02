@@ -271,15 +271,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         objects, it may try to remove invalid objects in case
         normalization fails.
 
-        Returns repaired event or raises EDXMLValidationError in
-        case repair failed.
+        Raises EDXMLValidationError in case the repair operation failed.
 
         Args:
             event (edxml.EventElement): The event
             schema (ElementTree): The RelaxNG schema for the event
-
-        Returns:
-            edxml.EventElement
         """
 
         while not schema.validate(event.get_element()):
