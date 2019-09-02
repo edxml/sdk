@@ -334,6 +334,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
           unicode: Generated output XML data
 
         """
+        # Below, we make sure that 'event' refers to an EDXMLEvent object
+        # while 'event_element' is a reference to the internal lxml element
+        # representation of 'event'.
         if isinstance(event, ParsedEvent):
             event_element = event
         elif isinstance(event, edxml.EventElement):
@@ -365,8 +368,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             schema = self.get_event_type_schema(event_type_name, isinstance(event, ParsedEvent))
 
             if not schema.validate(event_element):
-                # Event does not validate.
-                event = self._repair_event(event, schema)
+                # Event does not validate. We will try to repair it. Note that, since event_element
+                # is a reference to the internal lxml element, the repair action will manipulate
+                # event_element.
+                self._repair_event(event, schema)
 
         try:
             self.__writer.send(event_element)
