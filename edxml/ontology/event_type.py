@@ -1603,10 +1603,22 @@ class EventType(OntologyElement, MutableMapping):
                     self.__attr['name'], self.__attr['display-name-plural'])
             )
 
+        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
+            raise EDXMLValidationError(
+                'The description of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['description'])
+            )
+
         if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
                 'The description of object type "%s" is too long: "%s"' % (
                     self.__attr['name'], self.__attr['description'])
+            )
+
+        if normalize_xml_token(self.__attr['classlist']) != self.__attr['classlist']:
+            raise EDXMLValidationError(
+                'The class list of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['classlist'])
             )
 
         if self.__attr['classlist'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
@@ -1642,6 +1654,18 @@ class EventType(OntologyElement, MutableMapping):
                     'by means of property "%s", which does not have a datetime data type.' %
                     (self.__attr['name'], self.__attr['timespan-end'])
                 )
+
+        if normalize_xml_token(self.__attr['story']) != self.__attr['story']:
+            raise EDXMLValidationError(
+                'The story template of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['story'])
+            )
+
+        if normalize_xml_token(self.__attr['summary']) != self.__attr['summary']:
+            raise EDXMLValidationError(
+                'The summary template of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['summary'])
+            )
 
         self.validate_template(self.__attr['summary'])
         self.validate_template(self.__attr['story'])

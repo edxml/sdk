@@ -192,6 +192,12 @@ class Concept(OntologyElement):
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
+        if normalize_xml_token(self._attr['description']) != self._attr['description']:
+            raise EDXMLValidationError(
+                'The description of concept "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['description'])
+            )
+
         if not len(self._attr['description']) <= 128:
             raise EDXMLValidationError(
                 'The description of concept "%s" is too long: "%s"' % (

@@ -408,6 +408,12 @@ class ObjectType(OntologyElement):
                     self.__attr['name'], self.__attr['display-name-plural'])
             )
 
+        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
+            raise EDXMLValidationError(
+                'The description of object type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__attr['name'], self.__attr['description'])
+            )
+
         if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
                 'The description of object type "%s" is too long: "%s"' % (

@@ -261,6 +261,12 @@ class EventTypeAttachment(OntologyElement):
                 % self._attr['description']
             )
 
+        if normalize_xml_token(self._attr['description']) != self._attr['description']:
+            raise EDXMLValidationError(
+                'The description of attachment "%s" contains illegal whitespace characters: "%s"' % (
+                    self._attr['name'], self._attr['description'])
+            )
+
         if not len(self._attr['display-name-singular']) <= 32:
             raise EDXMLValidationError(
                 'The singular display name of attachment "%s" is too long: "%s"' % (

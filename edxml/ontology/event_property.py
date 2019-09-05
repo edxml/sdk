@@ -6,7 +6,7 @@ import edxml.ontology
 from edxml.EDXMLBase import EDXMLValidationError
 from lxml import etree
 from typing import Dict
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class EventProperty(OntologyElement):
@@ -518,9 +518,22 @@ class EventProperty(OntologyElement):
             raise EDXMLValidationError(
                 'Property description is too long: "%s"' % self.__attr['description'])
 
+        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
+            raise EDXMLValidationError(
+                'The description of property "%s" of event type "%s" contains illegal whitespace characters: "%s"' % (
+                    self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
+            )
+
         if not len(self.__attr['similar']) <= 64:
             raise EDXMLValidationError(
                 'Property attribute is too long: similar="%s"' % self.__attr['similar'])
+
+        if normalize_xml_token(self.__attr['similar']) != self.__attr['similar']:
+            raise EDXMLValidationError(
+                'The similar attribute of property "%s" of event type "%s" contains illegal whitespace '
+                'characters: "%s"' % (
+                    self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
+            )
 
         if self.is_unique():
             if self.is_optional():

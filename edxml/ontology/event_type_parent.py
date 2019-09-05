@@ -5,7 +5,7 @@ import edxml
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class EventTypeParent(OntologyElement):
@@ -213,11 +213,25 @@ class EventTypeParent(OntologyElement):
                 % self._attr['parent-description']
             )
 
+        if normalize_xml_token(self._attr['parent-description']) != self._attr['parent-description']:
+            raise EDXMLValidationError(
+                'The parent-description attribute in the implicit parent definition of event type "%s" '
+                'contains illegal whitespace characters: "%s"' % (
+                    self._childEventType.get_name(), self._attr['parent-description'])
+            )
+
         if not 1 <= len(self._attr['siblings-description']) <= 128:
             raise EDXMLValidationError(
                 'An implicit parent definition contains an siblings-description '
                 'attribute that is either empty or too long: "%s"'
                 % self._attr['siblings-description']
+            )
+
+        if normalize_xml_token(self._attr['siblings-description']) != self._attr['siblings-description']:
+            raise EDXMLValidationError(
+                'The siblings-description attribute in the implicit parent definition of event type "%s" '
+                'contains illegal whitespace characters: "%s"' % (
+                    self._childEventType.get_name(), self._attr['siblings-description'])
             )
 
         return self

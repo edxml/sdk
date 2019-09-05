@@ -5,7 +5,7 @@ import edxml.ontology
 
 from lxml import etree
 from edxml.EDXMLBase import EDXMLValidationError
-from edxml.ontology import EventProperty, OntologyElement
+from edxml.ontology import EventProperty, OntologyElement, normalize_xml_token
 
 
 class PropertyRelation(OntologyElement):
@@ -256,9 +256,21 @@ class PropertyRelation(OntologyElement):
             raise EDXMLValidationError(
                 'Property relation description is too long: "%s"' % self.__attr['description'])
 
+        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
+            raise EDXMLValidationError(
+                'Property relation description contains illegal whitespace characters: "%s"' % (
+                    self.__attr['description'])
+            )
+
         if not len(self.__attr['predicate']) <= 32:
             raise EDXMLValidationError(
                 'Property relation predicate is too long: "%s"' % self.__attr['predicate'])
+
+        if normalize_xml_token(self.__attr['predicate']) != self.__attr['predicate']:
+            raise EDXMLValidationError(
+                'Property relation predicate contains illegal whitespace characters: "%s"' % (
+                    self.__attr['predicate'])
+            )
 
         if self._type not in ['inter', 'intra', 'other']:
             raise EDXMLValidationError(
