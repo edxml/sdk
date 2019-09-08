@@ -1611,7 +1611,7 @@ class EventType(OntologyElement, MutableMapping):
 
         if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
-                'The description of object type "%s" is too long: "%s"' % (
+                'The description of event type "%s" is too long: "%s"' % (
                     self.__attr['name'], self.__attr['description'])
             )
 
