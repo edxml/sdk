@@ -46,6 +46,7 @@ from lxml import etree
 from copy import deepcopy
 from EDXMLBase import EDXMLBase, EvilCharacterFilter, EDXMLValidationError
 from edxml.event import ParsedEvent
+from edxml.ontology import Ontology
 
 
 class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
@@ -86,7 +87,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
 
         super(EDXMLWriter, self).__init__()
 
-        self.__ontology = None
+        self.__ontology = Ontology()            # type: Ontology
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
         self.__ignore_invalid_objects = ignore_invalid_objects
@@ -220,13 +221,9 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
           unicode: Generated output XML data
 
         """
-        if self.__ontology is None:
-            # This is our initial ontology. Validate and store it.
-            self.__ontology = ontology.validate()
-        else:
-            # We update our existing ontology, to make sure
-            # that both are compatible.
-            self.__ontology.update(ontology)
+        # Below updates triggers an exception in case the update
+        # is incompatible or otherwise invalid.
+        self.__ontology.update(ontology)
 
         try:
             self.__writer.send(ontology.generate_xml())
