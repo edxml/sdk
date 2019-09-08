@@ -347,9 +347,24 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         event_type_name = event.get_type_name()
         source_uri = event.get_source_uri()
 
+        if event_type_name is None:
+            raise EDXMLValidationError(
+                'Attempt to add an event that has no event type set. '
+                'Please check that the event generator is configured '
+                'to set the event type for each output event.'
+            )
+
+        if source_uri is None:
+            raise EDXMLValidationError(
+                'Attempt to add an event that has no event source set. '
+                'Please check that the event generator is configured '
+                'to set the event source for each output event.'
+            )
+
         if self.__ontology.get_event_type(event_type_name) is None:
             raise EDXMLValidationError(
                 'Attempt to add an event using unknown event type: "%s"' % event_type_name)
+
         if self.__ontology.get_event_source(source_uri) is None:
             raise EDXMLValidationError(
                 'Attempt to add an event using unknown source URI: "%s"' % source_uri)
