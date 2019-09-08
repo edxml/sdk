@@ -826,18 +826,16 @@ class Ontology(OntologyElement):
                              relation.get_target(), event_type_name)
                         )
 
-                    for source_concept_name in source_concepts:
-                        for target_concept_name in target_concepts:
-                            if relation.get_type() == 'intra':
-                                source_primitive = relation.get_source_concept().split('.', 2)[0]
-                                target_primitive = relation.get_target_concept().split('.', 2)[0]
-                                if source_primitive != target_primitive:
-                                    raise EDXMLValidationError(
-                                        ('Properties %s and %s in the intra-concept relation in event type %s must '
-                                         'both refer to the same primitive concept.') %
-                                        (relation.get_source(),
-                                         relation.get_target(), event_type_name)
-                                    )
+                    if relation.get_type() == 'intra':
+                        source_primitive = relation.get_source_concept().split('.', 2)[0]
+                        target_primitive = relation.get_target_concept().split('.', 2)[0]
+                        if source_primitive != target_primitive:
+                            raise EDXMLValidationError(
+                                ('Properties %s and %s in the intra-concept relation in event type %s must '
+                                 'both refer to the same primitive concept.') %
+                                (relation.get_source(),
+                                 relation.get_target(), event_type_name)
+                            )
 
         return self
 
