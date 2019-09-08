@@ -290,7 +290,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 last_error = schema.error_log.last_error
 
                 if last_error.path is None or \
-                        not last_error.path.startswith('/event/properties') or \
+                        not last_error.path.startswith('/event/properties/') or \
                         not self.__ignore_invalid_objects:
                     # Either we have no idea what is wrong, or we cannot do anything about it.
                     # Raise a validation exception.
