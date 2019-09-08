@@ -3,7 +3,7 @@ import copy
 import time
 
 from edxml import EDXMLWriter
-from edxml.EDXMLBase import EDXMLError, EDXMLValidationError
+from edxml.EDXMLBase import EDXMLValidationError
 # from edxml.ontology import *
 from edxml.ontology import Ontology
 
@@ -290,65 +290,22 @@ class SimpleEDXMLWriter(object):
 
         return self
 
-    def add_event(self, event, auto_source=True, auto_type=True):
+    def add_event(self, event):
         """
 
-        Add the specified event to the output stream. When the event source URI is
-        not set and AutoSource is True, the default source URI that has been set
-        using set_event_source() will be used. When the event type is not set and
-        AutoType is True, the default event type that has been set using set_event_type()
-        will be used.
+        Add the specified event to the output stream.
 
         If no output was specified while instantiating this class,
         the generated XML data will be returned as unicode string.
 
         Args:
-          event (EDXMLEvent): An EDXMLEvent instance
-          auto_source (bool):
-          auto_type (bool):
+          event (edxml.EDXMLEvent): An EDXMLEvent instance
 
         Returns:
           unicode: Generated output XML data
 
         """
-
-        if auto_source:
-            event_source_uri = event.get_source_uri()
-            if event_source_uri is None:
-                if len(self.__ontology.get_event_sources()) == 1:
-                    # The ontology contains only one source, so we just pick that one.
-                    event_source_uri = self.__ontology.get_event_sources().keys()[0]
-                else:
-                    if len(self.__ontology.get_event_sources()) == 0:
-                        raise EDXMLError(
-                            'Failed to output an event, no sources have been defined in the output ontology.')
-                    else:
-                        raise EDXMLError(
-                            "An output event did not have a configured source, no default output source has "
-                            "been configured and the ontology contains multiple sources. "
-                            "You do not want me to just pick one, do you?")
-                event.set_source(event_source_uri)
-        else:
-            event_source_uri = event.get_source_uri()
-
-        if auto_type:
-            event_type_name = event.get_type_name()
-            if event_type_name is None:
-                if len(self.__ontology.get_event_type_names()) == 1:
-                    # The ontology contains only one event type, so we just pick that one.
-                    event_type_name = self.__ontology.get_event_type_names()[0]
-                else:
-                    if len(self.__ontology.get_event_type_names()) == 0:
-                        raise EDXMLError(
-                            'Failed to output an event, no event types have been defined in the output ontology.')
-                    else:
-                        raise EDXMLError(
-                            "An output event did not have a configured event type, no default output type has "
-                            "been configured and the ontology contains multiple event type definitions. "
-                            "You do not want me to just pick one, do you?")
-                event.set_type(event_type_name)
-        else:
-            event_type_name = event.get_type_name()
+        event_type_name = event.get_type_name()
 
         if event_type_name in self.__event_type_post_processors:
             self.__event_type_post_processors[event_type_name](event)
