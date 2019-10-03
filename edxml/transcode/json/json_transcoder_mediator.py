@@ -140,7 +140,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
                 if self._transcoder_is_postprocessor(transcoder):
                     try:
-                        for PostProcessedEvent in transcoder.post_process(Event):
+                        for PostProcessedEvent in transcoder.post_process(Event, json_record):
                             try:
                                 outputs.append(
                                     self._writer.add_event(PostProcessedEvent))
