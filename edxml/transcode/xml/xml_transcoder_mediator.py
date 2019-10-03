@@ -284,63 +284,8 @@ class XmlTranscoderMediator(TranscoderMediator):
                     tree.getpath(element)
                 )
 
-            for Event in transcoder.generate(element, matching_element_xpath):
-                if self._output_source_uri:
-                    Event.set_source_uri(self._output_source_uri)
-                if not self._writer:
-                    # Apparently, this is the first event that
-                    # is generated. Create an EDXML writer and
-                    # write the initial ontology.
-                    self._create_writer()
-                    self._write_initial_ontology()
-                if self._ontology.is_modified_since(self._last_written_ontology_version):
-                    # Ontology was changed since we wrote the last ontology update,
-                    # so we need to write another update.
-                    self._write_ontology_update()
-                    self._last_written_ontology_version = self._ontology.get_version()
+            self._transcode(element, element_xpath, matching_element_xpath, transcoder)
 
-                if self._transcoder_is_postprocessor(transcoder):
-                    try:
-                        for PostProcessedEvent in transcoder.post_process(Event):
-                            try:
-                                outputs.append(
-                                    self._writer.add_event(PostProcessedEvent))
-                            except StopIteration:
-                                outputs.append(self._writer.close())
-                            except EDXMLError as Except:
-                                if not self._ignore_invalid_events:
-                                    raise
-                                if self._warn_invalid_events:
-                                    self.warning(
-                                        'The post processor of the transcoder for XML element at %s produced '
-                                        'an invalid event: %s\n\nContinuing...' % (element_xpath, str(Except))
-                                    )
-                    except Exception as Except:
-                        if self._debug:
-                            raise
-                        self.warning(('The post processor of the transcoder for XML element at %s failed '
-                                      'with %s: %s\n\nContinuing...') % (
-                                          element_xpath, type(Except).__name__, str(Except))
-                                     )
-                else:
-                    try:
-                        outputs.append(self._writer.add_event(Event))
-                    except StopIteration:
-                        outputs.append(self._writer.close())
-                    except EDXMLError as Except:
-                        if not self._ignore_invalid_events:
-                            raise
-                        if self._warn_invalid_events:
-                            self.warning(('The transcoder for XML element at %s produced an invalid '
-                                          'event: %s\n\nContinuing...') % (element_xpath, str(Except)))
-                    except Exception as Except:
-                        if not self._ignore_invalid_events or self._debug:
-                            raise
-                        if self._warn_invalid_events:
-                            self.warning(('Transcoder for XML element at %s failed '
-                                          'with %s: %s\n\nContinuing...') % (
-                                              element_xpath, type(Except).__name__, str(Except))
-                                         )
         else:
             if self._warn_no_transcoder:
                 self.warning(
@@ -351,3 +296,64 @@ class XmlTranscoderMediator(TranscoderMediator):
                              etree.tostring(element, pretty_print=True))
 
         return u''.join(outputs)
+
+    def _transcode(self, element, element_xpath, matching_element_xpath, transcoder):
+        outputs = []
+        for Event in transcoder.generate(element, matching_element_xpath):
+            if self._output_source_uri:
+                Event.set_source_uri(self._output_source_uri)
+            if not self._writer:
+                # Apparently, this is the first event that
+                # is generated. Create an EDXML writer and
+                # write the initial ontology.
+                self._create_writer()
+                self._write_initial_ontology()
+            if self._ontology.is_modified_since(self._last_written_ontology_version):
+                # Ontology was changed since we wrote the last ontology update,
+                # so we need to write another update.
+                self._write_ontology_update()
+                self._last_written_ontology_version = self._ontology.get_version()
+
+            if self._transcoder_is_postprocessor(transcoder):
+                try:
+                    for PostProcessedEvent in transcoder.post_process(Event):
+                        try:
+                            outputs.append(
+                                self._writer.add_event(PostProcessedEvent))
+                        except StopIteration:
+                            outputs.append(self._writer.close())
+                        except EDXMLError as Except:
+                            if not self._ignore_invalid_events:
+                                raise
+                            if self._warn_invalid_events:
+                                self.warning(
+                                    'The post processor of the transcoder for XML element at %s produced '
+                                    'an invalid event: %s\n\nContinuing...' % (element_xpath, str(Except))
+                                )
+                except Exception as Except:
+                    if self._debug:
+                        raise
+                    self.warning(('The post processor of the transcoder for XML element at %s failed '
+                                  'with %s: %s\n\nContinuing...') % (
+                                     element_xpath, type(Except).__name__, str(Except))
+                                 )
+            else:
+                try:
+                    outputs.append(self._writer.add_event(Event))
+                except StopIteration:
+                    outputs.append(self._writer.close())
+                except EDXMLError as Except:
+                    if not self._ignore_invalid_events:
+                        raise
+                    if self._warn_invalid_events:
+                        self.warning(('The transcoder for XML element at %s produced an invalid '
+                                      'event: %s\n\nContinuing...') % (element_xpath, str(Except)))
+                except Exception as Except:
+                    if not self._ignore_invalid_events or self._debug:
+                        raise
+                    if self._warn_invalid_events:
+                        self.warning(('Transcoder for XML element at %s failed '
+                                      'with %s: %s\n\nContinuing...') % (
+                                         element_xpath, type(Except).__name__, str(Except))
+                                     )
+        return outputs
