@@ -36,11 +36,11 @@ The above JSON record is from a data source that produces records that all have 
 Transcoders in the EDXML SDK
 ----------------------------
 
-The EDXML SDK features the :class:`edxml.transcode.Transcoder` class, which can be used to write transcoders for composite data sources. The class has two extensions :class:`edxml.transcode.json.JsonTranscoder` and :class:`edxml.transcode.xml.XmlTranscoder` for transcoding XML and JSON based data sources. Adding support for other types of data sources is fairly straight forward. By extending the ``JsonTranscoder`` or ``XmlTranscoder`` classes, a collection of transcoders can be written for each of the various types of input data records.
+The EDXML SDK features the :class:`edxml.transcode.Transcoder` class, which can be used to write transcoders for composite data sources. The class has two extensions :class:`edxml.transcode.object.ObjectTranscoder` and :class:`edxml.transcode.xml.XmlTranscoder` for transcoding XML and JSON based data sources. Adding support for other types of data sources is fairly straight forward. By extending the ``ObjectTranscoder`` or ``XmlTranscoder`` classes, a collection of transcoders can be written for each of the various types of input data records.
 
-Next to the ``Transcoder`` class, the SDK features the :class:`edxml.transcode.TranscoderMediator` class. This class is the mediator between the input data and the collection of transcoders. Like the transcoder class, the mediator class has two extensions :class:`edxml.transcode.xml.XmlTranscoderMediator` and :class:`edxml.transcode.json.JsonTranscoderMediator` for processing XML and JSON based data sources. A mediator allows a transcoder to be registered for each input record type. The mediator will then automatically parse the input data, determine the record type for each input record and invoke the correct transcoder to produce EDXML events. The mediator determines which transcoder to use by means of *selectors*. What a selector looks like depends on the type of transcoder. For instance, a selector in the XML transcoder is an XPath expression. When a transcoder registers itself with the mediator, it specifies a selector that will select the input data records that the transcoder is designed to transcode.
+Next to the ``Transcoder`` class, the SDK features the :class:`edxml.transcode.TranscoderMediator` class. This class is the mediator between the input data and the collection of transcoders. Like the transcoder class, the mediator class has two extensions :class:`edxml.transcode.xml.XmlTranscoderMediator` and :class:`edxml.transcode.object.ObjectTranscoderMediator` for processing XML data and sets of arbitrary Python objects. A mediator allows a transcoder to be registered for each input record type. The mediator will then automatically parse the input data, determine the record type for each input record and invoke the correct transcoder to produce EDXML events. The mediator determines which transcoder to use by means of *selectors*. What a selector looks like depends on the type of transcoder. For instance, a selector in the XML transcoder is an XPath expression. When a transcoder registers itself with the mediator, it specifies a selector that will select the input data records that the transcoder is designed to transcode.
 
-The ``Transcoder`` class can automatically create EDXML events for you if you provide it with some information about how to map fields from the input records to event properties. For example, the ``XmlTranscoder`` class has an ``XPATH_MAP`` constant that can be populated with XPath expressions that point into the XML data, along with associated event properties. The ``JsonTranscoder`` class has an ``ATTRIBUTE_MAP`` constant that works in a similar fashion. It supports a dotted syntax to allow reaching anywhere into the input JSON record to gather event properties, like this:
+The ``Transcoder`` class can automatically create EDXML events for you if you provide it with some information about how to map fields from the input records to event properties. For example, the ``XmlTranscoder`` class has an ``PROPERTY_MAP`` constant that can be populated with XPath expressions that point into the XML data, along with associated event properties. The ``ObjectTranscoder`` class has an ``PROPERTY_MAP`` constant that works in a similar fashion. It supports a dotted syntax to allow reaching anywhere into the input JSON record to gather event properties, like this:
 
 .. code-block:: python
 
@@ -142,9 +142,9 @@ Sometimes, you may need to inspect multiple fields in the input records in order
 
  .. code-block:: python
 
-  from edxml.transcode.json import JsonTranscoderMediator
+  from edxml.transcode.object import ObjectTranscoderMediator
 
-  class MyMediator(JsonTranscoderMediator):
+  class MyMediator(ObjectTranscoderMediator):
 
     TYPE_FIELD = 'ctype'
 

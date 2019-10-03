@@ -5,24 +5,28 @@ import edxml.transcode.mediator
 from edxml.EDXMLBase import EDXMLError
 
 
-class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
+class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     """
-    This class is a mediator between a source of JSON records and a set
-    of JsonTranscoder implementations that can transcode the JSON records
-    into EDXML events.
+    This class is a mediator between a source of Python objects, also called
+    input records, and a set of ObjectTranscoder implementations that can
+    transcode the objects into EDXML events.
 
-    Sources can instantiate the mediator and feed it JSON records, while
+    Sources can instantiate the mediator and feed it records, while
     transcoders can register themselves with the mediator in order to
-    transcode the types of JSON record that they support.
+    transcode the record types that they support. Note that we talk
+    about "record types" rather than "object types" because transcoders
+    distinguish between types of input record by inspecting the attributes
+    of the object rather than inspecting the Python object as obtained by
+    calling type() on the object.
     """
 
     TYPE_FIELD = None
     """
-    This constant must be set to the name of the field in the root of the JSON record
-    that contains the JSON record type, allowing the Transcoder Manager to route
-    JSON records to the correct transcoder.
+    This constant must be set to the name of the item or attribute in the object
+    that contains the input record type, allowing the TranscoderMediator to route
+    objects to the correct transcoder.
 
-    If the constant is set to None, all JSON records will be routed to the fallback
+    If the constant is set to None, all objects will be routed to the fallback
     transcoder. If there is no fallback transcoder available, the record will not
     be processed.
 
@@ -35,21 +39,21 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     def register(cls, record_type_identifier, transcoder):
         """
 
-        Register a transcoder for processing records of specified
-        type. The same transcoder can be registered for multiple
-        record types. The Transcoder argument must be a JsonTranscoder
+        Register a transcoder for processing objects of specified
+        record type. The same transcoder can be registered for multiple
+        record types. The Transcoder argument must be an ObjectTranscoder
         class or an extension of it. Do not pass in instantiated
         class, pass the class itself.
 
         Note:
           Any transcoder that registers itself as a transcoder for the
           record type named 'RECORD_OF_UNKNOWN_TYPE' is used as the fallback
-          transcoder. The fallback transcoder is used to transcode any record
-          that has a record type for which no transcoder has been registered.
+          transcoder. The fallback transcoder is used to transcode any object
+          that has a type for which no transcoder has been registered.
 
         Args:
-          record_type_identifier (str): Name of the JSON record type
-          transcoder (JsonTranscoder): JsonTranscoder class
+          record_type_identifier (str): Name of the record type
+          transcoder (ObjectTranscoder): ObjectTranscoder class
         """
         edxml.transcode.mediator.TranscoderMediator.register(
             record_type_identifier, transcoder)
@@ -58,37 +62,36 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     def _get_transcoder(cls, record_type_name):
         """
 
-        Returns a JsonTranscoder instance for transcoding
+        Returns a ObjectTranscoder instance for transcoding
         records of specified type, or None if no transcoder
         has been registered for the record type.
 
         Args:
-          record_type_name (str): Name of the JSON record type
+          record_type_name (str): Name of the record type
 
         Returns:
-          JsonTranscoder:
+          ObjectTranscoder:
         """
         return edxml.transcode.mediator.TranscoderMediator._get_transcoder(record_type_name)
 
-    def process(self, json_record):
+    def process(self, input_record):
         """
-        Processes a single JSON record, invoking the correct
+        Processes a single input object, invoking the correct
         transcoder to generate an EDXML event and writing the
         event into the output.
 
         If no output was specified while instantiating this class,
         any generated XML data will be returned as unicode string.
 
-        The JSON record must be represented as either a dictionary
-        or an object. When an object is passed, it will attempt to
-        read any attributes listed in the PROPERTY_MAP of the matching
-        transcoder from object attributes. When a dictionary is passed,
-        it will attempt to read keys as listed in PROPERTY_MAP. Using
-        dotted notation, the keys in PROPERTY_MAP can refer to dictionary
-        values that are themselves dictionaries of lists.
+        The object may optionally be a dictionary or act like one.
+        Transcoders can extract EDXML event object values from both
+        dictionary items and object attributes as listed in the
+        PROPERTY_MAP of the matching transcoder. Using dotted notation
+        the keys in PROPERTY_MAP can refer to dictionary items or
+        object attributes that are themselves dictionaries of lists.
 
         Args:
-          json_record (dict,object): Json dictionary
+          input_record (dict,object): Input object
 
         Returns:
           unicode: Generated output XML data
@@ -103,11 +106,11 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
             record_type = 'RECORD_OF_UNKNOWN_TYPE'
         else:
             try:
-                record_type = json_record.get(
+                record_type = input_record.get(
                     self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
             except AttributeError:
                 record_type = getattr(
-                    json_record, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+                    input_record, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
 
         transcoder = self._get_transcoder(record_type)
 
@@ -120,10 +123,11 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
             if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
                 self.warning(
-                    'JSON record has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD)
-                self.warning('Record was: %s' % json_record)
+                    'Input object has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD
+                )
+                self.warning('Record was: %s' % input_record)
 
-            for event in transcoder.generate(json_record, record_type):
+            for event in transcoder.generate(input_record, record_type):
                 if self._output_source_uri:
                     event.set_source(self._output_source_uri)
                 if not self._writer:
@@ -140,7 +144,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
                 if self._transcoder_is_postprocessor(transcoder):
                     try:
-                        for post_processed_event in transcoder.post_process(event, json_record):
+                        for post_processed_event in transcoder.post_process(event, input_record):
                             try:
                                 outputs.append(
                                     self._writer.add_event(post_processed_event))
@@ -151,7 +155,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                                     raise
                                 if self._warn_invalid_events:
                                     self.warning(
-                                        ('The post processor of the transcoder for JSON record type %s produced '
+                                        ('The post processor of the transcoder for input record type %s produced '
                                          'an invalid event: %s\n\nContinuing...') % (record_type, str(e))
                                     )
                     except Exception as e:
@@ -159,7 +163,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                             raise
                         if self._warn_invalid_events:
                             self.warning(
-                                ('The post processor of the transcoder for JSON record type %s failed '
+                                ('The post processor of the transcoder for input record type %s failed '
                                  'with %s: %s\n\nContinuing...') % (record_type, type(e).__name__, str(e))
                             )
                 else:
@@ -171,24 +175,24 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                         if not self._ignore_invalid_events:
                             raise
                         if self._warn_invalid_events:
-                            self.warning(('The transcoder for JSON record type %s produced an invalid '
+                            self.warning(('The transcoder for input record type %s produced an invalid '
                                           'event: %s\n\nContinuing...') % (record_type, str(e)))
                     except Exception as e:
                         if self._debug:
                             raise
                         self.warning(
-                            'Transcoder for JSON record type %s failed '
+                            'Transcoder for input record type %s failed '
                             'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
                         )
         else:
             if self._warn_no_transcoder:
                 if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
                     self.warning(
-                        'JSON record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD)
+                        'Input record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD)
                 else:
                     self.warning(('No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
                                   'no %s event generated.') % record_type
                                  )
-                self.warning('Record was: %s' % json_record)
+                self.warning('Record was: %s' % input_record)
 
         return u''.join(outputs)
