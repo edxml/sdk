@@ -125,7 +125,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
             for event in transcoder.generate(json_record, record_type):
                 if self._output_source_uri:
-                    Event.set_source_uri(self._output_source_uri)
+                    event.set_source(self._output_source_uri)
                 if not self._writer:
                     # Apparently, this is the first event that
                     # is generated. Create an EDXML writer and
