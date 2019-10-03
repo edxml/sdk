@@ -79,7 +79,7 @@ class TranscoderMediator(EDXMLBase):
         return this_method.__func__ is not base_method.__func__
 
     @classmethod
-    def register(cls, record_type_identifier, record_transcoder):
+    def register(cls, record_selector, record_transcoder):
         """
 
         Register a transcoder for processing records identified by
@@ -98,7 +98,7 @@ class TranscoderMediator(EDXMLBase):
           for which no transcoder has been registered.
 
         Args:
-          record_type_identifier: Record type identifier
+          record_selector: Record type selector
           record_transcoder (class): Transcoder class
         """
         if record_transcoder not in cls.__transcoders:
@@ -106,7 +106,7 @@ class TranscoderMediator(EDXMLBase):
             cls.__auto_merge_eventtypes.extend(
                 cls.__transcoders[record_transcoder].get_auto_merge_event_types())
 
-        cls.__record_transcoders[record_type_identifier] = record_transcoder
+        cls.__record_transcoders[record_selector] = record_transcoder
 
     def debug(self, disable_buffering=True, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
         """
