@@ -19,6 +19,8 @@ class XmlTranscoderMediator(TranscoderMediator):
 
     _XPATH_MATCHERS = {}
 
+    _last_used_transcoder_xpath = None
+
     @classmethod
     def register(cls, xpath_expression, transcoder):
         """
@@ -251,23 +253,27 @@ class XmlTranscoderMediator(TranscoderMediator):
         # match multiple elements.
         element_xpath = tree.getpath(element)
 
-        # Matching elements to the correct transcoders for processing them requires
-        # that we try to match the element to each of the XPath expressions that are
-        # associated with the transcoders. However, we do expect the left hand side of
-        # the element XPath to match the left hand side of the transcoder XPath. So,
-        # we sort the transcoder XPath expressions such that these left hand matching
-        # ones are tested first.
-        transcoder_paths = sorted(XmlTranscoderMediator._XPATH_MATCHERS.keys(
-        ), key=lambda xpath: element_xpath.startswith(xpath))
+        transcoder_paths = XmlTranscoderMediator._XPATH_MATCHERS.keys()
 
         matching_element_xpath = 'RECORD_OF_UNKNOWN_TYPE'
 
+        if self._last_used_transcoder_xpath is not None:
+            # Try whatever transcoder was used on the previously
+            # transcoded element first. If it matches, we are lucky and we
+            # do not need to try them all.
+            transcoder_paths.insert(0, self._last_used_transcoder_xpath)
+
+        # Below, we try to match the XPath expressions of each of the registered
+        # transcoders with the XPath expression of the current element.
         for MatchingXPath in transcoder_paths:
             if element in XmlTranscoderMediator._XPATH_MATCHERS[MatchingXPath](element):
                 # The element is among the elements that match the
                 # XPath expression of one of the transcoders.
                 matching_element_xpath = MatchingXPath
                 break
+
+        if matching_element_xpath != 'RECORD_OF_UNKNOWN_TYPE':
+            self._last_used_transcoder_xpath = matching_element_xpath
 
         transcoder = self._get_transcoder(matching_element_xpath)
 
