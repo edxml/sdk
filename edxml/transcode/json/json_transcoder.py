@@ -9,19 +9,20 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
     ATTRIBUTE_MAP = {}
     """
-    The ATTRIBUTE_MAP attribute is a dictionary mapping JSON attributes to EDXML
-    event properties. The map is used to automatically populate the properties of
-    the EDXMLEvent instances produced by the Generate method of the JsonTranscoder
-    class. The keys may contain dots, indicating a subfield or positions within
-    an array, like so::
+    The ATTRIBUTE_MAP attribute is a dictionary mapping event type names to their
+    associated attribute mappings. Each attribute mapping is itself a dictionary
+    mapping input record attribute names to EDXML event properties. The map is used to
+    automatically populate the properties of the output events produced by the
+    generate() method of the JsonTranscoder class. The attribute names may contain dots,
+    indicating a subfield or positions within a list, like so::
 
-        {'fieldname.0.subfieldname': 'property-name'}
+        {'event-type-name': {'fieldname.0.subfieldname': 'property-name'}}
 
     Note that the event structure will not be validated until the event is yielded by
     the generate() method. This creates the possibility to add nonexistent properties
-    to the attribute map and remove them in the Generate method, which may be convenient
-    for composing properties from multiple JSON values, or for splitting the auto-generated
-    event into multiple output events.
+    to the attribute map and remove them in the generate() method, which may be convenient
+    for composing properties from multiple input record attributes, or for splitting the
+    auto-generated event into multiple output events.
     """
 
     EMPTY_VALUES = {}
@@ -77,7 +78,7 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
         event_type_name = self.TYPE_MAP.get(record_type_name, None)
 
-        for JsonField, PropertyName in self.ATTRIBUTE_MAP.items():
+        for JsonField, PropertyName in self.ATTRIBUTE_MAP[event_type_name].items():
             # Below, we parse dotted notation to find sub-fields
             # in the Json data.
 
