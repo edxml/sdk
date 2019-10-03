@@ -32,18 +32,17 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
     XPATH_MAP = {}
     """
-    The XPATH_MAP attribute is a dictionary mapping XPath expressions to EDXML
-    event properties. The map is used to automatically populate the properties of
-    the EDXMLEvent instances produced by the Generate method of the XmlTranscoder
-    class. The keys are XPath expressions relative to the root of the XML input
-    elements for this transcoder. Example::
+    The XPATH_MAP attribute is a dictionary mapping event type names to the XPath
+    expressions for finding property objects. Each value in the dictionary is another
+    dictionary that maps property names to the XPath expression. The XPath expressions
+    are relative to the source XML element of the event. Example::
 
-        {'./some/subtag[@attribute]': 'property-name'}
+        {'event-type-name': {'some/subtag[@attribute]': 'property-name'}}
 
     The use of EXSLT regular expressions is supported and may be used in Xpath keys
     like this::
 
-        {'*[re:test(., "^abc$", "i")]': 'property-name'}
+        {'event-type-name': {'*[re:test(., "^abc$", "i")]': 'property-name'}}
 
     Extending XPath by injecting custom Python functions is supported due to the lxml
     implementation of XPath that is being used in the transcoder implementation. Please
@@ -207,7 +206,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         event_type_name = self.TYPE_MAP.get(xpath_selector, None)
 
-        for xpath, property_name in self.XPATH_MAP.items():
+        for xpath, property_name in self.XPATH_MAP[event_type_name].items():
 
             if xpath not in XmlTranscoder._XPATH_MATCHERS:
                 # Create and cache a compiled function for evaluating the
