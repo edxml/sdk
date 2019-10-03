@@ -253,7 +253,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # match multiple elements.
         element_xpath = tree.getpath(element)
 
-        transcoder_paths = XmlTranscoderMediator._XPATH_MATCHERS.keys()
+        transcoder_xpaths = XmlTranscoderMediator._XPATH_MATCHERS.keys()
 
         matching_element_xpath = 'RECORD_OF_UNKNOWN_TYPE'
 
@@ -261,15 +261,15 @@ class XmlTranscoderMediator(TranscoderMediator):
             # Try whatever transcoder was used on the previously
             # transcoded element first. If it matches, we are lucky and we
             # do not need to try them all.
-            transcoder_paths.insert(0, self._last_used_transcoder_xpath)
+            transcoder_xpaths.insert(0, self._last_used_transcoder_xpath)
 
         # Below, we try to match the XPath expressions of each of the registered
         # transcoders with the XPath expression of the current element.
-        for MatchingXPath in transcoder_paths:
-            if element in XmlTranscoderMediator._XPATH_MATCHERS[MatchingXPath](element):
+        for matching_xpath in transcoder_xpaths:
+            if element in XmlTranscoderMediator._XPATH_MATCHERS[matching_xpath](element):
                 # The element is among the elements that match the
                 # XPath expression of one of the transcoders.
-                matching_element_xpath = MatchingXPath
+                matching_element_xpath = matching_xpath
                 break
 
         if matching_element_xpath != 'RECORD_OF_UNKNOWN_TYPE':
