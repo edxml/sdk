@@ -30,9 +30,9 @@ class XmlTranscoder(edxml.transcode.Transcoder):
       fallback event type.
     """
 
-    XPATH_MAP = {}
+    PROPERTY_MAP = {}
     """
-    The XPATH_MAP attribute is a dictionary mapping event type names to the XPath
+    The PROPERTY_MAP attribute is a dictionary mapping event type names to the XPath
     expressions for finding property objects. Each value in the dictionary is another
     dictionary that maps property names to the XPath expression. The XPath expressions
     are relative to the source XML element of the event. Example::
@@ -183,7 +183,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         Generates one or more EDXML events from the
         given XML element, populating it with properties
-        using the XPATH_MAP class property.
+        using the PROPERTY_MAP class property.
 
         This method can be overridden to create a generic
         event generator, populating the output events with
@@ -206,7 +206,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         event_type_name = self.TYPE_MAP.get(xpath_selector, None)
 
-        for xpath, property_name in self.XPATH_MAP[event_type_name].items():
+        for xpath, property_name in self.PROPERTY_MAP[event_type_name].items():
 
             if xpath not in XmlTranscoder._XPATH_MATCHERS:
                 # Create and cache a compiled function for evaluating the
