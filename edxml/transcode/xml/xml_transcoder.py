@@ -16,10 +16,15 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
     TYPE_MAP = {}
     """
-    The TYPE_MAP attribute is a dictionary mapping EDXML event type names
-    to the XPath expressions of the equivalent input XML elements. This mapping
-    is used by the transcoder mediator to find the correct transcoder for each input
-    data record.
+    The TYPE_MAP attribute is a dictionary mapping XPath expressions to EDXML
+    event type names. The XPath expressions are relative to the XPath of the
+    elements that that transcoder is registered to at the transcoder mediator.
+    The expressions in TYPE_MAP are evaluated on each XML input element to obtain
+    sub-elements. For each sub-element an EDXML event of the corresponding type
+    is generated. In case the events are supposed to be generated from the input
+    element as a whole, you can use '.' for the XPath expression. However, you
+    can also use the expressions to produce multiple types of output events
+    from different parts of the input element.
 
     Note:
       When no EDXML event type name is specified for a particular XPath expression,
@@ -28,6 +33,9 @@ class XmlTranscoder(edxml.transcode.Transcoder):
     Note:
       The fallback transcoder must set the None key to the name of the EDXML
       fallback event type.
+
+    Example:
+        {'.': 'some-event-type'}
     """
 
     PROPERTY_MAP = {}
@@ -202,9 +210,27 @@ class XmlTranscoder(edxml.transcode.Transcoder):
           EDXMLEvent:
         """
 
-        properties = {}
+        for event_type_xpath, event_type_name in self.TYPE_MAP.items():
+            if event_type_xpath not in XmlTranscoder._XPATH_MATCHERS:
+                # Create and cache a compiled function for evaluating the
+                # XPath expression.
+                try:
+                    XmlTranscoder._XPATH_MATCHERS[event_type_xpath] = etree.XPath(
+                        event_type_xpath, namespaces={
+                            're': 'http://exslt.org/regular-expressions'}
+                    )
+                except XPathSyntaxError:
+                    raise ValueError(
+                        'TYPE_MAP of %s contains invalid XPath for event type %s: %s' % (
+                            self.__class__, event_type_name, event_type_xpath)
+                    )
 
-        event_type_name = self.TYPE_MAP.get(xpath_selector, None)
+            for sub_element in self._XPATH_MATCHERS[event_type_xpath](element):
+                yield self._generate_event(event_type_name, sub_element)
+
+    def _generate_event(self, event_type_name, element):
+
+        properties = {}
 
         for xpath, property_name in self.PROPERTY_MAP[event_type_name].items():
 
@@ -253,4 +279,4 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                     # XPath returned None
                     continue
 
-        yield EventElement(properties, event_type_name)
+        return EventElement(properties, event_type_name)
