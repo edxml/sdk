@@ -101,6 +101,11 @@ class TranscoderMediator(EDXMLBase):
           record_selector: Record type selector
           record_transcoder (class): Transcoder class
         """
+        if record_selector in cls.__record_transcoders:
+            raise Exception(
+                "Attempt to register multiple transcoders for record selector '%s'" % record_selector
+            )
+
         if record_transcoder not in cls.__transcoders:
             cls.__transcoders[record_transcoder] = record_transcoder()
             cls.__auto_merge_eventtypes.extend(
