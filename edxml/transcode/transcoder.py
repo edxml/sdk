@@ -312,10 +312,10 @@ class Transcoder(EDXMLBase):
         return
         yield
 
-    def post_process(self, event):
+    def post_process(self, event, input_record):
         """
 
-        Generates zero or more EDXML events from the
+        Generates zero or more EDXML output events from the
         given EDXML input event. If this method is overridden by
         an extension of the Transcoder class, all events generated
         by the generate() method are passed through this method for
@@ -323,8 +323,13 @@ class Transcoder(EDXMLBase):
         modified or omitted. Or, multiple derivative events can be
         created from a single input event.
 
+        The input record that was used to generate the input event
+        is also passed as a parameter. Post processors can use this
+        to extract additional information and add it to the input event.
+
         Args:
           event (EDXMLEvent): Input event
+          input_record: Input record
 
         Yields:
           EDXMLEvent:
