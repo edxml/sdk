@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 from lxml import etree
 from lxml.etree import XPathSyntaxError
@@ -19,11 +20,12 @@ class XmlTranscoderMediator(TranscoderMediator):
 
     _XPATH_MATCHERS = {}
 
+    _transcoder_tags = {}
     _transcoder_positions = {}
     _last_used_transcoder_xpath = None
 
     @classmethod
-    def register(cls, xpath_expression, transcoder):
+    def register(cls, xpath_expression, transcoder, tag=None):
         """
 
         Register a transcoder for processing XML elements matching
@@ -31,6 +33,16 @@ class XmlTranscoderMediator(TranscoderMediator):
         for multiple XPath expressions. The Transcoder argument must be a XmlTranscoder
         class or an extension of it. Do not pass in instantiated
         class, pass the class itself.
+
+        The optional tag argument can be used to pass a list of tag names. Only
+        the tags in the input XML data that are included in this list will be
+        visited while parsing and matched against the XPath expressions
+        associated with registered transcoders. When the argument is not
+        used, the tag names will be guessed from the xpath expressions that
+        the transcoders have been registered with. Namespaced tags can be
+        specified using James Clark notation:
+
+          {http://www.w3.org/1999/xhtml}html
 
         The use of EXSLT regular expressions in XPath expressions is supported and
         can be specified like in this example::
@@ -46,8 +58,14 @@ class XmlTranscoderMediator(TranscoderMediator):
         Args:
           xpath_expression (str): XPath of matching XML records
           transcoder (XmlTranscoder): XmlTranscoder class
+          tag (Optional[str]): XML tag name
         """
         TranscoderMediator.register(xpath_expression, transcoder)
+
+        if tag is not None:
+            cls._transcoder_tags[xpath_expression] = tag
+        else:
+            cls._transcoder_tags[xpath_expression] = cls.get_visited_tag_name(xpath_expression)
 
         # Create and cache a compiled function for evaluating the
         # XPath expression.
@@ -77,7 +95,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         """
         return TranscoderMediator._get_transcoder(xpath_expression)
 
-    def parse(self, input_file, tags, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True,
+    def parse(self, input_file, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True,
               remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, recover=None,
               huge_tree=False, schema=None, resolve_entities=False):
         """
@@ -85,19 +103,6 @@ class XmlTranscoderMediator(TranscoderMediator):
         Parses the specified file, writing the resulting EDXML data into the
         output. The file can be any file-like object, or the name of a file
         that should be opened and parsed.
-
-        The tags argument is a list of tag names. Only the tags in the input
-        XML data that are included in this list will be matched against the
-        XPath expressions associated with registered transcoders. So, all
-        tags of XML elements that should be provided to transcoders must be
-        included in this list. Other XML elements cannot be transcoded into
-        EDXML events, even though they can still be addressed by traversing
-        the XML tree. However, do note that the mediator uses etree.iterparse
-        to parse the input XML data, so the XML tree will be incomplete while
-        parsing. Namespaced tags can be specified by inclusing the namespace
-        like this:
-
-          {http://www.w3.org/1999/xhtml}html
 
         The other keyword arguments are passed directly to :class:`lxml.etree.iterparse`,
         please refer to the lxml documentation for details.
@@ -124,10 +129,11 @@ class XmlTranscoderMediator(TranscoderMediator):
           dtd_validation (bool): validate (if DTD is available)
           attribute_defaults (bool): read default attributes from DTD
           resolve_entities (bool): replace entities by their text value (default: True)
-          tags (List[str]): List of filtered tag names
           input_file (Union[io.TextIOBase, file, str]):
 
         """
+        tags = self._transcoder_tags.values()
+
         element_iterator = etree.iterparse(
             input_file, events=['end'], tag=tags, attribute_defaults=attribute_defaults, dtd_validation=dtd_validation,
             load_dtd=load_dtd, no_network=no_network, remove_blank_text=remove_blank_text,
@@ -149,7 +155,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         if self._writer:
             self._writer.close()
 
-    def generate(self, input_file, tags, attribute_defaults=False, dtd_validation=False, load_dtd=False,
+    def generate(self, input_file, attribute_defaults=False, dtd_validation=False, load_dtd=False,
                  no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None,
                  html=False, recover=None, huge_tree=False, schema=None, resolve_entities=False):
         """
@@ -161,19 +167,6 @@ class XmlTranscoderMediator(TranscoderMediator):
         If an output was specified when instantiating this class, the EDXML
         data will be written into the output and this generator will yield
         empty strings.
-
-        The tags argument is a list of tag names. Only the tags in the input
-        XML data that are included in this list will be matched against the
-        XPath expressions associated with registered transcoders. So, all
-        tags of XML elements that should be provided to transcoders must be
-        included in this list. Other XML elements cannot be transcoded into
-        EDXML events, even though they can still be addressed by traversing
-        the XML tree. However, do note that the mediator uses etree.iterparse
-        to parse the input XML data, so the XML tree will be incomplete while
-        parsing. Namespaced tags can be specified by including the namespace
-        like this:
-
-          {http://www.w3.org/1999/xhtml}html
 
         The other keyword arguments are passed directly to :class:`lxml.etree.iterparse`,
         please refer to the lxml documentation for details.
@@ -197,10 +190,11 @@ class XmlTranscoderMediator(TranscoderMediator):
           dtd_validation (bool): validate (if DTD is available)
           attribute_defaults (bool): read default attributes from DTD
           resolve_entities (bool): replace entities by their text value (default: True)
-          tags (List[str]): List of filtered tag names
           input_file (Union[io.TextIOBase, file, str]):
 
         """
+        tags = self._transcoder_tags.values()
+
         element_iterator = etree.iterparse(
             input_file, events=['end'], tag=tags, attribute_defaults=attribute_defaults, dtd_validation=dtd_validation,
             load_dtd=load_dtd, no_network=no_network, remove_blank_text=remove_blank_text,
@@ -371,3 +365,24 @@ class XmlTranscoderMediator(TranscoderMediator):
                                          element_xpath, type(Except).__name__, str(Except))
                                      )
         return outputs
+
+    @staticmethod
+    def get_visited_tag_name(xpath):
+        """
+        Tries to determine the name of the tag of elements that match the
+        specified XPath expression. Raises ValueError in case the xpath expression
+        is too complex to determine the tag name.
+
+        Returns:
+             Optional[List[str]]
+
+        """
+        if re.search(r"^/?([0-9a-zA-Z_-]+)(/[0-9a-zA-Z_-]+)*$", xpath):
+            return xpath.split('/')[-1]
+
+        # The xpath expression is not a simple path,
+        # like /some/path/to/tagname.
+        raise ValueError(
+            'Cannot translate xpath expression %s to a single name of matching tags. '
+            'You must explicitly pass a tag name to register the associated transcoder.' % xpath
+        )
