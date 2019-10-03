@@ -124,9 +124,9 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         """
         total_matches = []
-        for Node in nodes:
-            if Node.text:
-                matches = re.findall(pattern, Node.text, int(flags))
+        for node in nodes:
+            if node.text:
+                matches = re.findall(pattern, node.text, int(flags))
                 total_matches.extend(unicode(match) for match in matches)
         return total_matches
 
@@ -182,8 +182,8 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         if strings:
             if not isinstance(strings, list):
                 strings = [strings]
-            for String in strings:
-                out_strings.append(' '.join(String.split()))
+            for string in strings:
+                out_strings.append(' '.join(string.split()))
         return out_strings if isinstance(strings, list) else out_strings[0]
 
     def generate(self, element, xpath_selector, **kwargs):

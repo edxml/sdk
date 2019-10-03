@@ -78,11 +78,11 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
         event_type_name = self.TYPE_MAP.get(record_type_name, None)
 
-        for JsonField, PropertyName in self.PROPERTY_MAP[event_type_name].items():
+        for json_field, property_name in self.PROPERTY_MAP[event_type_name].items():
             # Below, we parse dotted notation to find sub-fields
             # in the Json data.
 
-            field_path = JsonField.split('.')
+            field_path = json_field.split('.')
             if len(field_path) > 0:
                 try:
                     # Try using the record as a dictionary
@@ -102,15 +102,15 @@ class JsonTranscoder(edxml.transcode.Transcoder):
                             continue
                 # Now descend into the record to find the innermost
                 # value that the field is referring to.
-                for Field in field_path[1:]:
+                for field in field_path[1:]:
                     try:
                         try:
-                            value = value.get(Field)
+                            value = value.get(field)
                         except AttributeError:
-                            value = getattr(value, Field)
+                            value = getattr(value, field)
                     except AttributeError:
                         try:
-                            value = value[int(Field)]
+                            value = value[int(field)]
                         except (ValueError, IndexError):
                             # Field not found in JSON.
                             value = None
@@ -118,15 +118,15 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
                 if value is not None:
                     empty = ['']
-                    empty.extend(self.EMPTY_VALUES.get(JsonField, ()))
+                    empty.extend(self.EMPTY_VALUES.get(json_field, ()))
                     if type(value) == list:
-                        properties[PropertyName] = [
+                        properties[property_name] = [
                             v for v in value if v not in empty]
                     elif type(value) == bool:
-                        properties[PropertyName] = [
+                        properties[property_name] = [
                             'true' if value else 'false']
                     else:
-                        properties[PropertyName] = [
+                        properties[property_name] = [
                             value] if value not in empty else []
 
         yield EDXMLEvent(properties, event_type_name)

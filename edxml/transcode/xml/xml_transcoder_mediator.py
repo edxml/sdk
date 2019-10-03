@@ -30,7 +30,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
         Register a transcoder for processing XML elements matching
         specified XPath expression. The same transcoder can be registered
-        for multiple XPath expressions. The Transcoder argument must be a XmlTranscoder
+        for multiple XPath expressions. The transcoder argument must be a XmlTranscoder
         class or an extension of it. Do not pass in instantiated
         class, pass the class itself.
 
@@ -307,7 +307,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
     def _transcode(self, element, element_xpath, matching_element_xpath, transcoder):
         outputs = []
-        for Event in transcoder.generate(element, matching_element_xpath):
+        for event in transcoder.generate(element, matching_element_xpath):
             if self._output_source_uri:
                 Event.set_source_uri(self._output_source_uri)
             if not self._writer:
@@ -324,45 +324,45 @@ class XmlTranscoderMediator(TranscoderMediator):
 
             if self._transcoder_is_postprocessor(transcoder):
                 try:
-                    for PostProcessedEvent in transcoder.post_process(Event, element):
+                    for post_processed_event in transcoder.post_process(event, element):
                         try:
                             outputs.append(
-                                self._writer.add_event(PostProcessedEvent))
+                                self._writer.add_event(post_processed_event))
                         except StopIteration:
                             outputs.append(self._writer.close())
-                        except EDXMLError as Except:
+                        except EDXMLError as e:
                             if not self._ignore_invalid_events:
                                 raise
                             if self._warn_invalid_events:
                                 self.warning(
                                     'The post processor of the transcoder for XML element at %s produced '
-                                    'an invalid event: %s\n\nContinuing...' % (element_xpath, str(Except))
+                                    'an invalid event: %s\n\nContinuing...' % (element_xpath, str(e))
                                 )
-                except Exception as Except:
+                except Exception as e:
                     if self._debug:
                         raise
                     self.warning(('The post processor of the transcoder for XML element at %s failed '
                                   'with %s: %s\n\nContinuing...') % (
-                                     element_xpath, type(Except).__name__, str(Except))
+                                     element_xpath, type(e).__name__, str(e))
                                  )
             else:
                 try:
-                    outputs.append(self._writer.add_event(Event))
+                    outputs.append(self._writer.add_event(event))
                 except StopIteration:
                     outputs.append(self._writer.close())
-                except EDXMLError as Except:
+                except EDXMLError as e:
                     if not self._ignore_invalid_events:
                         raise
                     if self._warn_invalid_events:
                         self.warning(('The transcoder for XML element at %s produced an invalid '
-                                      'event: %s\n\nContinuing...') % (element_xpath, str(Except)))
-                except Exception as Except:
+                                      'event: %s\n\nContinuing...') % (element_xpath, str(e)))
+                except Exception as e:
                     if not self._ignore_invalid_events or self._debug:
                         raise
                     if self._warn_invalid_events:
                         self.warning(('Transcoder for XML element at %s failed '
                                       'with %s: %s\n\nContinuing...') % (
-                                         element_xpath, type(Except).__name__, str(Except))
+                                         element_xpath, type(e).__name__, str(e))
                                      )
         return outputs
 

@@ -123,7 +123,7 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                     'JSON record has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD)
                 self.warning('Record was: %s' % json_record)
 
-            for Event in transcoder.generate(json_record, record_type):
+            for event in transcoder.generate(json_record, record_type):
                 if self._output_source_uri:
                     Event.set_source_uri(self._output_source_uri)
                 if not self._writer:
@@ -140,45 +140,45 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
                 if self._transcoder_is_postprocessor(transcoder):
                     try:
-                        for PostProcessedEvent in transcoder.post_process(Event, json_record):
+                        for post_processed_event in transcoder.post_process(event, json_record):
                             try:
                                 outputs.append(
-                                    self._writer.add_event(PostProcessedEvent))
+                                    self._writer.add_event(post_processed_event))
                             except StopIteration:
                                 outputs.append(self._writer.close())
-                            except EDXMLError as Except:
+                            except EDXMLError as e:
                                 if not self._ignore_invalid_events:
                                     raise
                                 if self._warn_invalid_events:
                                     self.warning(
                                         ('The post processor of the transcoder for JSON record type %s produced '
-                                         'an invalid event: %s\n\nContinuing...') % (record_type, str(Except))
+                                         'an invalid event: %s\n\nContinuing...') % (record_type, str(e))
                                     )
-                    except Exception as Except:
+                    except Exception as e:
                         if not self._ignore_invalid_events or self._debug:
                             raise
                         if self._warn_invalid_events:
                             self.warning(
                                 ('The post processor of the transcoder for JSON record type %s failed '
-                                 'with %s: %s\n\nContinuing...') % (record_type, type(Except).__name__, str(Except))
+                                 'with %s: %s\n\nContinuing...') % (record_type, type(e).__name__, str(e))
                             )
                 else:
                     try:
-                        outputs.append(self._writer.add_event(Event))
+                        outputs.append(self._writer.add_event(event))
                     except StopIteration:
                         outputs.append(self._writer.close())
-                    except EDXMLError as Except:
+                    except EDXMLError as e:
                         if not self._ignore_invalid_events:
                             raise
                         if self._warn_invalid_events:
                             self.warning(('The transcoder for JSON record type %s produced an invalid '
-                                          'event: %s\n\nContinuing...') % (record_type, str(Except)))
-                    except Exception as Except:
+                                          'event: %s\n\nContinuing...') % (record_type, str(e)))
+                    except Exception as e:
                         if self._debug:
                             raise
                         self.warning(
                             'Transcoder for JSON record type %s failed '
-                            'with %s: %s\n\nContinuing...' % (record_type, type(Except).__name__, str(Except))
+                            'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
                         )
         else:
             if self._warn_no_transcoder:
