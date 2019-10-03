@@ -5,7 +5,7 @@ import edxml.transcode
 from edxml import EDXMLEvent
 
 
-class JsonTranscoder(edxml.transcode.Transcoder):
+class ObjectTranscoder(edxml.transcode.Transcoder):
 
     PROPERTY_MAP = {}
     """
@@ -13,7 +13,7 @@ class JsonTranscoder(edxml.transcode.Transcoder):
     associated property mappings. Each property mapping is itself a dictionary
     mapping input record attribute names to EDXML event properties. The map is used to
     automatically populate the properties of the output events produced by the
-    generate() method of the JsonTranscoder class. The attribute names may contain dots,
+    generate() method of the ObjectTranscoder class. The attribute names may contain dots,
     indicating a subfield or positions within a list, like so::
 
         {'event-type-name': {'fieldname.0.subfieldname': 'property-name'}}
@@ -41,21 +41,20 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
     """
 
-    def generate(self, record, record_type_name, **kwargs):
+    def generate(self, input_object, record_type_name, **kwargs):
         """
 
         Generates one or more EDXML events from the
-        given JSON record, populating it with properties
+        given input record, populating it with properties
         using the PROPERTY_MAP class property.
 
-        The JSON record can be passed either as a dictionary,
-        an object, a dictionary containing objects or an object
-        containing dictionaries. Dictionaries are allowed to contain
-        lists or other dictionaries. For objects, the PROPERTY_MAP
-        will be used to access its attributes. These attributes
-        may in turn be dictionaries, lists or other objects. Using
-        dotted notation in PROPERTY_MAP, you can extract pretty much
-        everything from anything.
+        The input record can be a dictionary or act like one, it can
+        be an object, a dictionary containing objects or an object
+        containing dictionaries. Object attributes or dictionary
+        items are allowed to contain lists or other objects. The keys
+        in the PROPERTY_MAP will be used to access its items or
+        attributes. Using dotted notation in PROPERTY_MAP, you can
+        extract pretty much everything from anything.
 
         This method can be overridden to create a generic
         event generator, populating the output events with
@@ -66,8 +65,8 @@ class JsonTranscoder(edxml.transcode.Transcoder):
         editing the event content, and so on.
 
         Args:
-          record (dict, object): Decoded JSON data
-          record_type_name (str): The JSON record type
+          input_object (dict, object): Input object
+          record_type_name (str): The record type of the input object
           **kwargs: Arbitrary keyword arguments
 
         Yields:
@@ -78,25 +77,25 @@ class JsonTranscoder(edxml.transcode.Transcoder):
 
         event_type_name = self.TYPE_MAP.get(record_type_name, None)
 
-        for json_field, property_name in self.PROPERTY_MAP[event_type_name].items():
+        for selector, property_name in self.PROPERTY_MAP[event_type_name].items():
             # Below, we parse dotted notation to find sub-fields
-            # in the Json data.
+            # in the object.
 
-            field_path = json_field.split('.')
+            field_path = selector.split('.')
             if len(field_path) > 0:
                 try:
                     # Try using the record as a dictionary
-                    value = record.get(field_path[0])
+                    value = input_object.get(field_path[0])
                 except AttributeError:
                     # That did not work. Try using the record
                     # as an object.
                     try:
-                        value = getattr(record, field_path[0])
+                        value = getattr(input_object, field_path[0])
                     except AttributeError:
                         # That did not work either. Try interpreting
                         # the field as an index into a list.
                         try:
-                            value = record[int(field_path[0])]
+                            value = input_object[int(field_path[0])]
                         except (ValueError, IndexError):
                             # Field not found in record, try next field.
                             continue
@@ -112,13 +111,13 @@ class JsonTranscoder(edxml.transcode.Transcoder):
                         try:
                             value = value[int(field)]
                         except (ValueError, IndexError):
-                            # Field not found in JSON.
+                            # Field not found in object.
                             value = None
                             break
 
                 if value is not None:
                     empty = ['']
-                    empty.extend(self.EMPTY_VALUES.get(json_field, ()))
+                    empty.extend(self.EMPTY_VALUES.get(selector, ()))
                     if type(value) == list:
                         properties[property_name] = [
                             v for v in value if v not in empty]

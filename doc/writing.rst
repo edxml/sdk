@@ -35,11 +35,11 @@ edxml.transcode module
     :members:
     :show-inheritance:
 
-edxml.transcode.json module
+edxml.transcode.object module
 ---------------------------
 .. _`JSON transcoder module`:
 
-.. automodule:: edxml.transcode.json
+.. automodule:: edxml.transcode.object
     :special-members: __init__
     :members:
     :show-inheritance:
