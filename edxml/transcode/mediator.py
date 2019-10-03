@@ -384,6 +384,9 @@ class TranscoderMediator(EDXMLBase):
 
         """
         if self._writer is None:
+            # Apparently, no events were generated. We will only
+            # output the ontology.
             self._create_writer()
+            self._write_initial_ontology()
 
         return self._writer.close(flush)
