@@ -19,6 +19,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
     _XPATH_MATCHERS = {}
 
+    _transcoder_positions = {}
     _last_used_transcoder_xpath = None
 
     @classmethod
@@ -145,10 +146,6 @@ class XmlTranscoderMediator(TranscoderMediator):
             tree = etree.ElementTree(root)
             self.process(elem, tree)
 
-            # Delete previously parsed elements
-            while elem.getprevious() is not None:
-                del elem.getparent()[0]
-
         if self._writer:
             self._writer.close()
 
@@ -222,10 +219,6 @@ class XmlTranscoderMediator(TranscoderMediator):
             tree = etree.ElementTree(root)
             yield self.process(elem, tree)
 
-            # Delete previously parsed elements
-            while elem.getprevious() is not None:
-                del elem.getparent()[0]
-
         yield self.close()
 
     def process(self, element, tree=None):
@@ -285,6 +278,27 @@ class XmlTranscoderMediator(TranscoderMediator):
                 )
 
             self._transcode(element, element_xpath, matching_element_xpath, transcoder)
+
+            # Delete previously transcoded elements to keep the in-memory XML
+            # tree small and processing efficient. Note that lxml only allows us
+            # to delete children of a parent element by index. Also, we cannot delete
+            # the element that we are currently processing, we always delete the
+            # previously transcoded element. To this end, we keep track of the
+            # indices of the last transcoded element inside its parent element.
+            parent = element.getparent()
+            parent_xpath = tree.getpath(parent)
+            last_parent, last_transcoded = self._transcoder_positions.get(parent_xpath, (None, None))
+            if last_transcoded is not None:
+                del last_parent[last_transcoded]
+
+            index = parent.index(element)
+            self._transcoder_positions[parent_xpath] = (parent, index)
+
+            if index > 100:
+                self.warning(
+                    "The element at xpath %s contains many child elements that have no associated transcoder. "
+                    "These elements are clogging the in-memory XML tree, slowing down processing." % parent_xpath
+                )
 
         else:
             if self._warn_no_transcoder:
