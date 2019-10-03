@@ -374,88 +374,108 @@ class Transcoder(EDXMLBase):
     def generate_event_types(self):
         """
 
-        This method generates event types using the attributes of the
-        various transcoders. This yields a set of preconfigured event types
-        that may optionally be tuned by each of the transcoders. Yields
-        tuples containing pairs of event type names and event
-        type instances.
+        This method generates all event types using the attributes of the
+        various transcoders. Yields tuples containing pairs of event type
+        names and event type instances.
 
         Yields:
           tuple[str, edxml.ontology.EventType]:
         """
-        for EventTypeName in self.TYPES:
-            event_type = self._ontology.create_event_type(EventTypeName) \
-                .set_description(self.TYPE_DESCRIPTIONS.get(EventTypeName)) \
-                .set_display_name(*self.TYPE_DISPLAY_NAMES.get(EventTypeName, [None, None])) \
-                .set_summary_template(self.TYPE_SUMMARIES.get(EventTypeName))\
-                .set_story_template(self.TYPE_STORIES.get(EventTypeName))\
-                .set_timespan_property_name_start(self.TYPE_TIMESPANS.get(EventTypeName, [None, None])[0])\
-                .set_timespan_property_name_end(self.TYPE_TIMESPANS.get(EventTypeName, [None, None])[1])
+        for event_type_name in self.TYPES:
+            yield event_type_name, self.create_event_type(event_type_name, self._ontology)
 
-            if EventTypeName in self.TYPE_PROPERTIES:
-                for PropertyName, ObjectTypeName in self.TYPE_PROPERTIES[EventTypeName].iteritems():
-                    event_type.create_property(PropertyName, ObjectTypeName)
-                    if PropertyName in self.TYPE_PROPERTY_DESCRIPTIONS.get(EventTypeName, {}):
-                        event_type[PropertyName].set_description(
-                            self.TYPE_PROPERTY_DESCRIPTIONS[EventTypeName][PropertyName])
-                    if PropertyName in self.TYPE_PROPERTY_SIMILARITY.get(EventTypeName, {}):
-                        event_type[PropertyName].hint_similar(
-                            self.TYPE_PROPERTY_SIMILARITY[EventTypeName][PropertyName])
-                    if PropertyName in self.TYPE_PROPERTY_MERGE_STRATEGIES.get(EventTypeName, {}):
-                        event_type[PropertyName].set_merge_strategy(
-                            self.TYPE_PROPERTY_MERGE_STRATEGIES[EventTypeName][PropertyName])
-                    if PropertyName in self.TYPE_UNIQUE_PROPERTIES.get(EventTypeName, {}):
-                        event_type[PropertyName].unique()
+    @classmethod
+    def create_event_type(cls, event_type_name, ontology):
+        """
 
-        for EventTypeName in self.TYPES:
-            if EventTypeName not in self.TYPE_ATTACHMENTS:
-                continue
-            for attachment_name in self.TYPE_ATTACHMENTS[EventTypeName]:
-                attachment = event_type.create_attachment(attachment_name)
-                if attachment_name in self.TYPE_ATTACHMENT_DESCRIPTIONS.get(EventTypeName, {}):
-                    attachment.set_description(self.TYPE_ATTACHMENT_DESCRIPTIONS[EventTypeName][attachment_name])
-                if attachment_name in self.TYPE_ATTACHMENT_DISPLAY_NAMES.get(EventTypeName, {}):
-                    attachment.set_display_name(
-                        self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name][0],
-                        self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name][1]
-                        if len(self.TYPE_ATTACHMENT_DISPLAY_NAMES[EventTypeName][attachment_name]) > 1 else None
+        Creates specified event type in the provided ontology using
+        the class attributes of the transcoder. It returns the
+        resulting event type. Transcoders can optionally tune the
+        resulting event type definition by overriding this method.
+
+        Args:
+            event_type_name (str): Name of the desired event type
+            ontology (edxml.ontology.Ontology): Ontology to add the event type to
+
+        Returns:
+            edxml.ontology.EventType
+
+        """
+        event_type = ontology.create_event_type(event_type_name)
+        if cls.TYPE_DESCRIPTIONS.get(event_type_name):
+            event_type.set_description(cls.TYPE_DESCRIPTIONS[event_type_name])
+        if cls.TYPE_DISPLAY_NAMES.get(event_type_name):
+            event_type.set_display_name(*cls.TYPE_DISPLAY_NAMES[event_type_name])
+        if cls.TYPE_SUMMARIES.get(event_type_name):
+            event_type.set_summary_template(cls.TYPE_SUMMARIES[event_type_name])
+        if cls.TYPE_STORIES.get(event_type_name):
+            event_type.set_story_template(cls.TYPE_STORIES[event_type_name])
+        if cls.TYPE_TIMESPANS.get(event_type_name):
+            event_type.set_timespan_property_name_start(cls.TYPE_TIMESPANS[event_type_name][0])
+            event_type.set_timespan_property_name_end(cls.TYPE_TIMESPANS[event_type_name][1])
+
+        for property_name, object_type_name in cls.TYPE_PROPERTIES.get(event_type_name, {}).items():
+            event_type.create_property(property_name, object_type_name)
+            if property_name in cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}):
+                event_type[property_name].set_description(
+                    cls.TYPE_PROPERTY_DESCRIPTIONS[event_type_name][property_name])
+            if property_name in cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}):
+                event_type[property_name].hint_similar(
+                    cls.TYPE_PROPERTY_SIMILARITY[event_type_name][property_name])
+            if property_name in cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}):
+                event_type[property_name].set_merge_strategy(
+                    cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name][property_name])
+            if property_name in cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, {}):
+                event_type[property_name].unique()
+
+        for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
+            attachment = event_type.create_attachment(attachment_name)
+            if attachment_name in cls.TYPE_ATTACHMENT_DESCRIPTIONS.get(event_type_name, {}):
+                attachment.set_description(cls.TYPE_ATTACHMENT_DESCRIPTIONS[event_type_name][attachment_name])
+            if attachment_name in cls.TYPE_ATTACHMENT_DISPLAY_NAMES.get(event_type_name, {}):
+                attachment.set_display_name(
+                    cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name][0],
+                    cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name][1]
+                    if len(cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name]) > 1 else None
+                )
+            if attachment_name in cls.TYPE_ATTACHMENT_MEDIA_TYPES.get(event_type_name, {}):
+                attachment.set_media_type(cls.TYPE_ATTACHMENT_MEDIA_TYPES[event_type_name][attachment_name])
+            if attachment_name in cls.TYPE_ATTACHMENT_ENCODINGS.get(event_type_name, {}):
+                attachment.set_encoding(cls.TYPE_ATTACHMENT_ENCODINGS[event_type_name][attachment_name])
+
+        if event_type_name in cls.PARENT_MAPPINGS:
+            parent_event_type_name = None
+            parent_description = None
+            siblings_description = None
+            property_map = cls.PARENT_MAPPINGS[event_type_name]
+            for parent_child in cls.PARENTS_CHILDREN:
+                if parent_child[2] == event_type_name:
+                    parent_event_type_name, parent_description = parent_child[0:2]
+                    break
+            for child_siblings in cls.CHILDREN_SIBLINGS:
+                if child_siblings[0] == event_type_name:
+                    if child_siblings[2] != parent_event_type_name:
+                        raise ValueError(
+                            'Class properties PARENTS_CHILDREN and CHILDREN_SIBLINGS are '
+                            'inconsistent for output event type "%s".' % event_type_name
+                        )
+                    siblings_description = child_siblings[1]
+                    break
+
+            if parent_event_type_name:
+                event_type.set_parent(
+                    EventTypeParent.create(
+                        event_type,
+                        parent_event_type_name,
+                        property_map,
+                        parent_description,
+                        siblings_description
                     )
-                if attachment_name in self.TYPE_ATTACHMENT_MEDIA_TYPES.get(EventTypeName, {}):
-                    attachment.set_media_type(self.TYPE_ATTACHMENT_MEDIA_TYPES[EventTypeName][attachment_name])
-                if attachment_name in self.TYPE_ATTACHMENT_ENCODINGS.get(EventTypeName, {}):
-                    attachment.set_encoding(self.TYPE_ATTACHMENT_ENCODINGS[EventTypeName][attachment_name])
+                )
+            else:
+                raise ValueError(
+                    'Output event type "%s" has an entry in the PARENT_MAPPINGS class attribute, '
+                    'but not in the PARENTS_CHILDREN attribute.' % event_type_name
+                )
 
-        for EventTypeName in self.TYPES:
-            if EventTypeName in self.PARENT_MAPPINGS:
-                parent_event_type_name = None
-                parent_description = None
-                siblings_description = None
-                property_map = self.PARENT_MAPPINGS[EventTypeName]
-                for ParentChild in self.PARENTS_CHILDREN:
-                    if ParentChild[2] == EventTypeName:
-                        parent_event_type_name, parent_description = ParentChild[0:2]
-                        break
-                for ChildSiblings in self.CHILDREN_SIBLINGS:
-                    if ChildSiblings[0] == EventTypeName:
-                        if ChildSiblings[2] != parent_event_type_name:
-                            self.error(
-                                'Class properties PARENTS_CHILDREN and CHILDREN_SIBLINGS are '
-                                'inconsistent for output event type "%s".' % EventTypeName)
-                        siblings_description = ChildSiblings[1]
-                        break
-
-                if parent_event_type_name:
-                    event_type.set_parent(
-                        EventTypeParent.create(
-                            event_type,
-                            parent_event_type_name,
-                            property_map,
-                            parent_description,
-                            siblings_description)
-                    )
-                else:
-                    self.error(
-                        'Output event type "%s" has an entry in the PARENT_MAPPINGS class attribute, '
-                        'but not in the PARENTS_CHILDREN attribute.' % EventTypeName)
-
-            yield EventTypeName, event_type
+        return event_type
