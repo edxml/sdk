@@ -81,10 +81,10 @@ class JsonTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
         The JSON record must be represented as either a dictionary
         or an object. When an object is passed, it will attempt to
-        read any attributes listed in the ATTRIBUTE_MAP of the matching
+        read any attributes listed in the PROPERTY_MAP of the matching
         transcoder from object attributes. When a dictionary is passed,
-        it will attempt to read keys as listed in ATTRIBUTE_MAP. Using
-        dotted notation, the keys in ATTRIBUTE_MAP can refer to dictionary
+        it will attempt to read keys as listed in PROPERTY_MAP. Using
+        dotted notation, the keys in PROPERTY_MAP can refer to dictionary
         values that are themselves dictionaries of lists.
 
         Args:

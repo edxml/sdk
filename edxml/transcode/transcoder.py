@@ -51,6 +51,14 @@ class Transcoder(EDXMLBase):
       fallback event type.
     """
 
+    PROPERTY_MAP = {}
+    """
+    The PROPERTY_MAP attribute is a dictionary mapping event type names to the property
+    value selectors for finding property objects in input records. Each value in the
+    dictionary is another dictionary that maps value selectors to property names. The
+    exact nature of the value selectors differs between transcoder implementations.
+    """
+
     TYPE_DESCRIPTIONS = {}
     """
     The TYPE_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names
