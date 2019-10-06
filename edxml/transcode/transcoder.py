@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import edxml
+from edxml.logger import log
 from edxml.EDXMLBase import EDXMLBase
 from edxml.ontology import EventTypeParent
 
@@ -377,6 +378,9 @@ class Transcoder(EDXMLBase):
         Yields:
           tuple[str, edxml.ontology.EventType]:
         """
+
+        self.check_class_attributes()
+
         for event_type_name in self.TYPE_PROPERTIES.keys():
             yield event_type_name, self.create_event_type(event_type_name, self._ontology)
 
@@ -450,11 +454,6 @@ class Transcoder(EDXMLBase):
                     break
             for child_siblings in cls.CHILDREN_SIBLINGS:
                 if child_siblings[0] == event_type_name:
-                    if child_siblings[2] != parent_event_type_name:
-                        raise ValueError(
-                            'Class properties PARENTS_CHILDREN and CHILDREN_SIBLINGS are '
-                            'inconsistent for output event type "%s".' % event_type_name
-                        )
                     siblings_description = child_siblings[1]
                     break
 
@@ -468,10 +467,139 @@ class Transcoder(EDXMLBase):
                         siblings_description
                     )
                 )
-            else:
-                raise ValueError(
-                    'Output event type "%s" has an entry in the PARENT_MAPPINGS class attribute, '
-                    'but not in the PARENTS_CHILDREN attribute.' % event_type_name
-                )
 
         return event_type
+
+    @classmethod
+    def check_class_attributes(cls):
+
+        existing_types = set(cls.TYPE_MAP.values())
+
+        for event_type_name, properties in cls.TYPE_PROPERTIES.items():
+            for property_name in properties.keys():
+                if property_name not in cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}):
+                    log.warning(
+                        'Property %s of event type %s of %s is missing a description.' %
+                        (property_name, event_type_name, cls.__name__)
+                    )
+
+        for event_type_name in existing_types:
+            existing_properties = set(cls.TYPE_PROPERTIES.get(event_type_name, {}).keys())
+
+            if existing_properties == set():
+                raise ValueError(
+                    '%s.TYPE_PROPERTIES contains no properties for event type %s in TYPE_MAP.'
+                    % (cls.__name__, event_type_name)
+                )
+
+            properties_with_descriptions = set(cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}).keys())
+            if properties_with_descriptions.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_PROPERTY_DESCRIPTIONS contains property names that are not in TYPE_PROPERTIES.'
+                    % cls.__name__
+                )
+
+            properties_with_similarity = set(cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}).keys())
+            if properties_with_similarity.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_PROPERTY_SIMILARITY contains property names that are not in TYPE_PROPERTIES.' %
+                    cls.__name__
+                )
+
+            properties_with_merge_strategies = set(cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}).keys())
+            if properties_with_merge_strategies.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_PROPERTY_MERGE_STRATEGIES contains property names that are not in TYPE_PROPERTIES[%s].'
+                    % (cls.__name__, event_type_name)
+                )
+
+            unique_properties = set(cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, []))
+            if unique_properties.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_UNIQUE_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' % cls.__name__
+                )
+
+            if event_type_name in cls.PARENT_MAPPINGS:
+                parent_event_type_name = None
+                for parent_child in cls.PARENTS_CHILDREN:
+                    if not isinstance(parent_child, list):
+                        raise ValueError('Class attribute PARENTS_CHILDREN contains a value that is not a list.')
+                    if len(parent_child) != 3:
+                        raise ValueError(
+                            '%s.PARENTS_CHILDREN contains a list that has an incorrect number of items. '
+                            'It must contain exactly three items.' % cls.__name__
+                        )
+                    if parent_child[2] == event_type_name:
+                        parent_event_type_name, parent_description = parent_child[0:2]
+                        break
+                if parent_event_type_name is None:
+                    raise ValueError(
+                        'Output event type "%s" of %s has an entry in the PARENT_MAPPINGS class attribute, '
+                        'but not in the PARENTS_CHILDREN attribute.' % (event_type_name, cls.__name__)
+                    )
+                for child_siblings in cls.CHILDREN_SIBLINGS:
+                    if child_siblings[0] == event_type_name:
+                        if child_siblings[2] != parent_event_type_name:
+                            raise ValueError(
+                                '%s.CHILDREN_SIBLINGS contains an entry containing "%s" as parent '
+                                'while that event type has no children according to the PARENTS_CHILDREN attribute.'
+                                % (cls.__name__, child_siblings[2])
+                            )
+
+        types_with_properties = set(cls.TYPE_PROPERTIES.keys())
+        if types_with_properties.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_descriptions = set(cls.TYPE_DESCRIPTIONS.keys())
+        if types_with_descriptions.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_DESCRIPTIONS contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_display_names = set(cls.TYPE_DISPLAY_NAMES.keys())
+        if types_with_display_names.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_DISPLAY_NAMES contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_summaries = set(cls.TYPE_SUMMARIES.keys())
+        if types_with_summaries.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_SUMMARIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_stories = set(cls.TYPE_STORIES.keys())
+        if types_with_stories.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_STORIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_timespans = set(cls.TYPE_TIMESPANS.keys())
+        if types_with_timespans.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_TIMESPANS contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_attachments = set(cls.TYPE_ATTACHMENTS.keys())
+        if types_with_attachments.difference(existing_types) != set():
+            raise ValueError('%s.TYPE_ATTACHMENTS contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_attachment_media_types = set(cls.TYPE_ATTACHMENT_MEDIA_TYPES.keys())
+        if types_with_attachment_media_types.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_ATTACHMENT_MEDIA_TYPES contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_attachment_display_names = set(cls.TYPE_ATTACHMENT_DISPLAY_NAMES.keys())
+        if types_with_attachment_display_names.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_ATTACHMENT_DISPLAY_NAMES contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_attachment_descriptions = set(cls.TYPE_ATTACHMENT_DESCRIPTIONS.keys())
+        if types_with_attachment_descriptions.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_ATTACHMENT_DESCRIPTIONS contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_attachment_encodings = set(cls.TYPE_ATTACHMENT_ENCODINGS.keys())
+        if types_with_attachment_encodings.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_ATTACHMENT_ENCODINGS contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_parents = set(cls.PARENT_MAPPINGS.keys())
+        if types_with_parents.difference(existing_types) != set():
+            raise ValueError(
+                '%s.PARENT_MAPPINGS contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
