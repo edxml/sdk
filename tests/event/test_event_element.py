@@ -1,6 +1,7 @@
 # coding=utf-8
 # the line above is required for inline unicode
 import hashlib
+from collections import OrderedDict
 
 from lxml import etree
 
@@ -80,3 +81,22 @@ def test_cast_to_string(event_element):
     # from ParsedEvent instances. These objects are instantiated by lxml
     # and inherit the namespace from their parent document.
     assert parsed.find('properties/a').text == u"🖤"
+
+
+def test_sort_event(event_element):
+    event_element.set_properties({})
+    event_element['b'] = ['3', '2']
+    event_element['a'] = ['1']
+
+    attachments = OrderedDict()
+    attachments['b'] = 'b'
+    attachments['a'] = 'a'
+    event_element.set_attachments(attachments)
+
+    assert event_element.get_element().xpath('properties/*/text()') == ['3', '2', '1']
+    assert event_element.get_element().xpath('attachments/*/text()') == ['b', 'a']
+
+    event_element.sort()
+
+    assert event_element.get_element().xpath('properties/*/text()') == ['1', '2', '3']
+    assert event_element.get_element().xpath('attachments/*/text()') == ['a', 'b']

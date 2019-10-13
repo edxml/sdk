@@ -4,7 +4,7 @@ import re
 import hashlib
 
 
-from collections import MutableMapping
+from collections import MutableMapping, OrderedDict
 from collections import defaultdict
 from lxml import etree
 from copy import deepcopy
@@ -48,7 +48,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent
         """
-        self._properties = {prop: set(values) for prop, values in properties.items()}
+        self._properties = OrderedDict({prop: set(values) for prop, values in properties.items()})
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
@@ -156,6 +156,12 @@ class EDXMLEvent(MutableMapping):
             attachments
         )
 
+    def sort(self):
+        # TODO: doc string
+        self._properties = OrderedDict(sorted(self._properties.items(), key=lambda t: t[0]))
+        self._attachments = OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0]))
+        return self
+
     def get_type_name(self):
         """
 
@@ -188,7 +194,7 @@ class EDXMLEvent(MutableMapping):
           Dict[str, List[unicode]]: Event properties
 
         """
-        return self._properties
+        return self._properties or OrderedDict()
 
     def get_explicit_parents(self):
         """
@@ -281,7 +287,7 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
 
         """
-        self._properties = {prop: set(objects) for prop, objects in properties.items()}
+        self._properties = OrderedDict({prop: set(objects) for prop, objects in properties.items()})
         return self
 
     def copy_properties_from(self, source_event, property_map):
@@ -715,7 +721,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         try:
             return len(self._properties)
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
                 if tag not in self._properties:
@@ -727,7 +733,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         try:
             return self._properties.get(key, set())
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
                 if tag not in self._properties:
@@ -739,7 +745,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         try:
             return key in self._properties
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
                 if tag not in self._properties:
@@ -752,7 +758,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
             for p in self._properties.keys():
                 yield p
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
                 if tag not in self._properties:
@@ -823,11 +829,26 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         # Below is a limitation of the lxml library.
         raise NotImplementedError('ParsedEvent can only be instantiated by EDXML parsers.')
 
+    def sort(self):
+        props = self.find('{http://edxml.org/edxml}properties')
+        if props is not None:
+            props[:] = sorted(props, key=lambda element: (element.tag, element.text))
+            try:
+                del self._properties
+            except AttributeError:
+                pass
+
+        attachments = self.find('{http://edxml.org/edxml}attachments')
+        if attachments is not None:
+            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+
+        return self
+
     def get_properties(self):
         try:
             return self._properties
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
                 if tag not in self._properties:
@@ -838,7 +859,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     def get_attachments(self):
         attachments_element = self.find('{http://edxml.org/edxml}attachments')
 
-        attachments = {}
+        attachments = OrderedDict()
         for attachment in attachments_element if attachments_element is not None else []:
             attachments[attachment.tag[24:]] = attachment.text
         return attachments
@@ -1176,7 +1197,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         try:
             return len(self._properties)
         except TypeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.__element.find('properties'):
                 if element.tag not in self._properties:
                     self._properties[element.tag] = set()
@@ -1187,7 +1208,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         try:
             return self._properties.get(key, set())
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.__element.find('properties'):
                 if element.tag not in self._properties:
                     self._properties[element.tag] = set()
@@ -1198,7 +1219,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         try:
             return key in self._properties
         except TypeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.__element.find('properties'):
                 if element.tag not in self._properties:
                     self._properties[element.tag] = set()
@@ -1210,7 +1231,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
             for p in self._properties.keys():
                 yield p
         except AttributeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.__element.find('properties'):
                 if element.tag not in self._properties:
                     self._properties[element.tag] = set()
@@ -1305,11 +1326,23 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
 
         return new
 
+    def sort(self):
+        props = self.__element.find('properties')
+        if props is not None:
+            props[:] = sorted(props, key=lambda element: (element.tag, element.text))
+            self._properties = None
+
+        attachments = self.__element.find('attachments')
+        if attachments is not None:
+            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+
+        return self
+
     def get_properties(self):
         try:
-            return dict(self._properties)
+            return OrderedDict(self._properties)
         except TypeError:
-            self._properties = {}
+            self._properties = OrderedDict()
             for element in self.__element.find('properties'):
                 if element.tag not in self._properties:
                     self._properties[element.tag] = set()
@@ -1319,7 +1352,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
     def get_attachments(self):
         attachments_element = self.__element.find('attachments')
 
-        attachments = {}
+        attachments = OrderedDict()
         for attachment in attachments_element if attachments_element is not None else []:
             attachments[attachment.tag] = attachment.text
 

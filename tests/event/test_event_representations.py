@@ -1,6 +1,7 @@
 # coding=utf-8
 # the line above is required for inline unicode
 import hashlib
+from collections import OrderedDict
 
 from edxml import SimpleEDXMLWriter, EDXMLPushParser
 from edxml.event import EDXMLEvent, ParsedEvent, EventElement
@@ -302,3 +303,23 @@ def test_compute_sticky_hash(event, ontology):
     ).digest().encode('hex')
 
     assert event.compute_sticky_hash(ontology) == hash_hex
+
+
+def test_sort_event(event):
+    event.set_properties({})
+    event['b'] = 'test'
+    event['a'] = 'test'
+
+    attachments = OrderedDict()
+    attachments['b'] = 'test'
+    attachments['a'] = 'test'
+    event.set_attachments(attachments)
+
+    assert event.get_properties().keys() == ['b', 'a']
+    assert event.get_attachments().keys() == ['b', 'a']
+
+    event.sort()
+
+    assert event.get_properties().keys() == ['a', 'b']
+    assert event.get_attachments().keys() == ['a', 'b']
+

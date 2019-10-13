@@ -1,6 +1,7 @@
 # coding=utf-8
 # the line above is required for inline unicode
 import hashlib
+from collections import OrderedDict
 
 from lxml import etree
 
@@ -117,3 +118,24 @@ def test_cast_to_string(parsed_event):
     # Note that ParsedEvent objects are instantiated by lxml and inherit the
     # namespace from the parent document.
     assert parsed.find('{http://edxml.org/edxml}properties/{http://edxml.org/edxml}a').text == u"🖤"
+
+
+def test_sort_event(parsed_event):
+    parsed_event.set_properties({})
+    parsed_event['b'] = ['3', '2']
+    parsed_event['a'] = ['1']
+
+    attachments = OrderedDict()
+    attachments['b'] = 'b'
+    attachments['a'] = 'a'
+    parsed_event.set_attachments(attachments)
+
+    namespaces = {'edxml': 'http://edxml.org/edxml'}
+
+    assert parsed_event.xpath('edxml:properties/*/text()', namespaces=namespaces) == ['3', '2', '1']
+    assert parsed_event.xpath('edxml:attachments/*/text()', namespaces=namespaces) == ['b', 'a']
+
+    parsed_event.sort()
+
+    assert parsed_event.xpath('edxml:properties/*/text()', namespaces=namespaces) == ['1', '2', '3']
+    assert parsed_event.xpath('edxml:attachments/*/text()', namespaces=namespaces) == ['a', 'b']
