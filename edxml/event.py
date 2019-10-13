@@ -157,7 +157,14 @@ class EDXMLEvent(MutableMapping):
         )
 
     def sort(self):
-        # TODO: doc string
+        """
+
+        Sorts the event properties and attachments on their names. This can be helpful when
+        comparing differences between events.
+
+        Returns:
+            EDXMLEvent:
+        """
         self._properties = OrderedDict(sorted(self._properties.items(), key=lambda t: t[0]))
         self._attachments = OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0]))
         return self
@@ -830,6 +837,14 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         raise NotImplementedError('ParsedEvent can only be instantiated by EDXML parsers.')
 
     def sort(self):
+        """
+
+        Sorts the event properties and attachments on their names. This can be helpful when
+        comparing differences between events.
+
+        Returns:
+            EDXMLEvent:
+        """
         props = self.find('{http://edxml.org/edxml}properties')
         if props is not None:
             props[:] = sorted(props, key=lambda element: (element.tag, element.text))
@@ -1327,6 +1342,14 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
         return new
 
     def sort(self):
+        """
+
+        Sorts the event properties and attachments on their names. This can be helpful when
+        comparing differences between events.
+
+        Returns:
+            EDXMLEvent:
+        """
         props = self.__element.find('properties')
         if props is not None:
             props[:] = sorted(props, key=lambda element: (element.tag, element.text))
