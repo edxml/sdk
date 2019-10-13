@@ -741,6 +741,9 @@ class EventProperty(OntologyElement):
         attribs['optional'] = 'true' if self.__attr['optional'] else 'false'
         attribs['multivalued'] = 'true' if self.__attr['multivalued'] else 'false'
 
+        if attribs['similar'] == '':
+            del attribs['similar']
+
         prop = etree.Element('property', attribs)
 
         for concept_name in sorted(self.__concepts.keys()):
