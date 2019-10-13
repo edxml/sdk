@@ -1934,20 +1934,20 @@ class EventType(OntologyElement, MutableMapping):
             element.append(self.__parent.generate_xml())
 
         properties = etree.Element('properties')
-        for prop in self.__properties.values():
-            properties.append(prop.generate_xml())
+        for property_name in sorted(self.__properties.keys()):
+            properties.append(self.__properties[property_name].generate_xml())
         element.append(properties)
 
         if len(self.__relations) > 0:
             relations = etree.Element('relations')
-            for relation in self.__relations.values():
-                relations.append(relation.generate_xml())
+            for relation_id in sorted(self.__relations.keys()):
+                relations.append(self.__relations[relation_id].generate_xml())
             element.append(relations)
 
         if len(self.__attachments) > 0:
             attachments = etree.Element('attachments')
-            for attachment in self.__attachments.values():
-                attachments.append(attachment.generate_xml())
+            for attachment_name in sorted(self.__attachments.keys()):
+                attachments.append(self.__attachments[attachment_name].generate_xml())
             element.append(attachments)
 
         return element

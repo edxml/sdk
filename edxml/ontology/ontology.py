@@ -1000,16 +1000,16 @@ class Ontology(OntologyElement):
         event_types = etree.SubElement(ontology_element, 'eventtypes')
         event_sources = etree.SubElement(ontology_element, 'sources')
 
-        for objectTypeName, objectType in self.__object_types.iteritems():
-            object_types.append(objectType.generate_xml())
+        for object_type_name in sorted(self.__object_types.keys()):
+            object_types.append(self.__object_types[object_type_name].generate_xml())
 
-        for conceptName, concept in self.__concepts.iteritems():
-            concepts.append(concept.generate_xml())
+        for concept_name in sorted(self.__concepts.keys()):
+            concepts.append(self.__concepts[concept_name].generate_xml())
 
-        for eventTypeName, eventType in self.__event_types.iteritems():
-            event_types.append(eventType.generate_xml())
+        for event_type_name in sorted(self.__event_types.keys()):
+            event_types.append(self.__event_types[event_type_name].generate_xml())
 
-        for uri, source in self.__sources.iteritems():
-            event_sources.append(source.generate_xml())
+        for uri in sorted(self.__sources.keys()):
+            event_sources.append(self.__sources[uri].generate_xml())
 
         return ontology_element

@@ -743,7 +743,7 @@ class EventProperty(OntologyElement):
 
         prop = etree.Element('property', attribs)
 
-        for concept_name, association in self.get_concept_associations().items():
-            prop.append(association.generate_xml())
+        for concept_name in sorted(self.__concepts.keys()):
+            prop.append(self.__concepts[concept_name].generate_xml())
 
         return prop
