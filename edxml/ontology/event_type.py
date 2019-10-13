@@ -2123,7 +2123,7 @@ class EventType(OntologyElement, MutableMapping):
           namespaced (bool): Require a namespace specification or not
 
         Returns:
-          ElementTree: The schema
+          lxml.etree.RelaxNG: The schema
         """
         e = ElementMaker()
 
