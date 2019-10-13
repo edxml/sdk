@@ -721,23 +721,19 @@ class DataType(object):
                 # lost. So we will not attempt to do that here. We will only apply
                 # quoting in case there are illegal characters in the URI and no percent
                 # encoding is present, which implies that the URI has not been quoted at all.
-                if not re.match(r'^[a-zA-Z#-;_~?\[\]!=@]+$', value):
-                    if not re.match(r'&[a-fA-F\d]{2}', value):
-                        scheme, netloc, path, qs, anchor = urlsplit(value)
-                        # Note that a path may start with a slash irrespective of the actual path separator.
-                        path = urllib.quote(path, '/' + path_separator)
-                        # Quote the query part.
-                        qs = urllib.quote_plus(qs, ':&=')
-                        # Reconstruct normalized value.
-                        normalized.add(urlunsplit(
-                            (scheme, netloc, path, qs, anchor))
-                        )
-                    else:
-                        raise EDXMLValidationError(
-                            'Invalid uri value: "%s" appears to be percent-encoded'
-                            'but also contains illegal characters.' % repr(
-                                value)
-                        )
+                try:
+                    scheme, netloc, path, qs, anchor = urlsplit(value)
+                except ValueError:
+                    continue
+
+                # Note that a path may start with a slash irrespective of the actual path separator.
+                path = urllib.quote(path, '/' + path_separator)
+                # Quote the query part.
+                qs = urllib.quote_plus(qs, ':&=')
+                # Reconstruct normalized value.
+                normalized.add(urlunsplit(
+                    (scheme, netloc, path, qs, anchor))
+                )
             return normalized
 
         elif split_data_type[0] == 'ip':
