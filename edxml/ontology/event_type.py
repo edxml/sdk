@@ -799,8 +799,7 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        if summary:
-            self._set_attr('summary', summary)
+        self._set_attr('summary', summary)
         return self
 
     def set_story_template(self, story):
@@ -816,8 +815,7 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        if story:
-            self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
+        self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
         return self
 
     def set_version(self, version):
