@@ -38,7 +38,7 @@
 
 import sys
 import time
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 
 import edxml
 from edxml.EDXMLParser import ProcessingInterrupted

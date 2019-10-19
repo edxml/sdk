@@ -36,11 +36,6 @@ class EDXMLError(Exception):
     pass
 
 
-class EDXMLValidationError(EDXMLError):
-    """Exception for signaling EDXML validation errors"""
-    pass
-
-
 class EvilCharacterFilter(object):
     """
     This class exports a single property named evil_xml_chars_regexp.

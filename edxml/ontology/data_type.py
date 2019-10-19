@@ -10,7 +10,7 @@ from datetime import datetime
 from dateutil.parser import parse
 from lxml import etree
 from lxml.builder import ElementMaker
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 
 
 class DataType(object):

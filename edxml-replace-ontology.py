@@ -37,7 +37,7 @@
 
 import sys
 
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 from edxml.EDXMLFilter import EDXMLPullFilter
 from edxml.EDXMLParser import EDXMLOntologyPullParser, ProcessingInterrupted
 

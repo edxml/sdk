@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 
 
 def assert_valid_upgrade(old, new):

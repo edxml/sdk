@@ -10,7 +10,8 @@ from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
 
-from edxml.EDXMLBase import EvilCharacterFilter, EDXMLValidationError
+from edxml.EDXMLBase import EvilCharacterFilter
+from edxml.error import EDXMLValidationError
 
 
 class EDXMLEvent(MutableMapping):

@@ -41,7 +41,7 @@ import edxml
 
 from collections import defaultdict
 from lxml import etree
-from EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 from edxml import ParsedEvent
 
 

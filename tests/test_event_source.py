@@ -1,5 +1,5 @@
 from edxml.ontology import Ontology, EventSource
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 import pytest
 
 

@@ -5,7 +5,7 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 
 

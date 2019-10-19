@@ -13,7 +13,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from termcolor import colored
 
-from edxml.EDXMLBase import EDXMLValidationError
+from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 
 
