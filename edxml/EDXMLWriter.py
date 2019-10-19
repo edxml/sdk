@@ -314,23 +314,16 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                     # Raise a validation exception.
                     self.__generate_event_validation_exception(event, event.get_element(), schema)
 
-                # Try removing the offending property object.
-                for invalid_element in event.get_element().xpath(last_error.path):
-                    invalid_element.getparent().remove(invalid_element)
-                    if self.__log_repaired_events:
-                        sys.stderr.write(
-                            "Removed invalid object '%s' of property '%s'.\n" %
-                            (invalid_element.text, invalid_element.tag)
-                        )
-
-                if self.__log_repaired_events:
-                    for property_name in original_event.keys():
-                        if event[property_name] != original_event[property_name]:
-                            sys.stderr.write(
-                                'Repaired invalid property %s of event type %s: %s => %s\n' %
-                                (property_name, event.get_type_name(), repr(
-                                    original_event[property_name]), repr(event[property_name]))
-                            )
+                # Try removing the offending property object(s).
+                offending_property_name = last_error.path.split('/')[-1].split('[')[0]
+                offending_property_values_all = event[offending_property_name]
+                offending_property_values_bad = [e.text for e in event.get_element().xpath(last_error.path)]
+                event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
+                sys.stderr.write(
+                    'Repaired invalid property %s of event type %s: %s => %s\n' %
+                    (offending_property_name, event.get_type_name(), repr(
+                        original_event[offending_property_name]), repr(event[offending_property_name]))
+                )
 
         self.__num_events_repaired += 1
 
