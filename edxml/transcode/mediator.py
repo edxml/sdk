@@ -2,6 +2,7 @@
 from typing import Dict
 
 import edxml
+from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
 from edxml.EDXMLBase import EDXMLBase, EDXMLValidationError
@@ -317,7 +318,7 @@ class TranscoderMediator(EDXMLBase):
                 transcoder.set_ontology(Ontology())
 
         if len(self.__sources) == 0:
-            self.warning(
+            log.warning(
                 'No EDXML source was defined, generating bogus source.')
             self.__sources.append(
                 self._ontology.create_event_source('/undefined/'))

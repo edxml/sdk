@@ -47,6 +47,7 @@ from copy import deepcopy
 from EDXMLBase import EDXMLBase, EvilCharacterFilter, EDXMLValidationError
 from edxml.event import ParsedEvent
 from edxml.ontology import Ontology
+from edxml.logger import log
 
 
 class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
@@ -266,8 +267,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__writer.close()
 
         if self.__num_events_produced > 0 and (100 * self.__num_events_repaired) / self.__num_events_produced > 10:
-            sys.stderr.write(
-                'WARNING: %d out of %d events were automatically repaired because they were invalid. '
+            log.warn(
+                '%d out of %d events were automatically repaired because they were invalid. '
                 'If performance is important, verify your event generator code to produce valid events.\n' %
                 (self.__num_events_repaired, self.__num_events_produced)
             )
@@ -319,7 +320,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 offending_property_values_all = event[offending_property_name]
                 offending_property_values_bad = [e.text for e in event.get_element().xpath(last_error.path)]
                 event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
-                sys.stderr.write(
+                log.error(
                     'Repaired invalid property %s of event type %s: %s => %s\n' %
                     (offending_property_name, event.get_type_name(), repr(
                         original_event[offending_property_name]), repr(event[offending_property_name]))

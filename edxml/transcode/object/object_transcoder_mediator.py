@@ -3,6 +3,7 @@
 import edxml.transcode.mediator
 
 from edxml.EDXMLBase import EDXMLError
+from edxml.logger import log
 
 
 class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
@@ -122,10 +123,10 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         if transcoder:
 
             if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
-                self.warning(
-                    'Input object has no "%s" field, passing to fallback transcoder' % self.TYPE_FIELD
+                log.warning(
+                    'Input object has no "%s" field, passing to fallback transcoder. Record was: %s' %
+                    (self.TYPE_FIELD, input_record)
                 )
-                self.warning('Record was: %s' % input_record)
 
             for event in transcoder.generate(input_record, record_type):
                 if self._output_source_uri:
@@ -154,17 +155,17 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                                 if not self._ignore_invalid_events:
                                     raise
                                 if self._warn_invalid_events:
-                                    self.warning(
-                                        ('The post processor of the transcoder for input record type %s produced '
-                                         'an invalid event: %s\n\nContinuing...') % (record_type, str(e))
+                                    log.warning(
+                                        'The post processor of the transcoder for input record type %s produced '
+                                        'an invalid event: %s\n\nContinuing...' % (record_type, str(e))
                                     )
                     except Exception as e:
                         if not self._ignore_invalid_events or self._debug:
                             raise
                         if self._warn_invalid_events:
-                            self.warning(
-                                ('The post processor of the transcoder for input record type %s failed '
-                                 'with %s: %s\n\nContinuing...') % (record_type, type(e).__name__, str(e))
+                            log.warning(
+                                'The post processor of the transcoder for input record type %s failed '
+                                'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
                             )
                 else:
                     try:
@@ -175,24 +176,27 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                         if not self._ignore_invalid_events:
                             raise
                         if self._warn_invalid_events:
-                            self.warning(('The transcoder for input record type %s produced an invalid '
-                                          'event: %s\n\nContinuing...') % (record_type, str(e)))
+                            log.warning(
+                                'The transcoder for input record type %s produced an invalid '
+                                'event: %s\n\nContinuing...' % (record_type, str(e))
+                            )
                     except Exception as e:
                         if self._debug:
                             raise
-                        self.warning(
+                        log.warning(
                             'Transcoder for input record type %s failed '
                             'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
                         )
         else:
             if self._warn_no_transcoder:
                 if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
-                    self.warning(
-                        'Input record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD)
+                    log.warning(
+                        'Input record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD
+                    )
                 else:
-                    self.warning(('No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
-                                  'no %s event generated.') % record_type
-                                 )
-                self.warning('Record was: %s' % input_record)
+                    log.warning(
+                        'No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
+                        'no %s event generated. Record was: %s' % (record_type, input_record)
+                    )
 
         return u''.join(outputs)

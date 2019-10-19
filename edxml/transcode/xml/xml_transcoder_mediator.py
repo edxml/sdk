@@ -4,6 +4,7 @@ import re
 from lxml import etree
 from lxml.etree import XPathSyntaxError
 from edxml.EDXMLBase import EDXMLError
+from edxml.logger import log
 from edxml.transcode import TranscoderMediator
 
 
@@ -266,7 +267,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
         if transcoder:
             if element_xpath == 'RECORD_OF_UNKNOWN_TYPE' and self._warn_fallback:
-                self.warning(
+                log.warning(
                     'XML element at %s does not match any XPath expressions, passing to fallback transcoder' %
                     tree.getpath(element)
                 )
@@ -289,18 +290,18 @@ class XmlTranscoderMediator(TranscoderMediator):
             self._transcoder_positions[parent_xpath] = (parent, index)
 
             if index > 100:
-                self.warning(
+                log.warning(
                     "The element at xpath %s contains many child elements that have no associated transcoder. "
                     "These elements are clogging the in-memory XML tree, slowing down processing." % parent_xpath
                 )
 
         else:
             if self._warn_no_transcoder:
-                self.warning(
+                log.warning(
                     'XML element at %s does not match any XPath expressions and no fallback transcoder is available.'
                     % element_xpath
                 )
-                self.warning('XML element was: %s' %
+                log.warning('XML element was: %s' %
                              etree.tostring(element, pretty_print=True))
 
         return u''.join(outputs)
@@ -334,17 +335,18 @@ class XmlTranscoderMediator(TranscoderMediator):
                             if not self._ignore_invalid_events:
                                 raise
                             if self._warn_invalid_events:
-                                self.warning(
+                                log.warning(
                                     'The post processor of the transcoder for XML element at %s produced '
                                     'an invalid event: %s\n\nContinuing...' % (element_xpath, str(e))
                                 )
                 except Exception as e:
                     if self._debug:
                         raise
-                    self.warning(('The post processor of the transcoder for XML element at %s failed '
-                                  'with %s: %s\n\nContinuing...') % (
-                                     element_xpath, type(e).__name__, str(e))
-                                 )
+                    log.warning(
+                        'The post processor of the transcoder for XML element at %s failed '
+                        'with %s: %s\n\nContinuing...' %
+                        (element_xpath, type(e).__name__, str(e))
+                    )
             else:
                 try:
                     outputs.append(self._writer.add_event(event))
@@ -354,16 +356,19 @@ class XmlTranscoderMediator(TranscoderMediator):
                     if not self._ignore_invalid_events:
                         raise
                     if self._warn_invalid_events:
-                        self.warning(('The transcoder for XML element at %s produced an invalid '
-                                      'event: %s\n\nContinuing...') % (element_xpath, str(e)))
+                        log.warning(
+                            'The transcoder for XML element at %s produced an invalid '
+                            'event: %s\n\nContinuing...' % (element_xpath, str(e))
+                        )
                 except Exception as e:
                     if not self._ignore_invalid_events or self._debug:
                         raise
                     if self._warn_invalid_events:
-                        self.warning(('Transcoder for XML element at %s failed '
-                                      'with %s: %s\n\nContinuing...') % (
-                                         element_xpath, type(e).__name__, str(e))
-                                     )
+                        log.warning(
+                            'Transcoder for XML element at %s failed '
+                            'with %s: %s\n\nContinuing...' %
+                            (element_xpath, type(e).__name__, str(e))
+                        )
         return outputs
 
     @staticmethod
