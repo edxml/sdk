@@ -253,6 +253,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         Returns:
           unicode: Generated output XML data
         """
+        if self.__writer is None:
+            # Already closed
+            return ''
+
         self.__writer.close()
 
         if self.__num_events_produced > 0 and (100 * self.__num_events_repaired) / self.__num_events_produced > 10:
@@ -262,7 +266,11 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 (self.__num_events_repaired, self.__num_events_produced)
             )
 
-        return self.flush()
+        string = self.flush()
+
+        self.__writer = None
+
+        return string
 
     def _repair_event(self, event, schema):
         """
