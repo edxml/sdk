@@ -83,7 +83,8 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
             # actually unicode data.
             self.buffer.append(unicode(data, encoding='utf-8'))
 
-    def __init__(self, output=None, validate=True, log_repaired_events=False, ignore_invalid_objects=False):
+    def __init__(self, output=None, validate=True, log_repaired_events=False, ignore_invalid_objects=False,
+                 pretty_print=True):
 
         super(EDXMLWriter, self).__init__()
 
@@ -93,6 +94,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
         self.__ignore_invalid_objects = ignore_invalid_objects
         self.__log_repaired_events = log_repaired_events
         self.__invalid_event_count = 0
+        self.__pretty_print = pretty_print
         self.__validate = validate
         self.__output = output
 
@@ -192,8 +194,10 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                     while True:
                         # This is the main loop which generates the ontology elements,
                         # event elements and foreign elements.
-                        writer.write((yield), pretty_print=True)
+                        writer.write((yield), pretty_print=self.__pretty_print)
                         writer.flush()
+                        if not self.__pretty_print:
+                            self.__output.write('\n')
                 except GeneratorExit:
                     # Coroutine was closed
                     pass
