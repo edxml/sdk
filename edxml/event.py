@@ -10,7 +10,7 @@ from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
 
-from edxml.EDXMLBase import EvilCharacterFilter
+import edxml
 from edxml.error import EDXMLValidationError
 
 
@@ -662,7 +662,7 @@ class EDXMLEvent(MutableMapping):
         return True
 
 
-class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
+class ParsedEvent(EDXMLEvent, etree.ElementBase):
     """
     This class extends both EDXMLEvent and etree.ElementBase to
     provide an EDXML event representation that can be generated directly
@@ -710,12 +710,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                 if type(v) in (str, unicode):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
-                    if not hasattr(self, 'evil_xml_chars_regexp'):
-                        # TODO: Make the evil chars regexp a class constant,
-                        #       which means we no longer need to call constructor here.
-                        super(EDXMLEvent, self).__init__()
                     props[-1].text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), v))
+                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
                     raise ValueError(
                         'Value of property %s is not a string: %s' % (key, repr(value)))
@@ -927,7 +923,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         properties_element[-1].text = unicode(
-                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value)
+                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
                         )
                     else:
                         raise ValueError('Value of property %s is not a string: %s' % (
@@ -1031,10 +1027,8 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
                 if type(attachment) in (str, unicode):
                     # Attachment contains illegal characters,
                     # replace them with unicode replacement characters.
-                    if not hasattr(self, 'evil_xml_chars_regexp'):
-                        super(EDXMLEvent, self).__init__()
                     attachments_element.find('{http://edxml.org/edxml}' + name).text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
+                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
                     )
                 else:
                     raise ValueError(
@@ -1095,7 +1089,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
         self.attrib['source-uri'] = source_uri
 
 
-class EventElement(EDXMLEvent, EvilCharacterFilter):
+class EventElement(EDXMLEvent):
     """
     This class extends EDXMLEvent to provide an EDXML event representation
     that wraps an etree Element instance, providing a convenient means to
@@ -1154,7 +1148,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         p[-1].text = unicode(
-                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value)
+                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
                         )
                     else:
                         raise ValueError(
@@ -1169,7 +1163,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         attachments_element[-1].text = unicode(
-                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
+                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
                         )
                     else:
                         raise ValueError(
@@ -1203,7 +1197,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
                     props[-1].text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), v))
+                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
                     raise ValueError(
                         'Value of property %s is not a string: %s' % (key, repr(value)))
@@ -1432,7 +1426,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                         # Value contains illegal characters,
                         # replace them with unicode replacement characters.
                         properties_element[-1].text = unicode(
-                            re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), value)
+                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
                         )
                     else:
                         raise ValueError('Value of property %s is not a string: %s' % (
@@ -1534,7 +1528,7 @@ class EventElement(EDXMLEvent, EvilCharacterFilter):
                     # Attachment contains illegal characters,
                     # replace them with unicode replacement characters.
                     attachments_element.find(name).text = unicode(
-                        re.sub(self.evil_xml_chars_regexp, unichr(0xfffd), attachment)
+                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
                     )
                 else:
                     raise ValueError(

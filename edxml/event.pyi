@@ -5,7 +5,6 @@ import edxml
 from collections import MutableMapping
 from lxml import etree
 from typing import Dict, Union, Generator, List, Set, Iterable
-from edxml.EDXMLBase import EvilCharacterFilter
 
 
 class EDXMLEvent(MutableMapping):
@@ -82,7 +81,7 @@ class EDXMLEvent(MutableMapping):
     def compute_sticky_hash(self, ontology: edxml.ontology.Ontology, encoding: str ='hex'): ...
 
 
-class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
+class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
     def __init__(self, properties: Dict[str, Iterable[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = {}) -> None:
@@ -131,7 +130,7 @@ class ParsedEvent(EDXMLEvent, EvilCharacterFilter, etree.ElementBase):
     def compute_sticky_hash(self, ontology: edxml.ontology.Ontology, encoding: str='hex'): ...
 
 
-class EventElement(EDXMLEvent, EvilCharacterFilter):
+class EventElement(EDXMLEvent):
 
     def __init__(self, properties: Dict[str, Iterable[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = {}) -> None:
