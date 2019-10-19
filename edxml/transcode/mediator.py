@@ -5,11 +5,11 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
-from edxml.EDXMLBase import EDXMLBase, EDXMLValidationError
+from edxml.EDXMLBase import EDXMLValidationError
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 
 
-class TranscoderMediator(EDXMLBase):
+class TranscoderMediator(object):
     """
     Base class for implementing mediators between a non-EDXML input data source
     and a set of Transcoder implementations that can transcode the input data records

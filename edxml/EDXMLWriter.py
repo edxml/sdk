@@ -44,13 +44,13 @@ import edxml
 
 from lxml import etree
 from copy import deepcopy
-from EDXMLBase import EDXMLBase, EvilCharacterFilter, EDXMLValidationError
+from EDXMLBase import EvilCharacterFilter, EDXMLValidationError
 from edxml.event import ParsedEvent
 from edxml.ontology import Ontology
 from edxml.logger import log
 
 
-class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
+class EDXMLWriter(EvilCharacterFilter):
     """
     Class for generating EDXML streams
 

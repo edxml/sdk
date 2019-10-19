@@ -41,43 +41,6 @@ class EDXMLValidationError(EDXMLError):
     pass
 
 
-class EDXMLBase(object):
-    """Base class for most SDK subclasses"""
-
-    def __init__(self):
-
-        self.warning_count = 0
-        self.error_count = 0
-
-    def error(self, message):
-        """Raises :class:`EDXMLError`.
-
-        Args:
-          message (str): Error message
-        """
-
-        self.error_count += 1
-        raise EDXMLError(unicode("ERROR: " + message).encode('utf-8'))
-
-    def warning(self, message):
-        """Prints a warning to sys.stderr.
-
-        Args:
-          message (str): Warning message
-
-        """
-        self.warning_count += 1
-        sys.stderr.write(unicode("WARNING: " + message + "\n").encode('utf-8'))
-
-    def get_warning_count(self):
-        """Returns the number of warnings generated"""
-        return self.warning_count
-
-    def get_error_count(self):
-        """Returns the number of errors generated"""
-        return self.error_count
-
-
 class EvilCharacterFilter(object):
     """
     This class exports a single property named evil_xml_chars_regexp.
