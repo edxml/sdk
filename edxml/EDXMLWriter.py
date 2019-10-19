@@ -302,7 +302,7 @@ class EDXMLWriter(EDXMLBase, EvilCharacterFilter):
                 # an EDXMLValidationError in case any value does not make sense.
                 self.__ontology.get_event_type(event.get_type_name()).normalize_event_objects(event)
                 if event.get_properties() == original_event.get_properties():
-                    raise EDXMLValidationError("Normalization did not change anything.")
+                    raise EDXMLValidationError("Attempt to normalize invalid event objects failed.")
             except EDXMLValidationError:
                 # normalization failed.
                 last_error = schema.error_log.last_error
