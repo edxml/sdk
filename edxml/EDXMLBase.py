@@ -31,11 +31,6 @@
 import sys
 
 
-class EDXMLError(Exception):
-    """Generic EDXML exception class"""
-    pass
-
-
 class EvilCharacterFilter(object):
     """
     This class exports a single property named evil_xml_chars_regexp.

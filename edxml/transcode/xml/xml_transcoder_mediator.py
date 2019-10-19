@@ -3,7 +3,7 @@ import re
 
 from lxml import etree
 from lxml.etree import XPathSyntaxError
-from edxml.EDXMLBase import EDXMLError
+from edxml.error import EDXMLError
 from edxml.logger import log
 from edxml.transcode import TranscoderMediator
 

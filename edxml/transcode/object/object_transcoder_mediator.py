@@ -2,7 +2,7 @@
 
 import edxml.transcode.mediator
 
-from edxml.EDXMLBase import EDXMLError
+from edxml.error import EDXMLError
 from edxml.logger import log
 
 

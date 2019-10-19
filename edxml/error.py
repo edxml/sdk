@@ -1,4 +1,6 @@
-from edxml.EDXMLBase import EDXMLError
+class EDXMLError(Exception):
+    """Generic EDXML exception class"""
+    pass
 
 
 class EDXMLValidationError(EDXMLError):

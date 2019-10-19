@@ -44,7 +44,7 @@ import argparse
 import sys
 from xml.sax import make_parser
 from xml.sax.xmlreader import AttributesImpl
-from edxml.EDXMLBase import EDXMLError
+from edxml.error import EDXMLError
 from edxml.EDXMLFilter import EDXMLPullFilter
 
 # This class is based on the EDXMLStreamFilter class,

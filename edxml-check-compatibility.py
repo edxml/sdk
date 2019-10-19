@@ -37,7 +37,7 @@
 import argparse
 import sys
 
-from edxml.EDXMLBase import EDXMLError
+from edxml.error import EDXMLError
 from edxml.EDXMLParser import EDXMLOntologyPullParser, ProcessingInterrupted
 
 
