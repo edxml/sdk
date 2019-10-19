@@ -478,7 +478,7 @@ class EDXMLEvent(MutableMapping):
 
         """
 
-        event_type = ontology.get_event_type(self._event_type_name)
+        event_type = ontology.get_event_type(self.get_type_name())
         properties = event_type.get_properties()
         property_names = properties.keys()
         unique_properties = event_type.get_unique_properties()
@@ -619,7 +619,7 @@ class EDXMLEvent(MutableMapping):
         if event_type.is_unique():
             return hashlib.sha1(
                 (
-                    '%s\n%s\n%s' % (self._source_uri, self._event_type_name, '\n'.join(sorted(object_strings)))
+                    '%s\n%s\n%s' % (self.get_source_uri(), self.get_type_name(), '\n'.join(sorted(object_strings)))
                 ).encode("utf-8")
             ).digest().encode(encoding)
         else:
