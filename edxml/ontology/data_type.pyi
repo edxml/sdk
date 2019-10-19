@@ -38,6 +38,9 @@ class DataType(object):
     def datetime(cls) -> 'DataType': ...
 
     @classmethod
+    def sequence(cls) -> 'DataType': ...
+
+    @classmethod
     def boolean(cls) -> 'DataType': ...
 
     @classmethod
