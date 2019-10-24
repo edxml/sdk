@@ -265,10 +265,10 @@ class EventProperty(OntologyElement):
         if merge_strategy == 'match':
             self._set_attr('unique', True)
 
-        if merge_strategy in ('match', 'min', 'max', 'replace'):
+        if merge_strategy in ('min', 'max', 'replace'):
             self._set_attr('multivalued', False)
 
-        if merge_strategy in ('match', 'min', 'max'):
+        if merge_strategy in ('min', 'max'):
             self._set_attr('optional', False)
 
         return self
@@ -327,16 +327,13 @@ class EventProperty(OntologyElement):
         """
 
         Mark property as a unique property, which also sets
-        the merge strategy to 'match' and makes the property
-        both mandatory and single valued.
+        the merge strategy to 'match'.
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('unique', True)
         self._set_attr('merge', 'match')
-        self._set_attr('optional', False)
-        self._set_attr('multivalued', False)
         return self
 
     def is_unique(self):
@@ -535,24 +532,13 @@ class EventProperty(OntologyElement):
                     self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
             )
 
-        if self.is_unique():
-            if self.is_optional():
-                raise EDXMLValidationError(
-                    'Property "%s" is unique and optional at the same time' % self.__attr['name']
-                )
-            if self.is_multi_valued():
-                raise EDXMLValidationError(
-                    'Property "%s" is unique and multivalued at the same time' % self.__attr[
-                        'name']
-                )
-
-        if self.__attr['merge'] in ('match', 'min', 'max') and self.is_optional():
+        if self.__attr['merge'] in ('min', 'max') and self.is_optional():
             raise EDXMLValidationError(
                 'Property "%s" cannot be optional due to its merge strategy' % self.__attr[
                     'name']
             )
 
-        if self.__attr['merge'] in ('match', 'min', 'max', 'replace') and self.is_multi_valued():
+        if self.__attr['merge'] in ('min', 'max', 'replace') and self.is_multi_valued():
             raise EDXMLValidationError(
                 'Property "%s" cannot be multivalued due to its merge strategy' % self.__attr[
                     'name']
