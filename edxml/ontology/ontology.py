@@ -798,16 +798,6 @@ class Ontology(OntologyElement):
                             event_type[childProperty].get_merge_strategy())
                     )
 
-                # Check if child property is single valued
-                if event_type[childProperty].is_multi_valued():
-                    raise EDXMLValidationError(
-                        ('Event type %s contains a parent definition which refers to child property \'%s\'. '
-                         'This property is multi-valued, which is not allowed for properties that are used in '
-                         'parent definitions.') %
-                        (event_type_name, childProperty,
-                         event_type[childProperty].get_merge_strategy())
-                    )
-
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
         for event_type_name, event_type in self.__event_types.items():
