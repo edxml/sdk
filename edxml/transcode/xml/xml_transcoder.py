@@ -94,7 +94,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         ns['ws_normalize'] = XmlTranscoder._normalize_string
 
     @staticmethod
-    def _find_all(context, nodes, pattern, flags):
+    def _find_all(context, nodes, pattern, flags=0):
         """
 
         This function is available as an XPath function named 'findall', in
