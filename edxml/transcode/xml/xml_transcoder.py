@@ -281,8 +281,5 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                         # Property should be regarded as empty.
                         continue
                     properties[property_name].append(property)
-                except TypeError:
-                    # XPath returned None
-                    continue
 
         return EventElement(properties, event_type_name)
