@@ -81,7 +81,12 @@ class ObjectTranscoder(edxml.transcode.Transcoder):
             # Below, we parse dotted notation to find sub-fields
             # in the object.
 
-            field_path = selector.split('.')
+            try:
+                field_path = selector.split('.')
+            except AttributeError:
+                # Field path could be an integer key into a dictionary
+                # or a list index.
+                field_path = [selector]
             if len(field_path) > 0:
                 try:
                     # Try using the record as a dictionary
@@ -91,7 +96,7 @@ class ObjectTranscoder(edxml.transcode.Transcoder):
                     # as an object.
                     try:
                         value = getattr(input_object, field_path[0])
-                    except AttributeError:
+                    except (TypeError, AttributeError):
                         # That did not work either. Try interpreting
                         # the field as an index into a list.
                         try:
