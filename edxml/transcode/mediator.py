@@ -281,10 +281,7 @@ class TranscoderMediator(object):
         object_types = Ontology()
         for transcoder in self.__transcoders.values():
             transcoder.set_ontology(object_types)
-            for _ in transcoder.generate_object_types():
-                # Here, we only populate the list of object types,
-                # we don't do anything with them.
-                pass
+            transcoder.create_object_types()
 
         # Add the object types to the main mediator ontology
         self._ontology.update(object_types)
@@ -294,10 +291,7 @@ class TranscoderMediator(object):
         concepts = Ontology()
         for transcoder in self.__transcoders.values():
             transcoder.set_ontology(concepts)
-            for _ in transcoder.generate_concepts():
-                # Here, we only populate the list of concepts,
-                # we don't do anything with them.
-                pass
+            transcoder.create_concepts()
 
         # Add the concepts to the main mediator ontology
         self._ontology.update(concepts)
@@ -311,13 +305,8 @@ class TranscoderMediator(object):
             transcoder.set_ontology(Ontology())
             transcoder.update_ontology(object_types, validate=False)
             transcoder.update_ontology(concepts, validate=False)
-            for _, _ in transcoder.generate_event_types():
-                # Here, we only populate the ontology, we
-                # don't do anything with the ontology elements.
-                self._ontology.update(transcoder._ontology, validate=False)
-                transcoder.update_ontology(object_types, validate=False)
-                transcoder.update_ontology(concepts, validate=False)
-                transcoder.set_ontology(Ontology())
+            list(transcoder.generate_event_types())
+            self._ontology.update(transcoder._ontology, validate=False)
 
         if len(self.__sources) == 0:
             log.warning(

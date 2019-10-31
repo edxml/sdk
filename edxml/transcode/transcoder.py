@@ -343,29 +343,19 @@ class Transcoder(object):
         """
         return []
 
-    def generate_concepts(self):
+    def create_concepts(self):
         """
-
         This method may be used to generate generic EDXML
         concepts that are used by all transcoders.
-
-        Yields:
-          edxml.ontology.Concept:
         """
-        return
-        yield
+        pass
 
-    def generate_object_types(self):
+    def create_object_types(self):
         """
-
         This method may be used to generate generic EDXML
         object types that are used by all transcoders.
-
-        Yields:
-          edxml.ontology.ObjectType:
         """
-        return
-        yield
+        pass
 
     def generate_event_types(self):
         """
