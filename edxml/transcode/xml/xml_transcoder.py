@@ -151,11 +151,14 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         """
         out_strings = []
         if strings:
-            if not isinstance(strings, list):
-                strings = [strings]
-            for string in strings:
-                out_strings.append("".join(ch for ch in unicode(
-                    string) if unicodedata.category(ch)[0] != "C"))
+            for string in strings if isinstance(strings, list) else [unicode(strings)]:
+                try:
+                    # Try treating string as an XML element first.
+                    out_strings.append("".join(ch for ch in unicode(string.text) if unicodedata.category(ch)[0] != "C"))
+                except AttributeError:
+                    # That did not work. It must be an attribute or
+                    # an actual string then.
+                    out_strings.append("".join(ch for ch in unicode(string) if unicodedata.category(ch)[0] != "C"))
         return out_strings if isinstance(strings, list) else out_strings[0]
 
     @staticmethod
@@ -180,10 +183,13 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         """
         out_strings = []
         if strings:
-            if not isinstance(strings, list):
-                strings = [strings]
-            for string in strings:
-                out_strings.append(' '.join(string.split()))
+            for string in strings if isinstance(strings, list) else [unicode(strings)]:
+                try:
+                    out_strings.append(' '.join(string.split()))
+                except AttributeError:
+                    # If string is not a string then it must
+                    # be an element.
+                    out_strings.append(' '.join(string.text.split()))
         return out_strings if isinstance(strings, list) else out_strings[0]
 
     def generate(self, element, xpath_selector, **kwargs):
