@@ -370,7 +370,7 @@ class Transcoder(object):
 
         self.check_class_attributes()
 
-        for event_type_name in self.TYPE_PROPERTIES.keys():
+        for event_type_name in set(self.TYPE_MAP.values()):
             yield event_type_name, self.create_event_type(event_type_name, self._ontology)
 
     @classmethod
