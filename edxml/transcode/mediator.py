@@ -40,6 +40,8 @@ class TranscoderMediator(object):
     __log_repaired_events = False
     __auto_merge_eventtypes = []
 
+    __closed = False
+
     def __init__(self, output=None):
         """
 
@@ -384,10 +386,14 @@ class TranscoderMediator(object):
           unicode: Generated output XML data
 
         """
+        if self.__closed:
+            return ''
+
         if self._writer is None:
             # Apparently, no events were generated. We will only
             # output the ontology.
             self._create_writer()
             self._write_initial_ontology()
 
+        self.__closed = True
         return self._writer.close(flush)
