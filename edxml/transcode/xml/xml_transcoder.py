@@ -262,7 +262,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                 try:
                     # Here, we assume that the XPath expression selects
                     # an XML tag. We will use its text to populate the property
-                    if len(property.text) == 0:
+                    if property.text is None:
                         # Skip empty values
                         continue
                     elif property.text in self.EMPTY_VALUES.get(xpath, ()):
@@ -274,7 +274,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                     # Oops, XPath did not select a tag, it might be
                     # an attribute then.
                     property = unicode(property)
-                    if len(property) == 0:
+                    if property == '':
                         # Skip empty values
                         continue
                     elif property in self.EMPTY_VALUES.get(xpath, ()):
