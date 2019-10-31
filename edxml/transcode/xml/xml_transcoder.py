@@ -228,7 +228,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                 except XPathSyntaxError:
                     raise ValueError(
                         'TYPE_MAP of %s contains invalid XPath for event type %s: %s' % (
-                            self.__class__, event_type_name, event_type_xpath)
+                            type(self).__name__, event_type_name, event_type_xpath)
                     )
 
             for sub_element in self._XPATH_MATCHERS[event_type_xpath](element):
@@ -250,8 +250,8 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                     )
                 except XPathSyntaxError:
                     raise ValueError(
-                        'TYPE_MAP of %s contains invalid XPath for property %s: %s' % (
-                            self.__class__, property_name, xpath)
+                        'PROPERTY_MAP of %s contains invalid XPath for property %s: %s' %
+                        (type(self).__name__, property_name, xpath)
                     )
 
             # Use the XPath evaluation function to find matches
