@@ -87,8 +87,10 @@ class XmlTranscoderMediator(TranscoderMediator):
                     're': 'http://exslt.org/regular-expressions'}
             )
         except XPathSyntaxError:
-            raise ValueError('Attempt to register transcoder %s using invalid XPath expression %s.' % (
-                transcoder.__class__, xpath_expression))
+            raise ValueError(
+                'Attempt to register transcoder %s using invalid XPath expression %s.' %
+                (type(transcoder).__name__, xpath_expression)
+            )
 
     @classmethod
     def _get_transcoder(cls, xpath_expression):
