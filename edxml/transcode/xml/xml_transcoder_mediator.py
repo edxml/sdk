@@ -283,7 +283,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                     tree.getpath(element)
                 )
 
-            self._transcode(element, element_xpath, matching_element_xpath, transcoder)
+            outputs.extend(self._transcode(element, element_xpath, matching_element_xpath, transcoder))
 
             # Delete previously transcoded elements to keep the in-memory XML
             # tree small and processing efficient. Note that lxml only allows us
