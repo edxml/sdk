@@ -265,7 +265,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # Below, we try to match the XPath expressions of each of the registered
         # transcoders with the XPath expression of the current element.
         for matching_xpath in transcoder_xpaths:
-            if element in XmlTranscoderMediator._XPATH_MATCHERS[matching_xpath](element):
+            if element in XmlTranscoderMediator._XPATH_MATCHERS[matching_xpath](tree):
                 # The element is among the elements that match the
                 # XPath expression of one of the transcoders.
                 matching_element_xpath = matching_xpath
