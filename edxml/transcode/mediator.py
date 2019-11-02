@@ -75,6 +75,14 @@ class TranscoderMediator(object):
         # KeyboardInterrupt, flushing the# output buffers is fine.
         self.close(flush=exc_type != EDXMLValidationError)
 
+    @classmethod
+    def clear_registrations(cls):
+        # TODO: Remove this method as soon as registrations are
+        #       no longer kept in class constants.
+        cls.__record_transcoders = {}
+        cls.__transcoders = {}
+        cls.__sources = []
+
     @staticmethod
     def _transcoder_is_postprocessor(transcoder):
         this_method = getattr(transcoder, 'post_process')

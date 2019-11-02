@@ -26,6 +26,13 @@ class XmlTranscoderMediator(TranscoderMediator):
     _last_used_transcoder_xpath = None
 
     @classmethod
+    def clear_registrations(cls):
+        super(XmlTranscoderMediator, cls).clear_registrations()
+        cls._XPATH_MATCHERS = {}
+        cls._transcoder_tags = {}
+        cls._transcoder_positions = {}
+
+    @classmethod
     def register(cls, xpath_expression, transcoder, tag=None):
         """
 
