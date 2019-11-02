@@ -277,7 +277,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         transcoder = self._get_transcoder(matching_element_xpath)
 
         if transcoder:
-            if element_xpath == 'RECORD_OF_UNKNOWN_TYPE' and self._warn_fallback:
+            if matching_element_xpath == 'RECORD_OF_UNKNOWN_TYPE' and self._warn_fallback:
                 log.warning(
                     'XML element at %s does not match any XPath expressions, passing to fallback transcoder' %
                     tree.getpath(element)
