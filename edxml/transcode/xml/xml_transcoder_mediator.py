@@ -72,7 +72,7 @@ class XmlTranscoderMediator(TranscoderMediator):
           transcoder (XmlTranscoder): XmlTranscoder class
           tag (Optional[str]): XML tag name
         """
-        TranscoderMediator.register(xpath_expression, transcoder)
+        super(XmlTranscoderMediator, cls).register(xpath_expression, transcoder)
 
         if tag is not None:
             cls._transcoder_tags[xpath_expression] = tag
@@ -105,7 +105,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         Returns:
           edxml.transcode.xml.XmlTranscoder:
         """
-        return TranscoderMediator._get_transcoder(xpath_expression)
+        return super(XmlTranscoderMediator, cls)._get_transcoder(xpath_expression)
 
     def parse(self, input_file, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True,
               remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, recover=None,
