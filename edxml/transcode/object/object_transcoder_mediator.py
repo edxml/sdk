@@ -117,6 +117,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         if not transcoder and record_type != 'RECORD_OF_UNKNOWN_TYPE':
             # No transcoder available for record type,
             # use the fallback transcoder, if available.
+            record_type = 'RECORD_OF_UNKNOWN_TYPE'
             transcoder = self._get_transcoder('RECORD_OF_UNKNOWN_TYPE')
 
         if transcoder:
@@ -125,6 +126,9 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                     'Input object has no "%s" field, passing to fallback transcoder. Record was: %s' %
                     (self.TYPE_FIELD, input_record)
                 )
+
+            if record_type == 'RECORD_OF_UNKNOWN_TYPE':
+                record_type = None
 
             outputs.append(self._transcode(input_record, record_type, record_type, transcoder))
         else:

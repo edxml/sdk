@@ -293,8 +293,6 @@ class TranscoderMediator(object):
 
         if record_selector in cls.__record_transcoders:
             return cls.__transcoders[cls.__record_transcoders[record_selector]]
-        else:
-            return cls.__transcoders.get(cls.__record_transcoders.get('RECORD_OF_UNKNOWN_TYPE'))
 
     def _prepare_write_event(self):
         if self._ontology.is_modified_since(self._last_written_ontology_version):
