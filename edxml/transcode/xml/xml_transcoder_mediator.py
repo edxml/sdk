@@ -313,8 +313,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                     'XML element at %s does not match any XPath expressions and no fallback transcoder is available.'
                     % element_xpath
                 )
-                log.warning('XML element was: %s' %
-                             etree.tostring(element, pretty_print=True))
+                log.warning('XML element was: %s' % etree.tostring(element, pretty_print=True))
 
         return u''.join(outputs)
 
