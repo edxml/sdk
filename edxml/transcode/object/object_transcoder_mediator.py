@@ -2,7 +2,6 @@
 
 import edxml.transcode.mediator
 
-from edxml.error import EDXMLError
 from edxml.logger import log
 
 
@@ -121,72 +120,13 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
             transcoder = self._get_transcoder('RECORD_OF_UNKNOWN_TYPE')
 
         if transcoder:
-
             if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
                 log.warning(
                     'Input object has no "%s" field, passing to fallback transcoder. Record was: %s' %
                     (self.TYPE_FIELD, input_record)
                 )
 
-            for event in transcoder.generate(input_record, record_type):
-                if self._output_source_uri:
-                    event.set_source(self._output_source_uri)
-                if not self._writer:
-                    # Apparently, this is the first event that
-                    # is generated. Create an EDXML writer and
-                    # write the initial ontology.
-                    self._create_writer()
-                    self._write_initial_ontology()
-                if self._ontology.is_modified_since(self._last_written_ontology_version):
-                    # Ontology was changed since we wrote the last ontology update,
-                    # so we need to write another update.
-                    self._write_ontology_update()
-                    self._last_written_ontology_version = self._ontology.get_version()
-
-                if self._transcoder_is_postprocessor(transcoder):
-                    try:
-                        for post_processed_event in transcoder.post_process(event, input_record):
-                            try:
-                                outputs.append(
-                                    self._writer.add_event(post_processed_event))
-                            except StopIteration:
-                                outputs.append(self._writer.close())
-                            except EDXMLError as e:
-                                if not self._ignore_invalid_events:
-                                    raise
-                                if self._warn_invalid_events:
-                                    log.warning(
-                                        'The post processor of the transcoder for input record type %s produced '
-                                        'an invalid event: %s\n\nContinuing...' % (record_type, str(e))
-                                    )
-                    except Exception as e:
-                        if not self._ignore_invalid_events or self._debug:
-                            raise
-                        if self._warn_invalid_events:
-                            log.warning(
-                                'The post processor of the transcoder for input record type %s failed '
-                                'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
-                            )
-                else:
-                    try:
-                        outputs.append(self._writer.add_event(event))
-                    except StopIteration:
-                        outputs.append(self._writer.close())
-                    except EDXMLError as e:
-                        if not self._ignore_invalid_events:
-                            raise
-                        if self._warn_invalid_events:
-                            log.warning(
-                                'The transcoder for input record type %s produced an invalid '
-                                'event: %s\n\nContinuing...' % (record_type, str(e))
-                            )
-                    except Exception as e:
-                        if self._debug:
-                            raise
-                        log.warning(
-                            'Transcoder for input record type %s failed '
-                            'with %s: %s\n\nContinuing...' % (record_type, type(e).__name__, str(e))
-                        )
+            outputs.append(self._transcode(input_record, record_type, record_type, transcoder))
         else:
             if self._warn_no_transcoder:
                 if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:

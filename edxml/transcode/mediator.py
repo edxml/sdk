@@ -5,7 +5,7 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLValidationError, EDXMLError
 from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 
 
@@ -60,7 +60,7 @@ class TranscoderMediator(object):
 
         super(TranscoderMediator, self).__init__()
         self.__output = output
-        self._writer = None   # var: edxml.SimpleEDXMLWriter
+        self.__writer = None   # var: edxml.SimpleEDXMLWriter
         self._ontology = Ontology()
         self._last_written_ontology_version = self._ontology.get_version()
 
@@ -74,6 +74,22 @@ class TranscoderMediator(object):
         # invalid EDXML data. For other kinds of exceptions, like
         # KeyboardInterrupt, flushing the# output buffers is fine.
         self.close(flush=exc_type != EDXMLValidationError)
+
+    @property
+    def _writer(self):
+        """
+        Property containing the EDXML writer that
+        is used to produce output. It will automatically
+        output the initial ontology on first access.
+
+        Returns:
+            edxml.SimpleEDXMLWriter
+
+        """
+        if not self.__writer:
+            self._create_writer()
+            self._write_initial_ontology()
+        return self.__writer
 
     @classmethod
     def clear_registrations(cls):
@@ -280,6 +296,15 @@ class TranscoderMediator(object):
         else:
             return cls.__transcoders.get(cls.__record_transcoders.get('RECORD_OF_UNKNOWN_TYPE'))
 
+    def _prepare_write_event(self):
+        if self._ontology.is_modified_since(self._last_written_ontology_version):
+            # Ontology was changed since we wrote the last ontology update,
+            # so we need to write another update.
+            # TODO: Below writes a full ontology, we should only
+            #       output any new or updated elements.
+            self._write_ontology_update()
+            self._last_written_ontology_version = self._ontology.get_version()
+
     def _write_initial_ontology(self):
         # Here, we write the ontology elements that are
         # defined by the various transcoders.
@@ -333,7 +358,7 @@ class TranscoderMediator(object):
         return self._writer.add_ontology(self._ontology)
 
     def _create_writer(self):
-        self._writer = SimpleEDXMLWriter(self.__output, self.__validate_events)
+        self.__writer = SimpleEDXMLWriter(self.__output, self.__validate_events)
         if self.__disable_buffering:
             self._writer.set_buffer_size(0)
         if self._ignore_invalid_objects:
@@ -344,6 +369,99 @@ class TranscoderMediator(object):
             self._writer.log_repaired_events()
         for EventTypeName in self.__auto_merge_eventtypes:
             self._writer.auto_merge(EventTypeName)
+
+    def _write_event(self, record_id, event):
+        """
+        Writes a single event using the EDXML writer.
+
+        If no output was configured for the EDXML writer the
+        generated XML data will be returned as unicode string.
+
+        Args:
+            record_id (str): Record identifier
+            event (edxml.EDXMLEvent): The EDXML event
+
+        Returns:
+            str:
+        """
+        self._prepare_write_event()
+
+        outputs = []
+        try:
+            outputs.append(self._writer.add_event(event))
+        except StopIteration:
+            # This is raised by the coroutine in EDXMLWriter when the
+            # coroutine receives a send() after is was closed.
+            # TODO: Can this still happen? It looks like every send() and next() is
+            #       enclosed in a try / catch that raises RuntimeException.
+            outputs.append(self._writer.close())
+        except EDXMLError as e:
+            if not self._ignore_invalid_events:
+                raise
+            if self._warn_invalid_events:
+                log.warning(
+                    'The post processor of the transcoder for record %s produced '
+                    'an invalid event: %s\n\nContinuing...' % (record_id, str(e))
+                )
+        return ''.join(outputs)
+
+    def _transcode(self, record, record_id, record_selector, transcoder):
+        """
+        Transcodes specified input record and writes the resulting events
+        into the configured output.
+
+        If no output was configured for the EDXML writer the
+        generated XML data will be returned as unicode string.
+
+        Args:
+            record: The input record
+            record_id (str): Record identifier
+            record_selector (str): Selector matching the record
+            transcoder (edxml.transcode.Transcoder): The transcoder to use
+
+        Returns:
+            str:
+
+        """
+        outputs = []
+
+        for event in transcoder.generate(record, record_selector):
+            if self._output_source_uri:
+                event.set_source(self._output_source_uri)
+
+            if self._transcoder_is_postprocessor(transcoder):
+                for post_processed_event in self._post_process(record_id, record, transcoder, event):
+                    outputs.append(self._write_event(record_id, post_processed_event))
+            else:
+                outputs.append(self._write_event(record_id, event))
+
+        return ''.join(outputs)
+
+    def _post_process(self, record_id, record, transcoder, event):
+        """
+        Uses specified transcoder to post-process one event, yielding
+        zero or more output events.
+
+        Args:
+            record_id (str): Record identifier
+            record: The input record of the output event
+            transcoder (edxml.transcode.Transcoder): The transcoder to use
+            event: The output event
+
+        Yields:
+            edxml.EDXMLEvent
+        """
+        try:
+            for post_processed_event in transcoder.post_process(event, record):
+                yield post_processed_event
+        except Exception as e:
+            # TODO: Reverse this. Unless indicated otherwise, post processing exceptions should be fatal.
+            if self._debug:
+                raise
+            log.warning(
+                'The post processor of %s failed transcoding record %s: %s\n\nContinuing...' %
+                (type(e).__name__, record_id, str(e))
+            )
 
     def process(self, record):
         """

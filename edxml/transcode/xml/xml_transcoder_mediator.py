@@ -3,7 +3,6 @@ import re
 
 from lxml import etree
 from lxml.etree import XPathSyntaxError
-from edxml.error import EDXMLError
 from edxml.logger import log
 from edxml.transcode import TranscoderMediator
 
@@ -285,7 +284,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                     tree.getpath(element)
                 )
 
-            outputs.extend(self._transcode(element, element_xpath, matching_element_xpath, transcoder))
+            outputs.append(self._transcode(element, element_xpath, matching_element_xpath, transcoder))
 
             # Delete previously transcoded elements to keep the in-memory XML
             # tree small and processing efficient. Note that lxml only allows us
@@ -318,71 +317,6 @@ class XmlTranscoderMediator(TranscoderMediator):
                              etree.tostring(element, pretty_print=True))
 
         return u''.join(outputs)
-
-    def _transcode(self, element, element_xpath, matching_element_xpath, transcoder):
-        outputs = []
-        for event in transcoder.generate(element, matching_element_xpath):
-            if self._output_source_uri:
-                event.set_source(self._output_source_uri)
-            if not self._writer:
-                # Apparently, this is the first event that
-                # is generated. Create an EDXML writer and
-                # write the initial ontology.
-                self._create_writer()
-                self._write_initial_ontology()
-            if self._ontology.is_modified_since(self._last_written_ontology_version):
-                # Ontology was changed since we wrote the last ontology update,
-                # so we need to write another update.
-                self._write_ontology_update()
-                self._last_written_ontology_version = self._ontology.get_version()
-
-            if self._transcoder_is_postprocessor(transcoder):
-                try:
-                    for post_processed_event in transcoder.post_process(event, element):
-                        try:
-                            outputs.append(
-                                self._writer.add_event(post_processed_event))
-                        except StopIteration:
-                            outputs.append(self._writer.close())
-                        except EDXMLError as e:
-                            if not self._ignore_invalid_events:
-                                raise
-                            if self._warn_invalid_events:
-                                log.warning(
-                                    'The post processor of the transcoder for XML element at %s produced '
-                                    'an invalid event: %s\n\nContinuing...' % (element_xpath, str(e))
-                                )
-                except Exception as e:
-                    if self._debug:
-                        raise
-                    log.warning(
-                        'The post processor of the transcoder for XML element at %s failed '
-                        'with %s: %s\n\nContinuing...' %
-                        (element_xpath, type(e).__name__, str(e))
-                    )
-            else:
-                try:
-                    outputs.append(self._writer.add_event(event))
-                except StopIteration:
-                    outputs.append(self._writer.close())
-                except EDXMLError as e:
-                    if not self._ignore_invalid_events:
-                        raise
-                    if self._warn_invalid_events:
-                        log.warning(
-                            'The transcoder for XML element at %s produced an invalid '
-                            'event: %s\n\nContinuing...' % (element_xpath, str(e))
-                        )
-                except Exception as e:
-                    if not self._ignore_invalid_events or self._debug:
-                        raise
-                    if self._warn_invalid_events:
-                        log.warning(
-                            'Transcoder for XML element at %s failed '
-                            'with %s: %s\n\nContinuing...' %
-                            (element_xpath, type(e).__name__, str(e))
-                        )
-        return outputs
 
     @staticmethod
     def get_visited_tag_name(xpath):
