@@ -25,22 +25,7 @@ class TranscoderMediator(object):
 
     __record_transcoders = {}
     __transcoders = {}  # type: Dict[any, edxml.transcode.Transcoder]
-    __sources = []
-
-    _debug = False
-    _warn_no_transcoder = False
-    _warn_fallback = False
-    _warn_invalid_events = False
-    _ignore_invalid_objects = False
-    _ignore_invalid_events = False
-    _output_source_uri = None
-
-    __disable_buffering = False
-    __validate_events = True
-    __log_repaired_events = False
     __auto_merge_eventtypes = []
-
-    __closed = False
 
     def __init__(self, output=None):
         """
@@ -59,8 +44,23 @@ class TranscoderMediator(object):
         """
 
         super(TranscoderMediator, self).__init__()
+        self._debug = False
+        self._warn_no_transcoder = False
+        self._warn_fallback = False
+        self._warn_invalid_events = False
+        self._ignore_invalid_objects = False
+        self._ignore_invalid_events = False
+        self._output_source_uri = None
+
+        self.__disable_buffering = False
+        self.__validate_events = True
+        self.__log_repaired_events = False
+
+        self.__sources = []
+        self.__closed = False
         self.__output = output
         self.__writer = None   # var: edxml.SimpleEDXMLWriter
+
         self._ontology = Ontology()
         self._last_written_ontology_version = self._ontology.get_version()
 
