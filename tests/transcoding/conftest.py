@@ -6,7 +6,7 @@ import pytest
 
 from edxml.ontology import Ontology, DataType
 from edxml.transcode import Transcoder
-from edxml.transcode.object import ObjectTranscoder
+from edxml.transcode.object import ObjectTranscoder, ObjectTranscoderMediator
 from edxml.transcode.xml import XmlTranscoder
 
 

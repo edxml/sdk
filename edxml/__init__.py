@@ -6,6 +6,7 @@ import sys
 from .version import __version__
 
 from event import EDXMLEvent, EventElement, ParsedEvent
+from event_collection import EventCollection
 from EDXMLWriter import EDXMLWriter
 from SimpleEDXMLWriter import SimpleEDXMLWriter
 from EDXMLParser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
@@ -44,6 +45,6 @@ evil_xml_chars_regexp = u'[%s]' % u''.join(
     ["%s-%s" % (unichr(low), unichr(high)) for (low, high) in ranges]
 )
 
-__all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EDXMLWriter', 'SimpleEDXMLWriter',
+__all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EventCollection', 'EDXMLWriter', 'SimpleEDXMLWriter',
            'EDXMLPullParser', 'EDXMLPushParser', 'EDXMLOntologyPullParser', 'EDXMLOntologyPushParser',
            'EDXMLPullFilter', 'EDXMLPushFilter', 'ontology', 'transcode', '__version__']

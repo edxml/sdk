@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
-from edxml import SimpleEDXMLWriter, EDXMLPushParser
+from edxml import EventCollection
 from edxml.event import EDXMLEvent, ParsedEvent
 from edxml.ontology import Ontology
 import pytest
@@ -33,21 +33,8 @@ def ontology():
 
 
 def create_parsed_event(ontology, event):
-    writer = SimpleEDXMLWriter()
-    writer.add_ontology(ontology)
-
-    edxml_data = writer.add_event(event) + writer.close()
-
-    class TestParser(EDXMLPushParser):
-        events = []
-
-        def _parsed_event(self, event):
-            self.events.append(event)
-
-    with TestParser() as parser:
-        parser.feed(edxml_data)
-        events = parser.events
-
+    edxml_data = EventCollection([event]).set_ontology(ontology).to_edxml()
+    events = EventCollection.from_edxml(edxml_data.encode('utf-8'))
     return events[0]  # type: ParsedEvent
 
 
