@@ -55,8 +55,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           record_type_identifier (str): Name of the record type
           transcoder (ObjectTranscoder): ObjectTranscoder class
         """
-        edxml.transcode.mediator.TranscoderMediator.register(
-            record_type_identifier, transcoder)
+        super(ObjectTranscoderMediator, cls).register(record_type_identifier, transcoder)
 
     @classmethod
     def _get_transcoder(cls, record_type_name):
@@ -72,7 +71,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         Returns:
           ObjectTranscoder:
         """
-        return edxml.transcode.mediator.TranscoderMediator._get_transcoder(record_type_name)
+        return super(ObjectTranscoderMediator, cls)._get_transcoder(record_type_name)
 
     def process(self, input_record):
         """
