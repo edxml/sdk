@@ -352,7 +352,7 @@ class ObjectType(OntologyElement):
         split_data_type = self.__attr['data-type'].split(':')
 
         if split_data_type[0] == 'string':
-            if len(split_data_type) >= 4 and 'i' in split_data_type[3]:
+            if split_data_type[2] == 'ci':
                 # Perform regex matching on lower case string
                 value = value.lower()
             if self.__attr['regexp'] is not None and not re.match(self.__attr['regexp'], value):
