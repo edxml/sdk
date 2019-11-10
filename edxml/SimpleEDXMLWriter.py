@@ -64,6 +64,7 @@ class SimpleEDXMLWriter(object):
         self.__event_type_post_processors = {}
         self.__auto_merge = {}
         self.__writer = None
+        self.__closed = False
 
     def __enter__(self):
         return self
@@ -490,6 +491,9 @@ class SimpleEDXMLWriter(object):
 
         """
 
+        if self.__closed:
+            return ''
+
         outputs = []
 
         if not self.__writer:
@@ -506,4 +510,8 @@ class SimpleEDXMLWriter(object):
             outputs.append(self.flush(force=True))
 
         outputs.append(self.__writer.close())
+
+        self.__writer = None
+        self.__closed = True
+
         return u''.join(outputs)
