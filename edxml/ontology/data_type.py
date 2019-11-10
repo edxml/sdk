@@ -813,7 +813,7 @@ class DataType(object):
         elif split_data_type[0] == 'sequence':
             try:
                 int(value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 raise EDXMLValidationError(
                     "Invalid sequence value '%s'." % value)
         elif split_data_type[0] == 'number':
@@ -837,7 +837,7 @@ class DataType(object):
             else:
                 try:
                     value = int(value)
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     raise EDXMLValidationError("Invalid number '%s'." % value)
                 if len(split_data_type) < 3:
                     # number is unsigned.
@@ -856,9 +856,8 @@ class DataType(object):
                 value = ''.join(c for c in str(value) if c != hex_separator)
             try:
                 value.decode("hex")
-            except ValueError:
-                raise EDXMLValidationError(
-                    "Invalid hexadecimal value '%s'." % value)
+            except (TypeError, ValueError):
+                raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
         elif split_data_type[0] == 'uuid':
             if not re.match(self.UUID_PATTERN, value):
                 raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
@@ -872,7 +871,7 @@ class DataType(object):
                 try:
                     geo_lat = float(split_geo_point[0])
                     geo_lon = float(split_geo_point[1])
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     raise EDXMLValidationError(
                         "The geo:point value '%s' is not formatted correctly." % value)
                 if geo_lat < -90 or geo_lat > 90:
@@ -906,7 +905,7 @@ class DataType(object):
                 # String should only contain latin1 characters.
                 try:
                     unicode(value).encode('latin1')
-                except LookupError, ValueError:
+                except (LookupError, ValueError):
                     raise EDXMLValidationError(
                         "string of data type %s contains unicode characters: %s" % (self.type, value))
         elif split_data_type[0] == 'uri':
@@ -943,7 +942,7 @@ class DataType(object):
                     if not 0 <= int(split_ip_part) <= 255:
                         raise EDXMLValidationError(
                             "Invalid IPv4 address: '%s'" % value)
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     raise EDXMLValidationError(
                         "Invalid IPv4 address: '%s'" % value)
         elif split_data_type[0] == 'boolean':
