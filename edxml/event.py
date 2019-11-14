@@ -14,6 +14,124 @@ import edxml
 from edxml.error import EDXMLValidationError
 
 
+class PropertySet(object):
+    def __init__(self, properties=None, update_property=None):
+        self.__properties = OrderedDict()
+        for property_name, values in properties.items() or {}:
+            self.__properties[property_name] = PropertyObjectSet(property_name, values, update_property)
+
+        if update_property is not None:
+            self._update_property = update_property
+
+    def _update_property(self, property_name, values):
+        pass
+
+    def replace_object_set(self, property_name, object_set):
+        self.__properties[property_name] = object_set
+
+    def items(self):
+        return [(key, values) for key, values in self.__properties.items() if len(values) > 0]
+
+    def keys(self):
+        return [key for key, values in self.__properties.items() if len(values) > 0]
+
+    def values(self):
+        return self.__properties.values()
+
+    def get(self, property_name, default=None):
+        return self.__properties.get(property_name, default)
+
+    def copy(self):
+        return deepcopy(self)
+
+    def __iter__(self):
+        for p in self.__properties.keys():
+            if len(self.__properties[p]) > 0:
+                yield p
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __eq__(self, other):
+        return dict(other) == {p: v for p, v in self.__properties.items() if len(v) > 0}
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __setitem__(self, key, value):
+        self.__properties[key] = PropertyObjectSet(key, value, self._update_property)
+        self._update_property(key, value)
+
+    def __getitem__(self, item):
+        try:
+            return self.__properties[item]
+        except KeyError:
+            if not isinstance(item, str):
+                raise TypeError('Property name is not a string: ' + repr(item))
+            self.__properties[item] = PropertyObjectSet(item, update=self._update_property)
+            return self.__properties[item]
+
+    def __delitem__(self, key):
+        try:
+            del self.__properties[key]
+            self._update_property(key, None)
+        except KeyError:
+            pass
+
+    def __repr__(self):
+        return repr(self.__properties)
+
+
+class PropertyObjectSet(object):
+    def __init__(self, property_name, objects=None, update=None):
+        if property_name is None:
+            raise ValueError()
+        self.__property_name = property_name
+        if isinstance(objects, set):
+            self.__objects = objects
+        else:
+            if isinstance(objects, str):
+                objects = (objects,)
+            self.__objects = set(iter(objects or []))
+        if update is not None:
+            self._update = update
+
+    def __iter__(self):
+        return iter(self.__objects)
+
+    def __len__(self):
+        return len(self.__objects)
+
+    def __eq__(self, other):
+        return self.__objects == other
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __contains__(self, item):
+        return item in self.__objects
+
+    def __repr__(self):
+        return repr(self.__objects)
+
+    def add(self, value):
+        self.__objects.add(value)
+        self._update(self.__property_name, self.__objects)
+
+    def update(self, values):
+        self.__objects.update(values)
+        self._update(self.__property_name, self.__objects)
+
+    def difference(self, other):
+        return self.__objects.difference(other)
+
+    def intersection(self, other):
+        return self.__objects.intersection(other)
+
+    def _update(self, property_name, values):
+        pass
+
+
 class EDXMLEvent(MutableMapping):
     """Class representing an EDXML event.
 
@@ -49,7 +167,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent
         """
-        self._properties = OrderedDict({prop: set(values) for prop, values in properties.items()})
+        self._properties = PropertySet(properties)
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
@@ -63,13 +181,10 @@ class EDXMLEvent(MutableMapping):
         )
 
     def __delitem__(self, key):
-        self._properties.pop(key, None)
+        del self._properties[key]
 
     def __setitem__(self, key, value):
-        try:
-            self._properties[key] = set(value)
-        except TypeError:
-            self._properties[key] = {value}
+        self._properties[key] = PropertyObjectSet(key, value)
 
     def __len__(self):
         return len(self._properties)
@@ -78,7 +193,8 @@ class EDXMLEvent(MutableMapping):
         try:
             return self._properties[key]
         except KeyError:
-            return set()
+            self._properties[key] = PropertyObjectSet(key)
+            return self._properties[key]
 
     def __contains__(self, key):
         try:
@@ -87,8 +203,41 @@ class EDXMLEvent(MutableMapping):
             return False
 
     def __iter__(self):
-        for property_name, objects in self._properties.items():
+        for property_name in self._properties:
             yield property_name
+
+    def __eq__(self, other):
+
+        if not isinstance(other, type(self)):
+            raise TypeError("Can only compare events to other events.")
+
+        if self.get_type_name() != other.get_type_name():
+            return False
+
+        if self.get_source_uri() != other.get_source_uri():
+            return False
+
+        if not self.properties.__eq__(other.properties):
+            return False
+
+        if self.get_attachments() != other.get_attachments():
+            return False
+
+        if set(self.get_explicit_parents()) != set(other.get_explicit_parents()):
+            return False
+
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @property
+    def properties(self):
+        return self._properties
+
+    @properties.setter
+    def properties(self, new_properties):
+        self.set_properties(new_properties)
 
     def get_any(self, property_name, default=None):
         """
@@ -150,7 +299,7 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
         """
         return cls(
-            {property_name: set(values) for property_name, values in properties.items()},
+            properties,
             event_type_name,
             source_uri,
             parents,
@@ -166,7 +315,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
             EDXMLEvent:
         """
-        self._properties = OrderedDict(sorted(self._properties.items(), key=lambda t: t[0]))
+        self._properties = PropertySet(OrderedDict(sorted(self._properties.items(), key=lambda t: t[0])))
         self._attachments = OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0]))
         return self
 
@@ -202,7 +351,7 @@ class EDXMLEvent(MutableMapping):
           Dict[str, List[unicode]]: Event properties
 
         """
-        return self._properties or OrderedDict()
+        return self._properties
 
     def get_explicit_parents(self):
         """
@@ -295,7 +444,7 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
 
         """
-        self._properties = OrderedDict({prop: set(objects) for prop, objects in properties.items()})
+        self._properties = PropertySet(properties)
         return self
 
     def copy_properties_from(self, source_event, property_map):
@@ -319,6 +468,7 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
         """
 
+        props = self.get_properties()
         for source, targets in property_map.iteritems():
             try:
                 source_properties = source_event._properties[source]
@@ -327,9 +477,9 @@ class EDXMLEvent(MutableMapping):
                 continue
             if len(source_properties) > 0:
                 for target in (targets if isinstance(targets, list) else [targets]):
-                    if target not in self._properties:
-                        self._properties[target] = set()
-                    self._properties[target].update(source_properties)
+                    if target not in props:
+                        props[target] = PropertyObjectSet(target)
+                    props[target].update(source_properties)
 
         return self
 
@@ -354,20 +504,20 @@ class EDXMLEvent(MutableMapping):
           EDXMLEvent:
         """
 
+        props = self.get_properties()
         for source, targets in property_map.iteritems():
             try:
                 for target in (targets if isinstance(targets, list) else [targets]):
                     if len(source_event._properties[source]) == 0:
                         continue
-                    if target not in self._properties:
-                        self._properties[target] = set()
-                    self._properties[target].update(
-                        source_event._properties[source])
+                    if target not in props:
+                        props[target] = PropertyObjectSet(target)
+                    props[target].update(source_event._properties[source])
             except KeyError:
                 # Source property does not exist.
                 pass
             else:
-                del source_event._properties[source]
+                del source_event[source]
 
         return self
 
@@ -680,6 +830,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
     """
 
     def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
+        super(ParsedEvent, self).__init__(properties, event_type_name, source_uri, parents, attachments)
         raise NotImplementedError('ParsedEvent objects can only be created by parsers')
 
     def __str__(self):
@@ -695,11 +846,16 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             pass
 
     def __setitem__(self, key, value):
+        object_set = PropertyObjectSet(key, value, update=self.__update_property)
+        self.__update_property(key, object_set)
         try:
-            value = set(value)
-        except TypeError:
-            value = {value}
+            self._properties.replace_object_set(key, object_set)
+        except AttributeError:
+            properties = self.get_properties()
+            properties[key] = object_set
+            self._properties = PropertySet(properties, update_property=self.__update_property)
 
+    def __update_property(self, key, value):
         props = self.find('{http://edxml.org/edxml}properties')
         for existing_value in props.findall('{http://edxml.org/edxml}' + key):
             props.remove(existing_value)
@@ -716,60 +872,18 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
                     raise ValueError(
                         'Value of property %s is not a string: %s' % (key, repr(value)))
 
-        try:
-            del self._properties
-        except AttributeError:
-            pass
-
     def __len__(self):
-        try:
-            return len(self._properties)
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.find('{http://edxml.org/edxml}properties'):
-                tag = element.tag[24:]
-                if tag not in self._properties:
-                    self._properties[tag] = set()
-                self._properties[tag].add(element.text)
-            return len(self._properties)
+        return len(self.get_properties())
 
     def __getitem__(self, key):
-        try:
-            return self._properties.get(key, set())
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.find('{http://edxml.org/edxml}properties'):
-                tag = element.tag[24:]
-                if tag not in self._properties:
-                    self._properties[tag] = set()
-                self._properties[tag].add(element.text)
-            return self._properties.get(key, set())
+        return self.get_properties()[key]
 
     def __contains__(self, key):
-        try:
-            return key in self._properties
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.find('{http://edxml.org/edxml}properties'):
-                tag = element.tag[24:]
-                if tag not in self._properties:
-                    self._properties[tag] = set()
-                self._properties[tag].add(element.text)
-            return key in self._properties
+        return key in self.get_properties()
 
     def __iter__(self):
-        try:
-            for p in self._properties.keys():
-                yield p
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.find('{http://edxml.org/edxml}properties'):
-                tag = element.tag[24:]
-                if tag not in self._properties:
-                    self._properties[tag] = set()
-                self._properties[tag].add(element.text)
-            for p in self._properties.keys():
-                yield p
+        for p in self.get_properties().keys():
+            yield p
 
     def flush(self):
         """
@@ -856,16 +970,29 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
         return self
 
+    @property
+    def properties(self):
+        return self.get_properties()
+
+    @properties.setter
+    def properties(self, new_properties):
+        self.set_properties(new_properties)
+
     def get_properties(self):
         try:
             return self._properties
         except AttributeError:
-            self._properties = OrderedDict()
+            properties = OrderedDict()
             for element in self.find('{http://edxml.org/edxml}properties'):
                 tag = element.tag[24:]
-                if tag not in self._properties:
-                    self._properties[tag] = set()
-                self._properties[tag].add(element.text)
+                if tag not in properties:
+                    properties[tag] = set()
+                properties[tag].add(element.text)
+
+            self._properties = PropertySet(
+                properties, update_property=self.__update_property
+            )
+
             return self._properties
 
     def get_attachments(self):
@@ -887,7 +1014,8 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         Returns: Dict[str, str]
 
         """
-        return {name: value for name, value in self.attrib.items() if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
+        return {name: value for name, value in self.attrib.items()
+                if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
 
     def get_explicit_parents(self):
         parent_string = self.attrib.get('parents', '')
@@ -914,25 +1042,12 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         properties_element = self.find('{http://edxml.org/edxml}properties')
         properties_element.clear()
 
-        for property_name, values in properties.items():
-            for value in values:
-                try:
-                    etree.SubElement(properties_element, '{http://edxml.org/edxml}' + property_name).text = value
-                except (TypeError, ValueError):
-                    if type(value) in (str, unicode):
-                        # Value contains illegal characters,
-                        # replace them with unicode replacement characters.
-                        properties_element[-1].text = unicode(
-                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
-                        )
-                    else:
-                        raise ValueError('Value of property %s is not a string: %s' % (
-                            property_name, repr(value)))
+        self._properties = PropertySet(
+                properties, update_property=self.__update_property
+            )
 
-        try:
-            del self._properties
-        except AttributeError:
-            pass
+        for property_name, values in self._properties.items():
+            self.__update_property(property_name, values)
 
         return self
 
@@ -1116,15 +1231,8 @@ class EventElement(EDXMLEvent):
         Returns:
           EventElement:
         """
-        super(EventElement, self).__init__(properties, event_type_name, source_uri, parents, attachments)
-        super(EDXMLEvent, self).__init__()
-
-        # These are now kept in an etree element.
-        self._properties = None
-        self._parents = None
-        self._attachments = None
-
         new = etree.Element('event')
+        self.__element = new
 
         if event_type_name is not None:
             new.set('event-type', event_type_name)
@@ -1136,59 +1244,41 @@ class EventElement(EDXMLEvent):
         if parents:
             new.set('parents', ','.join(parents))
 
-        p = etree.SubElement(new, 'properties')
-        for property_name, values in properties.iteritems():
-            if property_name == '':
-                raise ValueError('Attempt to create event containing a property having an empty property name.')
-            for value in values:
-                try:
-                    etree.SubElement(p, property_name).text = value
-                except (TypeError, ValueError):
-                    if type(value) in (str, unicode):
-                        # Value contains illegal characters,
-                        # replace them with unicode replacement characters.
-                        p[-1].text = unicode(
-                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
-                        )
-                    else:
-                        raise ValueError(
-                            'Value of property %s is not a string: %s' % (property_name, repr(value)))
-        if attachments != {}:
-            attachments_element = etree.SubElement(new, 'attachments')
-            for attachment_name, attachment in attachments.items():
-                try:
-                    etree.SubElement(attachments_element, attachment_name).text = attachment
-                except (TypeError, ValueError):
-                    if type(attachments) in (str, unicode):
-                        # Value contains illegal characters,
-                        # replace them with unicode replacement characters.
-                        attachments_element[-1].text = unicode(
-                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
-                        )
-                    else:
-                        raise ValueError(
-                            'Event attachment is not a string: ' + repr(attachment))
+        etree.SubElement(new, 'properties')
+        self.set_properties(properties)
 
-        self.__element = new
-        self._properties = None
+        if attachments != {}:
+            self.set_attachments(attachments)
+
+        self._properties = PropertySet(
+            properties, update_property=self.__update_property
+        )
 
     def __str__(self):
         return etree.tostring(self.__element)
 
+    def __repr__(self):
+        return repr(self.__element)
+
     def __delitem__(self, key):
-        props = self.__element.find('properties')
-        for element in props.findall(key):
-            props.remove(element)
-        self._properties = None
+        del self.get_properties()[key]
 
     def __setitem__(self, key, value):
-        try:
-            value = set(value)
-        except TypeError:
-            value = {value}
+        object_set = PropertyObjectSet(key, value, update=self.__update_property)
+        self.__update_property(key, object_set)
+        self.get_properties().replace_object_set(key, object_set)
+
+    def __len__(self):
+        return len(self.get_properties())
+
+    def __update_property(self, key, value):
         props = self.__element.find('properties')
         for existing_value in props.findall(key):
             props.remove(existing_value)
+
+        if value is None:
+            return
+
         for v in value:
             try:
                 etree.SubElement(props, key).text = v
@@ -1196,57 +1286,21 @@ class EventElement(EDXMLEvent):
                 if type(v) in (str, unicode):
                     # Value contains illegal characters,
                     # replace them with unicode replacement characters.
-                    props[-1].text = unicode(
-                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
+                    props[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
                     raise ValueError(
-                        'Value of property %s is not a string: %s' % (key, repr(value)))
-        self._properties = None
-
-    def __len__(self):
-        try:
-            return len(self._properties)
-        except TypeError:
-            self._properties = OrderedDict()
-            for element in self.__element.find('properties'):
-                if element.tag not in self._properties:
-                    self._properties[element.tag] = set()
-                self._properties[element.tag].add(element.text)
-            return len(self._properties)
+                        'Value of property %s is not a string: %s' % (key, repr(value))
+                    )
 
     def __getitem__(self, key):
-        try:
-            return self._properties.get(key, set())
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.__element.find('properties'):
-                if element.tag not in self._properties:
-                    self._properties[element.tag] = set()
-                self._properties[element.tag].add(element.text)
-            return self._properties.get(key, set())
+        return self.get_properties()[key]
 
     def __contains__(self, key):
-        try:
-            return key in self._properties
-        except TypeError:
-            self._properties = OrderedDict()
-            for element in self.__element.find('properties'):
-                if element.tag not in self._properties:
-                    self._properties[element.tag] = set()
-                self._properties[element.tag].add(element.text)
-            return key in self._properties
+        return key in self.get_properties()
 
     def __iter__(self):
-        try:
-            for p in self._properties.keys():
-                yield p
-        except AttributeError:
-            self._properties = OrderedDict()
-            for element in self.__element.find('properties'):
-                if element.tag not in self._properties:
-                    self._properties[element.tag] = set()
-                self._properties[element.tag].add(element.text)
-            for p in self._properties.keys():
+        for p, v in self.get_properties().items():
+            if len(v) > 0:
                 yield p
 
     def get_element(self):
@@ -1286,7 +1340,7 @@ class EventElement(EDXMLEvent):
           EventElement:
         """
         return cls(
-            {property_name: set(values) for property_name, values in properties.items()},
+            properties,
             event_type_name,
             source_uri,
             parents,
@@ -1356,16 +1410,28 @@ class EventElement(EDXMLEvent):
 
         return self
 
+    @property
+    def properties(self):
+        return self.get_properties()
+
+    @properties.setter
+    def properties(self, new_properties):
+        self.set_properties(new_properties)
+
     def get_properties(self):
-        try:
-            return OrderedDict(self._properties)
-        except TypeError:
-            self._properties = OrderedDict()
+        if self._properties is None:
+            properties = OrderedDict()
             for element in self.__element.find('properties'):
-                if element.tag not in self._properties:
-                    self._properties[element.tag] = set()
-                self._properties[element.tag].add(element.text)
-            return self._properties
+                tag = element.tag
+                if tag not in properties:
+                    properties[tag] = set()
+                properties[tag].add(element.text)
+
+            self._properties = PropertySet(
+                properties, update_property=self.__update_property
+            )
+
+        return self._properties
 
     def get_attachments(self):
         attachments_element = self.__element.find('attachments')
@@ -1378,7 +1444,8 @@ class EventElement(EDXMLEvent):
 
     def get_foreign_attributes(self):
         attr = self.__element.attrib.items()
-        return {name: value for name, value in attr if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
+        return {name: value for name, value in attr
+                if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
 
     def get_explicit_parents(self):
         parent_string = self.__element.attrib.get('parents', '')
@@ -1417,22 +1484,12 @@ class EventElement(EDXMLEvent):
         properties_element = self.__element.find('properties')
         properties_element.clear()
 
-        for property_name, values in properties.items():
-            for value in values:
-                try:
-                    etree.SubElement(properties_element, property_name).text = value
-                except (TypeError, ValueError):
-                    if type(value) in (str, unicode):
-                        # Value contains illegal characters,
-                        # replace them with unicode replacement characters.
-                        properties_element[-1].text = unicode(
-                            re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value)
-                        )
-                    else:
-                        raise ValueError('Value of property %s is not a string: %s' % (
-                            property_name, repr(value)))
+        self._properties = PropertySet(
+                properties, update_property=self.__update_property
+            )
 
-        self._properties = None
+        for property_name, values in self._properties.items():
+            self.__update_property(property_name, values)
 
         return self
 

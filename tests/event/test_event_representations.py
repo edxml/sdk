@@ -116,6 +116,8 @@ def test_read_properties(event):
     assert event.values() == [{u"😀"}]
     assert event["smiley"] == {u"😀"}
     assert event.get_any("smiley") == u"😀"
+    assert event["nonexistent"] == set()
+    assert event.properties.items() == [('smiley', {'😀'})]
     assert event.get_any("nonexistent") is None
     assert event.get_any("nonexistent", "default") == "default"
     assert event["nonexistent"] == set()
@@ -123,6 +125,11 @@ def test_read_properties(event):
     assert "nonexistent" not in event
     assert {prop: values for prop, values in event.iteritems()} == {"smiley": {u"😀"}}
     assert event.get_properties() == {"smiley": {u"😀"}}
+
+
+def test_get_non_string_property_fails(event):
+    with pytest.raises(TypeError):
+        event.get(None)
 
 
 def test_set_and_get_property(event):
@@ -170,7 +177,37 @@ def test_set_property_to_noniterable_fails(event):
         event.set_properties({"a": 1})
 
 
-def test_delete_propery(event):
+def test_add_property_object(event):
+    event['smiley'].add(u"☹")
+    assert event.get_properties() == {"smiley": {u"😀", u"☹"}}
+
+
+def test_update_property_object(event):
+    event['smiley'].update([u"☹"])
+    assert event.get_properties() == {"smiley": {u"😀", u"☹"}}
+
+
+def test_add_nonexistent_property_object(event):
+    event['nonexistent'].add("value")
+    assert event.get_properties() == {"smiley": {u"😀"}, "nonexistent": {"value"}}
+
+
+def test_add_properties_object(event):
+    event.properties['smiley'].add(u"☹")
+    assert event.properties == {"smiley": {u"😀", u"☹"}}
+
+
+def test_update_properties_object(event):
+    event.properties['smiley'].update([u"☹"])
+    assert event.properties == {"smiley": {u"😀", u"☹"}}
+
+
+def test_add_nonexistent_properties_object(event):
+    event.properties['nonexistent'].add("value")
+    assert event.properties == {"smiley": {u"😀"}, "nonexistent": {"value"}}
+
+
+def test_delete_property(event):
     event.set_properties({"smiley": [u"😀"], "meh": [u"☹"]})
 
     del event['meh']

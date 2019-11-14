@@ -60,7 +60,7 @@ def test_direct_instantiation_not_possible():
 
 
 def test_set_non_string_property_value_fails(parsed_event):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         parsed_event["a"] = True
 
 
@@ -72,14 +72,15 @@ def test_set_non_string_content_fails(parsed_event):
 def test_object_character_replacement(parsed_event):
     unicode_replacement_character = unichr(0xfffd)
 
-    parsed_event["b"] = ["a", chr(0), "c"]
-    assert parsed_event.get_properties() == {
-        "a": {u"🖤"},
-        "b": {"a", unicode_replacement_character, "c"}
-    }
+    parsed_event["b"] = [chr(0)]
+    b = parsed_event.find('e:properties/e:b', namespaces={'e': 'http://edxml.org/edxml'})
+    assert parsed_event.get_properties()["b"] == {unicode_replacement_character}
+    assert b.text == unicode_replacement_character
 
-    parsed_event.set_properties({"b": {"a", chr(0), "c"}})
-    assert parsed_event.get_properties() == {"b": {"a", unicode_replacement_character, "c"}}
+    parsed_event.set_properties({"c": {chr(0)}})
+    c = parsed_event.find('e:properties/e:c', namespaces={'e': 'http://edxml.org/edxml'})
+    assert parsed_event.get_properties()["c"] == {unicode_replacement_character}
+    assert c.text == unicode_replacement_character
 
 
 def test_set_invalid_content(parsed_event):

@@ -12,6 +12,7 @@ class EDXMLEvent(MutableMapping):
     def __init__(self, properties: Dict[str, List[unicode]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = {}) -> None:
 
+        self.properties = ...     # type: Dict[str, Set[unicode]]
         self._properties = ...    # type: Dict[str, Set[unicode]]
         self._event_type_name = ...  # type: str
         self._source_uri = ...     # type: str

@@ -43,7 +43,7 @@ def event_element(ontology, sha1_hash):
 
 
 def test_set_non_string_property_value_fails(event_element):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         event_element["a"] = True
 
 
@@ -55,14 +55,13 @@ def test_set_non_string_content_fails(event_element):
 def test_object_character_replacement(event_element):
     unicode_replacement_character = unichr(0xfffd)
 
-    event_element["b"] = ["a", chr(0), "c"]
-    assert event_element.get_properties() == {
-        "a": {u"🖤"},
-        "b": {"a", unicode_replacement_character, "c"}
-    }
+    event_element["b"] = [chr(0)]
+    assert event_element.get_properties()["b"] == {chr(0)}
+    assert event_element.get_element().find('properties/b').text == unicode_replacement_character
 
-    event_element.set_properties({"b": {"a", chr(0), "c"}})
-    assert event_element.get_properties() == {"b": {"a", unicode_replacement_character, "c"}}
+    event_element.set_properties({"c": {chr(0)}})
+    assert event_element.get_properties() == {"c": {chr(0)}}
+    assert event_element.get_element().find('properties/c').text == unicode_replacement_character
 
 
 def test_set_invalid_content(event_element):
