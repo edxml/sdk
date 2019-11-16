@@ -294,6 +294,9 @@ class EDXMLWriter(object):
             schema (ElementTree): The RelaxNG schema for the event
         """
 
+        # Do not modify the original event
+        event = deepcopy(event)
+
         while not schema.validate(event.get_element()):
 
             original_event = deepcopy(event)
@@ -327,6 +330,8 @@ class EDXMLWriter(object):
                 )
 
         self.__num_events_repaired += 1
+
+        return event
 
     def add_event(self, event):
         """
