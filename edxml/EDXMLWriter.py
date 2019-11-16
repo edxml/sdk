@@ -290,7 +290,7 @@ class EDXMLWriter(object):
         Raises EDXMLValidationError in case the repair operation failed.
 
         Args:
-            event (edxml.EventElement): The event
+            event (edxml.EDXMLEvent): The event
             schema (ElementTree): The RelaxNG schema for the event
         """
 
