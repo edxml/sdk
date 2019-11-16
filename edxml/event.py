@@ -260,6 +260,9 @@ class EDXMLEvent(MutableMapping):
         except IndexError:
             return default
 
+    def get_element(self):
+        return EventElement.create_from_event(self).get_element()
+
     def copy(self):
         """
 
@@ -1023,6 +1026,9 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         # but splitting an empty string, e.g. ''.split(','), does not results in
         # an empty list, but [''] instead.
         return [] if parent_string == '' else parent_string.split(',')
+
+    def get_element(self):
+        return self
 
     def set_properties(self, properties):
         """

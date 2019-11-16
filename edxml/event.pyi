@@ -56,6 +56,8 @@ class EDXMLEvent(MutableMapping):
 
     def get_foreign_attributes(self) -> Dict[str, str]: ...
 
+    def get_element(self) -> etree.Element: ...
+
     @classmethod
     def create_from_xml(cls, event_type_name: str, source_uri: str, event_element: etree.Element) -> 'EDXMLEvent': ...
 
@@ -138,8 +140,6 @@ class EventElement(EDXMLEvent):
         super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, attachments)
         self.__properties = ...  # type: Dict[str, Set[unicode]]
         self.__element = ...      # type: etree.Element
-
-    def get_element(self) -> etree.Element: ...
 
     def copy(self) -> 'EventElement': ...
 

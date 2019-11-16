@@ -343,19 +343,6 @@ class EDXMLWriter(object):
           unicode: Generated output XML data
 
         """
-        # Below, we make sure that 'event' refers to an EDXMLEvent object
-        # while 'event_element' is a reference to the internal lxml element
-        # representation of 'event'.
-        if isinstance(event, ParsedEvent):
-            event_element = event
-        elif isinstance(event, edxml.EventElement):
-            event_element = event.get_element()
-        elif isinstance(event, edxml.EDXMLEvent):
-            event = edxml.EventElement.create_from_event(event)
-            event_element = event.get_element()
-        else:
-            raise TypeError('Unknown type of event: %s' % str(type(event)))
-
         event_type_name = event.get_type_name()
         source_uri = event.get_source_uri()
 
@@ -381,6 +368,8 @@ class EDXMLWriter(object):
             raise EDXMLValidationError(
                 'Attempt to add an event using unknown source URI: "%s"' % source_uri)
 
+        event_element = event.get_element()
+
         if self.__validate:
             # Parsed events inherit the global namespace from the
             # EDXML data stream that they originate from. Unfortunately,
@@ -395,7 +384,8 @@ class EDXMLWriter(object):
                 # Event does not validate. We will try to repair it. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
-                self._repair_event(event, schema)
+                event = self._repair_event(event, schema)
+                event_element = event.get_element()
 
         try:
             self.__writer.send(event_element)
