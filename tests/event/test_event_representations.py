@@ -109,6 +109,38 @@ def event_with_foreign_attribute(request, ontology, sha1_hash):
         return create_parsed_event(ontology, edxml_event)
 
 
+# Note that below fixture has no ParsedEvent variant, because
+# events without an event type are invalid in EDXML serialization.
+# For that reason, these do not exist as ParsedEvent.
+@pytest.fixture(params=('EdxmlEvent', 'EventElement'))
+def event_without_type(request, ontology, sha1_hash):
+    edxml_event = EDXMLEvent(
+        properties={"smiley": u"😀"},
+        source_uri="/a/",
+    )
+
+    if request.param == 'EdxmlEvent':
+        return edxml_event
+    else:
+        return create_event_element(edxml_event)
+
+
+# Note that below fixture has no ParsedEvent variant, because
+# events without an event source are invalid in EDXML serialization.
+# For that reason, these do not exist as ParsedEvent.
+@pytest.fixture(params=('EdxmlEvent', 'EventElement'))
+def event_without_source(request, ontology, sha1_hash):
+    edxml_event = EDXMLEvent(
+        properties={"smiley": u"😀"},
+        event_type_name="a"
+    )
+
+    if request.param == 'EdxmlEvent':
+        return edxml_event
+    else:
+        return create_event_element(edxml_event)
+
+
 def test_read_properties(event):
 
     assert len(event) == 1
@@ -347,3 +379,10 @@ def test_sort_event(event):
     assert event.get_properties().keys() == ['a', 'b']
     assert event.get_attachments().keys() == ['a', 'b']
 
+
+def test_event_without_type(event_without_type):
+    assert event_without_type.get_type_name() is None
+
+
+def test_event_without_source(event_without_source):
+    assert event_without_source.get_source_uri() is None
