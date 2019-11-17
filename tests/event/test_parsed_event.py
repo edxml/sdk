@@ -75,12 +75,12 @@ def test_object_character_replacement(parsed_event):
     unicode_replacement_character = unichr(0xfffd)
 
     parsed_event["b"] = [chr(0)]
-    b = parsed_event.find('e:properties/e:b', namespaces={'e': 'http://edxml.org/edxml'})
+    b = parsed_event.find('e:properties/e:b', namespaces)
     assert parsed_event.get_properties()["b"] == {unicode_replacement_character}
     assert b.text == unicode_replacement_character
 
     parsed_event.set_properties({"c": {chr(0)}})
-    c = parsed_event.find('e:properties/e:c', namespaces={'e': 'http://edxml.org/edxml'})
+    c = parsed_event.find('e:properties/e:c', namespaces)
     assert parsed_event.get_properties()["c"] == {unicode_replacement_character}
     assert c.text == unicode_replacement_character
 
@@ -92,7 +92,7 @@ def test_set_invalid_content(parsed_event):
 
 
 def test_direct_xml_element_manipulation(parsed_event):
-    properties = parsed_event.find('{http://edxml.org/edxml}properties')
+    properties = parsed_event.find('e:properties', namespaces=namespaces)
     prop = etree.SubElement(properties, '{http://edxml.org/edxml}c')
     prop.text = 'd'
     properties.append(prop)
@@ -107,7 +107,7 @@ def test_cast_to_string(parsed_event):
 
     # Note that ParsedEvent objects are instantiated by lxml and inherit the
     # namespace from the parent document.
-    assert parsed.find('{http://edxml.org/edxml}properties/{http://edxml.org/edxml}a').text == u"🖤"
+    assert parsed.find('e:properties/e:a', namespaces=namespaces).text == u"🖤"
 
 
 def test_sort_event(parsed_event):
@@ -120,15 +120,13 @@ def test_sort_event(parsed_event):
     attachments['a'] = 'a'
     parsed_event.set_attachments(attachments)
 
-    namespaces = {'edxml': 'http://edxml.org/edxml'}
-
-    assert parsed_event.xpath('edxml:properties/*/text()', namespaces=namespaces) == ['3', '2', '1']
-    assert parsed_event.xpath('edxml:attachments/*/text()', namespaces=namespaces) == ['b', 'a']
+    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) == ['3', '2', '1']
+    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) == ['b', 'a']
 
     parsed_event.sort()
 
-    assert parsed_event.xpath('edxml:properties/*/text()', namespaces=namespaces) == ['1', '2', '3']
-    assert parsed_event.xpath('edxml:attachments/*/text()', namespaces=namespaces) == ['a', 'b']
+    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) == ['1', '2', '3']
+    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) == ['a', 'b']
 
 
 def test_set_property(parsed_event):
