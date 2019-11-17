@@ -394,20 +394,21 @@ class EDXMLEvent(MutableMapping):
         return self._foreign_attribs
 
     @classmethod
-    def create_from_xml(cls, event_type_name, source_uri, event_element):
+    def create_from_xml(cls, event_element):
         """
 
         Creates and returns a new EDXMLEvent instance by reading it from
         specified lxml Element instance.
 
         Args:
-          event_type_name (str): The name of the event type
-          source_uri (str): The URI of the EDXML event source
           event_element (etree.Element): The XML element containing the event
 
         Returns:
           EDXMLEvent:
         """
+        event_type_name = event_element.attrib["event-type"]
+        source_uri = event_element.attrib["source-uri"]
+
         attachments = {}
         property_objects = {}
         for element in event_element:
@@ -933,15 +934,13 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             'ParsedEvent objects can only be created by parsers')
 
     @classmethod
-    def create_from_xml(cls, event_type_name, source_uri, event_element):
+    def create_from_xml(cls, event_element):
         """
 
         Creates and returns a new EDXMLEvent instance by reading it from
         specified lxml Element instance.
 
         Args:
-          event_type_name (str): The name of the event type
-          source_uri (str): The URI of the EDXML event source
           event_element (etree.Element): The XML element containing the event
 
         Returns:
@@ -1376,15 +1375,13 @@ class EventElement(EDXMLEvent):
         ).set_foreign_attributes(event.get_foreign_attributes())
 
     @classmethod
-    def create_from_xml(cls, event_type_name, source_uri, event_element):
+    def create_from_xml(cls, event_element):
         """
 
         Creates and returns a new EventElement instance by reading it from
         specified lxml Element instance.
 
         Args:
-          event_type_name (str): The name of the event type
-          source_uri (str): The URI of the EDXML event source
           event_element (etree.Element): The XML element containing the event
 
         Returns:

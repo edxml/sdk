@@ -56,7 +56,7 @@ def test_direct_instantiation_not_possible():
     with pytest.raises(NotImplementedError):
         ParsedEvent.create({})
     with pytest.raises(NotImplementedError):
-        ParsedEvent.create_from_xml('event_type', '/event/source/', etree.Element('tag'))
+        ParsedEvent.create_from_xml(etree.Element('tag'))
 
 
 def test_set_non_string_property_value_fails(parsed_event):
