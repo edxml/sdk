@@ -1140,6 +1140,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             etree.SubElement(self, '{http://edxml.org/edxml}attachments')
             return self.set_attachments(attachments)
 
+        attachments_element.clear()
         for name, attachment in attachments.items():
             try:
                 etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + name).text = attachment
@@ -1580,6 +1581,7 @@ class EventElement(EDXMLEvent):
             etree.SubElement(self.__element, 'attachments')
             return self.set_attachments(attachments)
 
+        attachments_element.clear()
         for name, attachment in attachments.items():
             try:
                 etree.SubElement(attachments_element, name).text = attachment
