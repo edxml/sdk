@@ -10,6 +10,8 @@ from edxml.event import EDXMLEvent, ParsedEvent
 from edxml.ontology import Ontology
 import pytest
 
+namespaces = {'e': 'http://edxml.org/edxml'}
+
 
 @pytest.fixture
 def sha1_hash():
@@ -127,3 +129,69 @@ def test_sort_event(parsed_event):
 
     assert parsed_event.xpath('edxml:properties/*/text()', namespaces=namespaces) == ['1', '2', '3']
     assert parsed_event.xpath('edxml:attachments/*/text()', namespaces=namespaces) == ['a', 'b']
+
+
+def test_set_property(parsed_event):
+    parsed_event["b"] = ["x"]
+    assert parsed_event.properties == {"a": {u"🖤"}, "b": {"x"}}
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 1
+    assert parsed_event.find('e:properties/e:b', namespaces).text == "x"
+
+
+def test_extend_property(parsed_event):
+    parsed_event["b"] = ["x"]
+    parsed_event["b"].add("y")
+    assert parsed_event.properties == {"a": {u"🖤"}, "b": {"x", "y"}}
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 2
+    values = {
+        parsed_event.findall('e:properties/e:b', namespaces)[0].text,
+        parsed_event.findall('e:properties/e:b', namespaces)[1].text
+    }
+    assert values == {"x", "y"}
+
+
+def test_delete_property(parsed_event):
+    parsed_event["b"] = ["x"]
+    assert len(parsed_event.findall('e:properties/e:a', namespaces)) == 1
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 1
+
+    del parsed_event["b"]
+    assert len(parsed_event.findall('e:properties/e:a', namespaces)) == 1
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 0
+
+
+def test_delete_multi_valued_property(parsed_event):
+    parsed_event["b"] = ["x", "y"]
+    assert len(parsed_event.findall('e:properties/e:a', namespaces)) == 1
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 2
+
+    del parsed_event["b"]
+    assert len(parsed_event.findall('e:properties/e:a', namespaces)) == 1
+    assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 0
+
+
+def test_set_attachment(parsed_event):
+    parsed_event.set_attachments({"a": "a"})
+    assert len(parsed_event.findall('e:attachments/e:a', namespaces)) == 1
+    assert parsed_event.find('e:attachments/e:a', namespaces).text == "a"
+
+
+def test_delete_attachment(parsed_event):
+    parsed_event.set_attachments({"a": "a", "b": "b"})
+    assert len(parsed_event.findall('e:attachments/*', namespaces)) == 2
+
+    parsed_event.set_attachments({"a": "a"})
+    assert len(parsed_event.findall('e:attachments/*', namespaces)) == 1
+    assert parsed_event.find('e:attachments/e:a', namespaces).text == "a"
+
+
+def test_set_event_type(parsed_event):
+    assert parsed_event.attrib['event-type'] == "a"
+    parsed_event.set_type('b')
+    assert parsed_event.attrib['event-type'] == "b"
+
+
+def test_set_event_source(parsed_event):
+    assert parsed_event.attrib['source-uri'] == "/a/"
+    parsed_event.set_source('/b/')
+    assert parsed_event.attrib['source-uri'] == "/b/"

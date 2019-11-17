@@ -99,3 +99,69 @@ def test_sort_event(event_element):
 
     assert event_element.get_element().xpath('properties/*/text()') == ['1', '2', '3']
     assert event_element.get_element().xpath('attachments/*/text()') == ['a', 'b']
+
+
+def test_set_property(event_element):
+    event_element["b"] = ["x"]
+    assert event_element.properties == {"a": {u"🖤"}, "b": {"x"}}
+    assert len(event_element.get_element().findall('properties/b')) == 1
+    assert event_element.get_element().find('properties/b').text == "x"
+
+
+def test_extend_property(event_element):
+    event_element["b"] = ["x"]
+    event_element["b"].add("y")
+    assert event_element.properties == {"a": {u"🖤"}, "b": {"x", "y"}}
+    assert len(event_element.get_element().findall('properties/b')) == 2
+    values = {
+        event_element.get_element().findall('properties/b')[0].text,
+        event_element.get_element().findall('properties/b')[1].text
+    }
+    assert values == {"x", "y"}
+
+
+def test_delete_property(event_element):
+    event_element["b"] = ["x"]
+    assert len(event_element.get_element().findall('properties/a')) == 1
+    assert len(event_element.get_element().findall('properties/b')) == 1
+
+    del event_element["b"]
+    assert len(event_element.get_element().findall('properties/a')) == 1
+    assert len(event_element.get_element().findall('properties/b')) == 0
+
+
+def test_delete_multi_valued_property(event_element):
+    event_element["b"] = ["x", "y"]
+    assert len(event_element.get_element().findall('properties/a')) == 1
+    assert len(event_element.get_element().findall('properties/b')) == 2
+
+    del event_element["b"]
+    assert len(event_element.get_element().findall('properties/a')) == 1
+    assert len(event_element.get_element().findall('properties/b')) == 0
+
+
+def test_set_attachment(event_element):
+    event_element.set_attachments({"a": "a"})
+    assert len(event_element.get_element().findall('attachments/a')) == 1
+    assert event_element.get_element().find('attachments/a').text == "a"
+
+
+def test_delete_attachment(event_element):
+    event_element.set_attachments({"a": "a", "b": "b"})
+    assert len(event_element.get_element().findall('attachments/*')) == 2
+
+    event_element.set_attachments({"a": "a"})
+    assert len(event_element.get_element().findall('attachments/*')) == 1
+    assert event_element.get_element().find('attachments/a').text == "a"
+
+
+def test_set_event_type(event_element):
+    assert event_element.get_element().attrib['event-type'] == "a"
+    event_element.set_type('b')
+    assert event_element.get_element().attrib['event-type'] == "b"
+
+
+def test_set_event_source(event_element):
+    assert event_element.get_element().attrib['source-uri'] == "/a/"
+    event_element.set_source('/b/')
+    assert event_element.get_element().attrib['source-uri'] == "/b/"
