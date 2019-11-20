@@ -61,9 +61,9 @@ def test_direct_instantiation_not_possible():
         ParsedEvent.create_from_xml(etree.Element('tag'))
 
 
-def test_set_non_string_property_value_fails(parsed_event):
+def test_set_unsupported_property_value_fails(parsed_event):
     with pytest.raises(TypeError):
-        parsed_event["a"] = True
+        parsed_event["a"] = object()
 
 
 def test_set_non_string_content_fails(parsed_event):

@@ -2,7 +2,8 @@
 # the line above is required for inline unicode
 import hashlib
 from collections import OrderedDict
-
+from datetime import datetime
+from IPy import IP
 from lxml import etree
 
 from edxml.event import EDXMLEvent, EventElement
@@ -42,9 +43,9 @@ def event_element(ontology, sha1_hash):
     return EventElement.create_from_event(event)
 
 
-def test_set_non_string_property_value_fails(event_element):
+def test_set_unsupported_property_value_fails(event_element):
     with pytest.raises(TypeError):
-        event_element["a"] = True
+        event_element["a"] = object()
 
 
 def test_set_non_string_content_fails(event_element):
@@ -62,6 +63,31 @@ def test_object_character_replacement(event_element):
     event_element.set_properties({"c": {chr(0)}})
     assert event_element.get_properties() == {"c": {chr(0)}}
     assert event_element.get_element().find('properties/c').text == unicode_replacement_character
+
+
+def test_coerce_integer_property_object(event_element):
+    event_element["b"] = 1
+    assert event_element.get_element().find('properties/b').text == "1"
+
+
+def test_coerce_boolean_property_object(event_element):
+    event_element["b"] = True
+    assert event_element.get_element().find('properties/b').text == "true"
+
+
+def test_coerce_float_property_object(event_element):
+    event_element["b"] = 0.1
+    assert event_element.get_element().find('properties/b').text == "0.1"
+
+
+def test_coerce_datetime_property_object(event_element):
+    event_element["b"] = datetime(2013, 9, 30)
+    assert event_element.get_element().find('properties/b').text == "2013-09-30T00:00:00.000000Z"
+
+
+def test_coerce_ip_property_object(event_element):
+    event_element["b"] = IP("127.0.0.1")
+    assert event_element.get_element().find('properties/b').text == "127.0.0.1"
 
 
 def test_set_invalid_content(event_element):

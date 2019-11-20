@@ -2,6 +2,8 @@
 # the line above is required for inline unicode
 import hashlib
 from collections import OrderedDict
+from datetime import datetime
+from IPy import IP
 
 from edxml import EventCollection
 from edxml.event import EDXMLEvent, ParsedEvent, EventElement
@@ -204,9 +206,39 @@ def test_change_and_find_nonexistent_property(event):
     assert "nonexistent" not in event
 
 
+def test_set_property_to_string(event):
+    event["a"] = "string"
+    assert event["a"] == {"string"}
+
+
+def test_set_property_to_integer(event):
+    event["a"] = 1
+    assert event["a"] == {1}
+
+
+def test_set_property_to_boolean(event):
+    event["a"] = True
+    assert event["a"] == {True}
+
+
+def test_set_property_to_float(event):
+    event["a"] = 0.1
+    assert event["a"] == {0.1}
+
+
+def test_set_property_to_datetime(event):
+    event["a"] = datetime(2013, 9, 30)
+    assert event["a"] == {datetime(2013, 9, 30)}
+
+
+def test_set_property_to_ip(event):
+    event["a"] = IP("127.0.0.1")
+    assert event["a"] == {IP("127.0.0.1")}
+
+
 def test_set_property_to_noniterable_fails(event):
     with pytest.raises(TypeError):
-        event.set_properties({"a": 1})
+        event.set_properties({"a": object()})
 
 
 def test_add_property_object(event):

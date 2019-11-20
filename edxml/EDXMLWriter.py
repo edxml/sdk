@@ -320,7 +320,7 @@ class EDXMLWriter(object):
 
                 # Try removing the offending property object(s).
                 offending_property_name = last_error.path.split('/')[-1].split('[')[0]
-                offending_property_values_all = event[offending_property_name]
+                offending_property_values_all = {str(v) for v in event[offending_property_name]}
                 offending_property_values_bad = [e.text for e in event.get_element().xpath(last_error.path)]
                 event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
                 log.error(

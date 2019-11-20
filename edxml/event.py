@@ -6,12 +6,41 @@ import hashlib
 
 from collections import MutableMapping, OrderedDict
 from collections import defaultdict
+from datetime import datetime
+from IPy import IP
 from lxml import etree
 from copy import deepcopy
 from decimal import Decimal
 
 import edxml
 from edxml.error import EDXMLValidationError
+from edxml.ontology import DataType
+
+
+def to_edxml_object(property_name, value):
+    """
+    Function to coerce values of various types
+    into their native EDXML string representations.
+
+    Args:
+        property_name (str):
+        value:
+
+    Returns:
+        str:
+    """
+    if isinstance(value, IP):
+        return value.strFullsize()
+    elif isinstance(value, datetime):
+        return DataType.format_utc_datetime(value)
+    elif type(value) in (int, float):
+        return str(value)
+    elif isinstance(value, bool):
+        return 'true' if value else 'false'
+    else:
+        raise ValueError(
+            'Value of property %s is not a string: %s' % (property_name, repr(value))
+        )
 
 
 class PropertySet(object):
@@ -90,7 +119,7 @@ class PropertyObjectSet(object):
         if isinstance(objects, set):
             self.__objects = objects
         else:
-            if isinstance(objects, str):
+            if isinstance(objects, (str, unicode, int, bool, float, datetime, IP)):
                 objects = (objects,)
             self.__objects = set(iter(objects or []))
         if update is not None:
@@ -873,8 +902,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
                     props[-1].text = unicode(
                         re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
-                    raise ValueError(
-                        'Value of property %s is not a string: %s' % (key, repr(value)))
+                    props[-1].text = to_edxml_object(key, v)
 
     def __len__(self):
         return len(self.get_properties())
@@ -1294,9 +1322,7 @@ class EventElement(EDXMLEvent):
                     # replace them with unicode replacement characters.
                     props[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
-                    raise ValueError(
-                        'Value of property %s is not a string: %s' % (key, repr(value))
-                    )
+                    props[-1].text = to_edxml_object(key, v)
 
     def __getitem__(self, key):
         return self.get_properties()[key]
