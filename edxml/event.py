@@ -161,6 +161,69 @@ class PropertyObjectSet(object):
         pass
 
 
+class AttachmentSet(object):
+    def __init__(self, attachments=None, update_attachment=None):
+        self.__attachments = OrderedDict()
+        for attachment_name, value in attachments.items() or {}:
+            self.__attachments[attachment_name] = value
+
+        if update_attachment is not None:
+            self._update_attachment = update_attachment
+
+    def _update_attachment(self, attachment_name, value):
+        pass
+
+    def items(self):
+        return self.__attachments.items()
+
+    def keys(self):
+        return self.__attachments.keys()
+
+    def values(self):
+        return self.__attachments.values()
+
+    def get(self, attachment_name, default=None):
+        return self.__attachments.get(attachment_name, default)
+
+    def copy(self):
+        return deepcopy(self)
+
+    def __iter__(self):
+        for p in self.__attachments.keys():
+            if len(self.__attachments[p]) > 0:
+                yield p
+
+    def __len__(self):
+        return len(self.__attachments)
+
+    def __eq__(self, other):
+        return other == {a: v for a, v in self.__attachments.items() if len(v) > 0}
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __setitem__(self, key, value):
+        self.__attachments[key] = value
+        self._update_attachment(key, value)
+
+    def __getitem__(self, item):
+        try:
+            return self.__attachments[item]
+        except KeyError:
+            self.__attachments[item] = ''
+            return self.__attachments[item]
+
+    def __delitem__(self, key):
+        try:
+            del self.__attachments[key]
+            self._update_attachment(key, None)
+        except KeyError:
+            pass
+
+    def __repr__(self):
+        return repr(self.__attachments)
+
+
 class EDXMLEvent(MutableMapping):
     """Class representing an EDXML event.
 
@@ -200,7 +263,7 @@ class EDXMLEvent(MutableMapping):
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
-        self._attachments = attachments
+        self._attachments = AttachmentSet(attachments)
         self._foreign_attribs = {}
 
     def __str__(self):
@@ -249,7 +312,7 @@ class EDXMLEvent(MutableMapping):
         if not self.properties.__eq__(other.properties):
             return False
 
-        if self.get_attachments() != other.get_attachments():
+        if self.attachments != other.attachments:
             return False
 
         if set(self.get_explicit_parents()) != set(other.get_explicit_parents()):
@@ -267,6 +330,14 @@ class EDXMLEvent(MutableMapping):
     @properties.setter
     def properties(self, new_properties):
         self.set_properties(new_properties)
+
+    @property
+    def attachments(self):
+        return self.get_attachments()
+
+    @attachments.setter
+    def attachments(self, new_attachments):
+        self.set_attachments(new_attachments)
 
     def get_any(self, property_name, default=None):
         """
@@ -301,7 +372,11 @@ class EDXMLEvent(MutableMapping):
            EDXMLEvent
         """
         return EDXMLEvent(
-            self._properties.copy(), self._event_type_name, self._source_uri, list(self._parents), self._attachments
+            self._properties.copy(),
+            self._event_type_name,
+            self._source_uri,
+            list(self._parents),
+            self._attachments.copy()
         )
 
     @classmethod
@@ -348,7 +423,7 @@ class EDXMLEvent(MutableMapping):
             EDXMLEvent:
         """
         self._properties = PropertySet(OrderedDict(sorted(self._properties.items(), key=lambda t: t[0])))
-        self._attachments = OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0]))
+        self._attachments = AttachmentSet(OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0])))
         return self
 
     def get_type_name(self):
@@ -580,7 +655,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent:
         """
-        self._attachments = attachments
+        self._attachments = AttachmentSet(attachments)
         return self
 
     def set_source(self, source_uri):
@@ -904,6 +979,28 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
                 else:
                     props[-1].text = to_edxml_object(key, v)
 
+    def __update_attachment(self, attachment_name, value):
+        attachments_element = self.find('{http://edxml.org/edxml}attachments')
+        if attachments_element is None:
+            attachments_element = etree.SubElement(self, '{http://edxml.org/edxml}attachments')
+
+        existing_attachment = attachments_element.find('{http://edxml.org/edxml}' + attachment_name)
+        if existing_attachment is not None:
+            attachments_element.remove(existing_attachment)
+
+        if value is None:
+            return
+
+        try:
+            etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + attachment_name).text = value
+        except (TypeError, ValueError):
+            if type(value) in (str, unicode):
+                # Value contains illegal characters,
+                # replace them with unicode replacement characters.
+                attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
+            else:
+                attachments_element[-1].text = value
+
     def __len__(self):
         return len(self.get_properties())
 
@@ -997,6 +1094,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         attachments = self.find('{http://edxml.org/edxml}attachments')
         if attachments is not None:
             attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+            try:
+                del self._attachments
+            except AttributeError:
+                pass
 
         return self
 
@@ -1026,12 +1127,18 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             return self._properties
 
     def get_attachments(self):
-        attachments_element = self.find('{http://edxml.org/edxml}attachments')
+        try:
+            return self._attachments
+        except AttributeError:
+            attachments_element = self.find('{http://edxml.org/edxml}attachments')
 
-        attachments = OrderedDict()
-        for attachment in attachments_element if attachments_element is not None else []:
-            attachments[attachment.tag[24:]] = attachment.text
-        return attachments
+            attachments = OrderedDict()
+            for attachment in attachments_element if attachments_element is not None else []:
+                attachments[attachment.tag[24:]] = attachment.text
+
+            self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
+
+            return self._attachments
 
     def get_foreign_attributes(self):
         """
@@ -1165,23 +1272,15 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         attachments_element = self.find('{http://edxml.org/edxml}attachments')
 
         if attachments_element is None:
-            etree.SubElement(self, '{http://edxml.org/edxml}attachments')
-            return self.set_attachments(attachments)
+            attachments_element = etree.SubElement(self, '{http://edxml.org/edxml}attachments')
 
         attachments_element.clear()
+
+        self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
+
         for name, attachment in attachments.items():
-            try:
-                etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + name).text = attachment
-            except (TypeError, ValueError):
-                if type(attachment) in (str, unicode):
-                    # Attachment contains illegal characters,
-                    # replace them with unicode replacement characters.
-                    attachments_element.find('{http://edxml.org/edxml}' + name).text = unicode(
-                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
-                    )
-                else:
-                    raise ValueError(
-                        'Event attachment %s is not a string: %s' % (name, repr(attachment)))
+            self.__update_attachment(name, attachment)
+
         return self
 
     def add_parents(self, parent_hashes):
@@ -1283,6 +1382,8 @@ class EventElement(EDXMLEvent):
 
         if attachments != {}:
             self.set_attachments(attachments)
+        else:
+            self._attachments = AttachmentSet({}, update_attachment=self.__update_attachment)
 
         self._properties = PropertySet(
             properties, update_property=self.__update_property
@@ -1323,6 +1424,29 @@ class EventElement(EDXMLEvent):
                     props[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
                     props[-1].text = to_edxml_object(key, v)
+
+    def __update_attachment(self, attachment_name, value):
+        attachments_element = self.__element.find('attachments')
+        if attachments_element is None:
+            attachments_element = etree.SubElement(self.__element, 'attachments')
+
+        existing_attachment = attachments_element.find(attachment_name)
+        if existing_attachment is not None:
+            attachments_element.remove(existing_attachment)
+
+        if value is None:
+            return
+
+        try:
+            etree.SubElement(attachments_element, attachment_name).text = value
+        except (TypeError, ValueError):
+            if type(value) in (str, unicode):
+                # Value contains illegal characters,
+                # replace them with unicode replacement characters.
+                # TODO: This should not be default behaviour.
+                attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
+            else:
+                attachments_element[-1].text = value
 
     def __getitem__(self, key):
         return self.get_properties()[key]
@@ -1437,6 +1561,7 @@ class EventElement(EDXMLEvent):
         attachments = self.__element.find('attachments')
         if attachments is not None:
             attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+            self._attachments = None
 
         return self
 
@@ -1464,13 +1589,16 @@ class EventElement(EDXMLEvent):
         return self._properties
 
     def get_attachments(self):
-        attachments_element = self.__element.find('attachments')
+        if self._attachments is None:
+            attachments_element = self.__element.find('attachments')
 
-        attachments = OrderedDict()
-        for attachment in attachments_element if attachments_element is not None else []:
-            attachments[attachment.tag] = attachment.text
+            attachments = OrderedDict()
+            for attachment in attachments_element if attachments_element is not None else []:
+                attachments[attachment.tag] = attachment.text
 
-        return attachments
+            self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
+
+        return self._attachments
 
     def get_foreign_attributes(self):
         attr = self.__element.attrib.items()
@@ -1604,24 +1732,15 @@ class EventElement(EDXMLEvent):
         attachments_element = self.__element.find('attachments')
 
         if attachments_element is None:
-            etree.SubElement(self.__element, 'attachments')
-            return self.set_attachments(attachments)
+            attachments_element = etree.SubElement(self.__element, 'attachments')
 
         attachments_element.clear()
+
+        self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
+
         for name, attachment in attachments.items():
-            try:
-                etree.SubElement(attachments_element, name).text = attachment
-            except (TypeError, ValueError):
-                if type(attachment) in (str, unicode):
-                    # Attachment contains illegal characters,
-                    # replace them with unicode replacement characters.
-                    attachments_element.find(name).text = unicode(
-                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), attachment)
-                    )
-                else:
-                    raise ValueError(
-                        'Event attachment %s is not a string: %s' % (name, repr(attachments))
-                    )
+            self.__update_attachment(name, attachment)
+
         return self
 
     def add_parents(self, parent_hashes):

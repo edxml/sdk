@@ -345,6 +345,29 @@ def test_change_attachments(event):
     assert event.get_attachments() == {'attachment': "changed"}
 
 
+def test_get_attachments_property(event, event_with_attachment):
+    assert event.attachments == {}
+    assert event_with_attachment.attachments == {'attachment': 'test'}
+
+
+def test_set_attachments_property(event):
+    assert event.attachments == {}
+    event.attachments = {'attachment': 'test'}
+    assert event.attachments == {'attachment': 'test'}
+
+
+def test_extend_attachments_property(event):
+    assert event.attachments == {}
+    event.attachments['attachment'] = 'test'
+    assert event.attachments == {'attachment': 'test'}
+
+
+def test_delete_attachment_from_property(event):
+    event.attachments = {'a': 'x', 'b': 'y'}
+    del event.attachments['a']
+    assert event.attachments == {'b': 'y'}
+
+
 def test_read_parents(event_with_explicit_parent, sha1_hash):
     assert event_with_explicit_parent.get_explicit_parents() == [sha1_hash]
 

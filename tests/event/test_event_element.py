@@ -48,8 +48,8 @@ def test_set_unsupported_property_value_fails(event_element):
         event_element["a"] = object()
 
 
-def test_set_non_string_content_fails(event_element):
-    with pytest.raises(ValueError):
+def test_set_non_string_attachment_fails(event_element):
+    with pytest.raises(TypeError):
         event_element.set_attachments({'attachment': True})
 
 
@@ -90,10 +90,11 @@ def test_coerce_ip_property_object(event_element):
     assert event_element.get_element().find('properties/b').text == "127.0.0.1"
 
 
-def test_set_invalid_content(event_element):
+def test_set_invalid_attachment(event_element):
     unicode_replacement_character = unichr(0xfffd)
     event_element.set_attachments({'attachment': chr(0)})
-    assert event_element.get_attachments() == {'attachment': unicode_replacement_character}
+    assert event_element.get_element().find('attachments/attachment').text == unicode_replacement_character
+    assert event_element.get_attachments() == {'attachment': chr(0)}
 
 
 def test_cast_to_string(event_element):
