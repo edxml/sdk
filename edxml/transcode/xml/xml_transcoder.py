@@ -282,4 +282,4 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                         continue
                     properties[property_name].append(property)
 
-        return EventElement(properties, event_type_name)
+        return EventElement(self._post_process_properties(event_type_name, properties), event_type_name)

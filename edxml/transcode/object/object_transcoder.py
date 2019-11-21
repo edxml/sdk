@@ -133,4 +133,4 @@ class ObjectTranscoder(edxml.transcode.Transcoder):
                         properties[property_name] = [
                             value] if value not in empty else []
 
-        yield EDXMLEvent(properties, event_type_name)
+        yield EDXMLEvent(self._post_process_properties(event_type_name, properties), event_type_name)

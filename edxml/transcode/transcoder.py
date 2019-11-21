@@ -94,6 +94,25 @@ class Transcoder(object):
 
     """
 
+    TYPE_PROPERTY_POST_PROCESSORS = {}
+    """
+    The TYPE_PROPERTY_POST_PROCESSORS attribute is a dictionary mapping EDXML event type names to property
+    processors. Each property processors is a dictionary mapping property names to processors. A processor
+    is a function that accepts a value from the input field that corresponds with the property and returns
+    the value as it should be stored in the output event. When it returns None, the value will be omitted
+    in the output event.
+    The processors will be applied to input record values before using them to create output events.
+
+    Example::
+
+        {
+          'event_type_name': {
+            'property-a': lambda x: x.lower()
+          }
+        }
+
+    """
+
     TYPE_PROPERTY_DESCRIPTIONS = {}
     """
     The TYPE_PROPERTY_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to property
@@ -502,6 +521,13 @@ class Transcoder(object):
                     % (cls.__name__, event_type_name)
                 )
 
+            properties_with_post_processor = set(cls.TYPE_PROPERTY_POST_PROCESSORS.get(event_type_name, {}).keys())
+            if properties_with_post_processor.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_PROPERTY_POST_PROCESSORS contains property names that are not in TYPE_PROPERTIES[%s].'
+                    % (cls.__name__, event_type_name)
+                )
+
             unique_properties = set(cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, []))
             if unique_properties.difference(existing_properties) != set():
                 raise ValueError(
@@ -592,3 +618,14 @@ class Transcoder(object):
             raise ValueError(
                 '%s.PARENT_MAPPINGS contains event type names that are not in TYPE_MAP.' % cls.__name__
             )
+
+    def _post_process_properties(self, event_type_name, properties):
+        for property_name in properties:
+            if self.TYPE_PROPERTY_POST_PROCESSORS.get(event_type_name, {}).get(property_name):
+                processed = []
+                for value in properties[property_name]:
+                    processed_value = self.TYPE_PROPERTY_POST_PROCESSORS[event_type_name][property_name](value)
+                    if processed_value:
+                        processed.append(processed_value)
+                properties[property_name] = processed
+        return properties
