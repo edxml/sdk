@@ -48,6 +48,9 @@ class ObjectTranscoder(edxml.transcode.Transcoder):
         given input record, populating it with properties
         using the PROPERTY_MAP class property.
 
+        When the transcoder is the fallback transcoder,
+        record_type_name will be None.
+
         The input record can be a dictionary or act like one, it can
         be an object, a dictionary containing objects or an object
         containing dictionaries. Object attributes or dictionary
@@ -66,7 +69,7 @@ class ObjectTranscoder(edxml.transcode.Transcoder):
 
         Args:
           input_object (dict, object): Input object
-          record_type_name (str): The record type of the input object
+          record_type_name (Optional[str]): The record type of the input object
           **kwargs: Arbitrary keyword arguments
 
         Yields:

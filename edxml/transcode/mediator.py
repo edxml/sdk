@@ -119,10 +119,10 @@ class TranscoderMediator(object):
         class, pass the class itself.
 
         Note:
-          Any transcoder that registers itself as a transcoder for the
-          record selector string 'RECORD_OF_UNKNOWN_TYPE' is used as the fallback
-          transcoder. The fallback transcoder is used to transcode any record
-          for which no transcoder has been registered.
+          Any transcoder that registers itself as a transcoder using None
+          as selector is used as the fallback transcoder. The fallback
+          transcoder is used to transcode any record for which no transcoder
+          has been registered.
 
         Args:
           record_selector: Record type selector
@@ -277,7 +277,7 @@ class TranscoderMediator(object):
         return self
 
     @classmethod
-    def _get_transcoder(cls, record_selector):
+    def _get_transcoder(cls, record_selector=None):
         """
 
         Returns a Transcoder instance for transcoding
@@ -406,7 +406,8 @@ class TranscoderMediator(object):
     def _transcode(self, record, record_id, record_selector, transcoder):
         """
         Transcodes specified input record and writes the resulting events
-        into the configured output.
+        into the configured output. When the transcoder is the fallback
+        transcoder, record_selector will be None.
 
         If no output was configured for the EDXML writer the
         generated XML data will be returned as unicode string.
@@ -414,7 +415,7 @@ class TranscoderMediator(object):
         Args:
             record: The input record
             record_id (str): Record identifier
-            record_selector (str): Selector matching the record
+            record_selector (Optional[str]): Selector matching the record
             transcoder (edxml.transcode.Transcoder): The transcoder to use
 
         Returns:

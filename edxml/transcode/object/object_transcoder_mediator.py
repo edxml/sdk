@@ -32,7 +32,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
     Note:
       The fallback transcoder is a transcoder that registered itself as a transcoder
-      for the record type named 'RECORD_OF_UNKNOWN_TYPE', which is a reserved name.
+      using None as record type.
     """
 
     @classmethod
@@ -46,19 +46,19 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         class, pass the class itself.
 
         Note:
-          Any transcoder that registers itself as a transcoder for the
-          record type named 'RECORD_OF_UNKNOWN_TYPE' is used as the fallback
-          transcoder. The fallback transcoder is used to transcode any object
-          that has a type for which no transcoder has been registered.
+          Any transcoder that registers itself as a transcoder using None
+          as record_type_identifier is used as the fallback transcoder.
+          The fallback transcoder is used to transcode any record for which
+          no transcoder has been registered.
 
         Args:
-          record_type_identifier (str): Name of the record type
+          record_type_identifier (Optional[str]): Name of the record type
           transcoder (ObjectTranscoder): ObjectTranscoder class
         """
         super(ObjectTranscoderMediator, cls).register(record_type_identifier, transcoder)
 
     @classmethod
-    def _get_transcoder(cls, record_type_name):
+    def _get_transcoder(cls, record_type_name=None):
         """
 
         Returns a ObjectTranscoder instance for transcoding
@@ -102,43 +102,38 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         if self.TYPE_FIELD is None:
             # Type field is not set, which means we must use the
             # fallback transcoder.
-            record_type = 'RECORD_OF_UNKNOWN_TYPE'
+            record_type = None
         else:
             try:
-                record_type = input_record.get(
-                    self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+                record_type = input_record.get(self.TYPE_FIELD)
             except AttributeError:
-                record_type = getattr(
-                    input_record, self.TYPE_FIELD, 'RECORD_OF_UNKNOWN_TYPE')
+                record_type = getattr(input_record, self.TYPE_FIELD)
 
         transcoder = self._get_transcoder(record_type)
 
-        if not transcoder and record_type != 'RECORD_OF_UNKNOWN_TYPE':
+        if not transcoder and record_type is not None:
             # No transcoder available for record type,
             # use the fallback transcoder, if available.
-            record_type = 'RECORD_OF_UNKNOWN_TYPE'
-            transcoder = self._get_transcoder('RECORD_OF_UNKNOWN_TYPE')
+            record_type = None
+            transcoder = self._get_transcoder()
 
         if transcoder:
-            if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD and self._warn_fallback:
+            if record_type is None and self.TYPE_FIELD and self._warn_fallback:
                 log.warning(
                     'Input object has no "%s" field, passing to fallback transcoder. Record was: %s' %
                     (self.TYPE_FIELD, input_record)
                 )
 
-            if record_type == 'RECORD_OF_UNKNOWN_TYPE':
-                record_type = None
-
-            outputs.append(self._transcode(input_record, record_type, record_type, transcoder))
+            outputs.append(self._transcode(input_record, record_type or '', record_type, transcoder))
         else:
             if self._warn_no_transcoder:
-                if record_type == 'RECORD_OF_UNKNOWN_TYPE' and self.TYPE_FIELD:
+                if record_type is None and self.TYPE_FIELD:
                     log.warning(
                         'Input record has no "%s" field and no fallback transcoder available.' % self.TYPE_FIELD
                     )
                 else:
                     log.warning(
-                        'No transcoder registered itself as fallback (record type "RECORD_OF_UNKNOWN_TYPE"), '
+                        'No transcoder registered itself as fallback (record type None), '
                         'no %s event generated. Record was: %s' % (record_type, input_record)
                     )
 

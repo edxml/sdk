@@ -61,13 +61,13 @@ class XmlTranscoderMediator(TranscoderMediator):
             *[re:test(., "^abc$", "i")]
 
         Note:
-          Any transcoder that registers itself as a transcoder for the
-          XPath expression 'RECORD_OF_UNKNOWN_TYPE' is used as the fallback
-          transcoder. The fallback transcoder is used to transcode any record
-          that does not match any XPath expression of any registered transcoder.
+          Any transcoder that registers itself as a transcoder using None
+          as the XPath expression is used as the fallback transcoder. The
+          fallback transcoder is used to transcode any record that does not
+           match any XPath expression of any registered transcoder.
 
         Args:
-          xpath_expression (str): XPath of matching XML records
+          xpath_expression (Optional[str]): XPath of matching XML records
           transcoder (XmlTranscoder): XmlTranscoder class
           tag (Optional[str]): XML tag name
         """
@@ -76,7 +76,12 @@ class XmlTranscoderMediator(TranscoderMediator):
         if tag is not None:
             cls._transcoder_tags[xpath_expression] = tag
         else:
+            if xpath_expression is None:
+                raise ValueError("When registering a fallback transcoder, you must supply the tag parameter.")
             cls._transcoder_tags[xpath_expression] = cls.get_visited_tag_name(xpath_expression)
+
+        if xpath_expression is None:
+            return
 
         # Create and cache a compiled function for evaluating the
         # XPath expression.
@@ -92,7 +97,7 @@ class XmlTranscoderMediator(TranscoderMediator):
             )
 
     @classmethod
-    def _get_transcoder(cls, xpath_expression):
+    def _get_transcoder(cls, xpath_expression=None):
         """
 
         Returns a XmlTranscoder instance for transcoding
@@ -255,7 +260,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
         transcoder_xpaths = XmlTranscoderMediator._XPATH_MATCHERS.keys()
 
-        matching_element_xpath = 'RECORD_OF_UNKNOWN_TYPE'
+        matching_element_xpath = None
 
         if self._last_used_transcoder_xpath is not None:
             # Try whatever transcoder was used on the previously
@@ -272,13 +277,13 @@ class XmlTranscoderMediator(TranscoderMediator):
                 matching_element_xpath = matching_xpath
                 break
 
-        if matching_element_xpath != 'RECORD_OF_UNKNOWN_TYPE':
+        if matching_element_xpath is not None:
             self._last_used_transcoder_xpath = matching_element_xpath
 
         transcoder = self._get_transcoder(matching_element_xpath)
 
         if transcoder:
-            if matching_element_xpath == 'RECORD_OF_UNKNOWN_TYPE' and self._warn_fallback:
+            if matching_element_xpath is None and self._warn_fallback:
                 log.warning(
                     'XML element at %s does not match any XPath expressions, passing to fallback transcoder' %
                     tree.getpath(element)

@@ -198,7 +198,7 @@ def test_log_skipped_element(xml_transcoder, xml, output, caplog):
 
 def test_log_fallback_transcoder(xml_transcoder, xml, output, caplog):
 
-    XmlTranscoderMediator.register('RECORD_OF_UNKNOWN_TYPE', xml_transcoder, tag='records')
+    XmlTranscoderMediator.register(None, xml_transcoder, tag='records')
 
     with XmlTranscoderMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')

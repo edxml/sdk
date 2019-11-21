@@ -199,6 +199,9 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         given XML element, populating it with properties
         using the PROPERTY_MAP class property.
 
+        When the transcoder is the fallback transcoder,
+        xpath_selector will be None.
+
         This method can be overridden to create a generic
         event generator, populating the output events with
         generic properties that may or may not be useful to
@@ -209,7 +212,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         Args:
           element (etree.Element): XML element
-          xpath_selector (str): The matching XPath selector
+          xpath_selector (Optional[str]): The matching XPath selector
           **kwargs: Arbitrary keyword arguments
 
         Yields:
