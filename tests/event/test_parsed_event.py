@@ -74,19 +74,21 @@ def test_set_non_string_content_fails(parsed_event):
 def test_object_character_replacement(parsed_event):
     unicode_replacement_character = unichr(0xfffd)
 
+    parsed_event.replace_invalid_characters()
     parsed_event["b"] = [chr(0)]
     b = parsed_event.find('e:properties/e:b', namespaces)
-    assert parsed_event.get_properties()["b"] == {unicode_replacement_character}
+    assert parsed_event.get_properties()["b"] == {chr(0)}
     assert b.text == unicode_replacement_character
 
     parsed_event.set_properties({"c": {chr(0)}})
     c = parsed_event.find('e:properties/e:c', namespaces)
-    assert parsed_event.get_properties()["c"] == {unicode_replacement_character}
+    assert parsed_event.get_properties()["c"] == {chr(0)}
     assert c.text == unicode_replacement_character
 
 
-def test_set_invalid_content(parsed_event):
+def test_set_invalid_attachment(parsed_event):
     unicode_replacement_character = unichr(0xfffd)
+    parsed_event.replace_invalid_characters()
     parsed_event.set_attachments({'attachment': chr(0)})
     assert parsed_event.get_element()\
         .find('e:attachments/e:attachment', namespaces).text == unicode_replacement_character

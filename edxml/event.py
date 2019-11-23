@@ -266,6 +266,8 @@ class EDXMLEvent(MutableMapping):
         self._attachments = AttachmentSet(attachments)
         self._foreign_attribs = {}
 
+        self._replace_invalid_characters = False
+
     def __str__(self):
         return "\n".join(
             ['%20s:%s' % (property_name, ','.join([unicode(value) for value in values]))
@@ -323,6 +325,27 @@ class EDXMLEvent(MutableMapping):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def replace_invalid_characters(self, replace=True):
+        """
+        Enables automatic replacement of invalid unicode characters with
+        the unicode replacement character. This will be used to produce
+        valid XML representations of events containing invalid unicode
+        characters in their property objects or attachments.
+
+        Enabling this feature may be useful when dealing with broken input
+        data that triggers an occasional ValueError. In stead of crashing,
+        the invalid data will be automatically replaced.
+
+        Args:
+            replace (bool):
+
+        Returns:
+            edxml.EDXMLEvent
+
+        """
+        self._replace_invalid_characters = replace
+        return self
+
     @property
     def properties(self):
         return self._properties
@@ -361,7 +384,9 @@ class EDXMLEvent(MutableMapping):
             return default
 
     def get_element(self):
-        return EventElement.create_from_event(self).get_element()
+        return EventElement.create_from_event(self)\
+            .replace_invalid_characters(self._replace_invalid_characters)\
+            .get_element()
 
     def copy(self):
         """
@@ -972,8 +997,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
                 etree.SubElement(props, '{http://edxml.org/edxml}' + key).text = v
             except (TypeError, ValueError):
                 if type(v) in (str, unicode):
-                    # Value contains illegal characters,
-                    # replace them with unicode replacement characters.
+                    # Value contains illegal characters.
+                    if not getattr(self, '_replace_invalid_characters', False):
+                        raise
+                    # Replace illegal characters with unicode replacement characters.
                     props[-1].text = unicode(
                         re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
@@ -995,8 +1022,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + attachment_name).text = value
         except (TypeError, ValueError):
             if type(value) in (str, unicode):
-                # Value contains illegal characters,
-                # replace them with unicode replacement characters.
+                # Value contains illegal characters.
+                if not getattr(self, '_replace_invalid_characters', False):
+                    raise
+                # Replace illegal characters with unicode replacement characters.
                 attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
             else:
                 attachments_element[-1].text = value
@@ -1419,8 +1448,10 @@ class EventElement(EDXMLEvent):
                 etree.SubElement(props, key).text = v
             except (TypeError, ValueError):
                 if type(v) in (str, unicode):
-                    # Value contains illegal characters,
-                    # replace them with unicode replacement characters.
+                    # Value contains illegal characters.
+                    if not getattr(self, '_replace_invalid_characters', False):
+                        raise
+                    # Replace illegal characters with unicode replacement characters.
                     props[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
                 else:
                     props[-1].text = to_edxml_object(key, v)
@@ -1441,9 +1472,10 @@ class EventElement(EDXMLEvent):
             etree.SubElement(attachments_element, attachment_name).text = value
         except (TypeError, ValueError):
             if type(value) in (str, unicode):
-                # Value contains illegal characters,
-                # replace them with unicode replacement characters.
-                # TODO: This should not be default behaviour.
+                # Value contains illegal characters.
+                if not getattr(self, '_replace_invalid_characters', False):
+                    raise
+                # replace illegal characters with unicode replacement characters.
                 attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
             else:
                 attachments_element[-1].text = value
@@ -1523,7 +1555,8 @@ class EventElement(EDXMLEvent):
             source_uri=event.get_source_uri(),
             attachments=event.get_attachments(),
             parents=event.get_explicit_parents()
-        ).set_foreign_attributes(event.get_foreign_attributes())
+        ).set_foreign_attributes(event.get_foreign_attributes())\
+            .replace_invalid_characters(event._replace_invalid_characters)
 
     @classmethod
     def create_from_xml(cls, event_element):

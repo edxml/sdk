@@ -56,6 +56,7 @@ def test_set_non_string_attachment_fails(event_element):
 def test_object_character_replacement(event_element):
     unicode_replacement_character = unichr(0xfffd)
 
+    event_element.replace_invalid_characters()
     event_element["b"] = [chr(0)]
     assert event_element.get_properties()["b"] == {chr(0)}
     assert event_element.get_element().find('properties/b').text == unicode_replacement_character
@@ -92,6 +93,7 @@ def test_coerce_ip_property_object(event_element):
 
 def test_set_invalid_attachment(event_element):
     unicode_replacement_character = unichr(0xfffd)
+    event_element.replace_invalid_characters()
     event_element.set_attachments({'attachment': chr(0)})
     assert event_element.get_element().find('attachments/attachment').text == unicode_replacement_character
     assert event_element.get_attachments() == {'attachment': chr(0)}

@@ -19,6 +19,7 @@ class EDXMLEvent(MutableMapping):
         self._parents = ...       # type: Set[str]
         self._attachments = ...     # type: Dict[str, str]
         self._foreign_attribs = ... # type: Dict[str, str]
+        self._replace_invalid_characters = ... #type: bool
 
     def __str__(self) -> unicode: ...
 
@@ -33,6 +34,8 @@ class EDXMLEvent(MutableMapping):
     def __contains__(self, key: str) -> bool: ...
 
     def __iter__(self) -> Generator[Dict[str, Set[unicode]], None, None]: ...
+
+    def replace_invalid_characters(self, replace: bool=True) -> 'EDXMLEvent': ...
 
     def get_any(self, property_name: str, default: str=None) -> Union[unicode, None]: ...
 
@@ -91,6 +94,8 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, attachments)
         self.__properties = ...  # type: Dict[str, Set[unicode]]
 
+    def replace_invalid_characters(self, replace: bool=True) -> etree.Element: ...
+
     def flush(self) -> 'ParsedEvent': ...
 
     def copy(self) -> 'ParsedEvent': ...
@@ -140,6 +145,8 @@ class EventElement(EDXMLEvent):
         super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, attachments)
         self.__properties = ...  # type: Dict[str, Set[unicode]]
         self.__element = ...      # type: etree.Element
+
+    def replace_invalid_characters(self, replace: bool=True) -> 'EventElement': ...
 
     def copy(self) -> 'EventElement': ...
 
