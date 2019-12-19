@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event definition validation, verify
+if properties illegal combinations of merge
+strategies and data types are rejected.
+
+max strategy combined with geo data type.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="geo:point"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+          <property name="b" object-type="a" description="b" unique="false" optional="false" multivalued="false" merge="max"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

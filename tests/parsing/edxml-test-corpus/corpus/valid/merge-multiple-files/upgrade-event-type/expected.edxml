@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading the attributes of an event type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+    </objecttypes>
+    <concepts>
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <eventtypes>
+      <eventtype name="a" description="changed-description" display-name-singular="changed-display-name-singular" display-name-plural="changed-display-name-plural" summary="changed summary" story="changed-story" classlist="class" version="8">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

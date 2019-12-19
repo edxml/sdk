@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if duplicate concept definitions in multiple files are accepted.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>

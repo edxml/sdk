@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing if valid values of various data types are correctly parsed and reproduced.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="number.tinyint.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:tinyint:signed"/>
+      <objecttype name="number.tinyint.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:tinyint"/>
+      <objecttype name="number.smallint.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:smallint:signed"/>
+      <objecttype name="number.smallint.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:smallint"/>
+      <objecttype name="number.mediumint.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:mediumint:signed"/>
+      <objecttype name="number.mediumint.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:mediumint"/>
+      <objecttype name="number.int.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:int:signed"/>
+      <objecttype name="number.int.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:int"/>
+      <objecttype name="number.bigint.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:bigint:signed"/>
+      <objecttype name="number.bigint.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:bigint"/>
+      <objecttype name="number.float.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:float:signed"/>
+      <objecttype name="number.float.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:float"/>
+      <objecttype name="number.double.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:double:signed"/>
+      <objecttype name="number.double.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:double"/>
+      <objecttype name="number.decimal.3.2.signed" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:decimal:3:2:signed"/>
+      <objecttype name="number.decimal.3.2.unsigned" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:decimal:3:2"/>
+      <objecttype name="hex.6.2.colon" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="hex:6:2::"/>
+      <objecttype name="hex.6.2.dot" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="hex:6:2:."/>
+      <objecttype name="hex.6" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="hex:6"/>
+      <objecttype name="geo.point" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="geo:point"/>
+      <objecttype name="hashlink" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="hashlink"/>
+      <objecttype name="uri" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="uri:/"/>
+      <objecttype name="uuid" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="uuid"/>
+      <objecttype name="ip" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="ip"/>
+      <objecttype name="datetime" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="datetime"/>
+      <objecttype name="sequence" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="sequence"/>
+      <objecttype name="boolean" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="boolean"/>
+      <objecttype name="enum" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="enum:yes:no"/>
+      <objecttype name="base64" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="base64:1024"/>
+      <objecttype name="string.8" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:8:cs"/>
+      <objecttype name="string.8.ci" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:8:ci"/>
+      <objecttype name="string.8.ci.u" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:8:ci:u"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="number-tinyint-signed" object-type="number.tinyint.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-tinyint-unsigned" object-type="number.tinyint.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-smallint-signed" object-type="number.smallint.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-smallint-unsigned" object-type="number.smallint.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-mediumint-signed" object-type="number.mediumint.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-mediumint-unsigned" object-type="number.mediumint.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-int-signed" object-type="number.int.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-int-unsigned" object-type="number.int.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-bigint-signed" object-type="number.bigint.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-bigint-unsigned" object-type="number.bigint.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-float-signed" object-type="number.float.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-float-unsigned" object-type="number.float.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-double-signed" object-type="number.double.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-double-unsigned" object-type="number.double.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-decimal-3-2-signed" object-type="number.decimal.3.2.signed" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="number-decimal-3-2-unsigned" object-type="number.decimal.3.2.unsigned" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="hex-6-2-colon" object-type="hex.6.2.colon" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="hex-6-2-dot" object-type="hex.6.2.dot" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="hex-6" object-type="hex.6" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="geo-point" object-type="geo.point" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="hashlink" object-type="hashlink" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="uri" object-type="uri" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="uuid" object-type="uuid" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="ip" object-type="ip" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="datetime" object-type="datetime" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="sequence" object-type="sequence" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="boolean" object-type="boolean" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="enum" object-type="enum" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="base64" object-type="base64" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="string-8" object-type="string.8" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="string-8-ci" object-type="string.8.ci" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+          <property name="string-8-ci-u" object-type="string.8.ci.u" description="a" unique="false" optional="true" multivalued="true" merge="drop"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources>
+      <source uri="/test/" description="a" date-acquired="20000101" version="1"/>
+    </sources>
+  </ontology>
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <number-tinyint-signed>-128</number-tinyint-signed>
+      <number-tinyint-unsigned>255</number-tinyint-unsigned>
+      <number-smallint-signed>-32768</number-smallint-signed>
+      <number-smallint-unsigned>65535</number-smallint-unsigned>
+      <number-mediumint-signed>-8388607</number-mediumint-signed>
+      <number-mediumint-unsigned>16777215</number-mediumint-unsigned>
+      <number-int-signed>-2147483647</number-int-signed>
+      <number-int-unsigned>4294967295</number-int-unsigned>
+      <number-bigint-signed>-9223372036854775807</number-bigint-signed>
+      <number-bigint-unsigned>18446744073709551615</number-bigint-unsigned>
+      <number-float-signed>-3.000000E+038</number-float-signed>
+      <number-float-unsigned>3.000000E+038</number-float-unsigned>
+      <number-double-signed>-3.000000E+300</number-double-signed>
+      <number-double-unsigned>3.000000E+300</number-double-unsigned>
+      <number-decimal-3-2-signed>-1.00</number-decimal-3-2-signed>
+      <number-decimal-3-2-unsigned>1.00</number-decimal-3-2-unsigned>
+      <hex-6-2-colon>aa:bb:cc</hex-6-2-colon>
+      <hex-6-2-dot>aa.bb.cc</hex-6-2-dot>
+      <hex-6>aabbcc</hex-6>
+      <geo-point>43.000001,115.999999</geo-point>
+      <geo-point>-90.000000,-180.000000</geo-point>
+      <geo-point>90.000000,-180.000000</geo-point>
+      <geo-point>-90.000000,180.000000</geo-point>
+      <geo-point>90.000000,180.000000</geo-point>
+      <hashlink>da39a3ee5e6b4b0d3255bfef95601890afd80709</hashlink>
+      <uri>http://test</uri>
+      <uuid>123e4567-e89b-12d3-a456-426655440000</uuid>
+      <ip>10.0.0.1</ip>
+      <datetime>2013-09-20T00:00:00.000000Z</datetime>
+      <datetime>1583-01-01T00:00:00.000000Z</datetime>
+      <datetime>9999-12-31T23:59:59.999999Z</datetime>
+      <sequence>1</sequence>
+      <boolean>true</boolean>
+      <enum>yes</enum>
+      <base64>dGVzdA==</base64>
+      <string-8>&amp;</string-8>
+      <string-8>></string-8>
+      <string-8>Test</string-8>
+      <string-8-ci>test</string-8-ci>
+      <string-8-ci-u>eé®</string-8-ci-u>
+    </properties>
+  </event>
+</edxml>

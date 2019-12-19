@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if XML containing comments and processing instructions is accepted.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <!-- comment -->
+  <ontology>
+    <!-- comment -->
+    <objecttypes>
+      <!-- comment -->
+      <?foo attr="bar"?>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+    </objecttypes>
+    <!-- comment -->
+    <concepts>
+      <!-- comment -->
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <!-- comment -->
+    <eventtypes>
+      <!-- comment -->
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <!-- comment -->
+        <properties>
+          <!-- comment -->
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match" similar="a">
+            <!-- comment -->
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="false" optional="true" multivalued="true" merge="drop"/>
+        </properties>
+        <!-- comment -->
+        <relations>
+          <!-- comment -->
+          <other property1="a" property2="b" directed="false" description="[[a]] linked to [[b]]" confidence="2" predicate="linked"/>
+        </relations>
+        <!-- comment -->
+        <attachments>
+          <!-- comment -->
+          <attachment name="a" description="a" display-name-singular="a" display-name-plural="a" media-type="text/plain" encoding="unicode"/>
+        </attachments>
+      </eventtype>
+      <!-- comment -->
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <!-- comment -->
+        <parent eventtype="a" propertymap="a:a" parent-description="a" siblings-description="a"/>
+        <!-- comment -->
+        <properties>
+          <!-- comment -->
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match" similar="a"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <!-- comment -->
+    <sources>
+        <source uri="/a/" description="a" date-acquired="20200101" version="1"/>
+    </sources>
+  </ontology>
+  <!-- comment -->
+  <event event-type="a" source-uri="/a/">
+    <!-- comment -->
+    <properties>
+      <!-- comment -->
+      <a><!-- comment -->a</a>
+    </properties>
+    <!-- comment -->
+    <attachments>
+      <!-- comment -->
+      <a><!-- comment -->a</a>
+    </attachments>
+  </event>
+</edxml>

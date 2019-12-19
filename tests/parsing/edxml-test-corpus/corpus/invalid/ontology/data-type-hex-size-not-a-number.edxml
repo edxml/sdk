@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event definition validation, verify
+if a hex data type having an invalid size is rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="hex:foo"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>

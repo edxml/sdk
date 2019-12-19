@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing database import event validation, verify
+if parent definitions that map unknown child properties are rejected:
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:int"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+      <eventtype name="b" description="b" display-name-singular="b" display-name-plural="b" summary="[[a]]" story="[[a]]" version="1">
+        <parent eventtype="a" propertymap="b:a" parent-description="a" siblings-description="a"/>
+        <properties>
+          <property name="a" object-type="a" description="b" unique="true" optional="false" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

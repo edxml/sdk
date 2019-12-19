@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing object value validation, verify
+if empty event attachments are rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:1:cs"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+        <attachments>
+          <attachment name="a" description="a" display-name-singular="a" display-name-plural="a" media-type="text/plain" encoding="unicode"/>
+        </attachments>
+      </eventtype>
+    </eventtypes>
+    <sources>
+      <source uri="/test/" description="a" date-acquired="20000101" version="1"/>
+    </sources>
+  </ontology>
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <a>a</a>
+    </properties>
+    <attachments>
+      <a/>
+    </attachments>
+  </event>
+</edxml>

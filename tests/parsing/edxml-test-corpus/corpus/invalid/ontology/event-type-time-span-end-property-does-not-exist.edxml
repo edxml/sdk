@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event definition validation, verify
+if event types that define a time span having
+a end property that does not exist are rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="datetime"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" timespan-start="a"  timespan-end="unknown" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="false" optional="false" multivalued="false" merge="drop"/>
+          <property name="b" object-type="a" description="b" unique="false" optional="false" multivalued="false" merge="drop"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading of a concept works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="a" display-name-singular="a" display-name-plural="a" version="1"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <!-- No changes, only a version increment. -->
+      <concept name="a" description="a" display-name-singular="a" display-name-plural="a" version="2"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="changed-description" display-name-singular="a" display-name-plural="a" version="3"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="changed-description" display-name-singular="changed-display-name-singular" display-name-plural="a" version="4"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="changed-description" display-name-singular="changed-display-name-singular" display-name-plural="changed-display-name-plural" version="5"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>

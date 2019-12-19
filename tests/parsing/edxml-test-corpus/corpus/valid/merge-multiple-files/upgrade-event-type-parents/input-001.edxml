@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading of parents of an event type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+          <property name="b" object-type="a" description="b" unique="false" optional="true" multivalued="true" merge="drop"/>
+        </properties>
+        <relations/>
+        <attachments/>
+      </eventtype>
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <!-- No changes, only a version increment. -->
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="2">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="3">
+        <parent eventtype="a" propertymap="a:a" parent-description="a" siblings-description="a"/>
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="4">
+        <!-- Changed parent description -->
+        <parent eventtype="a" propertymap="a:a" parent-description="changed-description-parent" siblings-description="a"/>
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="b" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="5">
+        <!-- Changed siblings description -->
+        <parent eventtype="a" propertymap="a:a" parent-description="changed-description-parent" siblings-description="changed-siblings-description"/>
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

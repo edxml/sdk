@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading of an object type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="changed-description" display-name-singular="changed-display-name-singular" display-name-plural="changed-display-name-plural" version="8" compress="false" data-type="string:10:cs" fuzzy-matching="phonetic" regexp="[a-z]|[A-Z]"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>

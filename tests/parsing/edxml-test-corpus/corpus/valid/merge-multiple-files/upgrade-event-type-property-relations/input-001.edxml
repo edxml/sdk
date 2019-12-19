@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading of the property relations of an event type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+    </objecttypes>
+    <concepts>
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <!-- No changes, only a version increment. -->
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="2">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="3">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations>
+          <other property1="a" property2="b" directed="false" description="[[a]] related to [[b]]" confidence="1" predicate="related"/>
+        </relations>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="4">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations>
+          <!-- Changed description -->
+          <other property1="a" property2="b" directed="false" description="[[a]] linked to [[b]]" confidence="1" predicate="related"/>
+        </relations>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="5">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations>
+          <!-- Changed confidence -->
+          <other property1="a" property2="b" directed="false" description="[[a]] linked to [[b]]" confidence="2" predicate="related"/>
+        </relations>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="6">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="9" cnp="9"/>
+          </property>
+          <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations>
+          <!-- Changed predicate -->
+          <other property1="a" property2="b" directed="false" description="[[a]] linked to [[b]]" confidence="2" predicate="linked"/>
+        </relations>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if adding a concept works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="a" display-name-singular="a" display-name-plural="a" version="1"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>

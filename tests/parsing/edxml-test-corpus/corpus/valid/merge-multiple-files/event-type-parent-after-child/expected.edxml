@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if defining the parent of an event type after the child event
+type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:64:ci"/>
+    </objecttypes>
+    <concepts>
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <parent eventtype="b" propertymap="a:a" parent-description="in" siblings-description="in"/>
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+      <eventtype name="b" description="b" display-name-singular="b" display-name-plural="b" summary="b" story="b" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match">
+            <property-concept name="a" confidence="0" cnp="128"/>
+          </property>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if upgrading of attachments of an event type works as expected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="6">
+        <properties>
+          <property name="a" object-type="a" description="description" unique="true" optional="true" multivalued="true" merge="match"/>
+        </properties>
+        <relations/>
+        <attachments>
+          <attachment name="a" description="description" display-name-singular="changed-display-name-singular" display-name-plural="changed-display-name-plural" media-type="text/plain" encoding="unicode"/>
+        </attachments>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

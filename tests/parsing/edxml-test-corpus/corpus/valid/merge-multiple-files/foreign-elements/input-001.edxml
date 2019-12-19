@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing if a foreign element that looks just like an
+EDXML event is treated correctly.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:int"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="c" unique="true" optional="true" multivalued="false" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources>
+      <source uri="/test/" description="a" date-acquired="20000101" version="1"/>
+    </sources>
+  </ontology>
+  <f:event xmlns:f="http://foreign/namespace" event-type="a" source-uri="/test/">
+    <f:properties>
+      <!-- Below element mimics an invalid event object. Any implementation
+           that mistakes the foreign element as an EDXML event will throw
+           a validation exception. -->
+      <f:a>test</f:a>
+    </f:properties>
+  </f:event>
+</edxml>

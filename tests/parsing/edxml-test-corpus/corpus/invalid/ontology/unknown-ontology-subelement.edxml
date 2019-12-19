@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event definition validation, verify
+if an unknown ontology sub-element is rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes/>
+    <whatever/>
+    <sources/>
+  </ontology>
+</edxml>

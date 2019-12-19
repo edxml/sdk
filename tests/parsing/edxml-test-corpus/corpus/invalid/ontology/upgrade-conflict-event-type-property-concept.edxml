@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if conflicting event type property concept definitions are rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:cs"/>
+    </objecttypes>
+    <concepts>
+      <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match">
+            <property-concept name="a" confidence="8" cnp="8"/>
+          </property>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="true" multivalued="true" merge="match">
+            <!-- Confidence changed, event type version did not -->
+            <property-concept name="a" confidence="9" cnp="8"/>
+          </property>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

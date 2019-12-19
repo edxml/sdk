@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event structure validation, verify
+if a parent property mapping that targets
+a parent property that is not unique is rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="number:int"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+          <property name="b" object-type="a" description="b" unique="false" optional="false" multivalued="false" merge="drop"/>
+        </properties>
+        <relations/>
+      </eventtype>
+      <eventtype name="b" description="b" display-name-singular="b" display-name-plural="b" summary="[[c]]" story="[[c]][[d]]" version="1">
+        <parent eventtype="a" propertymap="c:a,d:b" parent-description="a" siblings-description="a"/>
+        <properties>
+          <property name="c" object-type="a" description="c" unique="false" optional="true" multivalued="false" merge="drop"/>
+          <property name="d" object-type="a" description="d" unique="false" optional="true" multivalued="false" merge="drop"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources/>
+  </ontology>
+</edxml>

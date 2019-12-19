@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if conflicting source definitions are rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes/>
+    <sources>
+      <source uri="/a/" description="a" date-acquired="20190101" version="1"/>
+    </sources>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts/>
+    <eventtypes/>
+    <sources>
+      <!-- Description changed, version did not -->
+      <source uri="/a/" description="changed" date-acquired="20190101" version="1"/>
+    </sources>
+  </ontology>
+</edxml>

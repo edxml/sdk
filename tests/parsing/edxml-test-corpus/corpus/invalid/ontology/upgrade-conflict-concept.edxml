@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Test if conflicting concept definitions are rejected.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <concept name="a" description="a" display-name-singular="a" display-name-plural="a" version="1"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+  <ontology>
+    <objecttypes/>
+    <concepts>
+      <!-- Description changed, version did not -->
+      <concept name="a" description="changed" display-name-singular="a" display-name-plural="a" version="1"/>
+    </concepts>
+    <eventtypes/>
+    <sources/>
+  </ontology>
+</edxml>
