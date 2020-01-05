@@ -269,6 +269,10 @@ class EDXMLParserBase(object):
         return self.__event_type_schema_cache.get(event_type_name)
 
     def __find_root_element(self, event_element):
+        if event_element.tag == '{http://edxml.org/edxml}edxml' and event_element.getparent() is None:
+            # The passed element is the root element.
+            self.__root_element = event_element
+            return
         # Find the root element by traversing up the
         # tree until the <edxml> tag is found.
         self.__root_element = event_element.getparent()
