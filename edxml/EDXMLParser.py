@@ -240,17 +240,14 @@ class EDXMLParserBase(object):
     def get_ontology(self):
         """
 
-        Returns the ontology that was read by the parser, or
-        None if no ontology has been read yet.
-
-        Note:
-          The ontology will not be available until the first
-          event has been parsed.
+        Returns the ontology that was read by the parser. The ontology
+        is updated whenever new ontology information is parsed from
+        the input data.
 
         Returns:
            edxml.ontology.Ontology: The parsed ontology
         """
-        return self._ontology
+        return self._ontology or edxml.ontology.Ontology()
 
     def get_event_type_schema(self, event_type_name):
         """
