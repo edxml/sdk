@@ -365,7 +365,7 @@ class EDXMLParserBase(object):
 
             if elem.tag == '{http://edxml.org/edxml}edxml':
                 if elem.getparent() is None:
-                    version_string = elem.attrib['version']
+                    version_string = elem.attrib.get('version')
                     if version_string is None:
                         raise EDXMLValidationError(
                             'Root element is missing the version attribute.')
