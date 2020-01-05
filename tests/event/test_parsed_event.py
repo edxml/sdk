@@ -66,7 +66,7 @@ def test_set_unsupported_property_value_fails(parsed_event):
         parsed_event["a"] = object()
 
 
-def test_set_non_string_content_fails(parsed_event):
+def test_set_non_string_attachment_fails(parsed_event):
     with pytest.raises(TypeError):
         parsed_event.set_attachments({'attachment': True})
 
