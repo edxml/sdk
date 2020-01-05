@@ -195,6 +195,9 @@ def test_change_and_get_properties(event):
     event.set_properties({"a": {"1"}, "b": {"2"}})
     assert event.get_properties() == {"a": {"1"}, "b": {"2"}}
 
+    event.properties = {"a": {"foo"}}
+    assert event.properties == {"a": {"foo"}}
+
 
 def test_change_and_iterate_properties(event):
     event.set_properties({"a": {"1"}, "b": {"2"}})
