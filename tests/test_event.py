@@ -85,7 +85,7 @@ def test_merge_non_unique(ontology, eventtype, eventproperty):
     assert changed3
     changed4 = e3.merge_with([e1_copy], ontology)
     assert changed4
-    assert e1["testeventproperty"].pop() == "testvalue2"
+    assert e1["testeventproperty"] == {"testvalue2"}
 
 
 def test_merge_unique(ontology, eventtype_unique, eventproperty_unique):
@@ -109,7 +109,7 @@ def test_merge_unique(ontology, eventtype_unique, eventproperty_unique):
     assert not changed3
     changed4 = e3.merge_with([e1_copy], ontology)
     assert not changed4
-    assert e1["testeventpropertyunique"].pop() == "testvalue"
+    assert e1["testeventpropertyunique"] == {"testvalue"}
 
 
 @pytest.fixture
@@ -146,7 +146,7 @@ def test_merge_datetime(ontology, eventtype_unique, datetimeproperty):
     assert e1.compute_sticky_hash(ontology) != e2.compute_sticky_hash(ontology)
     changed = e1.merge_with([e2], ontology)
     assert changed
-    assert e1["datetimeproperty"].pop() == '2018-10-03T15:15:32.000000Z'
+    assert e1["datetimeproperty"] == {'2018-10-03T15:15:32.000000Z'}
 
 
 def test_merge_parents(ontology, objecttype, eventtype_unique, eventproperty_unique):
@@ -216,7 +216,7 @@ def test_merge_minmax_datetime(ontology, eventtype_unique, datetimeobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert copy['prop'].pop() == '2018-10-03T15:15:30.000000Z'
+    assert copy['prop'] == {'2018-10-03T15:15:30.000000Z'}
 
     # set to max
     prop.set_merge_strategy('max')
@@ -225,7 +225,7 @@ def test_merge_minmax_datetime(ontology, eventtype_unique, datetimeobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert copy['prop'].pop() == '2018-10-03T15:15:32.000000Z'
+    assert copy['prop'] == {'2018-10-03T15:15:32.000000Z'}
 
 
 @pytest.fixture(params=['number:float', 'number:double', 'number:decimal:3:2'])
@@ -245,7 +245,7 @@ def test_merge_minmax_float(ontology, eventtype_unique, floatobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert float(copy['prop'].pop()) == 2.09
+    assert copy['prop'] == {'2.09'}
 
     # set to max
     prop.set_merge_strategy('max')
@@ -254,7 +254,7 @@ def test_merge_minmax_float(ontology, eventtype_unique, floatobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert float(copy['prop'].pop()) == 10.20
+    assert map(float, copy['prop']) == [10.2]
 
 
 @pytest.fixture(params=['number:tinyint', 'number:smallint', 'number:mediumint', 'number:int', 'number:bigint'])
@@ -274,7 +274,7 @@ def test_merge_minmax_int(ontology, eventtype_unique, intobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert int(copy['prop'].pop()) == 2
+    assert copy['prop'] == {'2'}
 
     # set to max
     prop.set_merge_strategy('max')
@@ -283,7 +283,7 @@ def test_merge_minmax_int(ontology, eventtype_unique, intobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert int(copy['prop'].pop()) == 10
+    assert copy['prop'] == {'10'}
 
 
 def test_merge_add(ontology, eventtype_unique, eventproperty_unique, objecttype):
@@ -315,8 +315,8 @@ def test_merge_add(ontology, eventtype_unique, eventproperty_unique, objecttype)
     changed = copy.merge_with([e2, e3, e4], ontology)
 
     assert changed
-    assert copy["testeventpropertyunique"].pop() == "test"
-    assert copy["testeventproperty"] == set(["value1", "value2", "value3", "value4"])
+    assert copy["testeventpropertyunique"] == {"test"}
+    assert copy["testeventproperty"] == {"value1", "value2", "value3", "value4"}
 
 
 def test_merge_replace_empty(ontology, eventtype_unique, eventproperty_unique, objecttype):
@@ -343,15 +343,15 @@ def test_merge_replace_empty(ontology, eventtype_unique, eventproperty_unique, o
     changed = copy.merge_with([e2], ontology)
 
     assert changed
-    assert copy["testeventpropertyunique"].pop() == "test"
-    assert copy["testeventproperty"] == set(["value1"])
+    assert copy["testeventpropertyunique"] == {"test"}
+    assert copy["testeventproperty"] == {"value1"}
 
     copy = deepcopy(e2)
     # merge empty into non-empty
     changed = copy.merge_with([e3], ontology)
 
     assert changed
-    assert copy["testeventpropertyunique"].pop() == "test"
+    assert copy["testeventpropertyunique"] == {"test"}
     assert copy["testeventproperty"] == set([])
 
     # merge multiple into e1
@@ -359,12 +359,16 @@ def test_merge_replace_empty(ontology, eventtype_unique, eventproperty_unique, o
     changed = copy.merge_with([e2, e3], ontology)
 
     assert not changed
-    assert copy["testeventpropertyunique"].pop() == "test"
+    assert copy["testeventpropertyunique"] == {"test"}
     assert copy["testeventproperty"] == set([])
 
 
 def create_eventelement():
-    return EventElement.create({'testeventpropertyunique': ["value1"]}, 'testeventtypeunique')
+    return EventElement.create(
+        properties={'testeventpropertyunique': ["value1"]},
+        event_type_name='testeventtypeunique',
+        source_uri="/test/"
+    )
 
 
 def create_parsedevent(ontology, tmpdir):
