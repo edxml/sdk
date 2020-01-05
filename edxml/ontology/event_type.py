@@ -1892,7 +1892,8 @@ class EventType(OntologyElement, MutableMapping):
             for relation_id, relation in self.get_property_relations().items():
                 self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
 
-            for relation_id in set(event_type.get_property_relations().keys()) - set(self.get_property_relations().keys()):
+            for relation_id in set(event_type.get_property_relations().keys()) - \
+                    set(self.get_property_relations().keys()):
                 self.add_relation(event_type.get_property_relations()[relation_id])
 
             for attachment_name, attachment in event_type.get_attachments().items():
