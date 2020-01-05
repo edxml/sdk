@@ -7,6 +7,8 @@ import re
 from decimal import Decimal
 
 from datetime import datetime
+
+from IPy import IP
 from dateutil.parser import parse
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -737,13 +739,18 @@ class DataType(object):
             return normalized
 
         elif split_data_type[0] == 'ip':
-            try:
-                return {u'%d.%d.%d.%d' % tuple(int(octet) for octet in value.split('.')) for value in values}
-            except (ValueError, TypeError):
-                raise EDXMLValidationError(
-                    'Invalid IPv4 address in list: "%s"' % '","'.join(
-                        [repr(value) for value in values])
-                )
+            normalized = set()
+            for value in values:
+                if not isinstance(value, IP):
+                    try:
+                        value = IP(value)
+                    except (ValueError, TypeError):
+                        raise EDXMLValidationError(
+                            'Invalid IPv4 address in list: "%s"' % '","'.join(
+                                [repr(value) for value in values])
+                        )
+                normalized.add(str(value))
+            return normalized
         elif split_data_type[0] == 'geo':
             if split_data_type[1] == 'point':
                 try:
