@@ -1,3 +1,27 @@
+import pytest
+
+from edxml.ontology import Ontology
+from edxml.transcode.object import ObjectTranscoder
+
+
+@pytest.fixture()
+def object_transcoder():
+    class TestObjectTranscoder(ObjectTranscoder):
+        """
+        This extension of ObjectTranscoder allows us to set class attributes
+        on it that last for just one unit test, making sure that unit
+        tests are free of side effects. Setting class attributes on the
+        ObjectTranscoder class would cause side effects because that class is
+        shared by all tests.
+        """
+        pass
+    t = TestObjectTranscoder()
+    ontology = Ontology()
+    ontology.create_object_type('object-type.string')
+    t.set_ontology(ontology)
+    return t
+
+
 def test_transcode_string_object_attribute(object_transcoder, record):
     type(object_transcoder).TYPE_MAP = {'test_record': 'test-event-type'}
     type(object_transcoder).PROPERTY_MAP = {'test-event-type': {'attr1': 'property1'}}
