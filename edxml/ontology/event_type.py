@@ -1777,7 +1777,6 @@ class EventType(OntologyElement, MutableMapping):
             # Adding a relation is possible, removing one is not.
             equal = False
             missing_relation_ids = set(old.get_property_relations().keys()) - set(new.get_property_relations().keys())
-            new_relation_ids = set(new.get_property_relations().keys()) - set(old.get_property_relations().keys())
             is_valid_upgrade &= versions_differ and len(missing_relation_ids) == 0
 
         if set(old.get_attachments().keys()) - set(new.get_attachments().keys()) != set():
