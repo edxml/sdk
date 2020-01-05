@@ -60,6 +60,12 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # Call parent class constructor
         EDXMLWriter.__init__(self, sys.stdout, validate=False)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def start(self):
         self.write_definitions()
         self.write_events()
@@ -373,7 +379,8 @@ def main():
              'useful for testing parallel EDXML stream processing.'
     )
 
-    EDXMLDummyDataGenerator(parser.parse_args()).start()
+    with EDXMLDummyDataGenerator(parser.parse_args()) as generator:
+        generator.start()
 
 
 if __name__ == "__main__":
