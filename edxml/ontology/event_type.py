@@ -2093,7 +2093,10 @@ class EventType(OntologyElement, MutableMapping):
 
         for propertyName, objects in event.items():
 
-            property_object_type = self.__properties[propertyName].get_object_type()
+            try:
+                property_object_type = self.__properties[propertyName].get_object_type()
+            except KeyError:
+                raise EDXMLValidationError("Event type '%s' has no property '%s'." % (self.get_name(), propertyName))
 
             try:
                 event[propertyName] = property_object_type.get_data_type(
