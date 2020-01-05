@@ -97,7 +97,21 @@ class EDXMLParserBase(object):
         # invalid, masking the original problem.
         if exc_type is None:
             self.__validate_root_element()
-            self._close()
+            self.close()
+
+    def close(self):
+        """
+        Close the parser after parsing has finished. After closing,
+        the parser instance can be reused for parsing another EDXML
+        data file.
+
+        Returns:
+          EDXMLParserBase: The EDXML parser
+        """
+        self.__parsed_initial_ontology = False
+        self.__root_element = None
+        self._close()
+        return self
 
     def _close(self):
         """
