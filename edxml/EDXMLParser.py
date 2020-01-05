@@ -35,6 +35,7 @@ import os
 import re
 import sys
 
+from lxml.etree import XMLSyntaxError
 from typing import Dict, List, Any
 
 import edxml
@@ -617,7 +618,11 @@ class EDXMLPullParser(EDXMLParserBase):
         else:
             lookup.get_namespace('http://edxml.org/edxml')['event'] = ParsedEvent
         self._element_iterator.set_element_class_lookup(lookup)
-        self._parse_edxml()
+
+        try:
+            self._parse_edxml()
+        except XMLSyntaxError as e:
+            raise EDXMLValidationError('Invalid XML: ' + str(e))
 
 
 class EDXMLPushParser(EDXMLParserBase):
@@ -682,8 +687,13 @@ class EDXMLPushParser(EDXMLParserBase):
             self.__inputParser.set_element_class_lookup(lookup)
 
             self._element_iterator = self.__inputParser.read_events()
+
         self.__inputParser.feed(data)
-        self._parse_edxml()
+
+        try:
+            self._parse_edxml()
+        except XMLSyntaxError as e:
+            raise EDXMLValidationError('Invalid XML: ' + str(e))
 
     def set_feed_target(self, target):
         """
