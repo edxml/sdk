@@ -52,6 +52,9 @@ class EDXMLReplay(EDXMLPullFilter):
     class UnbufferedStdout(object):
         # This is a wrapper to create an unbuffered
         # version of sys.stdout.
+
+        mode = 'wa'
+
         def __init__(self, stream):
             self.stream = stream
 
