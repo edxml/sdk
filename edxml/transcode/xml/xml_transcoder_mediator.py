@@ -299,12 +299,14 @@ class XmlTranscoderMediator(TranscoderMediator):
             # indices of the last transcoded element inside its parent element.
             parent = element.getparent()
             parent_xpath = tree.getpath(parent)
-            last_parent, last_transcoded = self._transcoder_positions.get(parent_xpath, (None, None))
-            if last_transcoded is not None:
-                del last_parent[last_transcoded]
+            if self._last_parent_xpath is not None:
+                last_parent, last_transcoded = self._transcoder_positions.get(self._last_parent_xpath, (None, None))
+                if last_transcoded is not None:
+                    del last_parent[last_transcoded]
 
             index = parent.index(element)
             self._transcoder_positions[parent_xpath] = (parent, index)
+            self._last_parent_xpath = parent_xpath
 
             if index > 100:
                 log.warning(
