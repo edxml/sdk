@@ -3,7 +3,7 @@
 import edxml
 
 from lxml import etree
-from typing import Any
+from typing import Any, Optional, Callable
 from typing import Dict
 
 from edxml.ontology import OntologyElement, PropertyConcept
@@ -40,6 +40,9 @@ class EventProperty(OntologyElement):
     def _child_modified_callback(self) -> 'EventProperty': ...
 
     def _set_attr(self, key: str, value): ...
+
+    def __getattr__(self, relation_type_predicate: str) -> \
+            Callable[[str, Optional[str], Optional[int], Optional[bool]], edxml.ontology.PropertyRelation] : ...
 
     def get_name(self) -> str: ...
 

@@ -62,6 +62,34 @@ class EventProperty(OntologyElement):
             self.__attr[key] = value
             self._child_modified_callback()
 
+    def __getattr__(self, relation_type_predicate):
+        """
+
+        Magic method allowing to define property relations in
+        a way that looks like::
+
+          sender.communicates_with('recipient').because(...)
+
+        The return value is a lambda that wraps the relate_to()
+        method. The call parameters are identical to those of
+        relate_to() except for the predicate parameter, which
+        is skipped. The relation predicate is derived from the
+        method name by replacing underscores with spaces. So
+        in the above example, the relation predicate would
+        become "communicates with".
+
+        Args:
+            relation_type_predicate (str):
+
+        Returns:
+          Callable[[str, Optional[str], Optional[int], Optional[bool]], edxml.ontology.PropertyRelation]
+        """
+        if relation_type_predicate.startswith('__'):
+            # We do not want to make callers think we have
+            # any magic methods that we actually do not have.
+            raise AttributeError
+        return lambda *args, **kwargs: self.relate_to(relation_type_predicate.replace('_', ' '), *args, **kwargs)
+
     def get_name(self):
         """
 
