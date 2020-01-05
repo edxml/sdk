@@ -598,7 +598,11 @@ class EDXMLPullParser(EDXMLParserBase):
           input_file (Union[io.TextIOBase, file, str]):
           foreign_element_tags (List[str])
 
+        Returns:
+            edxml.EDXMLPullParser
+
         """
+
         self._element_iterator = etree.iterparse(
             input_file,
             events=['end'],
