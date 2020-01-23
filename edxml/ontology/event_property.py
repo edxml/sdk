@@ -700,10 +700,19 @@ class EventProperty(OntologyElement):
             "Definitions of event type {} are neither equal nor valid upgrades / downgrades of one another "
             "due to the following difference in property definitions:\nOld version:\n{}\nNew version:\n{}".format(
                 self.__event_type.get_name(),
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, event_property):
         """

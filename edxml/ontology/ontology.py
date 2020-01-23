@@ -677,8 +677,8 @@ class Ontology(OntologyElement):
                         (event_type_name, event_type.get_parent().get_event_type()))
 
         # Check if the object type of each property exists
-        for event_type_name, event_type in self.__event_types.iteritems():
-            for property_name, event_property in event_type.iteritems():
+        for event_type_name, event_type in self.__event_types.items():
+            for property_name, event_property in event_type.items():
                 object_type_name = event_property.get_object_type_name()
                 if self.get_object_type(object_type_name) is None:
                     # Object type is not defined, try to load it from
@@ -692,8 +692,8 @@ class Ontology(OntologyElement):
                     )
 
         # Check if the concepts referred to by each property exists
-        for event_type_name, event_type in self.__event_types.iteritems():
-            for property_name, event_property in event_type.iteritems():
+        for event_type_name, event_type in self.__event_types.items():
+            for property_name, event_property in event_type.items():
                 for concept_name in event_property.get_concept_associations().keys():
                     if self.get_concept(concept_name) is None:
                         # Concept is not defined, try to load it from
@@ -707,8 +707,8 @@ class Ontology(OntologyElement):
 
         # Check if merge strategies make sense for the
         # configured property merge strategies
-        for event_type_name, event_type in self.__event_types.iteritems():
-            for property_name, event_property in event_type.iteritems():
+        for event_type_name, event_type in self.__event_types.items():
+            for property_name, event_property in event_type.items():
                 if event_property.get_merge_strategy() in ('min', 'max'):
                     if not event_property.get_data_type().is_numerical():
                         if not event_property.get_data_type().is_datetime():
@@ -722,8 +722,8 @@ class Ontology(OntologyElement):
         # Check if unique properties have their merge strategies set
         # to 'match'
         # TODO: Still needed for EDXML 3?
-        for event_type_name, event_type in self.__event_types.iteritems():
-            for property_name, event_property in event_type.iteritems():
+        for event_type_name, event_type in self.__event_types.items():
+            for property_name, event_property in event_type.items():
                 if event_property.is_unique():
                     if event_property.get_merge_strategy() != 'match':
                         raise EDXMLValidationError(
@@ -740,9 +740,9 @@ class Ontology(OntologyElement):
 
         # Verify that non-unique event type only have
         # properties with merge strategy 'drop'.
-        for event_type_name, event_type in self.__event_types.iteritems():
+        for event_type_name, event_type in self.__event_types.items():
             if not event_type.is_unique():
-                for property_name, event_property in event_type.iteritems():
+                for property_name, event_property in event_type.items():
                     if event_property.get_merge_strategy() != 'drop':
                         raise EDXMLValidationError(
                             'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
@@ -758,7 +758,7 @@ class Ontology(OntologyElement):
             # Check if all unique parent properties are present
             # in the property map
             parent_event_type = self.get_event_type(event_type.get_parent().get_event_type())
-            for parent_property_name, parent_property in parent_event_type.iteritems():
+            for parent_property_name, parent_property in parent_event_type.items():
                 if parent_property.is_unique():
                     if parent_property_name not in event_type.get_parent().get_property_map().values():
                         raise EDXMLValidationError(
@@ -920,6 +920,15 @@ class Ontology(OntologyElement):
             return 0
 
         return 1
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, other_ontology, validate=True):
         """

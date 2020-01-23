@@ -4,7 +4,7 @@ from typing import Dict
 import edxml
 import re
 
-from StringIO import StringIO
+from io import BytesIO
 from collections import MutableMapping
 from dateutil.parser import parse
 from dateutil import relativedelta
@@ -113,7 +113,7 @@ class EventType(OntologyElement, MutableMapping):
         Yields:
           Dict[str, edxml.ontology.EventProperty]
         """
-        for propertyName, prop in self.__properties.iteritems():
+        for propertyName, prop in self.__properties.items():
             yield propertyName
 
     def _child_modified_callback(self):
@@ -320,7 +320,7 @@ class EventType(OntologyElement, MutableMapping):
         """
         if self.__cachedUniqueProperties is None:
             self.__cachedUniqueProperties = {}
-            for propertyName, eventProperty in self.__properties.iteritems():
+            for propertyName, eventProperty in self.__properties.items():
                 if eventProperty.is_unique():
                     self.__cachedUniqueProperties[propertyName] = eventProperty
 
@@ -535,7 +535,7 @@ class EventType(OntologyElement, MutableMapping):
                         (type, source, target, self.get_display_name_singular(), source)
                     )
 
-                source_concept_name = self[source].get_concept_associations().keys()[0]
+                source_concept_name = list(self[source].get_concept_associations().keys())[0]
 
             if target_concept_name is None:
                 if len(self[target].get_concept_associations()) == 0:
@@ -553,7 +553,7 @@ class EventType(OntologyElement, MutableMapping):
                         (type, source, target, self.get_display_name_singular(), target)
                     )
 
-                target_concept_name = self[target].get_concept_associations().keys()[0]
+                target_concept_name = list(self[target].get_concept_associations().keys())[0]
 
         relation = edxml.ontology.PropertyRelation(
             self, self[source], self[target], self.__ontology.get_concept(source_concept_name, True),
@@ -888,7 +888,7 @@ class EventType(OntologyElement, MutableMapping):
           colorize (bool): Colorize output or not
 
         Returns:
-          unicode:
+          str:
         """
 
         # Recursively split a placeholder string at '{' and '}'
@@ -956,37 +956,37 @@ class EventType(OntologyElement, MutableMapping):
                     if delta.days > 0:
                         if delta.months > 0:
                             if delta.years > 0:
-                                return u'%d years, %d months, %d days, %d hours, %d minutes and %d seconds' % \
+                                return '%d years, %d months, %d days, %d hours, %d minutes and %d seconds' % \
                                        (delta.years, delta.months, delta.days,
                                         delta.hours, delta.minutes, delta.seconds)
                             else:
-                                return u'%d months, %d days, %d hours, %d minutes and %d seconds' % \
+                                return '%d months, %d days, %d hours, %d minutes and %d seconds' % \
                                        (delta.months, delta.days, delta.hours,
                                         delta.minutes, delta.seconds)
                         else:
-                            return u'%d days, %d hours, %d minutes and %d seconds' % \
+                            return '%d days, %d hours, %d minutes and %d seconds' % \
                                    (delta.days, delta.hours,
                                     delta.minutes, delta.seconds)
                     else:
-                        return u'%d hours, %d minutes and %d seconds' % \
+                        return '%d hours, %d minutes and %d seconds' % \
                                (delta.hours, delta.minutes, delta.seconds)
                 else:
-                    return u'%d minutes and %d seconds' % \
+                    return '%d minutes and %d seconds' % \
                            (delta.minutes, delta.seconds)
             else:
-                return u'%d.%d seconds' % \
+                return '%d.%d seconds' % \
                        (delta.seconds, delta.microseconds)
 
         def _format_byte_count(byte_count):
-            suffixes = [u'B', u'KB', u'MB', u'GB', u'TB', u'PB']
+            suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
             if byte_count == 0:
-                return u'0 B'
+                return '0 B'
             i = 0
             while byte_count >= 1024 and i < len(suffixes) - 1:
                 byte_count /= 1024.
                 i += 1
-            f = (u'%.2f' % byte_count).rstrip('0').rstrip('.')
-            return u'%s %s' % (f, suffixes[i])
+            f = ('%.2f' % byte_count).rstrip('0').rstrip('.')
+            return '%s %s' % (f, suffixes[i])
 
         def _process_simple_placeholder_string(string, event_object_values, capitalize_string):
 
@@ -1035,7 +1035,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                 elif formatter == 'TIMESPAN':
 
@@ -1051,12 +1051,12 @@ class EventType(OntologyElement, MutableMapping):
                         # Note that we use lexicographic sorting here.
                         date_time_a = parse(min(date_time_strings))
                         date_time_b = parse(max(date_time_strings))
-                        object_strings.append(u'between %s and %s' % (
+                        object_strings.append('between %s and %s' % (
                             date_time_a.isoformat(' '), date_time_b.isoformat(' ')))
                     else:
                         # No valid replacement string could be generated, which implies
                         # that we must return an empty string.
-                        return u''
+                        return ''
 
                 elif formatter == 'DURATION':
 
@@ -1074,7 +1074,7 @@ class EventType(OntologyElement, MutableMapping):
                     else:
                         # No valid replacement string could be generated, which implies
                         # that we must return an empty string.
-                        return u''
+                        return ''
 
                 elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
 
@@ -1083,7 +1083,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         date_time = parse(object_value)
@@ -1091,26 +1091,26 @@ class EventType(OntologyElement, MutableMapping):
                         try:
                             if formatter == 'FULLDATETIME':
                                 object_strings.append(date_time.strftime(
-                                    u'%A, %B %d %Y at %H:%M:%Sh UTC'))
+                                    '%A, %B %d %Y at %H:%M:%Sh UTC'))
                             elif formatter == 'DATETIME':
                                 object_strings.append(date_time.strftime(
-                                    u'%B %d %Y at %H:%M:%Sh UTC'))
+                                    '%B %d %Y at %H:%M:%Sh UTC'))
                             elif formatter == 'DATE':
                                 object_strings.append(
-                                    date_time.strftime(u'%a, %B %d %Y'))
+                                    date_time.strftime('%a, %B %d %Y'))
                             elif formatter == 'YEAR':
-                                object_strings.append(date_time.strftime(u'%Y'))
+                                object_strings.append(date_time.strftime('%Y'))
                             elif formatter == 'MONTH':
                                 object_strings.append(
-                                    date_time.strftime(u'%B %Y'))
+                                    date_time.strftime('%B %Y'))
                             elif formatter == 'WEEK':
                                 object_strings.append(
-                                    date_time.strftime(u'week %W of %Y'))
+                                    date_time.strftime('week %W of %Y'))
                         except ValueError:
                             # This may happen for some time stamps before year 1900, which
                             # is not supported by strftime.
                             object_strings.append(
-                                u'some date, a long, long time ago')
+                                'some date, a long, long time ago')
 
                 elif formatter == 'BYTECOUNT':
 
@@ -1119,7 +1119,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         object_strings.append(
@@ -1132,7 +1132,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         degrees = int(object_value)
@@ -1140,7 +1140,7 @@ class EventType(OntologyElement, MutableMapping):
                         seconds = int(
                             (object_value - degrees - (minutes / 60.0)) * 3600.0)
 
-                        object_strings.append(u'%d°%d′%d %s″' % (
+                        object_strings.append('%d°%d′%d %s″' % (
                             degrees, minutes, seconds, 'N' if degrees > 0 else 'S'))
 
                 elif formatter == 'LONGITUDE':
@@ -1150,7 +1150,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         degrees = int(object_value)
@@ -1158,7 +1158,7 @@ class EventType(OntologyElement, MutableMapping):
                         seconds = int(
                             (object_value - degrees - (minutes / 60.0)) * 3600.0)
 
-                        object_strings.append(u'%d°%d′%d %s″' % (
+                        object_strings.append('%d°%d′%d %s″' % (
                             degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
 
                 elif formatter == 'UPPERCASE':
@@ -1168,7 +1168,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         object_strings.append(object_value.upper())
@@ -1180,11 +1180,11 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     property_name, currency_symbol = arguments
                     for object_value in values:
-                        object_strings.append(u'%.2f%s' % (
+                        object_strings.append('%.2f%s' % (
                             int(object_value), currency_symbol))
 
                 elif formatter == 'URL':
@@ -1194,12 +1194,11 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     property_name, target_name = arguments
                     for object_value in values:
-                        object_strings.append(u'%s (%s)' %
-                                              (target_name, object_value))
+                        object_strings.append('%s (%s)' % (target_name, object_value))
 
                 elif formatter == 'MERGE':
 
@@ -1217,7 +1216,7 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
                         try:
@@ -1225,7 +1224,7 @@ class EventType(OntologyElement, MutableMapping):
                                 countries.get(object_value).name)
                         except KeyError:
                             object_strings.append(
-                                object_value + u' (unknown country code)')
+                                object_value + ' (unknown country code)')
 
                 elif formatter == 'BOOLEAN_STRINGCHOICE':
 
@@ -1234,11 +1233,11 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     property_name, true, false = arguments
                     for object_value in values:
-                        if object_value == u'true':
+                        if object_value == 'true':
                             object_strings.append(true)
                         else:
                             object_strings.append(false)
@@ -1250,15 +1249,15 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
-                        if object_value == u'true':
+                        if object_value == 'true':
                             # Print 'on'
-                            object_strings.append(u'on')
+                            object_strings.append('on')
                         else:
                             # Print 'off'
-                            object_strings.append(u'off')
+                            object_strings.append('off')
 
                 elif formatter == 'BOOLEAN_IS_ISNOT':
 
@@ -1267,15 +1266,15 @@ class EventType(OntologyElement, MutableMapping):
                     except KeyError:
                         # Property has no object, which implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                     for object_value in values:
-                        if object_value == u'true':
+                        if object_value == 'true':
                             # Print 'is'
-                            object_strings.append(u'is')
+                            object_strings.append('is')
                         else:
                             # Print 'is not'
-                            object_strings.append(u'is not')
+                            object_strings.append('is not')
 
                 elif formatter == 'EMPTY':
 
@@ -1288,7 +1287,7 @@ class EventType(OntologyElement, MutableMapping):
                         # Property has an object, so the formatter will
                         # yield an empty string. This in turn implies that
                         # we must produce an empty result.
-                        return u''
+                        return ''
 
                 elif formatter == 'NEWPAR':
 
@@ -1298,25 +1297,25 @@ class EventType(OntologyElement, MutableMapping):
                     if len(object_strings) > 1:
                         # If one property has multiple objects,
                         # list them all.
-                        if u''.join(object_strings) != u'':
+                        if ''.join(object_strings) != '':
                             last_object_value = object_strings.pop()
                             if colorize:
-                                object_string = u', '.join(
+                                object_string = ', '.join(
                                     colored(ObjectString, 'white', attrs=['bold']) for ObjectString in object_strings)\
-                                    + u' and ' + last_object_value
+                                    + ' and ' + last_object_value
                             else:
-                                object_string = u', '.join(object_strings)\
-                                    + u' and ' + last_object_value
+                                object_string = ', '.join(object_strings)\
+                                    + ' and ' + last_object_value
                         else:
-                            object_string = u''
+                            object_string = ''
                     else:
-                        if colorize and object_strings[0] != u'':
+                        if colorize and object_strings[0] != '':
                             object_string = colored(
                                 object_strings[0], 'white', attrs=['bold'])
                         else:
                             object_string = object_strings[0]
                 else:
-                    object_string = u''
+                    object_string = ''
 
                 replacements[placeholder[0]] = object_string
 
@@ -1324,10 +1323,10 @@ class EventType(OntologyElement, MutableMapping):
             # by the actual (formatted) object values
 
             for placeholder, replacement in replacements.items():
-                if replacement == u'':
+                if replacement == '':
                     # Placeholder produces empty string, which
                     # implies that we must produce an empty result.
-                    return u''
+                    return ''
                 string = string.replace(placeholder, replacement)
 
             return string
@@ -1350,14 +1349,14 @@ class EventType(OntologyElement, MutableMapping):
 
             return result
 
-        return _process_split_template(_split_template(unicode(self.__attr[which]))[
+        return _process_split_template(_split_template(self.__attr[which])[
             1], edxml_event.get_properties(), capitalize)
 
     def validate_template(self, template):
         """Checks if given template makes sense.
 
         Args:
-          template (unicode): The template
+          template (str): The template
 
         Raises:
           EDXMLValidationError
@@ -1374,9 +1373,9 @@ class EventType(OntologyElement, MutableMapping):
 
         # Test if template grammar is correct, by
         # checking that curly brackets are balanced.
-        curly_nestings = {u'{': 1, u'}': -1}
+        curly_nestings = {'{': 1, u'}': -1}
         nesting = 0
-        for curly in [c for c in template if c in [u'{', u'}']]:
+        for curly in [c for c in template if c in ['{', u'}']]:
             nesting += curly_nestings[curly]
             if nesting < 0:
                 raise EDXMLValidationError(
@@ -1783,7 +1782,7 @@ class EventType(OntologyElement, MutableMapping):
             # New version removes attachments. No upgrade possible.
             equal = is_valid_upgrade = False
 
-        if old.get_classes() != new.get_classes():
+        if set(old.get_classes()) != set(new.get_classes()):
             # Adding an event type class is possible, removing one is not.
             equal = False
             is_valid_upgrade &= versions_differ and len(set(old.get_classes()) - set(new.get_classes())) == 0
@@ -1840,22 +1839,19 @@ class EventType(OntologyElement, MutableMapping):
         raise EDXMLValidationError(
             "Event type definitions are neither equal nor valid upgrades / downgrades of one another "
             "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
 
     def __eq__(self, other):
-        # We need to implement this method to override the
-        # implementation of the MutableMapping, of which the
-        # EventType class is an extension.
         return self.__cmp__(other) == 0
 
     def __ne__(self, other):
-        # We need to implement this method to override the
-        # implementation of the MutableMapping, of which the
-        # EventType class is an extension.
         return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, event_type):
         """
@@ -1922,7 +1918,7 @@ class EventType(OntologyElement, MutableMapping):
 
         """
         attribs = dict(self.__attr)
-        attribs['version'] = unicode(attribs['version'])
+        attribs['version'] = str(attribs['version'])
 
         if attribs['classlist'] == '':
             del attribs['classlist']
@@ -2258,4 +2254,4 @@ class EventType(OntologyElement, MutableMapping):
         # Note that, for some reason, using a programmatically built ElementTree
         # to instantiate a RelaxNG object fails with 'schema is empty'. If we
         # convert the schema to a string and parse it back gain, all is good.
-        return etree.parse(StringIO(etree.tostring(etree.ElementTree(schema))))
+        return etree.parse(BytesIO(etree.tostring(etree.ElementTree(schema))))

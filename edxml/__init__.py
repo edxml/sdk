@@ -5,15 +5,15 @@ import sys
 
 from .version import __version__
 
-from event import EDXMLEvent, EventElement, ParsedEvent
-from event_collection import EventCollection
-from EDXMLWriter import EDXMLWriter
-from SimpleEDXMLWriter import SimpleEDXMLWriter
-from EDXMLParser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
-from EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
+from .event import EDXMLEvent, EventElement, ParsedEvent
+from .event_collection import EventCollection
+from .EDXMLWriter import EDXMLWriter
+from .SimpleEDXMLWriter import SimpleEDXMLWriter
+from .EDXMLParser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
+from .EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 
-import ontology
-import transcode
+from . import ontology
+from . import transcode
 
 namespace = {None: 'http://edxml.org/edxml'}
 
@@ -41,8 +41,8 @@ if sys.maxunicode >= 0x10000:  # not narrow build
     ])
 
 
-evil_xml_chars_regexp = u'[%s]' % u''.join(
-    ["%s-%s" % (unichr(low), unichr(high)) for (low, high) in ranges]
+evil_xml_chars_regexp = '[%s]' % ''.join(
+    ["%s-%s" % (chr(low), chr(high)) for (low, high) in ranges]
 )
 
 __all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EventCollection', 'EDXMLWriter', 'SimpleEDXMLWriter',

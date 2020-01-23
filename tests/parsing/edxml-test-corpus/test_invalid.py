@@ -43,19 +43,19 @@ def generate_invalid_event_fixture_params():
 
 @pytest.fixture(scope='module', params=generate_invalid_structure_fixture_params())
 def invalid_structure_corpus_item(request):
-    request.param['file'] = open(request.param['path'])
+    request.param['file'] = open(request.param['path'], 'rb')
     return request.param
 
 
 @pytest.fixture(scope='module', params=generate_invalid_ontology_fixture_params())
 def invalid_ontology_corpus_item(request):
-    request.param['file'] = open(request.param['path'])
+    request.param['file'] = open(request.param['path'], 'rb')
     return request.param
 
 
 @pytest.fixture(scope='module', params=generate_invalid_event_fixture_params())
 def invalid_event_corpus_item(request):
-    request.param['file'] = open(request.param['path'])
+    request.param['file'] = open(request.param['path'], 'rb')
     return request.param
 
 

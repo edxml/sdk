@@ -1,5 +1,6 @@
 # coding=utf-8
 # the line above is required for inline unicode
+import codecs
 import hashlib
 from collections import OrderedDict
 from datetime import datetime
@@ -13,12 +14,12 @@ import pytest
 
 @pytest.fixture
 def sha1_hash():
-    return hashlib.sha1("foo").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("foo".encode()).digest(), "hex")
 
 
 @pytest.fixture
 def another_sha1_hash():
-    return hashlib.sha1("bar").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("bar".encode()).digest(), "hex")
 
 
 @pytest.fixture
@@ -35,7 +36,7 @@ def ontology():
 @pytest.fixture
 def event_element(ontology, sha1_hash):
     event = EDXMLEvent(
-        properties={"a": u"🖤"},
+        properties={"a": "🖤"},
         event_type_name="a",
         source_uri="/a/",
     )
@@ -54,7 +55,7 @@ def test_set_non_string_attachment_fails(event_element):
 
 
 def test_object_character_replacement(event_element):
-    unicode_replacement_character = unichr(0xfffd)
+    unicode_replacement_character = chr(0xfffd)
 
     event_element.replace_invalid_characters()
     event_element["b"] = [chr(0)]
@@ -92,7 +93,7 @@ def test_coerce_ip_property_object(event_element):
 
 
 def test_set_invalid_attachment(event_element):
-    unicode_replacement_character = unichr(0xfffd)
+    unicode_replacement_character = chr(0xfffd)
     event_element.replace_invalid_characters()
     event_element.set_attachments({'attachment': chr(0)})
     assert event_element.get_element().find('attachments/attachment').text == unicode_replacement_character
@@ -100,7 +101,7 @@ def test_set_invalid_attachment(event_element):
 
 
 def test_cast_to_string(event_element):
-    string = unicode(event_element)
+    string = str(event_element)
 
     parsed = etree.fromstring(string)
 
@@ -108,7 +109,7 @@ def test_cast_to_string(event_element):
     # EDXML output stream that has a global namespace set. This differs
     # from ParsedEvent instances. These objects are instantiated by lxml
     # and inherit the namespace from their parent document.
-    assert parsed.find('properties/a').text == u"🖤"
+    assert parsed.find('properties/a').text == "🖤"
 
 
 def test_sort_event(event_element):
@@ -121,8 +122,10 @@ def test_sort_event(event_element):
     attachments['a'] = 'a'
     event_element.set_attachments(attachments)
 
-    assert event_element.get_element().xpath('properties/*/text()') == ['3', '2', '1']
-    assert event_element.get_element().xpath('attachments/*/text()') == ['b', 'a']
+    # NOTE: The objects in a property are stored as sets. The ordering of the objects is
+    # therefore undefined. Below assertions may fail on future Python versions.
+    assert event_element.get_element().xpath('properties/*/text()') != ['1', '2', '3']
+    assert event_element.get_element().xpath('attachments/*/text()') != ['a', 'b']
 
     event_element.sort()
 
@@ -132,7 +135,7 @@ def test_sort_event(event_element):
 
 def test_set_property(event_element):
     event_element["b"] = ["x"]
-    assert event_element.properties == {"a": {u"🖤"}, "b": {"x"}}
+    assert event_element.properties == {"a": {"🖤"}, "b": {"x"}}
     assert len(event_element.get_element().findall('properties/b')) == 1
     assert event_element.get_element().find('properties/b').text == "x"
 
@@ -140,7 +143,7 @@ def test_set_property(event_element):
 def test_extend_property(event_element):
     event_element["b"] = ["x"]
     event_element["b"].add("y")
-    assert event_element.properties == {"a": {u"🖤"}, "b": {"x", "y"}}
+    assert event_element.properties == {"a": {"🖤"}, "b": {"x", "y"}}
     assert len(event_element.get_element().findall('properties/b')) == 2
     values = {
         event_element.get_element().findall('properties/b')[0].text,

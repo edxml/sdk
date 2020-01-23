@@ -89,7 +89,7 @@ def main():
             'Waiting for EDXML data on standard input... (use --help option to get help)\n'
         )
 
-    input = open(args.file) if args.file else sys.stdin
+    input = open(args.file) if args.file else sys.stdin.buffer
 
     try:
         EDXMLEventPrinter(print_summaries=args.short, print_colorized=args.colored).parse(input)

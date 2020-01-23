@@ -305,7 +305,7 @@ class EDXMLParserBase(object):
             # XML structure is invalid.
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-                (etree.tostring(self.__root_element), str(ValidationError))
+                (etree.tostring(self.__root_element, encoding='unicode'), str(ValidationError))
             )
 
     def __process_ontology(self, ontology_element):
@@ -324,8 +324,10 @@ class EDXMLParserBase(object):
             self.__event_type_schema_cache = {}
         except EDXMLValidationError as exception:
             exception.message = "Invalid ontology definition detected: %s\n%s" %\
-                                (etree.tostring(ontology_element,
-                                                pretty_print=True), exception.message)
+                                (
+                                    etree.tostring(ontology_element, pretty_print=True, encoding='unicode'),
+                                    exception.message
+                                )
             raise
 
         for eventTypeName in self._ontology.get_event_type_names():
@@ -479,9 +481,9 @@ class EDXMLParserBase(object):
             # _parsed_event() method has been overridden
             # by a class extension, so we can use that
             # for handling events.
-            this_method = getattr(self, '_parsed_event')
+            this_method = getattr(type(self), '_parsed_event')
             base_method = getattr(EDXMLParserBase, '_parsed_event')
-            if this_method.__func__ is not base_method.__func__:
+            if this_method != base_method:
                 handlers = [self._parsed_event]
 
         return handlers
@@ -522,10 +524,11 @@ class EDXMLParserBase(object):
 
                 except EDXMLValidationError as exception:
                     schema = self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
-                    raise EDXMLValidationError('Event failed to validate:\n%s\n\n%s\nSchema:\n%s' % (
-                        etree.tostring(event, pretty_print=True).encode(
-                            'utf-8'), exception,
-                        etree.tostring(schema, pretty_print=True)), sys.exc_info()[2])
+                    raise EDXMLValidationError(
+                        'Event failed to validate:\n%s\n\n%s\nSchema:\n%s' % (
+                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception,
+                            etree.tostring(schema, pretty_print=True, encoding='unicode')), sys.exc_info()[2]
+                    )
 
         # Call all event handlers in order
         for handler in self._get_event_handlers(event_type_name, event_source_uri):

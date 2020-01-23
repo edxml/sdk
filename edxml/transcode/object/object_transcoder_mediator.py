@@ -80,7 +80,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         event into the output.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         The object may optionally be a dictionary or act like one.
         Transcoders can extract EDXML event object values from both
@@ -93,7 +93,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           input_record (dict,object): Input object
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
 
@@ -137,4 +137,4 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                         'no %s event generated. Record was: %s' % (record_type, input_record)
                     )
 
-        return u''.join(outputs)
+        return b''.join(outputs)

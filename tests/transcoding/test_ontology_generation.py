@@ -11,7 +11,7 @@ def test_event_type(transcoder):
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
 
-    assert event_types.keys() == ['event-type.a']
+    assert list(event_types.keys()) == ['event-type.a']
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
@@ -86,7 +86,7 @@ def test_event_type_attachments(transcoder):
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
 
-    assert event_types['event-type.a'].get_attachments().keys() == ['test-attachment']
+    assert list(event_types['event-type.a'].get_attachments().keys()) == ['test-attachment']
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
@@ -148,7 +148,7 @@ def test_properties(transcoder):
     transcoder._ontology.validate()
 
     for event_type in event_types.values():
-        assert event_type.get_properties().keys() == ['property-a']
+        assert list(event_type.get_properties().keys()) == ['property-a']
         assert event_type.get_properties()['property-a'].get_description() == 'test description'
         assert event_type.get_properties()['property-a'].get_similar_hint() == 'test similarity'
         assert event_type.get_properties()['property-a'].get_merge_strategy() == EventProperty.MERGE_MATCH

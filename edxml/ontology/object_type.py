@@ -335,7 +335,7 @@ class ObjectType(OntologyElement):
         when the value is invalid.
 
         Args:
-          value (unicode): Object value
+          value (str): Object value
 
         Raises:
           EDXMLValidationError
@@ -521,10 +521,19 @@ class ObjectType(OntologyElement):
         raise EDXMLValidationError(
             "Object type definitions are neither equal nor valid upgrades / downgrades of one another "
             "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, object_type):
         """
@@ -561,7 +570,7 @@ class ObjectType(OntologyElement):
         attribs = dict(self.__attr)
 
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
-        attribs['version'] = unicode(attribs['version'])
+        attribs['version'] = str(attribs['version'])
 
         if attribs['regexp'] is None:
             del attribs['regexp']

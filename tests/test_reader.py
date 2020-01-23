@@ -22,7 +22,7 @@ import pytest
     ],
 )
 def data(request):
-    request.param["file"] = open(request.param["filename"])
+    request.param["file"] = open(request.param["filename"], 'rb')
     return request.param
 
 
@@ -37,7 +37,7 @@ def test_read(data):
     assert a.get_event_type_counter(
         data["event_type_name"]) == data["event_count"]
     # Our object types should be parsed correctly and in order
-    assert a.get_ontology().get_object_types().keys() == data["object_types"]
+    assert list(a.get_ontology().get_object_types().keys()) == data["object_types"]
 
 
 # We can run pytest directly in our debugger

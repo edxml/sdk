@@ -44,7 +44,7 @@ from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
 
 def print_help():
 
-    print """
+    print("""
 
    This utility will filter out the event data from EDXML streams and validate the
    ontology in the <ontology> section in the process. The stripped version of
@@ -62,7 +62,7 @@ def print_help():
 
      cat input.edxml | edxml-strip-events.py > output.edxml
 
-"""
+""")
 
 # Program starts here.
 

@@ -53,12 +53,12 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         self.generate_collisions = args.collision_rate > 0
         self.event_source_uri_list = ('/source-a/', '/source-b/')
-        self.random_content_characters = u'abcdefghijklmnop  '
+        self.random_content_characters = 'abcdefghijklmnop  '
         self.random_content_characters_length = len(self.random_content_characters)
         self.time_start = time.time()
 
         # Call parent class constructor
-        EDXMLWriter.__init__(self, sys.stdout, validate=False)
+        EDXMLWriter.__init__(self, sys.stdout.buffer, validate=False)
 
     def __enter__(self):
         return self
@@ -89,28 +89,28 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         # Set the default object values
         property_objects = {
-            'property-a': [u'value'],
-            'property-c': [u'value'],
-            'property-g': [u'10.000000000'],
-            'property-h': [u'100.000000000']
+            'property-a': ['value'],
+            'property-c': ['value'],
+            'property-g': ['10.000000000'],
+            'property-h': ['100.000000000']
         }
 
         if not self.args.unordered:
             # This property requires ordering to be
             # preserved.
-            property_objects['property-b'] = [u'value']
+            property_objects['property-b'] = ['value']
 
         # To prevent colliding events from accumulating arbitrary
         # numbers of property 'property-c' (which has merge
         # strategy 'add'), we generate a small collection of random
         # strings for assigning to this property.
-        add_property_values = [u''.join(random.sample(
+        add_property_values = [''.join(random.sample(
             random_property_characters, self.args.object_size)) for _ in range(10)]
 
         if self.generate_collisions:
-            unique_property_values = [u''.join(random.sample(
+            unique_property_values = [''.join(random.sample(
                 random_property_characters, self.args.object_size)) for _ in range(self.args.collision_diversity)]
-            random_unique_property_values = random.sample(range(self.args.collision_diversity), int(
+            random_unique_property_values = random.sample(list(range(self.args.collision_diversity)), int(
                 self.args.collision_diversity * (1.0 - (self.args.collision_rate / 100.0))))
         else:
             random_unique_property_values = []
@@ -131,14 +131,14 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                 # as being random.
                 if self.generate_collisions:
                     for ValueIndex in random_unique_property_values:
-                        unique_property_values[ValueIndex] = u''.join(random.sample(
+                        unique_property_values[ValueIndex] = ''.join(random.sample(
                             random_property_characters, self.args.object_size))
 
                 # Generate random property values
                 if self.args.random_objects:
 
                     # The unique property is a completely random string
-                    property_objects['property-a'] = [u''.join(random.sample(self.random_content_characters * (int(
+                    property_objects['property-a'] = [''.join(random.sample(self.random_content_characters * (int(
                         self.args.object_size / self.random_content_characters_length) + 1),
                         self.args.object_size))]
 
@@ -147,7 +147,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                         # the ordering of the events to be preserved. And even
                         # then, we omit the property once in a while, removing
                         # it in case of a collision.
-                        property_objects['property-b'] = [u''.join(random.sample(self.random_content_characters * (int(
+                        property_objects['property-b'] = [''.join(random.sample(self.random_content_characters * (int(
                             self.args.object_size / self.random_content_characters_length) + 1),
                             self.args.object_size))]
 
@@ -158,7 +158,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     for property_name in ['g', 'h']:
                         # Random values in range [-0.5,0.5]
                         property_objects['property-' +
-                                         property_name] = [u'%1.9f' % (random.random() - 0.5)]
+                                         property_name] = ['%1.9f' % (random.random() - 0.5)]
 
                 if self.generate_collisions:
                     # For property-a, which is the unique property, we

@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 from collections import defaultdict
 from typing import Dict, List
 
@@ -142,14 +142,14 @@ class EventCollection(list):
         ['{http://some/foreign/namespace}tag']
 
         Args:
-            edxml_data (str): The EDXML data
+            edxml_data (bytes): The EDXML data
             foreign_element_tags (Tuple[str]): Foreign element tags
 
         Returns:
             EventCollection:
 
         """
-        class EdxmlData(StringIO):
+        class EdxmlData(BytesIO):
             mode = 'a'
 
         class Parser(edxml.EDXMLPullParser):
@@ -178,13 +178,13 @@ class EventCollection(list):
         the events in the collection.
 
         Returns:
-            str:
+            bytes:
 
         """
         if self._ontology is None:
             raise RuntimeError("Event collection contains no ontology, generating EDXML output is not possible.")
 
-        edxml_data = ''
+        edxml_data = b''
 
         writer = edxml.EDXMLWriter()
         edxml_data += writer.add_ontology(self._ontology)

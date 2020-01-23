@@ -231,10 +231,19 @@ class EventSource(OntologyElement):
         raise EDXMLValidationError(
             "Event source definitions are neither equal nor valid upgrades / downgrades of one another "
             "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, source):
         """
@@ -270,6 +279,6 @@ class EventSource(OntologyElement):
         """
 
         attribs = dict(self._attr)
-        attribs['version'] = unicode(attribs['version'])
+        attribs['version'] = str(attribs['version'])
 
         return etree.Element('source', attribs)

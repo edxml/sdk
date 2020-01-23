@@ -31,9 +31,9 @@ def generate_valid_merge_sequence_fixture_params():
 def corpus_item(request):
     request.param['inputs'] = []
     for path in request.param['input_paths']:
-        request.param['inputs'].append(open(path))
+        request.param['inputs'].append(open(path, 'rb'))
     if 'expected_path' in request.param:
-        request.param['expected'] = open(request.param['expected_path'])
+        request.param['expected'] = open(request.param['expected_path'], 'rb')
     return request.param
 
 

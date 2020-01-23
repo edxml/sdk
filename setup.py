@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 # Explicitly state a version to please flake8
 __version__ = 1.0
 # This will read __version__ from edxml/version.py
-execfile('edxml/version.py')
+exec(compile(open('edxml/version.py', "rb").read(), 'edxml/version.py', 'exec'))
 
 setup(
     name='edxml',
@@ -47,7 +47,7 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2'
+        'Programming Language :: Python :: 3'
     ],
 
     # What does your project relate to?

@@ -50,14 +50,14 @@ class EDXML2CSV(EDXMLPullParser):
         self.__column_separator = column_separator
         self.__output_column_names = output_column_names
         self.__print_header_line = print_header_line
-        super(EDXML2CSV, self).__init__(sys.stdout)
+        super(EDXML2CSV, self).__init__(sys.stdout.buffer)
 
     def _parsed_ontology(self, ontology):
 
         # Compile a list of output columns,
         # one column per event property.
         property_names = set()
-        for event_type_name, event_type in self.get_ontology().get_event_types().iteritems():
+        for event_type_name, event_type in self.get_ontology().get_event_types().items():
             property_names.update(event_type.get_properties().keys())
 
         # Filter the available properties using
@@ -89,7 +89,7 @@ class EDXML2CSV(EDXMLPullParser):
         for property_name in self.__property_names:
             property_objects[property_name] = []
 
-        for property_name, objects in event.get_properties().iteritems():
+        for property_name, objects in event.get_properties().items():
             if property_name in self.__property_names:
                 for event_object in objects:
                     escaped_value = event_object.replace(
@@ -142,7 +142,7 @@ class EDXML2CSV(EDXMLPullParser):
                         columns, property_objects, line, line_end, column)
                     return
 
-            sys.stdout.write(unicode(line + line_end + '\n').encode('utf-8'))
+            sys.stdout.write(line + line_end + '\n')
 
 def main():
     parser = argparse.ArgumentParser(
@@ -184,7 +184,7 @@ def main():
 
     args = parser.parse_args()
 
-    event_input = args.file or sys.stdin
+    event_input = args.file or sys.stdin.buffer
 
     if args.columns is None or args.columns == '':
         columns = None

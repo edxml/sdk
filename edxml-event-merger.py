@@ -55,7 +55,7 @@ class EDXMLEventMerger(EDXMLPullFilter):
 
     def __init__(self):
 
-        super(EDXMLEventMerger, self).__init__(sys.stdout)
+        super(EDXMLEventMerger, self).__init__(sys.stdout.buffer)
         self.HashBuffer = {}
 
     def _parsed_event(self, event):
@@ -74,7 +74,7 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
 
     def __init__(self, event_buffer_size, latency):
 
-        super(BufferingEDXMLEventMerger, self).__init__(sys.stdout)
+        super(BufferingEDXMLEventMerger, self).__init__(sys.stdout.buffer)
         self.__buffer_size = 0
         self.__max_latency = latency
         self.__max_buffer_size = event_buffer_size
@@ -103,7 +103,7 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
             self._flush_buffer()
 
     def _flush_buffer(self):
-        for event_hash, events in self.__hash_buffer.iteritems():
+        for event_hash, events in self.__hash_buffer.items():
             if len(events) > 1:
                 output_event = events.pop()
                 output_event.merge_with(events, self.get_ontology())
@@ -155,9 +155,9 @@ def main():
     args = parser.parse_args()
 
     if not args.file:
-        args.file = sys.stdin
+        args.file = sys.stdin.buffer
     else:
-        args.file = open(args.file)
+        args.file = open(args.file, 'rb')
 
     if args.buffer and args.buffer > 1:
         # We need to read input with minimal

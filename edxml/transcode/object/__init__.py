@@ -12,8 +12,8 @@ Python objects and route them records to the correct transcoder.
     :members:
     :show-inheritance:
 """
-from object_transcoder import ObjectTranscoder
-from object_transcoder_mediator import ObjectTranscoderMediator
+from .object_transcoder import ObjectTranscoder
+from .object_transcoder_mediator import ObjectTranscoderMediator
 
 
 __all__ = ['ObjectTranscoder', 'ObjectTranscoderMediator']

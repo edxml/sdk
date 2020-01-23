@@ -319,8 +319,7 @@ class Transcoder(object):
         Yields:
           EDXMLEvent:
         """
-        return
-        yield
+        yield from ()
 
     def post_process(self, event, input_record):
         """
@@ -344,8 +343,7 @@ class Transcoder(object):
         Yields:
           EDXMLEvent:
         """
-        return
-        yield
+        yield from ()
 
     @staticmethod
     def get_auto_merge_event_types():

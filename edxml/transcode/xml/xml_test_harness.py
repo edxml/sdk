@@ -47,9 +47,9 @@ class XmlTranscoderTestHarness(TranscoderTestHarness):
                     'You must specify one because this transcoder has multiple element roots in its TYPE_MAP.'
                     % type(self.transcoder).__name__
                 )
-            element_root = self.transcoder.TYPE_MAP.keys()[0]
+            element_root = list(self.transcoder.TYPE_MAP.keys())[0]
 
-        element = etree.fromstring(open(self.fixtures_path.rstrip('/') + '/' + filename).read())
+        element = etree.fromstring(open(self.fixtures_path.rstrip('/') + '/' + filename, 'rb').read())
         for sub_element in element.xpath(transcoder_root):
             self.process(sub_element, selector=element_root)
         self.close()

@@ -43,8 +43,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'EDXML SDK'
-copyright = u'2016, D.H.J. Takken'
+project = 'EDXML SDK'
+copyright = '2016, D.H.J. Takken'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -196,8 +196,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'EDXMLSDK.tex', u'EDXML SDK Documentation',
-     u'D.H.J. Takken', 'manual'),
+    ('index', 'EDXMLSDK.tex', 'EDXML SDK Documentation',
+     'D.H.J. Takken', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -227,7 +227,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'edxmlsdk', u'EDXML SDK Documentation',
-     [u'D.H.J. Takken'], 1)
+     ['D.H.J. Takken'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -240,8 +240,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'EDXMLSDK', u'EDXML SDK Documentation',
-     u'D.H.J. Takken', 'EDXMLSDK', 'The EDXML Software Developers Kit',
+    ('index', 'EDXMLSDK', 'EDXML SDK Documentation',
+     'D.H.J. Takken', 'EDXMLSDK', 'The EDXML Software Developers Kit',
      'Miscellaneous'),
 ]
 

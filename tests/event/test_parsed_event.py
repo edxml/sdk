@@ -1,5 +1,6 @@
 # coding=utf-8
 # the line above is required for inline unicode
+import codecs
 import hashlib
 from collections import OrderedDict
 
@@ -15,12 +16,12 @@ namespaces = {'e': 'http://edxml.org/edxml'}
 
 @pytest.fixture
 def sha1_hash():
-    return hashlib.sha1("foo").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("foo".encode()).digest(), "hex").decode()
 
 
 @pytest.fixture
 def another_sha1_hash():
-    return hashlib.sha1("bar").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("bar".encode()).digest(), "hex").decode()
 
 
 @pytest.fixture
@@ -36,7 +37,7 @@ def ontology():
 
 def create_parsed_event(ontology, event):
     edxml_data = EventCollection([event]).set_ontology(ontology).to_edxml()
-    events = EventCollection.from_edxml(edxml_data.encode('utf-8'))
+    events = EventCollection.from_edxml(edxml_data)
     return events[0]  # type: ParsedEvent
 
 
@@ -45,7 +46,7 @@ def parsed_event(ontology, sha1_hash):
     return create_parsed_event(
         ontology,
         EDXMLEvent(
-            properties={"a": u"🖤"},
+            properties={"a": "🖤"},
             event_type_name="a",
             source_uri="/a/",
         )
@@ -72,7 +73,7 @@ def test_set_non_string_attachment_fails(parsed_event):
 
 
 def test_object_character_replacement(parsed_event):
-    unicode_replacement_character = unichr(0xfffd)
+    unicode_replacement_character = chr(0xfffd)
 
     parsed_event.replace_invalid_characters()
     parsed_event["b"] = [chr(0)]
@@ -87,7 +88,7 @@ def test_object_character_replacement(parsed_event):
 
 
 def test_set_invalid_attachment(parsed_event):
-    unicode_replacement_character = unichr(0xfffd)
+    unicode_replacement_character = chr(0xfffd)
     parsed_event.replace_invalid_characters()
     parsed_event.set_attachments({'attachment': chr(0)})
     assert parsed_event.get_element()\
@@ -101,17 +102,17 @@ def test_direct_xml_element_manipulation(parsed_event):
     prop.text = 'd'
     properties.append(prop)
     parsed_event.flush()
-    assert parsed_event.get_properties() == {"a": {u"🖤"}, "c": {"d"}}
+    assert parsed_event.get_properties() == {"a": {"🖤"}, "c": {"d"}}
 
 
 def test_cast_to_string(parsed_event):
-    string = unicode(parsed_event)
+    string = str(parsed_event)
 
     parsed = etree.fromstring(string)
 
     # Note that ParsedEvent objects are instantiated by lxml and inherit the
     # namespace from the parent document.
-    assert parsed.find('e:properties/e:a', namespaces=namespaces).text == u"🖤"
+    assert parsed.find('e:properties/e:a', namespaces=namespaces).text == "🖤"
 
 
 def test_sort_event(parsed_event):
@@ -124,8 +125,10 @@ def test_sort_event(parsed_event):
     attachments['a'] = 'a'
     parsed_event.set_attachments(attachments)
 
-    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) == ['3', '2', '1']
-    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) == ['b', 'a']
+    # NOTE: The objects in a property are stored as sets. The ordering of the objects is
+    # therefore undefined. Below assertions may fail on future Python versions.
+    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) != ['1', '2', '3']
+    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) != ['a', 'b']
 
     parsed_event.sort()
 
@@ -135,7 +138,7 @@ def test_sort_event(parsed_event):
 
 def test_set_property(parsed_event):
     parsed_event["b"] = ["x"]
-    assert parsed_event.properties == {"a": {u"🖤"}, "b": {"x"}}
+    assert parsed_event.properties == {"a": {"🖤"}, "b": {"x"}}
     assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 1
     assert parsed_event.find('e:properties/e:b', namespaces).text == "x"
 
@@ -143,7 +146,7 @@ def test_set_property(parsed_event):
 def test_extend_property(parsed_event):
     parsed_event["b"] = ["x"]
     parsed_event["b"].add("y")
-    assert parsed_event.properties == {"a": {u"🖤"}, "b": {"x", "y"}}
+    assert parsed_event.properties == {"a": {"🖤"}, "b": {"x", "y"}}
     assert len(parsed_event.findall('e:properties/e:b', namespaces)) == 2
     values = {
         parsed_event.findall('e:properties/e:b', namespaces)[0].text,

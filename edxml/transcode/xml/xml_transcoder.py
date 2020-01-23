@@ -120,14 +120,14 @@ class XmlTranscoder(edxml.transcode.Transcoder):
             flags (int): Regular expression flags
 
         Returns:
-          List[unicode]
+          List[str]
 
         """
         total_matches = []
         for node in nodes:
             if node.text:
                 matches = re.findall(pattern, node.text, int(flags))
-                total_matches.extend(unicode(match) for match in matches)
+                total_matches.extend(str(match) for match in matches)
         return total_matches
 
     @staticmethod
@@ -143,22 +143,22 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         Args:
             context: lxml function context
-            strings (Union[unicode, List[unicode]): Input strings
+            strings (Union[str, List[str]): Input strings
 
         Returns:
-          (Union[unicode, List[unicode])
+          (Union[str, List[str])
 
         """
         out_strings = []
         if strings:
-            for string in strings if isinstance(strings, list) else [unicode(strings)]:
+            for string in strings if isinstance(strings, list) else [str(strings)]:
                 try:
                     # Try treating string as an XML element first.
-                    out_strings.append("".join(ch for ch in unicode(string.text) if unicodedata.category(ch)[0] != "C"))
+                    out_strings.append("".join(ch for ch in str(string.text) if unicodedata.category(ch)[0] != "C"))
                 except AttributeError:
                     # That did not work. It must be an attribute or
                     # an actual string then.
-                    out_strings.append("".join(ch for ch in unicode(string) if unicodedata.category(ch)[0] != "C"))
+                    out_strings.append("".join(ch for ch in str(string) if unicodedata.category(ch)[0] != "C"))
         return out_strings if isinstance(strings, list) else out_strings[0]
 
     @staticmethod
@@ -175,15 +175,15 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         Args:
             context: lxml function context
-            strings (Union[unicode, List[unicode]): Input strings
+            strings (Union[str, List[str]): Input strings
 
         Returns:
-          (Union[unicode, List[unicode])
+          (Union[str, List[str])
 
         """
         out_strings = []
         if strings:
-            for string in strings if isinstance(strings, list) else [unicode(strings)]:
+            for string in strings if isinstance(strings, list) else [str(strings)]:
                 try:
                     out_strings.append(' '.join(string.split()))
                 except AttributeError:
@@ -272,11 +272,11 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                         # Property should be regarded as empty.
                         continue
 
-                    properties[property_name].append(unicode(property.text))
+                    properties[property_name].append(property.text)
                 except AttributeError:
                     # Oops, XPath did not select a tag, it might be
                     # an attribute then.
-                    property = unicode(property)
+                    property = str(property)
                     if property == '':
                         # Skip empty values
                         continue

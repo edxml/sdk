@@ -76,7 +76,7 @@ def main():
                 sys.exit()
             except EDXMLError as error:
                 all_compatible = False
-                print("EDXML file %s is incompatible with previous files:\n%s" % (file_name, unicode(error)))
+                print("EDXML file %s is incompatible with previous files:\n%s" % (file_name, error))
             except Exception:
                 raise
 

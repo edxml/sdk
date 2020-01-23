@@ -12,8 +12,8 @@ XML elements and route XML element types to the correct transcoder.
     :members:
     :show-inheritance:
 """
-from xml_transcoder import XmlTranscoder
-from xml_transcoder_mediator import XmlTranscoderMediator
-from xml_test_harness import XmlTranscoderTestHarness
+from .xml_transcoder import XmlTranscoder
+from .xml_transcoder_mediator import XmlTranscoderMediator
+from .xml_test_harness import XmlTranscoderTestHarness
 
 __all__ = ['XmlTranscoder', 'XmlTranscoderMediator', 'XmlTranscoderTestHarness']

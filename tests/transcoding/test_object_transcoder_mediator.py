@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 import pytest
 from lxml import etree, objectify
@@ -21,10 +21,10 @@ def record():
 
 @pytest.fixture()
 def output():
-    class Output(StringIO):
+    class Output(BytesIO):
         # For transcoding we need a file-like output
         # object that is in append mode.
-        mode = 'a'
+        mode = 'ba'
 
     return Output()
 
@@ -85,8 +85,7 @@ def test_process_single_transcoder_single_event_type(object_transcoder_mediator,
 
     assert len(edxml_extract(edxml, '/edxml/event')) == 1
     assert len(edxml_extract(edxml, '/edxml/event/properties/*')) == 2
-    assert edxml_extract(edxml, '/edxml/event/properties/property-a')[0].text == 'a1'
-    assert edxml_extract(edxml, '/edxml/event/properties/property-a')[1].text == 'a2'
+    assert set(edxml_extract(edxml, '/edxml/event/properties/property-a/text()')) == {'a1', 'a2'}
     assert edxml_extract(edxml, '/edxml/event')[0].attrib == {
         'event-type': 'test-event-type.a',
         'source-uri': '/test/uri/'

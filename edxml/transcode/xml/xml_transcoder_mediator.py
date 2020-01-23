@@ -126,7 +126,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         please refer to the lxml documentation for details.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         Notes:
           Passing a file name rather than a file-like object
@@ -178,9 +178,9 @@ class XmlTranscoderMediator(TranscoderMediator):
                  html=False, recover=None, huge_tree=False, schema=None, resolve_entities=False):
         """
 
-        Parses the specified file, yielding unicode strings containing the
-        resulting EDXML data while parsing. The file can be any file-like
-        object, or the name of a file that should be opened and parsed.
+        Parses the specified file, yielding bytes containing the resulting
+        EDXML data while parsing. The file can be any file-like object,
+        or the name of a file that should be opened and parsed.
 
         If an output was specified when instantiating this class, the EDXML
         data will be written into the output and this generator will yield
@@ -240,14 +240,14 @@ class XmlTranscoderMediator(TranscoderMediator):
         event into the output.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         Args:
           element (etree.Element): XML element
           tree (etree.ElementTree): Root of XML document being parsed
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
         """
 
         outputs = []
@@ -258,7 +258,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # match multiple elements.
         element_xpath = tree.getpath(element)
 
-        transcoder_xpaths = XmlTranscoderMediator._XPATH_MATCHERS.keys()
+        transcoder_xpaths = list(XmlTranscoderMediator._XPATH_MATCHERS.keys())
 
         matching_element_xpath = None
 
@@ -320,9 +320,9 @@ class XmlTranscoderMediator(TranscoderMediator):
                     'XML element at %s does not match any XPath expressions and no fallback transcoder is available.'
                     % element_xpath
                 )
-                log.warning('XML element was: %s' % etree.tostring(element, pretty_print=True))
+                log.warning('XML element was: %s' % etree.tostring(element, pretty_print=True, encoding='unicode'))
 
-        return u''.join(outputs)
+        return b''.join(outputs)
 
     @staticmethod
     def get_visited_tag_name(xpath):

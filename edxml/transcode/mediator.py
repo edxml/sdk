@@ -101,9 +101,9 @@ class TranscoderMediator(object):
 
     @staticmethod
     def _transcoder_is_postprocessor(transcoder):
-        this_method = getattr(transcoder, 'post_process')
+        this_method = getattr(type(transcoder), 'post_process')
         base_method = getattr(Transcoder, 'post_process')
-        return this_method.__func__ is not base_method.__func__
+        return this_method != base_method
 
     @classmethod
     def register(cls, record_selector, record_transcoder):
@@ -373,14 +373,14 @@ class TranscoderMediator(object):
         Writes a single event using the EDXML writer.
 
         If no output was configured for the EDXML writer the
-        generated XML data will be returned as unicode string.
+        generated XML data will be returned as bytes.
 
         Args:
             record_id (str): Record identifier
             event (edxml.EDXMLEvent): The EDXML event
 
         Returns:
-            str:
+            bytes:
         """
         self._prepare_write_event()
 
@@ -401,7 +401,7 @@ class TranscoderMediator(object):
                     'The post processor of the transcoder for record %s produced '
                     'an invalid event: %s\n\nContinuing...' % (record_id, str(e))
                 )
-        return ''.join(outputs)
+        return b''.join(outputs)
 
     def _transcode(self, record, record_id, record_selector, transcoder):
         """
@@ -410,7 +410,7 @@ class TranscoderMediator(object):
         transcoder, record_selector will be None.
 
         If no output was configured for the EDXML writer the
-        generated XML data will be returned as unicode string.
+        generated XML data will be returned as bytes.
 
         Args:
             record: The input record
@@ -419,7 +419,7 @@ class TranscoderMediator(object):
             transcoder (edxml.transcode.Transcoder): The transcoder to use
 
         Returns:
-            str:
+            bytes:
 
         """
         outputs = []
@@ -434,7 +434,7 @@ class TranscoderMediator(object):
             else:
                 outputs.append(self._write_event(record_id, event))
 
-        return ''.join(outputs)
+        return b''.join(outputs)
 
     def _post_process(self, record_id, record, transcoder, event):
         """
@@ -469,16 +469,16 @@ class TranscoderMediator(object):
         event into the output.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         Args:
           record: Input data record
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
-        return u''
+        return b''
 
     def close(self, flush=True):
         """
@@ -491,17 +491,17 @@ class TranscoderMediator(object):
         be written to the output, unless flush is set to False.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         Args:
           flush (bool): Flush output buffer
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
         if self.__closed:
-            return ''
+            return b''
 
         if self._writer is None:
             # Apparently, no events were generated. We will only

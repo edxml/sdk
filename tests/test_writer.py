@@ -5,7 +5,7 @@ import socket
 import threading
 import time
 
-from StringIO import StringIO
+from io import BytesIO
 
 
 @pytest.fixture(
@@ -30,7 +30,7 @@ def file(request):
 
     a = EDXMLPullParser()
     a.set_event_type_handler(request.param["event_types"], handler=handler)
-    a.parse(open(request.param["filename"]))
+    a.parse(open(request.param["filename"], 'rb'))
     request.param["parser"] = a
     request.param["events"] = events
     return request.param
@@ -96,7 +96,7 @@ def simplewriter(tmpdir):
 @pytest.fixture
 def socketwriter(listener):
     def validate():
-        stringfile = StringIO(listener["result_buffer"].buffer)
+        stringfile = BytesIO(listener["result_buffer"].buffer)
         p = EDXMLPullParser()
         p.parse(stringfile)
         listener["result_buffer"].buffer = ""

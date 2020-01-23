@@ -40,7 +40,7 @@ def eventproperty_unique(eventtype_unique, objecttype):
 
 
 def test_event_init():
-    attachments = {"test": u"Två dagar kvar🎉🎉"}
+    attachments = {"test": "Två dagar kvar🎉🎉"}
     event = EDXMLEvent({}, event_type_name=None, source_uri=None, parents=None, attachments=attachments)
 
     assert event.get_attachments() == attachments
@@ -254,7 +254,7 @@ def test_merge_minmax_float(ontology, eventtype_unique, floatobjecttype):
     copy = deepcopy(e1)
     changed = copy.merge_with([e2, e3], ontology)
     assert changed
-    assert map(float, copy['prop']) == [10.2]
+    assert list(map(float, copy['prop'])) == [10.2]
 
 
 @pytest.fixture(params=['number:tinyint', 'number:smallint', 'number:mediumint', 'number:int', 'number:bigint'])
@@ -376,7 +376,7 @@ def create_parsedevent(ontology, tmpdir):
     f = tmpdir.mkdir("sub").join("simplewriter.edxml")
     f.ensure(file=True)
 
-    fa = f.open('a+')
+    fa = f.open('ba+')
     w = SimpleEDXMLWriter(fa)
     w.set_buffer_size(0)
     w.set_event_source("/test/")
@@ -386,7 +386,7 @@ def create_parsedevent(ontology, tmpdir):
     w.flush()
     w.close()
     fa.close()
-    fr = open(fa.name, 'r')
+    fr = open(fa.name, 'rb')
     p = EDXMLPullParser()
 
     events = []
@@ -418,7 +418,7 @@ def test_eventelement_parents(event):
     assert event.get_explicit_parents() == ["thisisaparenthash"]
 
     event.add_parents(["thisisaparenthash2"])
-    assert event.get_explicit_parents() == ["thisisaparenthash", "thisisaparenthash2"]
+    assert set(event.get_explicit_parents()) == {"thisisaparenthash", "thisisaparenthash2"}
 
     # Parent hashes are a set internally, so this causes reordering
     event.set_parents(["thisisaparenthash3", "thisisaparenthash2", "thisisaparenthash1"])

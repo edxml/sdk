@@ -42,7 +42,7 @@
 
 import argparse
 import sys
-from StringIO import StringIO
+from io import BytesIO
 from difflib import unified_diff
 
 from edxml import EDXMLPullParser
@@ -66,7 +66,7 @@ class SortingParser(EDXMLPullParser):
             self._events_by_hash[hash] = event
 
     def generate_sorted_edxml(self):
-        edxml = StringIO()
+        edxml = BytesIO()
         edxml.mode = 'a'
 
         # Generate EDXML data by adding the events sorted by sticky hash.
@@ -128,7 +128,7 @@ def main():
         sys.stderr.write(
             'edxml-diff - waiting for EDXML data on standard input... (use -h option to get help)\n'
         )
-        args.file.append(sys.stdin)
+        args.file.append(sys.stdin.buffer)
 
     differ = EdxmlDiffer()
 

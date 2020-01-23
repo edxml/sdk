@@ -79,10 +79,7 @@ class EDXMLWriter(object):
             self.mode = 'a'
 
         def write(self, data):
-            # For some reason, lxml write regular strings rather than
-            # unicode strings. We need to tell Python that it is
-            # actually unicode data.
-            self.buffer.append(unicode(data, encoding='utf-8'))
+            self.buffer.append(data)
 
     def __init__(self, output=None, validate=True, log_repaired_events=False, ignore_invalid_objects=False,
                  pretty_print=True):
@@ -129,7 +126,7 @@ class EDXMLWriter(object):
         # will write the XML declaration and open the
         # <events> tag.
         self.__writer = self.__outer_xml_serializer_coroutine()
-        self.__writer.next()
+        next(self.__writer)
 
         self.__current_element_type = ""
         self.__event_types = {}
@@ -182,11 +179,14 @@ class EDXMLWriter(object):
 
         except EDXMLValidationError as exception:
             self.__invalid_event_count += 1
-            raise EDXMLValidationError('An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
-                etree.tostring(event_element, pretty_print=True).encode(
-                    'utf-8'), exception,
-                'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
-                'and begin writing a new event.'), sys.exc_info()[2])
+            raise EDXMLValidationError(
+                'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
+                    etree.tostring(event_element, pretty_print=True, encoding='unicode'),
+                    exception,
+                    'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
+                    'and begin writing a new event.'
+                ), sys.exc_info()[2]
+            )
 
     def __outer_xml_serializer_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
@@ -211,11 +211,11 @@ class EDXMLWriter(object):
 
     def flush(self):
         if isinstance(self.__output, self.OutputBuffer):
-            output = u''.join(self.__output.buffer)
+            output = b''.join(self.__output.buffer)
             self.__output.buffer.clear()
             return output
         else:
-            return u''
+            return b''
 
     def add_ontology(self, ontology):
         """
@@ -223,13 +223,13 @@ class EDXMLWriter(object):
         Writes an EDXML ontology element into the output.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Args:
           ontology (edxml.ontology.Ontology): The ontology
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
         # Below updates triggers an exception in case the update
@@ -255,14 +255,14 @@ class EDXMLWriter(object):
         Finalizes the output data stream.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
         """
         if self.__writer is None:
             # Already closed
-            return ''
+            return b''
 
         self.__writer.close()
 
@@ -339,13 +339,13 @@ class EDXMLWriter(object):
         Adds specified event to the output data stream.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Args:
           event (edxml.EDXMLEvent): The event
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
         event_type_name = event.get_type_name()
@@ -410,13 +410,13 @@ class EDXMLWriter(object):
         Adds specified foreign element to the output data stream.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Args:
           element (etree._Element): The element
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
         try:

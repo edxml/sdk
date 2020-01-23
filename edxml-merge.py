@@ -189,7 +189,7 @@ for file_name in args.file:
     sys.stderr.write("\nParsing file %s:" % file_name)
 
     try:
-        sax_parser.parse(open(file_name))
+        sax_parser.parse(file_name)
     except ProcessingInterrupted:
         pass
     except EDXMLError as Error:

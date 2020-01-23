@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import codecs
 import re
 import hashlib
 
@@ -37,6 +37,8 @@ def to_edxml_object(property_name, value):
         return str(value)
     elif isinstance(value, bool):
         return 'true' if value else 'false'
+    elif isinstance(value, bytes):
+        return value.decode('utf-8')
     else:
         raise ValueError(
             'Value of property %s is not a string: %s' % (property_name, repr(value))
@@ -119,7 +121,7 @@ class PropertyObjectSet(object):
         if isinstance(objects, set):
             self.__objects = objects
         else:
-            if isinstance(objects, (str, unicode, int, bool, float, datetime, IP)):
+            if isinstance(objects, (str, int, bool, float, datetime, IP)):
                 objects = (objects,)
             self.__objects = set(iter(objects or []))
         if update is not None:
@@ -165,7 +167,10 @@ class AttachmentSet(object):
     def __init__(self, attachments=None, update_attachment=None):
         self.__attachments = OrderedDict()
         for attachment_name, value in attachments.items() or {}:
-            self.__attachments[attachment_name] = value
+            try:
+                self.__attachments[attachment_name] = '' + value
+            except TypeError as e:
+                raise TypeError(f"Failed to set event attachment {attachment_name}: {e}")
 
         if update_attachment is not None:
             self._update_attachment = update_attachment
@@ -250,7 +255,7 @@ class EDXMLEvent(MutableMapping):
         names to strings.
 
         Args:
-          properties (Dict[str,List[unicode]]): Dictionary of properties
+          properties (Dict[str,List[str]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -270,8 +275,8 @@ class EDXMLEvent(MutableMapping):
 
     def __str__(self):
         return "\n".join(
-            ['%20s:%s' % (property_name, ','.join([unicode(value) for value in values]))
-             for property_name, values in self._properties.iteritems()]
+            ['%20s:%s' % (property_name, ','.join(values))
+             for property_name, values in self._properties.items()]
         )
 
     def __delitem__(self, key):
@@ -421,11 +426,11 @@ class EDXMLEvent(MutableMapping):
           directly to create new events.
 
         Args:
-          properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
+          properties (Dict[str,Union[str,List[str]]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          attachments (Optional[unicode]): Event attachments dictionary
+          attachments (Optional[str]): Event attachments dictionary
 
         Returns:
           EDXMLEvent:
@@ -480,7 +485,7 @@ class EDXMLEvent(MutableMapping):
         as keys. The values are lists of object values.
 
         Returns:
-          Dict[str, List[unicode]]: Event properties
+          Dict[str, List[str]]: Event properties
 
         """
         return self._properties
@@ -568,10 +573,10 @@ class EDXMLEvent(MutableMapping):
         Replaces the event properties with the properties
         from specified dictionary. The dictionary must
         contain property names as keys. The values must be
-        lists of unicode strings.
+        lists of strings.
 
         Args:
-          properties: Dict(str, List(unicode)): Event properties
+          properties: Dict(str, List(str)): Event properties
 
         Returns:
           EDXMLEvent:
@@ -602,7 +607,7 @@ class EDXMLEvent(MutableMapping):
         """
 
         props = self.get_properties()
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             try:
                 source_properties = source_event._properties[source]
             except KeyError:
@@ -638,7 +643,7 @@ class EDXMLEvent(MutableMapping):
         """
 
         props = self.get_properties()
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             try:
                 for target in (targets if isinstance(targets, list) else [targets]):
                     if len(source_event._properties[source]) == 0:
@@ -842,7 +847,7 @@ class EDXMLEvent(MutableMapping):
                         else:
                             value_func = value_functions[split_data_type[1]]
                         # convert values according to their data type and add to the result
-                        values.update(map(value_func, source[property_name] | target[property_name]))
+                        values.update(list(map(value_func, source[property_name] | target[property_name])))
 
                         if merge_strategy == 'min':
                             target[property_name] = {str(min(values))}
@@ -901,16 +906,16 @@ class EDXMLEvent(MutableMapping):
         # string representation of the event, and output in hex
 
         if event_type.is_unique():
-            return hashlib.sha1(
+            return codecs.encode(hashlib.sha1(
                 (
                     '%s\n%s\n%s' % (self.get_source_uri(), self.get_type_name(), '\n'.join(sorted(object_strings)))
-                ).encode("utf-8")
-            ).digest().encode(encoding)
+                ).encode()
+            ).digest(), encoding).decode()
         else:
             attachment_strings = [
                 '%s:%s' % (name, attachment.replace('\n', '\\n')) for name, attachment in self.get_attachments().items()
             ]
-            return hashlib.sha1(
+            return codecs.encode(hashlib.sha1(
                 (
                     '%s\n%s\n%s\n%s' % (
                         self.get_source_uri(),
@@ -918,8 +923,8 @@ class EDXMLEvent(MutableMapping):
                         '\n'.join(sorted(object_strings)),
                         '\n'.join(sorted(attachment_strings))
                     )
-                ).encode("utf-8")
-            ).digest().encode(encoding)
+                ).encode()
+            ).digest(), encoding).decode()
 
     def is_valid(self, ontology):
         """
@@ -967,7 +972,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         raise NotImplementedError('ParsedEvent objects can only be created by parsers')
 
     def __str__(self):
-        return etree.tostring(self)
+        return etree.tostring(self, encoding='unicode')
 
     def __delitem__(self, key):
         props = self.find('{http://edxml.org/edxml}properties')
@@ -996,13 +1001,12 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             try:
                 etree.SubElement(props, '{http://edxml.org/edxml}' + key).text = v
             except (TypeError, ValueError):
-                if type(v) in (str, unicode):
+                if isinstance(v, str):
                     # Value contains illegal characters.
                     if not getattr(self, '_replace_invalid_characters', False):
                         raise
                     # Replace illegal characters with unicode replacement characters.
-                    props[-1].text = unicode(
-                        re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
+                    props[-1].text = re.sub(edxml.evil_xml_chars_regexp, chr(0xfffd), v)
                 else:
                     props[-1].text = to_edxml_object(key, v)
 
@@ -1021,12 +1025,12 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         try:
             etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + attachment_name).text = value
         except (TypeError, ValueError):
-            if type(value) in (str, unicode):
+            if isinstance(value, str):
                 # Value contains illegal characters.
                 if not getattr(self, '_replace_invalid_characters', False):
                     raise
                 # Replace illegal characters with unicode replacement characters.
-                attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
+                attachments_element[-1].text = re.sub(edxml.evil_xml_chars_regexp, chr(0xfffd), value)
             else:
                 attachments_element[-1].text = value
 
@@ -1199,10 +1203,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         Replaces the event properties with the properties
         from specified dictionary. The dictionary must
         contain property names as keys. The values must be
-        lists of unicode strings.
+        lists of strings.
 
         Args:
-          properties: Dict(str, List(unicode)): Event properties
+          properties: Dict(str, List(str)): Event properties
 
         Returns:
           EDXMLEvent:
@@ -1241,7 +1245,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
           EDXMLEvent:
         """
 
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             source_properties = source_event[source]
             if len(source_properties) > 0:
                 for target in (targets if isinstance(targets, list) else [targets]):
@@ -1272,7 +1276,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
           EDXMLEvent:
         """
 
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             for target in (targets if isinstance(targets, list) else [targets]):
                 if source not in source_event or len(source_event[source]) == 0:
                     continue
@@ -1380,11 +1384,11 @@ class EventElement(EDXMLEvent):
 
         Creates a new EDXML event. The Properties argument must be a
         dictionary mapping property names to object values. Object values
-        must be lists of one or multiple unicode strings. Explicit parent
+        must be lists of one or multiple strings. Explicit parent
         hashes must be specified as hex encoded strings.
 
         Args:
-          properties (Dict(str, List[unicode])): Dictionary of properties
+          properties (Dict(str, List[str])): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[optional]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -1419,7 +1423,7 @@ class EventElement(EDXMLEvent):
         )
 
     def __str__(self):
-        return etree.tostring(self.__element)
+        return etree.tostring(self.__element, encoding='unicode')
 
     def __repr__(self):
         return repr(self.__element)
@@ -1447,12 +1451,12 @@ class EventElement(EDXMLEvent):
             try:
                 etree.SubElement(props, key).text = v
             except (TypeError, ValueError):
-                if type(v) in (str, unicode):
+                if isinstance(v, str):
                     # Value contains illegal characters.
                     if not getattr(self, '_replace_invalid_characters', False):
                         raise
                     # Replace illegal characters with unicode replacement characters.
-                    props[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), v))
+                    props[-1].text = re.sub(edxml.evil_xml_chars_regexp, chr(0xfffd), v)
                 else:
                     props[-1].text = to_edxml_object(key, v)
 
@@ -1471,12 +1475,12 @@ class EventElement(EDXMLEvent):
         try:
             etree.SubElement(attachments_element, attachment_name).text = value
         except (TypeError, ValueError):
-            if type(value) in (str, unicode):
+            if isinstance(value, str):
                 # Value contains illegal characters.
                 if not getattr(self, '_replace_invalid_characters', False):
                     raise
                 # replace illegal characters with unicode replacement characters.
-                attachments_element[-1].text = unicode(re.sub(edxml.evil_xml_chars_regexp, unichr(0xfffd), value))
+                attachments_element[-1].text = re.sub(edxml.evil_xml_chars_regexp, chr(0xfffd), value)
             else:
                 attachments_element[-1].text = value
 
@@ -1518,7 +1522,7 @@ class EventElement(EDXMLEvent):
           directly to create new events.
 
         Args:
-          properties (Dict[str,Union[unicode,List[unicode]]]): Dictionary of properties
+          properties (Dict[str,Union[str,List[str]]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -1663,10 +1667,10 @@ class EventElement(EDXMLEvent):
         Replaces the event properties with the properties
         from specified dictionary. The dictionary must
         contain property names as keys. The values must be
-        lists of unicode strings.
+        lists of strings.
 
         Args:
-          properties: Dict(str, List(unicode)): Event properties
+          properties: Dict(str, List(str)): Event properties
 
         Returns:
           EventElement:
@@ -1705,7 +1709,7 @@ class EventElement(EDXMLEvent):
           EventElement:
         """
 
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             source_properties = source_event[source]
             if len(source_properties) > 0:
                 for target in (targets if isinstance(targets, list) else [targets]):
@@ -1736,7 +1740,7 @@ class EventElement(EDXMLEvent):
           EventElement:
         """
 
-        for source, targets in property_map.iteritems():
+        for source, targets in property_map.items():
             for target in (targets if isinstance(targets, list) else [targets]):
                 if source not in source_event or len(source_event[source]) == 0:
                     continue

@@ -1,5 +1,6 @@
 # coding=utf-8
 # the line above is required for inline unicode
+import codecs
 import hashlib
 from collections import OrderedDict
 from datetime import datetime
@@ -13,12 +14,12 @@ import pytest
 
 @pytest.fixture
 def sha1_hash():
-    return hashlib.sha1("foo").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("foo".encode()).digest(), "hex").decode()
 
 
 @pytest.fixture
 def another_sha1_hash():
-    return hashlib.sha1("bar").digest().encode("hex")
+    return codecs.encode(hashlib.sha1("bar".encode()).digest(), "hex").decode()
 
 
 @pytest.fixture
@@ -35,7 +36,7 @@ def ontology():
 
 def create_parsed_event(ontology, event):
     edxml_data = EventCollection([event]).set_ontology(ontology).to_edxml()
-    events = EventCollection.from_edxml(edxml_data.encode('utf-8'))
+    events = EventCollection.from_edxml(edxml_data)
     return events[0]  # type: ParsedEvent
 
 
@@ -52,7 +53,7 @@ def create_event_element(event):
 @pytest.fixture(params=('EdxmlEvent', 'ParsedEvent', 'EventElement'))
 def event(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         event_type_name="a",
         source_uri="/a/",
     )
@@ -68,7 +69,7 @@ def event(request, ontology, sha1_hash):
 @pytest.fixture(params=('EdxmlEvent', 'ParsedEvent', 'EventElement'))
 def event_with_attachment(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         event_type_name="a",
         source_uri="/a/",
         attachments={'attachment': 'test'}
@@ -85,7 +86,7 @@ def event_with_attachment(request, ontology, sha1_hash):
 @pytest.fixture(params=('EdxmlEvent', 'ParsedEvent'))
 def event_with_explicit_parent(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         event_type_name="a",
         source_uri="/a/",
         parents=[sha1_hash]
@@ -100,7 +101,7 @@ def event_with_explicit_parent(request, ontology, sha1_hash):
 @pytest.fixture(params=('EdxmlEvent', 'ParsedEvent'))
 def event_with_foreign_attribute(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         event_type_name="a",
         source_uri="/a/"
     ).set_foreign_attributes({'{http://some/namespace}key': 'value'})
@@ -117,7 +118,7 @@ def event_with_foreign_attribute(request, ontology, sha1_hash):
 @pytest.fixture(params=('EdxmlEvent', 'EventElement'))
 def event_without_type(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         source_uri="/a/",
     )
 
@@ -133,7 +134,7 @@ def event_without_type(request, ontology, sha1_hash):
 @pytest.fixture(params=('EdxmlEvent', 'EventElement'))
 def event_without_source(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
-        properties={"smiley": u"😀"},
+        properties={"smiley": "😀"},
         event_type_name="a"
     )
 
@@ -146,10 +147,10 @@ def event_without_source(request, ontology, sha1_hash):
 def test_read_properties(event):
 
     assert len(event) == 1
-    assert event.keys() == ["smiley"]
-    assert event.values() == [{u"😀"}]
-    assert event["smiley"] == {u"😀"}
-    assert event.get_any("smiley") == u"😀"
+    assert list(event.keys()) == ["smiley"]
+    assert list(event.values()) == [{"😀"}]
+    assert event["smiley"] == {"😀"}
+    assert event.get_any("smiley") == "😀"
     assert event["nonexistent"] == set()
     assert event.properties.items() == [('smiley', {'😀'})]
     assert event.get_any("nonexistent") is None
@@ -157,8 +158,8 @@ def test_read_properties(event):
     assert event["nonexistent"] == set()
     assert "smiley" in event
     assert "nonexistent" not in event
-    assert {prop: values for prop, values in event.iteritems()} == {"smiley": {u"😀"}}
-    assert event.get_properties() == {"smiley": {u"😀"}}
+    assert {prop: values for prop, values in event.items()} == {"smiley": {"😀"}}
+    assert event.get_properties() == {"smiley": {"😀"}}
 
 
 def test_get_non_string_property_fails(event):
@@ -168,13 +169,13 @@ def test_get_non_string_property_fails(event):
 
 def test_set_and_get_property(event):
     event["c"] = ["d"]
-    assert event.get_properties() == {"smiley": {u"😀"}, "c": {"d"}}
+    assert event.get_properties() == {"smiley": {"😀"}, "c": {"d"}}
 
     event["c"] = ["d", "e"]
-    assert event.get_properties() == {"smiley": {u"😀"}, "c": {"d", "e"}}
+    assert event.get_properties() == {"smiley": {"😀"}, "c": {"d", "e"}}
 
     event["c"] = ["e"]
-    assert event.get_properties() == {"smiley": {u"😀"}, "c": {"e"}}
+    assert event.get_properties() == {"smiley": {"😀"}, "c": {"e"}}
 
 
 def test_set_and_get_property_dict(event):
@@ -190,7 +191,7 @@ def test_set_and_get_property_dict(event):
 
 def test_change_and_get_properties(event):
     event["c"] = "d"
-    assert event.get_properties() == {"smiley": {u"😀"}, "c": {"d"}}
+    assert event.get_properties() == {"smiley": {"😀"}, "c": {"d"}}
 
     event.set_properties({"a": {"1"}, "b": {"2"}})
     assert event.get_properties() == {"a": {"1"}, "b": {"2"}}
@@ -201,7 +202,7 @@ def test_change_and_get_properties(event):
 
 def test_change_and_iterate_properties(event):
     event.set_properties({"a": {"1"}, "b": {"2"}})
-    assert {prop: values for prop, values in event.iteritems()} == {"a": {"1"}, "b": {"2"}}
+    assert {prop: values for prop, values in event.items()} == {"a": {"1"}, "b": {"2"}}
 
 
 def test_change_and_find_nonexistent_property(event):
@@ -245,43 +246,43 @@ def test_set_property_to_noniterable_fails(event):
 
 
 def test_add_property_object(event):
-    event['smiley'].add(u"☹")
-    assert event.get_properties() == {"smiley": {u"😀", u"☹"}}
+    event['smiley'].add("☹")
+    assert event.get_properties() == {"smiley": {"😀", "☹"}}
 
 
 def test_update_property_object(event):
-    event['smiley'].update([u"☹"])
-    assert event.get_properties() == {"smiley": {u"😀", u"☹"}}
+    event['smiley'].update(["☹"])
+    assert event.get_properties() == {"smiley": {"😀", "☹"}}
 
 
 def test_add_nonexistent_property_object(event):
     event['nonexistent'].add("value")
-    assert event.get_properties() == {"smiley": {u"😀"}, "nonexistent": {"value"}}
+    assert event.get_properties() == {"smiley": {"😀"}, "nonexistent": {"value"}}
 
 
 def test_add_properties_object(event):
-    event.properties['smiley'].add(u"☹")
-    assert event.properties == {"smiley": {u"😀", u"☹"}}
+    event.properties['smiley'].add("☹")
+    assert event.properties == {"smiley": {"😀", "☹"}}
 
 
 def test_update_properties_object(event):
-    event.properties['smiley'].update([u"☹"])
-    assert event.properties == {"smiley": {u"😀", u"☹"}}
+    event.properties['smiley'].update(["☹"])
+    assert event.properties == {"smiley": {"😀", "☹"}}
 
 
 def test_add_nonexistent_properties_object(event):
     event.properties['nonexistent'].add("value")
-    assert event.properties == {"smiley": {u"😀"}, "nonexistent": {"value"}}
+    assert event.properties == {"smiley": {"😀"}, "nonexistent": {"value"}}
 
 
 def test_delete_property(event):
-    event.set_properties({"smiley": [u"😀"], "meh": [u"☹"]})
+    event.set_properties({"smiley": ["😀"], "meh": ["☹"]})
 
     del event['meh']
-    assert event.get_properties() == {"smiley": {u"😀"}}
+    assert event.get_properties() == {"smiley": {"😀"}}
 
     del event['nonexistent']
-    assert event.get_properties() == {"smiley": {u"😀"}}
+    assert event.get_properties() == {"smiley": {"😀"}}
 
 
 def test_copy_property(event):
@@ -293,7 +294,7 @@ def test_copy_property(event):
 
     target.copy_properties_from(source, {"a": "copy", "nonexistent": "should be ignored"})
     assert source.get_properties() == {"a": {"foo"}}
-    assert target.get_properties() == {"copy": {u"foo"}}
+    assert target.get_properties() == {"copy": {"foo"}}
 
 
 def test_copy_property_values(event):
@@ -388,7 +389,7 @@ def test_add_parents(event, sha1_hash, another_sha1_hash):
     event.add_parents([sha1_hash])
     assert event.get_explicit_parents() == [sha1_hash]
     event.add_parents([another_sha1_hash])
-    assert event.get_explicit_parents() == [sha1_hash, another_sha1_hash]
+    assert set(event.get_explicit_parents()) == {sha1_hash, another_sha1_hash}
 
 
 def test_add_duplicate_parents(event, sha1_hash):
@@ -412,9 +413,9 @@ def test_compute_sticky_hash(event, ontology):
     # Note that this test is just to verify that hash
     # computation works for all event types. Exhaustive
     # testing of hash computation is done elsewhere.
-    hash_hex = hashlib.sha1(
-        u'/a/\na\nsmiley:😀\n'.encode('utf-8')
-    ).digest().encode('hex')
+    hash_hex = codecs.encode(hashlib.sha1(
+        '/a/\na\nsmiley:😀\n'.encode()
+    ).digest(), 'hex').decode()
 
     assert event.compute_sticky_hash(ontology) == hash_hex
 
@@ -429,13 +430,13 @@ def test_sort_event(event):
     attachments['a'] = 'test'
     event.set_attachments(attachments)
 
-    assert event.get_properties().keys() == ['b', 'a']
-    assert event.get_attachments().keys() == ['b', 'a']
+    assert list(event.get_properties().keys()) == ['b', 'a']
+    assert list(event.get_attachments().keys()) == ['b', 'a']
 
     event.sort()
 
-    assert event.get_properties().keys() == ['a', 'b']
-    assert event.get_attachments().keys() == ['a', 'b']
+    assert list(event.get_properties().keys()) == ['a', 'b']
+    assert list(event.get_attachments().keys()) == ['a', 'b']
 
 
 def test_event_without_type(event_without_type):

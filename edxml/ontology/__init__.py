@@ -40,7 +40,7 @@ sources, and so on.
     :members:
     :show-inheritance:
 """
-from __future__ import absolute_import
+
 
 from edxml.ontology.util import normalize_xml_token
 from edxml.ontology.ontology_element import OntologyElement

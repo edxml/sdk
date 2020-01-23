@@ -300,10 +300,19 @@ class EventTypeParent(OntologyElement):
             "Definitions of event type {} are neither equal nor valid upgrades / downgrades of one another "
             "due to the following difference in their parent definitions:\nOld version:\n{}\nNew version:\n{}".format(
                 self._childEventType.get_name(),
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, parent):
         """

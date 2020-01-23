@@ -60,7 +60,7 @@ def main():
     if args.file is None:
 
         # Feed the parser from standard input.
-        args.file = [sys.stdin]
+        args.file = [sys.stdin.buffer]
 
     with EDXMLPullParser() as parser:
         try:

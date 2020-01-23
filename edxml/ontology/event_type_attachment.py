@@ -45,7 +45,7 @@ class EventTypeAttachment(OntologyElement):
             'display-name-singular': display_name_singular,
             'display-name-plural': display_name_plural,
             'description': description or display_name_singular,
-            'encoding': 'baes64' if encode_base64 else 'unicode'
+            'encoding': 'base64' if encode_base64 else 'unicode'
         }
 
         self._event_type = event_type
@@ -367,10 +367,19 @@ class EventTypeAttachment(OntologyElement):
             "\nOld version:\n{}\nNew version:\n{}".format(
                 self._event_type.get_name(),
                 self.get_name(),
-                etree.tostring(old.generate_xml(), pretty_print=True),
-                etree.tostring(new.generate_xml(), pretty_print=True)
+                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def update(self, attachment):
         """

@@ -10,9 +10,9 @@ various types of input data (like JSON records) into EDXML output streams.
     :members:
     :show-inheritance:
 """
-from transcoder import Transcoder
-from mediator import TranscoderMediator
-from test_harness import TranscoderTestHarness
+from .transcoder import Transcoder
+from .mediator import TranscoderMediator
+from .test_harness import TranscoderTestHarness
 
 
 __all__ = ['Transcoder', 'TranscoderMediator', 'TranscoderTestHarness']

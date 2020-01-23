@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 import pytest
 from lxml import etree, objectify
@@ -9,7 +9,7 @@ from edxml.transcode.xml import XmlTranscoderMediator, XmlTranscoder
 
 @pytest.fixture()
 def xml():
-    return (
+    return bytes(
         '<root>'
         '  <records>'
         '    <a>'
@@ -21,16 +21,16 @@ def xml():
         '    </a>'
         '    <b attr="b2"/>'
         '  </records>'
-        '</root>'
+        '</root>', encoding='utf-8'
     )
 
 
 @pytest.fixture()
 def output():
-    class Output(StringIO):
+    class Output(BytesIO):
         # For transcoding we need a file-like output
         # object that is in append mode.
-        mode = 'a'
+        mode = 'ba'
 
     return Output()
 
@@ -79,7 +79,7 @@ def test_parse_single_transcoder_single_event_type(xml_transcoder, xml, output):
         mediator.register('records', xml_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     edxml = etree.fromstring(output.getvalue())
 
@@ -104,9 +104,9 @@ def test_generate(xml_transcoder, xml):
         mediator.register('records', xml_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
-        output_strings = list(mediator.generate(StringIO(xml)))
+        output_strings = list(mediator.generate(BytesIO(xml)))
 
-    edxml = etree.fromstring(''.join(output_strings).encode())
+    edxml = etree.fromstring(b''.join(output_strings))
 
     assert len(edxml_extract(edxml, '/edxml/event')) == 2
 
@@ -161,7 +161,7 @@ def test_parse_nested_transcoders(xml, output):
     with XmlTranscoderMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     edxml = etree.fromstring(output.getvalue())
 
@@ -188,7 +188,7 @@ def test_log_skipped_element(xml_transcoder, xml, output, caplog):
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     assert '/root/records/b[1] does not match any XPath' in ''.join(caplog.messages)
     assert '/root/records/b[2] does not match any XPath' in ''.join(caplog.messages)
@@ -204,7 +204,7 @@ def test_log_fallback_transcoder(xml_transcoder, xml, output, caplog):
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     assert 'passing to fallback transcoder' in ''.join(caplog.messages)
 
@@ -233,7 +233,7 @@ def test_ontology_update(xml_transcoder, xml, output):
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     edxml = etree.fromstring(output.getvalue())
 
@@ -258,7 +258,7 @@ def test_invalid_event_exception(xml_transcoder, xml, output):
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
-            mediator.parse(StringIO(xml))
+            mediator.parse(BytesIO(xml))
 
     XmlTranscoderMediator.clear_registrations()
 
@@ -283,7 +283,7 @@ def test_post_process(xml_transcoder, xml, output):
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
-        mediator.parse(StringIO(xml))
+        mediator.parse(BytesIO(xml))
 
     edxml = etree.fromstring(output.getvalue())
 
@@ -311,6 +311,6 @@ def test_post_processor_invalid_event_exception(xml_transcoder, xml, output):
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
-            mediator.parse(StringIO(xml))
+            mediator.parse(BytesIO(xml))
 
     XmlTranscoderMediator.clear_registrations()

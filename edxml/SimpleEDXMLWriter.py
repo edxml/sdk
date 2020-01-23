@@ -244,7 +244,7 @@ class SimpleEDXMLWriter(object):
 
         """
 
-        output = u''
+        output = b''
 
         self.__writer = EDXMLWriter(
             self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
@@ -297,13 +297,13 @@ class SimpleEDXMLWriter(object):
         Add the specified event to the output stream.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Args:
           event (edxml.EDXMLEvent): An EDXMLEvent instance
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
         event_type_name = event.get_type_name()
@@ -379,17 +379,17 @@ class SimpleEDXMLWriter(object):
         output latency is exceeded.
 
         If no output was specified while instantiating this class,
-        the generated XML data will be returned as unicode string.
+        the generated XML data will be returned as bytes.
 
         Args:
           force (bool): Force flushing or not
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
 
-        output = u''
+        output = b''
 
         if not self.__writer:
             # We did not create the EDXMLWriter yet.
@@ -415,7 +415,7 @@ class SimpleEDXMLWriter(object):
         return output
 
     def _write_ontology(self):
-        output = u''
+        output = b''
         output += self.__writer.add_ontology(self.__ontology)
         self.__last_written_ontology_version = self.__ontology.get_version()
         self.__wrote_ontology_before = True
@@ -427,7 +427,7 @@ class SimpleEDXMLWriter(object):
         event_group_id = "group"
 
         if len(self.__event_buffers[event_group_id][merge]) == 0:
-            return u''
+            return b''
 
         outputs = []
 
@@ -468,7 +468,7 @@ class SimpleEDXMLWriter(object):
         self.__previous_event_buffers = copy.deepcopy(self.__event_buffers)
         self.__event_buffers[event_group_id][merge] = {} if merge else []
 
-        return u''.join(outputs)
+        return b''.join(outputs)
 
     def close(self, flush=True):
         """
@@ -481,18 +481,18 @@ class SimpleEDXMLWriter(object):
         be written, unless flush is set to False.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as unicode string.
+        any generated XML data will be returned as bytes.
 
         Args:
           flush (bool): Flush output buffer
 
         Returns:
-          unicode: Generated output XML data
+          bytes: Generated output XML data
 
         """
 
         if self.__closed:
-            return ''
+            return b''
 
         outputs = []
 
@@ -514,4 +514,4 @@ class SimpleEDXMLWriter(object):
         self.__writer = None
         self.__closed = True
 
-        return u''.join(outputs)
+        return b''.join(outputs)
