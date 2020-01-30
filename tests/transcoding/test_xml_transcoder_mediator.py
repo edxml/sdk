@@ -25,16 +25,6 @@ def xml():
     )
 
 
-@pytest.fixture()
-def output():
-    class Output(BytesIO):
-        # For transcoding we need a file-like output
-        # object that is in append mode.
-        mode = 'ba'
-
-    return Output()
-
-
 def edxml_extract(edxml, path):
     # Below, we remove the EDXML namespace from all
     # tags, allowing us to use simple XPath expressions
@@ -70,10 +60,12 @@ def test_duplicate_registration_exception(xml_transcoder):
         mediator.register('/some/path', xml_transcoder, tag='test')
 
 
-def test_parse_single_transcoder_single_event_type(xml_transcoder, xml, output):
+def test_parse_single_transcoder_single_event_type(xml_transcoder, xml):
     xml_transcoder.TYPE_MAP = {'a': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
+
+    output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
         mediator.register('records', xml_transcoder)
@@ -113,7 +105,7 @@ def test_generate(xml_transcoder, xml):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_parse_nested_transcoders(xml, output):
+def test_parse_nested_transcoders(xml):
 
     class InnerTranscoder(XmlTranscoder):
         def create_object_types(self):
@@ -158,6 +150,8 @@ def test_parse_nested_transcoders(xml, output):
     XmlTranscoderMediator.register('/root/records', OuterTranscoder)
     XmlTranscoderMediator.register('/root/records/a', InnerTranscoder)
 
+    output = BytesIO()
+
     with XmlTranscoderMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -178,13 +172,13 @@ def test_parse_nested_transcoders(xml, output):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_log_skipped_element(xml_transcoder, xml, output, caplog):
+def test_log_skipped_element(xml_transcoder, xml, caplog):
 
     # Below we deliberately set the tag that the parser should visit
     # to 'b' while we register a transcoder for elements having tag 'a'
     XmlTranscoderMediator.register('/root/records/a', xml_transcoder, tag='b')
 
-    with XmlTranscoderMediator(output) as mediator:
+    with XmlTranscoderMediator(BytesIO()) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -196,11 +190,11 @@ def test_log_skipped_element(xml_transcoder, xml, output, caplog):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_log_fallback_transcoder(xml_transcoder, xml, output, caplog):
+def test_log_fallback_transcoder(xml_transcoder, xml, caplog):
 
     XmlTranscoderMediator.register(None, xml_transcoder, tag='records')
 
-    with XmlTranscoderMediator(output) as mediator:
+    with XmlTranscoderMediator(BytesIO()) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -211,7 +205,7 @@ def test_log_fallback_transcoder(xml_transcoder, xml, output, caplog):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_ontology_update(xml_transcoder, xml, output):
+def test_ontology_update(xml_transcoder, xml):
 
     class SourceGeneratingMediator(XmlTranscoderMediator):
         def process(self, element, tree=None):
@@ -229,6 +223,8 @@ def test_ontology_update(xml_transcoder, xml, output):
 
     SourceGeneratingMediator.register('/root/records/a', xml_transcoder)
 
+    output = BytesIO()
+
     with SourceGeneratingMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -243,7 +239,7 @@ def test_ontology_update(xml_transcoder, xml, output):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_invalid_event_exception(xml_transcoder, xml, output):
+def test_invalid_event_exception(xml_transcoder, xml):
 
     # Note that we use 'object-type.integer' as object type
     # while the values in the XML are not integer.
@@ -254,7 +250,7 @@ def test_invalid_event_exception(xml_transcoder, xml, output):
     XmlTranscoderMediator.register('/root/records/a', xml_transcoder)
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
-        with XmlTranscoderMediator(output) as mediator:
+        with XmlTranscoderMediator(BytesIO()) as mediator:
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
@@ -263,7 +259,7 @@ def test_invalid_event_exception(xml_transcoder, xml, output):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_post_process(xml_transcoder, xml, output):
+def test_post_process(xml_transcoder, xml):
 
     class PostProcessingTranscoder(xml_transcoder):
         def post_process(self, event, input_record):
@@ -279,6 +275,8 @@ def test_post_process(xml_transcoder, xml, output):
 
     XmlTranscoderMediator.register('/root/records/a', PostProcessingTranscoder)
 
+    output = BytesIO()
+
     with XmlTranscoderMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -292,7 +290,7 @@ def test_post_process(xml_transcoder, xml, output):
     XmlTranscoderMediator.clear_registrations()
 
 
-def test_post_processor_invalid_event_exception(xml_transcoder, xml, output):
+def test_post_processor_invalid_event_exception(xml_transcoder, xml):
 
     class PostProcessingTranscoder(xml_transcoder):
         def post_process(self, event, element):
@@ -307,7 +305,7 @@ def test_post_processor_invalid_event_exception(xml_transcoder, xml, output):
     XmlTranscoderMediator.register('/root/records/a', PostProcessingTranscoder)
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
-        with XmlTranscoderMediator(output) as mediator:
+        with XmlTranscoderMediator(BytesIO()) as mediator:
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()

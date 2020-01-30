@@ -110,18 +110,6 @@ class EDXMLWriter(object):
             raise IOError(
                 'The output of the EDXML writer does not look like an open file: ' + repr(self.__output))
 
-        # If the output is not opened for appending,
-        # we raise an error for the reason outlined above.
-        if 'a' not in self.__output.mode:
-            if self.__output == sys.stdout:
-                # Unless the output is standard output, which cannot
-                # be truncated. We make this exception because sys.stdout
-                # object has mode 'w', which would normally qualify as unsafe.
-                pass
-            else:
-                raise IOError(
-                    'The mode attribute of the output of the EDXML writer must contain "a" (opened for appending).')
-
         # Initialize lxml.etree based XML generators. This
         # will write the XML declaration and open the
         # <events> tag.

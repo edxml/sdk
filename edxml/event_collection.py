@@ -149,9 +149,6 @@ class EventCollection(list):
             EventCollection:
 
         """
-        class EdxmlData(BytesIO):
-            mode = 'a'
-
         class Parser(edxml.EDXMLPullParser):
             def __init__(self, events):
                 super(Parser, self).__init__()
@@ -166,7 +163,7 @@ class EventCollection(list):
         event_set = EventCollection()
         event_set._ontology = edxml.ontology.Ontology()
 
-        input_file = EdxmlData(edxml_data)
+        input_file = BytesIO(edxml_data)
         parser = Parser(event_set)
         parser.parse(input_file, foreign_element_tags)
 

@@ -67,7 +67,6 @@ class SortingParser(EDXMLPullParser):
 
     def generate_sorted_edxml(self):
         edxml = BytesIO()
-        edxml.mode = 'a'
 
         # Generate EDXML data by adding the events sorted by sticky hash.
         with EDXMLWriter(edxml) as writer:

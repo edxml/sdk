@@ -20,16 +20,6 @@ def record():
 
 
 @pytest.fixture()
-def output():
-    class Output(BytesIO):
-        # For transcoding we need a file-like output
-        # object that is in append mode.
-        mode = 'ba'
-
-    return Output()
-
-
-@pytest.fixture()
 def object_transcoder():
     class TestObjectTranscoder(ObjectTranscoder):
         """
@@ -68,13 +58,15 @@ def test_duplicate_registration_exception(object_transcoder):
         ObjectTranscoderMediator.register('test_record', object_transcoder)
 
 
-def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record, output):
+def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record):
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
     object_transcoder_mediator.clear_registrations()
     object_transcoder_mediator.register('test_record', object_transcoder)
+
+    output = BytesIO()
 
     with object_transcoder_mediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
@@ -92,7 +84,7 @@ def test_process_single_transcoder_single_event_type(object_transcoder_mediator,
     }
 
 
-def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, record, output, caplog):
+def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, record, caplog):
 
     object_transcoder.TYPE_MAP = {None: 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
@@ -105,7 +97,7 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
     # which no transcoder has been registered.
     record['type'] = 'nonexistent'
 
-    with object_transcoder_mediator(output) as mediator:
+    with object_transcoder_mediator(BytesIO()) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -114,7 +106,7 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
     assert 'passing to fallback transcoder' in ''.join(caplog.messages)
 
 
-def test_ontology_update(object_transcoder_mediator, object_transcoder, record, output):
+def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
 
     class SourceGeneratingMediator(object_transcoder_mediator):
         def process(self, record):
@@ -133,6 +125,8 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record, 
     SourceGeneratingMediator.clear_registrations()
     SourceGeneratingMediator.register('test_record', object_transcoder)
 
+    output = BytesIO()
+
     with SourceGeneratingMediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -146,7 +140,7 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record, 
     assert len(edxml_extract(edxml, '/edxml/ontology/sources/source[@uri="/another/test/uri/"]')) == 1
 
 
-def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, record, output):
+def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, record):
 
     # Note that we use 'object-type.integer' as object type
     # while the values in the record are not integer.
@@ -158,14 +152,14 @@ def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, 
     object_transcoder_mediator.register('test_record', object_transcoder)
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
-        with object_transcoder_mediator(output) as mediator:
+        with object_transcoder_mediator(BytesIO()) as mediator:
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
             mediator.process(record)
 
 
-def test_post_process(object_transcoder_mediator, object_transcoder, record, output):
+def test_post_process(object_transcoder_mediator, object_transcoder, record):
 
     class PostProcessingTranscoder(object_transcoder):
         def post_process(self, event, input_record):
@@ -182,6 +176,8 @@ def test_post_process(object_transcoder_mediator, object_transcoder, record, out
     object_transcoder_mediator.clear_registrations()
     object_transcoder_mediator.register('test_record', PostProcessingTranscoder)
 
+    output = BytesIO()
+
     with object_transcoder_mediator(output) as mediator:
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -193,7 +189,7 @@ def test_post_process(object_transcoder_mediator, object_transcoder, record, out
     assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]/properties/property-a')[0].text == 'b1'
 
 
-def test_post_processor_invalid_event_exception(object_transcoder_mediator, object_transcoder, record, output):
+def test_post_processor_invalid_event_exception(object_transcoder_mediator, object_transcoder, record):
 
     class PostProcessingTranscoder(object_transcoder):
         def post_process(self, event, element):
@@ -209,7 +205,7 @@ def test_post_processor_invalid_event_exception(object_transcoder_mediator, obje
     object_transcoder_mediator.register('test_record', PostProcessingTranscoder)
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
-        with object_transcoder_mediator(output) as mediator:
+        with object_transcoder_mediator(BytesIO()) as mediator:
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
