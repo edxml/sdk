@@ -48,8 +48,10 @@ class TranscoderMediator(object):
         self._warn_no_transcoder = False
         self._warn_fallback = False
         self._warn_invalid_events = False
+        self._warn_on_post_process_exceptions = True
         self._ignore_invalid_objects = False
         self._ignore_invalid_events = False
+        self._ignore_post_process_exceptions = False
         self._output_source_uri = None
 
         self.__disable_buffering = False
@@ -229,6 +231,26 @@ class TranscoderMediator(object):
         """
         self._ignore_invalid_events = True
         self._warn_invalid_events = warn
+        return self
+
+    def ignore_post_processing_exceptions(self, warn=True):
+        """
+
+        Instructs the mediator to ignore exceptions raised
+        by the _post_process() methods of transcoders.
+        After calling this method, any input record that
+        that fails transcode due to post processing errors
+        will be ignored and a warning is logged. If warn
+        is set to False these warnings are suppressed.
+
+        Args:
+          warn (bool): Log warnings or not
+
+        Returns:
+          TranscoderMediator:
+        """
+        self._ignore_post_process_exceptions = True
+        self._warn_on_post_process_exceptions = warn
         return self
 
     def add_event_source(self, source_uri):
@@ -454,13 +476,13 @@ class TranscoderMediator(object):
             for post_processed_event in transcoder.post_process(event, record):
                 yield post_processed_event
         except Exception as e:
-            # TODO: Reverse this. Unless indicated otherwise, post processing exceptions should be fatal.
-            if self._debug:
+            if not self._ignore_post_process_exceptions:
                 raise
-            log.warning(
-                'The post processor of %s failed transcoding record %s: %s\n\nContinuing...' %
-                (type(e).__name__, record_id, str(e))
-            )
+            if self._warn_on_post_process_exceptions:
+                log.warning(
+                    'The post processor of %s failed transcoding record %s: %s\n\nContinuing...' %
+                    (type(transcoder).__name__, record_id, str(e))
+                )
 
     def process(self, record):
         """
