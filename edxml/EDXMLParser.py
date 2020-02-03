@@ -576,7 +576,7 @@ class EDXMLPullParser(EDXMLParserBase):
 
     """
 
-    def parse(self, input_file, foreign_element_tags=[]):
+    def parse(self, input_file, foreign_element_tags=()):
         """
 
         Parses the specified file. The file can be any
@@ -613,7 +613,7 @@ class EDXMLPullParser(EDXMLParserBase):
                 '{http://edxml.org/edxml}edxml',
                 '{http://edxml.org/edxml}ontology',
                 '{http://edxml.org/edxml}event'
-            ] + foreign_element_tags,
+            ] + list(foreign_element_tags),
             no_network=True, resolve_entities=False
         )
 
