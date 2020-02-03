@@ -631,6 +631,8 @@ class EDXMLPullParser(EDXMLParserBase):
         except XMLSyntaxError as e:
             raise EDXMLValidationError('Invalid XML: ' + str(e.error_log))
 
+        return self
+
 
 class EDXMLPushParser(EDXMLParserBase):
     """
