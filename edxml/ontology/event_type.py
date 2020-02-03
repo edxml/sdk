@@ -1954,7 +1954,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
            list(str): List of property names
         """
-        return [PropertyName for PropertyName, Property in self.__properties.items() if Property.is_single_valued()]
+        return [property_name for property_name, prop in self.__properties.items() if prop.is_single_valued()]
 
     def get_mandatory_property_names(self):
         """
@@ -1964,7 +1964,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
            list(str): List of property names
         """
-        return [PropertyName for PropertyName, Property in self.__properties.items() if Property.is_mandatory()]
+        return [property_name for property_name, prop in self.__properties.items() if prop.is_mandatory()]
 
     def validate_event_structure(self, edxml_event):
         """
@@ -1989,43 +1989,43 @@ class EventType(OntologyElement, MutableMapping):
         else:
             parent_property_mapping = {}
 
-        for propertyName, objects in edxml_event.items():
+        for property_name, objects in edxml_event.items():
 
-            if propertyName in parent_property_mapping and len(objects) > 1:
+            if property_name in parent_property_mapping and len(objects) > 1:
                 raise EDXMLValidationError(
                     ('An event of type %s contains multiple objects of property %s, '
                      'but this property can only have one object due to it being used '
-                     'in an implicit parent definition.') % (self.__attr['name'], propertyName)
+                     'in an implicit parent definition.') % (self.__attr['name'], property_name)
                 )
 
             # Check if the property is actually
             # supposed to be in this event.
-            if propertyName not in self.get_properties():
+            if property_name not in self.get_properties():
                 raise EDXMLValidationError(
                     ('An event of type %s contains an object of property %s, '
                      'but this property does not belong to the event type.') %
-                    (self.__attr['name'], propertyName)
+                    (self.__attr['name'], property_name)
                 )
 
         # Verify that match, min and max properties have an object.
-        for PropertyName in self.get_mandatory_property_names():
-            if PropertyName not in edxml_event:
+        for property_name in self.get_mandatory_property_names():
+            if property_name not in edxml_event:
                 raise EDXMLValidationError(
                     ('An event of type %s is missing an object for property %s, '
                      'while it must have an object due to its configured merge strategy.')
-                    % (self.__attr['name'], PropertyName)
+                    % (self.__attr['name'], property_name)
                 )
 
         # Verify that properties that cannot have multiple
         # objects actually have at most one object
-        for PropertyName in self.get_singular_property_names():
-            if PropertyName in edxml_event:
-                if len(edxml_event[PropertyName]) > 1:
+        for property_name in self.get_singular_property_names():
+            if property_name in edxml_event:
+                if len(edxml_event[property_name]) > 1:
                     raise EDXMLValidationError(
                         ('An event of type %s has multiple objects of property %s, '
                          'while it cannot have more than one due to its configured merge strategy '
                          'or due to a implicit parent definition.') %
-                        (self.__attr['name'], PropertyName)
+                        (self.__attr['name'], property_name)
                     )
 
         return self
