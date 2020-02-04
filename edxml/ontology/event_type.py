@@ -2159,10 +2159,16 @@ class EventType(OntologyElement, MutableMapping):
         for property_name, event_property in self.__properties.items():
             object_type = ontology.get_object_type(event_property.get_object_type_name())
             if property_name in self.get_mandatory_property_names():
-                # Exactly one object must be present, no need
-                # to wrap it into an element to indicate this.
-                properties.append(
-                    e.element(object_type.generate_relaxng(), name=property_name))
+                if property_name in self.get_singular_property_names():
+                    # Exactly one object must be present, no need
+                    # to wrap it into an element to indicate this.
+                    properties.append(
+                        e.element(object_type.generate_relaxng(), name=property_name))
+                else:
+                    # Property is mandatory and can have any
+                    # number of objects.
+                    properties.append(e.oneOrMore(
+                        e.element(object_type.generate_relaxng(), name=property_name)))
             else:
                 if property_name in self.get_singular_property_names():
                     # Property is not mandatory, but if present there
