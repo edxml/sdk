@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from edxml.ontology import Ontology
 
 
 class Brick(object):
@@ -51,3 +52,27 @@ class Brick(object):
         """
         return
         yield
+
+    @classmethod
+    def test(cls):
+        """
+        This method can be used in unit tests to verify ontology bricks.
+        """
+        ontology = Ontology()
+        object_types = list(cls.generate_object_types(ontology))
+
+        # Check for duplicate object type definitions
+        assert len(object_types) == len(ontology.get_object_types())
+
+        # Validate object types
+        for object_type in object_types:
+            object_type.validate()
+
+        concepts = list(cls.generate_concepts(ontology))
+
+        # Check for duplicate concept definitions
+        assert len(concepts) == len(ontology.get_concepts())
+
+        # Validate concepts
+        for concept in concepts:
+            concept.validate()

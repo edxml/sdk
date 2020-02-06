@@ -11,3 +11,6 @@ class Brick(object):
 
     @classmethod
     def generate_concepts(cls, target_ontology: edxml.ontology.Ontology) -> List[edxml.ontology.Concept]: ...
+
+    @classmethod
+    def test(cls): ...
