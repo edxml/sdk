@@ -126,7 +126,7 @@ def test_change_relation_type_not_allowed():
 
     e1 = o.create_event_type('a')
     e1.create_property('a', 'a').identifies('a', 1)
-    e1.create_property('b', 'a').identifies('b', 1)
+    e1.create_property('b', 'a').identifies('a', 1)
 
     e2 = copy.deepcopy(e1).set_version(2)
 
