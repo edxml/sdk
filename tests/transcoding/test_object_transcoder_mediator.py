@@ -32,6 +32,18 @@ def object_transcoder():
         def create_object_types(self):
             self._ontology.create_object_type('object-type.string')
             self._ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
+
+        @classmethod
+        def create_event_type(cls, event_type_name, ontology):
+            event_type = super(TestObjectTranscoder, cls).create_event_type(event_type_name, ontology)
+
+            for prop in event_type.get_properties().values():
+                # For convenience we make all properties multi-valued to
+                # allow running tests that yield multi-valued properties.
+                prop.make_multivalued()
+
+            return event_type
+
     return TestObjectTranscoder
 
 

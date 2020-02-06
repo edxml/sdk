@@ -29,7 +29,7 @@ class EventProperty(OntologyElement):
     MERGE_MAX = 'max'
     """Merge strategy 'max'"""
 
-    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=True, multivalued=True,
+    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=True, multivalued=False,
                  merge='drop', similar=''):
 
         self.__attr = {
@@ -349,6 +349,16 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('optional', is_optional)
+        return self
+
+    def make_multivalued(self):
+        """
+        Make the property multi-valued.
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('multivalued', True)
         return self
 
     def unique(self):
