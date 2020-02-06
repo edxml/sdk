@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import copy
 import re
 import sre_constants
 
@@ -39,6 +39,13 @@ class ObjectType(OntologyElement):
         }
 
         self.__ontology = ontology  # type: edxml.ontology.Ontology
+
+        self.__versions = {1: copy.copy(self)}
+
+    def __copy__(self):
+        new = self.__new__(ObjectType)
+        new.__attr = self.__attr.copy()
+        return new
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
@@ -251,7 +258,30 @@ class ObjectType(OntologyElement):
           edxml.ontology.Concept: The Concept instance
         """
 
+        self.__versions[self.__attr['version']] = copy.copy(self)
         self._set_attr('version', int(version))
+        return self
+
+    def upgrade(self):
+        """
+        Verifies if the current instance is a valid upgrade of the instance as it
+        was when the version was last set. When successful the version number is
+        incremented.
+
+        This method is used for fluent upgrading of ontology bricks, allowing
+        definitions of object types to be changed in a single call chain while
+        making sure that no backward incompatible changes are made.
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        new_version = copy.copy(self)
+        new_version.__attr['version'] = self.__attr['version'] + 1
+        if new_version > self.__versions[self.__attr['version']]:
+            self.set_version(self.__attr['version'] + 1)
+        else:
+            raise Exception('Cannot upgrade when current version is not greater than previous version.')
+
         return self
 
     def fuzzy_match_head(self, length):

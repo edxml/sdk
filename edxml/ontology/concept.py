@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import re
 
 from lxml import etree
@@ -29,6 +30,8 @@ class Concept(OntologyElement):
         }
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
+
+        self.__versions = {1: copy.copy(self)}
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
@@ -142,7 +145,29 @@ class Concept(OntologyElement):
           edxml.ontology.Concept: The Concept instance
         """
 
+        self.__versions[self._attr['version']] = copy.copy(self)
         self._set_attr('version', int(version))
+        return self
+
+    def upgrade(self):
+        """
+        Verifies if the current instance is a valid upgrade of the instance as it
+        was when the version was last set. When successful the version number is
+        incremented.
+
+        This method is used for fluent upgrading of ontology bricks, allowing
+        definitions of concepts to be changed in a single call chain while
+        making sure that no backward incompatible changes are made.
+
+        Returns:
+          edxml.ontology.Concept: The Concept instance
+        """
+        new_version = copy.deepcopy(self).set_version(self._attr['version'] + 1)
+        if new_version > self.__versions[self._attr['version']]:
+            self.set_version(self._attr['version'] + 1)
+        else:
+            raise Exception('Cannot upgrade when current version is not greater than previous version.')
+
         return self
 
     def validate(self):

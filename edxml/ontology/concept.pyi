@@ -17,6 +17,7 @@ class Concept(OntologyElement):
                  display_name_plural: str = None, description: str = None) -> None:
         self._attr = ...    # type: Dict[str, Any]
         self._ontology = ...  # type: edxml.ontology.Ontology
+        self.__versions = ... # type: Dict[int, 'Concept']
 
     def _child_modified_callback(self) -> 'Concept': ...
 
@@ -37,6 +38,8 @@ class Concept(OntologyElement):
     def set_display_name(self, singular: str, plural: str = None) -> 'Concept': ...
 
     def set_version(self, version: int) -> 'Concept': ...
+
+    def upgrade(self) -> 'Concept': ...
 
     def validate(self) -> 'Concept': ...
 

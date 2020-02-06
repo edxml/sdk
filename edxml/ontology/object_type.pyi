@@ -18,6 +18,7 @@ class ObjectType(OntologyElement):
                  data_type: str = 'string:0:cs:u', compress: bool = False, fuzzy_matching: str = 'none',
                  regexp: str = '[\s\S]*') -> None:
 
+        self.__versions = ... # type: Dict[int, 'ObjectType']
         self.__attr = ...  # type: Dict[str, Any]
         self.__ontology = ...  # type: edxml.ontology.Ontology
 
@@ -54,6 +55,8 @@ class ObjectType(OntologyElement):
     def set_fuzzy_matching_attribute(self, attribute: str) -> 'ObjectType': ...
 
     def set_version(self, version: int) -> 'ObjectType': ...
+
+    def upgrade(self) -> 'ObjectType': ...
 
     def fuzzy_match_head(self, length: int) -> 'ObjectType': ...
 
