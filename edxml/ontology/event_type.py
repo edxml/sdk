@@ -2013,8 +2013,7 @@ class EventType(OntologyElement, MutableMapping):
         for property_name in self.get_mandatory_property_names():
             if property_name not in edxml_event:
                 raise EDXMLValidationError(
-                    ('An event of type %s is missing an object for property %s, '
-                     'while it must have an object due to its configured merge strategy.')
+                    'An event of type %s is missing an object for mandatory property %s.'
                     % (self.__attr['name'], property_name)
                 )
 
