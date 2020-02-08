@@ -365,13 +365,14 @@ class EventProperty(OntologyElement):
         """
 
         Mark property as a unique property, which also sets
-        the merge strategy to 'match'.
+        the merge strategy to 'match' and marks it as mandatory.
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('unique', True)
         self._set_attr('merge', 'match')
+        self._set_attr('optional', False)
         return self
 
     def is_unique(self):
