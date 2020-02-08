@@ -213,7 +213,7 @@ class TranscoderMediator(object):
 
         Instructs the EDXML writer to ignore invalid events.
         After calling this method, any event that fails to
-        validate will be dropped. If Warn is set to True,
+        validate will be dropped. If warn is set to True,
         a detailed warning will be printed, allowing the
         source and cause of the problem to be determined.
 
@@ -225,7 +225,7 @@ class TranscoderMediator(object):
           This has no effect when event validation is disabled.
 
         Args:
-          warn (bool): Print warnings or not
+          warn (bool): Log warnings or not
 
         Returns:
           TranscoderMediator:

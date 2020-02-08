@@ -31,9 +31,12 @@ class XmlTranscoderTestHarness(TranscoderTestHarness):
         elements for the transcoder from the parsed XML file, exactly
         as XmlTranscoderMediator would do it on real data.
 
-        The element_root is the XPath expression that is used to find
-        the root of the element inside the parsed XML file. When unspecified,
-        it will be fetched from the TYPE_MAP constant of the transcoder.
+        The element_root is only relevant when the transcoder can output
+        multiple types of events. It must be set to the XPath expression
+        of the sub-element inside the element being transcoded that corresponds
+        with one specific output event type. When unspecified and the transcoder
+        produces a single type of output events it will be fetched from
+        the TYPE_MAP constant of the transcoder.
 
         Args:
             filename (str): The XML file to use as input record fixture
