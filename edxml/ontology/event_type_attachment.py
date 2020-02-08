@@ -304,7 +304,7 @@ class EventTypeAttachment(OntologyElement):
             element.attrib['display-name-singular'],
             element.attrib['display-name-plural'],
             element.attrib['description'],
-            element.attrib['encoding']
+            element.attrib['encoding'] == 'base64'
         )
 
     def __cmp__(self, other):
