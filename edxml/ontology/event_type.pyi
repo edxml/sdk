@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import edxml
 
-from typing import List, Dict, Iterable
+from typing import List, Dict, Iterable, Tuple, Optional
 from lxml import etree
 
 from edxml.ontology import OntologyElement
@@ -68,6 +68,8 @@ class EventType(OntologyElement):
     def has_class(self, class_name) -> bool: ...
 
     def is_unique(self) -> bool: ...
+
+    def get_timespan_property_names(self) -> Tuple[Optional[str], Optional[str]]: ...
 
     def is_timeless(self) -> bool: ...
 
