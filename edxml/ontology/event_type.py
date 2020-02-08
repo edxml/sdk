@@ -2142,6 +2142,8 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           lxml.etree.RelaxNG: The schema
         """
+        namespace = {'ns': 'http://edxml.org/edxml'} if namespaced else {}
+
         e = ElementMaker()
 
         # Define a recursive 'anything' pattern
@@ -2264,7 +2266,7 @@ class EventType(OntologyElement, MutableMapping):
                 ) if len(attachments) > 0 else e.element(e.empty, name='attachments'),
             ),
             name='event',
-            **{'ns': 'http://edxml.org/edxml'} if namespaced else {}
+            **namespace
         )
 
         schema = e.grammar(
