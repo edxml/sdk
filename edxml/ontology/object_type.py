@@ -249,13 +249,13 @@ class ObjectType(OntologyElement):
     def set_version(self, version):
         """
 
-        Sets the concept version
+        Sets the object type version
 
         Args:
           version (int): Version
 
         Returns:
-          edxml.ontology.Concept: The Concept instance
+          edxml.ontology.ObjectType: The ObjectType instance
         """
 
         self.__versions[self.__attr['version']] = copy.copy(self)
