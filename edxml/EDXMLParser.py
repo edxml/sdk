@@ -330,7 +330,7 @@ class EDXMLParserBase(object):
             exception.message = "Invalid ontology definition detected: %s\n%s" %\
                                 (
                                     etree.tostring(ontology_element, pretty_print=True, encoding='unicode'),
-                                    exception.message
+                                    exception
                                 )
             raise
 
