@@ -33,7 +33,6 @@ This module offers various classes for incremental parsing of EDXML data streams
 """
 import os
 import re
-import sys
 
 from lxml.etree import XMLSyntaxError
 from typing import Dict, List, Any
@@ -304,8 +303,13 @@ class EDXMLParserBase(object):
         except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
             # XML structure is invalid.
             raise EDXMLValidationError(
-                "Invalid EDXML structure detected: %s\nThe RelaxNG validator generated the following error: %s" %
-                (etree.tostring(self.__root_element, encoding='unicode'), str(ValidationError))
+                "Invalid EDXML structure detected: %s\n"
+                "The RelaxNG validator generated the following error: %s\nDetails: %s" %
+                (
+                    etree.tostring(self.__root_element, encoding='unicode'),
+                    str(ValidationError),
+                    str(ValidationError.error_log)
+                )
             )
 
     def __process_ontology(self, ontology_element):
@@ -520,14 +524,14 @@ class EDXMLParserBase(object):
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
                     # a undoubtedly cryptic error message.
-                    raise EDXMLValidationError(schema.error_log)
+                    raise EDXMLValidationError(str(schema.error_log))
 
                 except EDXMLValidationError as exception:
                     schema = self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
                     raise EDXMLValidationError(
-                        'Event failed to validate:\n%s\n\n%s\nSchema:\n%s' % (
-                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception,
-                            etree.tostring(schema, pretty_print=True, encoding='unicode')), sys.exc_info()[2]
+                        'Event failed to validate:\n\n%s\nDetails:\n%s\n\nSchema:\n%s' % (
+                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception.args[0],
+                            etree.tostring(schema, pretty_print=True, encoding='unicode'))
                     )
 
         # Call all event handlers in order
