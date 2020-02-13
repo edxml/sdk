@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 import codecs
+import decimal
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -819,6 +820,9 @@ class DataType(object):
             raise EDXMLValidationError(
                 'Value for data type %s is not a string: %s' % (self.type, repr(value)))
 
+        if value == '':
+            raise EDXMLValidationError("Value of %s object is empty." % self.type)
+
         split_data_type = self.type.split(':')
 
         if split_data_type[0] == 'datetime':
@@ -833,8 +837,14 @@ class DataType(object):
             except (TypeError, ValueError):
                 raise EDXMLValidationError(
                     "Invalid sequence value '%s'." % value)
+            if int(value) < 0:
+                raise EDXMLValidationError("Negative sequence value: %s" % value)
         elif split_data_type[0] == 'number':
             if split_data_type[1] == 'decimal':
+                try:
+                    Decimal(value)
+                except decimal.InvalidOperation:
+                    raise EDXMLValidationError("Invalid EDXML decimal value: '%s'." % value)
                 if len(split_data_type) < 5:
                     # Decimal is unsigned.
                     if Decimal(value) < 0:
@@ -842,13 +852,13 @@ class DataType(object):
                             "Unsigned decimal value '%s' is negative." % value)
             elif split_data_type[1] == 'float' or split_data_type[1] == 'double':
                 try:
-                    value = float(value)
+                    float(value)
                 except ValueError:
                     raise EDXMLValidationError(
                         "Invalid floating point number '%s'." % value)
                 if len(split_data_type) < 3:
                     # number is unsigned.
-                    if value < 0:
+                    if float(value) < 0:
                         raise EDXMLValidationError(
                             "Unsigned floating point value is negative: '%s'." % value)
             else:
@@ -883,8 +893,15 @@ class DataType(object):
                 # This is the only option at the moment.
                 split_geo_point = value.split(',')
                 if len(split_geo_point) != 2:
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' is not formatted correctly." % value)
+                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+                if len(split_geo_point[0].split('.')) != 2:
+                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+                if len(split_geo_point[1].split('.')) != 2:
+                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+                if len(split_geo_point[0].split('.')[1]) != 6:
+                    raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
+                if len(split_geo_point[1].split('.')[1]) != 6:
+                    raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
                 try:
                     geo_lat = float(split_geo_point[0])
                     geo_lon = float(split_geo_point[1])
@@ -903,9 +920,6 @@ class DataType(object):
         elif split_data_type[0] == 'string':
 
             # Check length of object value
-            if value == '':
-                raise EDXMLValidationError(
-                    "Value of %s object is empty." % self.type)
             max_string_length = int(split_data_type[1])
             if max_string_length > 0:
                 if len(value) > max_string_length:
@@ -931,12 +945,9 @@ class DataType(object):
         elif split_data_type[0] == 'base64':
 
             # Check length of object value
-            if value == '':
-                raise EDXMLValidationError(
-                    "Value of %s object is empty." % self.type)
             try:
                 decoded = base64.decodebytes(value.encode('utf-8'))
-            except AttributeError:
+            except (AttributeError, ValueError):
                 raise EDXMLValidationError(
                     "Invalid base64 encoded string: '%s'" % value)
 
@@ -950,18 +961,12 @@ class DataType(object):
             if not re.match(self.HASHLINK_PATTERN, value):
                 raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
         elif split_data_type[0] == 'ip':
-            split_ip = value.split('.')
-            if len(split_ip) != 4:
-                raise EDXMLValidationError(
-                    "Invalid IPv4 address: '%s'" % value)
-            for split_ip_part in split_ip:
-                try:
-                    if not 0 <= int(split_ip_part) <= 255:
-                        raise EDXMLValidationError(
-                            "Invalid IPv4 address: '%s'" % value)
-                except (TypeError, ValueError):
-                    raise EDXMLValidationError(
-                        "Invalid IPv4 address: '%s'" % value)
+            try:
+                ip = IP(value)
+            except ValueError:
+                raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+            if ip.version() != 4 or ip.strNormal() != value:
+                raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
         elif split_data_type[0] == 'boolean':
             object_string = value.lower()
             if object_string not in ['true', 'false']:
