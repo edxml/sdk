@@ -425,9 +425,16 @@ class DataType(object):
 
                 elif split_data_type[1] == 'mediumint':
                     if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='short')
+                        element = e.data(
+                            e.param(str(-(2**23) + 1), name='minInclusive'),
+                            e.param(str(+(2**23) - 1), name='maxInclusive'),
+                            type='int'
+                        )
                     else:
-                        element = e.data(type='unsignedShort')
+                        element = e.data(
+                            e.param(str((2**24) - 1), name='maxInclusive'),
+                            type='unsignedInt'
+                        )
 
                 elif split_data_type[1] == 'int':
                     if len(split_data_type) > 2 and split_data_type[2] == 'signed':
@@ -500,7 +507,7 @@ class DataType(object):
                         r'(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
                         (int(fractional), int(fractional))
             else:
-                raise TypeError
+                raise TypeError('Unknown data type: ' + split_data_type[0])
 
         elif split_data_type[0] == 'uri':
             # Note that anyURI XML data type allows virtually anything,
@@ -572,7 +579,7 @@ class DataType(object):
             # Because we do not allow whitespace in base64 values,
             # we use a pattern to restrict the data type.
             element = e.data(
-                e.param(1, name='minLength'),
+                e.param('1', name='minLength'),
                 e.param(split_data_type[1], name='maxLength'),
                 e.param(r'\S*', name='pattern'),
                 type='base64Binary'
@@ -619,8 +626,8 @@ class DataType(object):
             element = e.data(
                 e.param(
                     (
-                        r'-?((([1-8][0-9]|[0-9])(\.\d+)?)|(90(\.0{0,6})?)),'
-                        r'-?((([1-9][0-9]|1[0-7]\d|[0-9])(\.\d{0,6})?)|(180(\.0{0,6})?))'
+                        r'-?((([1-8][0-9]|[0-9])(\.\d{6}))|(90\.0{6})),'
+                        r'-?((([1-9][0-9]|1[0-7]\d|[0-9])\.\d{6})|(180\.0{6}))'
                     ),
                     name='pattern'), type='string'
             )
