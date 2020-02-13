@@ -295,7 +295,7 @@ class EDXMLWriter(object):
                 self.__ontology.get_event_type(event.get_type_name()).normalize_event_objects(event)
                 if event.get_properties() == original_event.get_properties():
                     raise EDXMLValidationError("Attempt to normalize invalid event objects failed.")
-            except EDXMLValidationError:
+            except EDXMLValidationError as e:
                 # normalization failed.
                 last_error = schema.error_log.last_error
 
@@ -311,10 +311,14 @@ class EDXMLWriter(object):
                 offending_property_values_all = {str(v) for v in event[offending_property_name]}
                 offending_property_values_bad = [e.text for e in event.get_element().xpath(last_error.path)]
                 event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
-                log.error(
-                    'Repaired invalid property %s of event type %s: %s => %s\n' %
-                    (offending_property_name, event.get_type_name(), repr(
-                        original_event[offending_property_name]), repr(event[offending_property_name]))
+                log.warning(
+                    'Repaired invalid property %s of event type %s (%s): %s => %s\n' % (
+                        offending_property_name,
+                        event.get_type_name(),
+                        str(e),
+                        repr(original_event[offending_property_name]),
+                        repr(event[offending_property_name])
+                    )
                 )
 
         self.__num_events_repaired += 1
@@ -377,7 +381,11 @@ class EDXMLWriter(object):
                 # Event does not validate. We will try to repair it. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
-                event = self._repair_event(event, schema)
+                try:
+                    event = self._repair_event(event, schema)
+                    log.warning('Event validated after repairing it.')
+                except EDXMLValidationError:
+                    self.__generate_event_validation_exception(event, event.get_element(), schema)
                 event_element = event.get_element()
 
         try:
