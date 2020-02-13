@@ -37,6 +37,12 @@ class DataType(object):
     # Expression used for matching uuid datatypes
     UUID_PATTERN = re.compile(
         r"^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
+    # Expression used for matching valid EDXML floats (signed)
+    FLOAT_PATTERN_SIGNED = r'(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+    # Expression used for matching valid EDXML floats (unsigned)
+    FLOAT_PATTERN_UNSIGNED = r'([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+    # Expression used for matching valid EDXML datetime values
+    DATETIME_PATTERN = r'(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z'
 
     FAMILY_DATETIME = 'datetime'
     FAMILY_SEQUENCE = 'sequence'
@@ -401,9 +407,7 @@ class DataType(object):
             # hour. Also, it requires an explicit UTC timezone
             # and 6 decimal fractional seconds.
             element = e.data(
-                e.param(
-                    r'(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z',
-                    name='pattern'),
+                e.param(self.DATETIME_PATTERN, name='pattern'),
                 type='dateTime'
             )
 
@@ -478,12 +482,12 @@ class DataType(object):
                     # Assure that values are in 1.234567E+001 format, no leading
                     # plus sign is present and zero is not signed.
                     etree.SubElement(
-                        element, 'param', name='pattern').text = r'(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+                        element, 'param', name='pattern').text = self.FLOAT_PATTERN_SIGNED
                 else:
                     # Assure that values are in 1.234567E+001 format and not leading
                     # plus sign is present.
                     etree.SubElement(
-                        element, 'param', name='pattern').text = r'([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
+                        element, 'param', name='pattern').text = self.FLOAT_PATTERN_UNSIGNED
 
             elif split_data_type[1] == 'decimal':
                 digits, fractional = split_data_type[2:4]
@@ -826,9 +830,7 @@ class DataType(object):
         split_data_type = self.type.split(':')
 
         if split_data_type[0] == 'datetime':
-            if not re.match(
-                r'^(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z$',
-                    value):
+            if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
                 raise EDXMLValidationError(
                     "Invalid value for data type %s: '%s'." % (self.type, value))
         elif split_data_type[0] == 'sequence':
@@ -861,6 +863,10 @@ class DataType(object):
                     if float(value) < 0:
                         raise EDXMLValidationError(
                             "Unsigned floating point value is negative: '%s'." % value)
+                pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
+                if not re.match(r'^' + pattern + r'$', value):
+                    raise EDXMLValidationError("Invalid EDXML floating point value: '%s'." % value)
+
             else:
                 try:
                     value = int(value)
