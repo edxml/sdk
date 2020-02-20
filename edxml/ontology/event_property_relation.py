@@ -432,6 +432,7 @@ class PropertyRelation(OntologyElement):
             self.set_description(property_relation.get_description())
             self.set_predicate(property_relation.get_predicate())
             self.set_confidence(property_relation.get_confidence())
+            self.__event_type = property_relation.__event_type
 
         return self
 

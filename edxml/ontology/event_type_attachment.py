@@ -399,6 +399,7 @@ class EventTypeAttachment(OntologyElement):
             # The new definition is indeed newer. Update self.
             self.set_description(attachment.get_description())
             self.set_display_name(attachment.get_display_name_singular(), attachment.get_display_name_plural())
+            self._event_type = attachment._event_type
 
         return self
 

@@ -332,6 +332,7 @@ class EventTypeParent(OntologyElement):
             # The new definition is indeed newer. Update self.
             self.set_parent_description(parent.get_parent_description())
             self.set_siblings_description(parent.get_siblings_description())
+            self._childEventType = parent._childEventType
 
         return self
 

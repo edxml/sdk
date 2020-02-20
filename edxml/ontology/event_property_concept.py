@@ -236,6 +236,7 @@ class PropertyConcept(OntologyElement):
             # The new definition is indeed newer. Update self.
             self.set_confidence(property_concept.get_confidence())
             self.set_concept_naming_priority(property_concept.get_concept_naming_priority())
+            self.__event_type = property_concept.__event_type
 
         return self
 

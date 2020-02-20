@@ -762,6 +762,8 @@ class EventProperty(OntologyElement):
             for concept_name in new_concept_names:
                 self.add_associated_concept(event_property.get_concept_associations()[concept_name])
 
+            self.__event_type = event_property.__event_type
+
         return self
 
     def generate_xml(self):
