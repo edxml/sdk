@@ -630,22 +630,48 @@ class Ontology(OntologyElement):
         return self.__sources.get(uri)
 
     def __parse_event_types(self, event_types_element, validate=True):
-        for typeElement in event_types_element:
-            self._add_event_type(EventType.create_from_xml(typeElement, self), validate)
+        event_type_names = []
+        for type_element in event_types_element:
+            event_type = EventType.create_from_xml(type_element, self)
+            if event_type.get_name() in event_type_names:
+                raise EDXMLValidationError(
+                    'EDXML <eventtypes> element contains duplicate definition of "%s"' % event_type.get_name()
+                )
+            self._add_event_type(event_type, validate)
+            event_type_names.append(event_type.get_name())
 
     def __parse_object_types(self, object_types_element, validate=True):
-        for typeElement in object_types_element:
-            self._add_object_type(ObjectType.create_from_xml(typeElement, self), validate)
+        object_type_names = []
+        for type_element in object_types_element:
+            object_type = ObjectType.create_from_xml(type_element, self)
+            if object_type.get_name() in object_type_names:
+                raise EDXMLValidationError(
+                    'EDXML <objecttypes> element contains duplicate definition of "%s"' % object_type.get_name()
+                )
+            self._add_object_type(object_type, validate)
+            object_type_names.append(object_type.get_name())
 
     def __parse_concepts(self, concepts_element, validate=True):
-        for conceptElement in concepts_element:
-            self._add_concept(
-                Concept.create_from_xml(conceptElement, self), validate
-            )
+        concept_names = []
+        for concept_element in concepts_element:
+            concept = Concept.create_from_xml(concept_element, self)
+            if concept.get_name() in concept_names:
+                raise EDXMLValidationError(
+                    'EDXML <concepts> element contains duplicate definition of "%s"' % concept.get_name()
+                )
+            self._add_concept(concept, validate)
+            concept_names.append(concept.get_name())
 
     def __parse_sources(self, sources_element, validate=True):
-        for sourceElement in sources_element:
-            self._add_event_source(EventSource.create_from_xml(sourceElement, self), validate)
+        source_uris = []
+        for source_element in sources_element:
+            source = EventSource.create_from_xml(source_element, self)
+            if source.get_uri() in source_uris:
+                raise EDXMLValidationError(
+                    'EDXML <sources> element contains duplicate definition of "%s"' % source.get_uri()
+                )
+            self._add_event_source(source, validate)
+            source_uris.append(source.get_uri())
 
     def validate(self):
         """

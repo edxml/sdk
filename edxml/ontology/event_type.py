@@ -1695,24 +1695,46 @@ class EventType(OntologyElement, MutableMapping):
          .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
          .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))
 
+        property_names = []
+        relation_ids = []
+        attachments = []
         for element in type_element:
             if element.tag == '{http://edxml.org/edxml}parent':
-                event_type.set_parent(
-                    edxml.ontology.EventTypeParent.create_from_xml(element, event_type))
+                event_type.set_parent(edxml.ontology.EventTypeParent.create_from_xml(element, event_type))
             elif element.tag == '{http://edxml.org/edxml}properties':
-                for propertyElement in element:
-                    event_type.add_property(
-                        edxml.ontology.EventProperty.create_from_xml(propertyElement, ontology, event_type))
+                for property_element in element:
+                    prop = edxml.ontology.EventProperty.create_from_xml(property_element, ontology, event_type)
+                    if prop.get_name() in property_names:
+                        raise EDXMLValidationError(
+                            'EDXML <properties> element contains duplicate definition of "%s"' % prop.get_name()
+                        )
+                    event_type.add_property(prop)
+                    property_names.append(prop.get_name())
 
             elif element.tag == '{http://edxml.org/edxml}relations':
-                for relationElement in element:
-                    event_type.add_relation(
-                        edxml.ontology.PropertyRelation.create_from_xml(relationElement, event_type, ontology))
+                for relation_element in element:
+                    relation = edxml.ontology.PropertyRelation.create_from_xml(relation_element, event_type, ontology)
+                    if relation.get_persistent_id() in relation_ids:
+                        raise EDXMLValidationError(
+                            'EDXML <relations> element contains duplicate definition '
+                            'of a "%s" relation between "%s" and "%s".' % (
+                                relation.get_type(),
+                                event_type.get_properties()[relation.get_source()].get_name(),
+                                event_type.get_properties()[relation.get_target()].get_name(),
+                            )
+                        )
+                    event_type.add_relation(relation)
+                    relation_ids.append(relation.get_persistent_id())
 
             elif element.tag == '{http://edxml.org/edxml}attachments':
-                for attachmentElement in element:
-                    event_type.add_attachment(
-                        edxml.ontology.EventTypeAttachment.create_from_xml(attachmentElement, event_type))
+                for attachment_element in element:
+                    attachment = edxml.ontology.EventTypeAttachment.create_from_xml(attachment_element, event_type)
+                    if attachment.get_name() in attachments:
+                        raise EDXMLValidationError(
+                            'EDXML <attachments> element contains duplicate definition of "%s"' % attachment.get_name()
+                        )
+                    event_type.add_attachment(attachment)
+                    attachments.append(attachment.get_name())
 
         return event_type
 

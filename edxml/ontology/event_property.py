@@ -616,11 +616,17 @@ class EventProperty(OntologyElement):
             property_element.get('similar', '')
         )
 
+        concept_names = []
         for element in property_element:
             if element.tag == '{http://edxml.org/edxml}property-concept':
-                property.add_associated_concept(
-                    edxml.ontology.PropertyConcept.create_from_xml(element, parent_event_type, property)
-                )
+                property_concept = edxml.ontology.PropertyConcept.create_from_xml(element, parent_event_type, property)
+                if property_concept.get_concept_name() in concept_names:
+                    raise EDXMLValidationError(
+                        'EDXML <property-concept> element contains duplicate definition of "%s"' %
+                        property_concept.get_concept_name()
+                    )
+                property.add_associated_concept(property_concept)
+                concept_names.append(property_concept.get_concept_name())
 
         return property
 
