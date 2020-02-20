@@ -382,9 +382,6 @@ class ObjectType(OntologyElement):
         split_data_type = self.__attr['data-type'].split(':')
 
         if split_data_type[0] == 'string':
-            if split_data_type[2] == 'ci':
-                # Perform regex matching on lower case string
-                value = value.lower()
             if self.__attr['regexp'] is not None and not re.match('^%s$' % self.__attr['regexp'], value):
                 raise EDXMLValidationError(
                     "Object value '%s' of object type %s does not match regexp '%s' of the object type."
