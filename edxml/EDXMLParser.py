@@ -434,6 +434,8 @@ class EDXMLParserBase(object):
                     self.__parsed_initial_ontology = True
 
             elif not elem.tag.startswith('{http://edxml.org/edxml}'):
+                if not elem.tag.startswith('{'):
+                    raise EDXMLValidationError("Parser received an element without an XML namespace: '%s'" % elem.tag)
                 # We have a foreign element.
                 self._parse_foreign_element(elem)
 
