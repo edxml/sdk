@@ -620,7 +620,7 @@ class EDXMLPullParser(EDXMLParserBase):
                 '{http://edxml.org/edxml}ontology',
                 '{http://edxml.org/edxml}event'
             ] + list(foreign_element_tags),
-            no_network=True, resolve_entities=False
+            no_network=True, resolve_entities=False, remove_comments=True, remove_pis=True
         )
 
         # Set a custom class that lxml should use for
@@ -689,7 +689,8 @@ class EDXMLPushParser(EDXMLParserBase):
                     '{http://edxml.org/edxml}ontology',
                     '{http://edxml.org/edxml}event'
                 ] + self.__foreign_element_tags,
-                target=self.__feed_target, no_network=True, resolve_entities=False
+                target=self.__feed_target, no_network=True, resolve_entities=False,
+                remove_comments=True, remove_pis=True
             )
 
             # Set a custom class that lxml should use for
