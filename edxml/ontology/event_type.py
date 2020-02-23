@@ -204,7 +204,7 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           List[str]:
         """
-        return self.__attr['classlist'].split(',')
+        return [c for c in self.__attr['classlist'].split(',') if c != '']
 
     def get_properties(self):
         """
