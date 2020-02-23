@@ -531,7 +531,7 @@ class ObjectType(OntologyElement):
 
         if old.get_regexp() != new.get_regexp():
             equal = False
-            if old.get_regexp() is not None and new.get_regexp().find(old.get_regexp() + "|") != 0:
+            if old.get_regexp() is None or new.get_regexp().find(old.get_regexp() + "|") != 0:
                 # The new expression is not a valid extension of the old one.
                 is_valid_upgrade = False
 
