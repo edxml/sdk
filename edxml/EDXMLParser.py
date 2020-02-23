@@ -440,7 +440,7 @@ class EDXMLParserBase(object):
                 self._parse_foreign_element(elem)
 
             else:
-                raise ValueError('Parser received unexpected element with tag %s' % elem.tag)
+                raise EDXMLValidationError('Parser received unexpected element with tag %s' % elem.tag)
 
     def _parse_misplaced_event(self, elem):
         # We expect <event> tags to be children of the root <edxml>
