@@ -6,6 +6,7 @@ import sys
 from .version import __version__
 
 from .event import EDXMLEvent, EventElement, ParsedEvent
+from .template import Template
 from .event_collection import EventCollection
 from .EDXMLWriter import EDXMLWriter
 from .SimpleEDXMLWriter import SimpleEDXMLWriter
@@ -47,4 +48,4 @@ evil_xml_chars_regexp = '[%s]' % ''.join(
 
 __all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EventCollection', 'EDXMLWriter', 'SimpleEDXMLWriter',
            'EDXMLPullParser', 'EDXMLPushParser', 'EDXMLOntologyPullParser', 'EDXMLOntologyPushParser',
-           'EDXMLPullFilter', 'EDXMLPushFilter', 'ontology', 'transcode', '__version__']
+           'EDXMLPullFilter', 'EDXMLPushFilter', 'ontology', 'transcode', 'Template', '__version__']

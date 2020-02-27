@@ -280,30 +280,15 @@ class PropertyRelation(OntologyElement):
             raise EDXMLValidationError(
                 'Invalid property relation confidence: "%d"' % self.__attr['confidence'])
 
-        placeholders = re.findall(
-            edxml.ontology.EventType.TEMPLATE_PATTERN, self.__attr['description'])
-
-        if not self.__attr['property1'] in placeholders:
+        try:
+            edxml.Template(self.__attr['description']).validate(self.__event_type)
+        except EDXMLValidationError as e:
             raise EDXMLValidationError(
-                'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
-                (self.__attr['property1'], self.__attr['property2'],
-                 self.__attr['property1'], self.__attr['description'])
+                'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
+                    self.__attr['property1'], self.__attr['property2'],
+                    self.__attr['description'], str(e)
+                 )
             )
-
-        if not self.__attr['property2'] in placeholders:
-            raise EDXMLValidationError(
-                'Relation between properties %s and %s has a description that does not refer to property %s: "%s"' %
-                (self.__attr['property1'], self.__attr['property2'],
-                 self.__attr['property2'], self.__attr['description'])
-            )
-
-        for propertyName in placeholders:
-            if propertyName not in (self.__attr['property1'], self.__attr['property2']):
-                raise EDXMLValidationError(
-                    'Relation between properties %s and %s has a description that refers to other properties: "%s"' %
-                    (self.__attr['property1'], self.__attr['property2'],
-                     self.__attr['description'])
-                )
 
         if self.get_type() in ('inter', 'intra'):
             if self.__attr.get('concept1') is None or self.__attr.get('concept2') is None:

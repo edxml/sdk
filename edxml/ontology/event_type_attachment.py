@@ -3,6 +3,7 @@
 import re
 
 from lxml import etree
+import edxml
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 
@@ -291,7 +292,13 @@ class EventTypeAttachment(OntologyElement):
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
-        self._event_type.validate_template(self._attr['description'])
+        try:
+            edxml.Template(self._attr['description']).validate(self._event_type)
+        except EDXMLValidationError as e:
+            raise EDXMLValidationError(
+                'The description template of attachment "%s" is invalid: "%s"\nThe validator said: %s' % (
+                    self._attr['name'], self._attr['display-name-plural'], str(e))
+            )
 
         return self
 
