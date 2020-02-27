@@ -329,47 +329,51 @@ class TranscoderMediator(object):
     def _write_initial_ontology(self):
         # Here, we write the ontology elements that are
         # defined by the various transcoders.
+        self._initialize_ontology(self._ontology)
+
+        if len(self.__sources) == 0:
+            log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
+            self.__sources.append(self._ontology.create_event_source('/undefined/'))
+
+        self._writer.add_ontology(self._ontology)
+        self._last_written_ontology_version = self._ontology.get_version()
+
+    @classmethod
+    def _initialize_ontology(cls, ontology):
 
         # First, we accumulate the object types into an
         # empty ontology.
         object_types = Ontology()
-        for transcoder in self.__transcoders.values():
+        for transcoder in cls.__transcoders.values():
             transcoder.set_ontology(object_types)
             transcoder.create_object_types()
 
         # Add the object types to the main mediator ontology
-        self._ontology.update(object_types)
+        ontology.update(object_types)
 
         # Then, we accumulate the concepts into an
         # empty ontology.
         concepts = Ontology()
-        for transcoder in self.__transcoders.values():
+        for transcoder in cls.__transcoders.values():
             transcoder.set_ontology(concepts)
             transcoder.create_concepts()
 
         # Add the concepts to the main mediator ontology
-        self._ontology.update(concepts)
+        ontology.update(concepts)
 
         # Now, we allow each of the transcoders to create their event
         # types in separate ontologies. We do that to allow two transcoders
         # to create two event types that share the same name. That is
         # a common pattern in transcoders that inherit event type definitions
         # from their parent, adjust the event type and finally rename it.
-        for transcoder in self.__transcoders.values():
+        for transcoder in cls.__transcoders.values():
             transcoder.set_ontology(Ontology())
             transcoder.update_ontology(object_types, validate=False)
             transcoder.update_ontology(concepts, validate=False)
             list(transcoder.generate_event_types())
-            self._ontology.update(transcoder._ontology, validate=False)
+            ontology.update(transcoder._ontology, validate=False)
 
-        if len(self.__sources) == 0:
-            log.warning(
-                'No EDXML source was defined, generating bogus source.')
-            self.__sources.append(
-                self._ontology.create_event_source('/undefined/'))
-
-        self._writer.add_ontology(self._ontology)
-        self._last_written_ontology_version = self._ontology.get_version()
+        return ontology
 
     def _write_ontology_update(self):
         # Here, we write ontology updates resulting
