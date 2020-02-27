@@ -490,7 +490,19 @@ class TranscoderMediator(object):
                 )
 
     @classmethod
-    def describe(cls, source_name):
+    def describe_transcoder(cls, source_name):
+        """
+        Returns a reStructuredText description for a transcoder that
+        uses this mediator. This is done by combining the ontologies
+        of all registered record transcoders and describing what the
+        resulting data would entail.
+
+        Args:
+            source_name (str): A description of the data source
+
+        Returns:
+            str
+        """
 
         ontology = Ontology()
         cls._initialize_ontology(ontology)
