@@ -261,6 +261,32 @@ class Transcoder(object):
       {'event_type_name': ['my-property', 'another-property']}
     """
 
+    TYPE_OPTIONAL_PROPERTIES = {}
+    """
+    The TYPE_OPTIONAL_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of
+    property names that will be optional.
+    Example::
+
+      {'event_type_name': ['my-property', 'another-property']}
+
+    It is also possible to indicate that all event properties of a particular event type will be optional, like this::
+
+      {'event_type_name': True}
+
+    In this case TYPE_MANDATORY_PROPERTIES can be used to specify exceptions.
+    """
+
+    TYPE_MANDATORY_PROPERTIES = {}
+    """
+    All event properties are created as mandatory properties by default, unless TYPE_OPTIONAL_PROPERTIES indicates
+    otherwise. When TYPE_OPTIONAL_PROPERTIES indicates that all event properties of a specific event type must
+    be optional, TYPE_MANDATORY_PROPERTIES can list exceptions. It is a dictionary mapping EDXML event type names
+    to lists of property names that will be mandatory.
+    Example::
+
+      {'event_type_name': ['my-property', 'another-property']}
+    """
+
     TYPE_ATTACHMENT_MEDIA_TYPES = {}
     """
     The TYPE_ATTACHMENT_MEDIA_TYPES attribute is a dictionary mapping EDXML event type names to attachment media
@@ -439,6 +465,11 @@ class Transcoder(object):
                     cls.TYPE_PROPERTY_SIMILARITY[event_type_name][property_name])
             if property_name in cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []):
                 event_type[property_name].make_multivalued()
+            if cls.TYPE_OPTIONAL_PROPERTIES.get(event_type_name) is True:
+                if property_name not in cls.TYPE_MANDATORY_PROPERTIES.get(event_type_name, []):
+                    event_type[property_name].make_optional()
+            elif property_name in cls.TYPE_OPTIONAL_PROPERTIES.get(event_type_name, []):
+                event_type[property_name].make_optional()
             if property_name in cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}):
                 event_type[property_name].set_merge_strategy(
                     cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name][property_name])
@@ -530,6 +561,20 @@ class Transcoder(object):
                     cls.__name__
                 )
 
+            optional_properties = cls.TYPE_OPTIONAL_PROPERTIES.get(event_type_name, [])
+            if optional_properties is not True and set(optional_properties).difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_OPTIONAL_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
+                    cls.__name__
+                )
+
+            mandatory_properties = set(cls.TYPE_MANDATORY_PROPERTIES.get(event_type_name, []))
+            if mandatory_properties.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_MANDATORY_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
+                    cls.__name__
+                )
+
             properties_with_merge_strategies = set(cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}).keys())
             if properties_with_merge_strategies.difference(existing_properties) != set():
                 raise ValueError(
@@ -605,6 +650,18 @@ class Transcoder(object):
         if types_with_multi_valued_props.difference(existing_types) != set():
             raise ValueError(
                 '%s.TYPE_MULTI_VALUED_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_optional_props = set(cls.TYPE_OPTIONAL_PROPERTIES.keys())
+        if types_with_optional_props.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_OPTIONAL_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
+
+        types_with_mandatory_props = set(cls.TYPE_MANDATORY_PROPERTIES.keys())
+        if types_with_mandatory_props.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_MANDATORY_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
             )
 
         types_with_attachments = set(cls.TYPE_ATTACHMENTS.keys())

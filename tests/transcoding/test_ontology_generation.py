@@ -148,6 +148,7 @@ def test_properties(transcoder):
     type(transcoder).TYPE_PROPERTY_MERGE_STRATEGIES = {'event-type.a': {'property-a': EventProperty.MERGE_MATCH}}
     type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['property-a']}
     type(transcoder).TYPE_MULTI_VALUED_PROPERTIES = {'event-type.a': ['property-a']}
+    type(transcoder).TYPE_OPTIONAL_PROPERTIES = {'event-type.a': ['property-b']}
 
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
@@ -159,8 +160,51 @@ def test_properties(transcoder):
         assert event_type.get_properties()['property-a'].get_merge_strategy() == EventProperty.MERGE_MATCH
         assert event_type.get_properties()['property-a'].is_unique()
         assert event_type.get_properties()['property-a'].is_multi_valued()
+        assert event_type.get_properties()['property-a'].is_mandatory()
         assert event_type.get_properties()['property-b'].is_unique() is False
         assert event_type.get_properties()['property-b'].is_single_valued()
+        assert event_type.get_properties()['property-b'].is_optional()
+
+
+def test_optional_mandatory_properties(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {
+        'event-type.a': {
+            'property-a': 'object-type.string',
+            'property-b': 'object-type.string'
+        }
+    }
+
+    # Make one property optional.
+    type(transcoder).TYPE_OPTIONAL_PROPERTIES = {'event-type.a': ['property-a']}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    for event_type in event_types.values():
+        assert event_type.get_properties()['property-a'].is_optional()
+        assert event_type.get_properties()['property-b'].is_mandatory()
+
+
+def test_optional_mandatory_properties_b(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {
+        'event-type.a': {
+            'property-a': 'object-type.string',
+            'property-b': 'object-type.string'
+        }
+    }
+
+    # Make all properties optional, except for one.
+    type(transcoder).TYPE_OPTIONAL_PROPERTIES = {'event-type.a': True}
+    type(transcoder).TYPE_MANDATORY_PROPERTIES = {'event-type.a': ['property-b']}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    for event_type in event_types.values():
+        assert event_type.get_properties()['property-a'].is_optional()
+        assert event_type.get_properties()['property-b'].is_mandatory()
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
