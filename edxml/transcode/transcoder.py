@@ -252,6 +252,15 @@ class Transcoder(object):
       {'event_type_name': ['my-attachment', 'another-attachment']}
     """
 
+    TYPE_MULTI_VALUED_PROPERTIES = {}
+    """
+    The TYPE_MULTI_VALUED_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of
+    property names that will be multi-valued.
+    Example::
+
+      {'event_type_name': ['my-property', 'another-property']}
+    """
+
     TYPE_ATTACHMENT_MEDIA_TYPES = {}
     """
     The TYPE_ATTACHMENT_MEDIA_TYPES attribute is a dictionary mapping EDXML event type names to attachment media
@@ -428,6 +437,8 @@ class Transcoder(object):
             if property_name in cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}):
                 event_type[property_name].hint_similar(
                     cls.TYPE_PROPERTY_SIMILARITY[event_type_name][property_name])
+            if property_name in cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []):
+                event_type[property_name].make_multivalued()
             if property_name in cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}):
                 event_type[property_name].set_merge_strategy(
                     cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name][property_name])
@@ -512,6 +523,13 @@ class Transcoder(object):
                     cls.__name__
                 )
 
+            multi_valued_properties = set(cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []))
+            if multi_valued_properties.difference(existing_properties) != set():
+                raise ValueError(
+                    '%s.TYPE_MULTI_VALUED_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
+                    cls.__name__
+                )
+
             properties_with_merge_strategies = set(cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}).keys())
             if properties_with_merge_strategies.difference(existing_properties) != set():
                 raise ValueError(
@@ -582,6 +600,12 @@ class Transcoder(object):
         types_with_timespans = set(cls.TYPE_TIMESPANS.keys())
         if types_with_timespans.difference(existing_types) != set():
             raise ValueError('%s.TYPE_TIMESPANS contains event type names that are not in TYPE_MAP.' % cls.__name__)
+
+        types_with_multi_valued_props = set(cls.TYPE_MULTI_VALUED_PROPERTIES.keys())
+        if types_with_multi_valued_props.difference(existing_types) != set():
+            raise ValueError(
+                '%s.TYPE_MULTI_VALUED_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
+            )
 
         types_with_attachments = set(cls.TYPE_ATTACHMENTS.keys())
         if types_with_attachments.difference(existing_types) != set():

@@ -21,6 +21,12 @@ def test_spurious_type_display_name_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_type_multi_valued_properties_exception(transcoder):
+    type(transcoder).TYPE_MULTI_VALUED_PROPERTIES = {'spurious': []}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
 def test_spurious_type_summary_exception(transcoder):
     type(transcoder).TYPE_SUMMARIES = {'spurious': 'test'}
     with pytest.raises(ValueError, match='not in TYPE_MAP'):
@@ -103,6 +109,14 @@ def test_spurious_unique_property_exception(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
     type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['spurious']}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_multi_valued_property_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_MULTI_VALUED_PROPERTIES = {'event-type.a': ['spurious']}
     with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
         dict(transcoder.generate_event_types())
 

@@ -138,21 +138,29 @@ def test_event_type_attachment_media_type(transcoder):
 
 def test_properties(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
-    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {
+            'property-a': 'object-type.string',
+            'property-b': 'object-type.string'
+        }
+    }
     type(transcoder).TYPE_PROPERTY_DESCRIPTIONS = {'event-type.a': {'property-a': 'test description'}}
     type(transcoder).TYPE_PROPERTY_SIMILARITY = {'event-type.a': {'property-a': 'test similarity'}}
     type(transcoder).TYPE_PROPERTY_MERGE_STRATEGIES = {'event-type.a': {'property-a': EventProperty.MERGE_MATCH}}
     type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['property-a']}
+    type(transcoder).TYPE_MULTI_VALUED_PROPERTIES = {'event-type.a': ['property-a']}
 
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
 
     for event_type in event_types.values():
-        assert list(event_type.get_properties().keys()) == ['property-a']
+        assert list(event_type.get_properties().keys()) == ['property-a', 'property-b']
         assert event_type.get_properties()['property-a'].get_description() == 'test description'
         assert event_type.get_properties()['property-a'].get_similar_hint() == 'test similarity'
         assert event_type.get_properties()['property-a'].get_merge_strategy() == EventProperty.MERGE_MATCH
         assert event_type.get_properties()['property-a'].is_unique()
+        assert event_type.get_properties()['property-a'].is_multi_valued()
+        assert event_type.get_properties()['property-b'].is_unique() is False
+        assert event_type.get_properties()['property-b'].is_single_valued()
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
