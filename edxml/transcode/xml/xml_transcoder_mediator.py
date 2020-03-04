@@ -150,7 +150,7 @@ class XmlTranscoderMediator(TranscoderMediator):
           input_file (Union[io.TextIOBase, file, str]):
 
         """
-        tags = self._transcoder_tags.values()
+        tags = self._get_tags()
 
         element_iterator = etree.iterparse(
             input_file, events=['end'], tag=tags, attribute_defaults=attribute_defaults, dtd_validation=dtd_validation,
@@ -211,7 +211,7 @@ class XmlTranscoderMediator(TranscoderMediator):
           input_file (Union[io.TextIOBase, file, str]):
 
         """
-        tags = self._transcoder_tags.values()
+        tags = self._get_tags()
 
         element_iterator = etree.iterparse(
             input_file, events=['end'], tag=tags, attribute_defaults=attribute_defaults, dtd_validation=dtd_validation,
@@ -323,6 +323,19 @@ class XmlTranscoderMediator(TranscoderMediator):
                 log.warning('XML element was: %s' % etree.tostring(element, pretty_print=True, encoding='unicode'))
 
         return b''.join(outputs)
+
+    def _get_tags(self):
+        """
+        Returns the names of the XML tags the XML parser will visit
+        while parsing input. By default, these are the tags for which
+        record transcoders are registered. This list can be extended
+        by overriding this method.
+
+        Returns:
+            List[str]
+
+        """
+        return list(self._transcoder_tags.values())
 
     @staticmethod
     def get_visited_tag_name(xpath):
