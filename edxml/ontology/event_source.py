@@ -228,10 +228,21 @@ class EventSource(OntologyElement):
         if versions_differ:
             return -1 if other_is_newer else 1
 
+        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
+
+        old_version = str(old.get_version())
+        new_version = str(new.get_version())
+
+        if not versions_differ:
+            new_version += ' (conflicting definition)'
+
         raise EDXMLValidationError(
-            "Event source definitions are neither equal nor valid upgrades / downgrades of one another "
-            "due to the following difference in their definitions:\nOld version:\n{}\nNew version:\n{}".format(
+            "Event source definitions are {} due to the following difference in their definitions:\n"
+            "Version {}:\n{}\nVersion {}:\n{}".format(
+                problem,
+                old_version,
                 etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
+                new_version,
                 etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
             )
         )
