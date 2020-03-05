@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, Optional
+from graphviz import Digraph
 
 import edxml
 from edxml.logger import log
@@ -488,6 +489,25 @@ class TranscoderMediator(object):
                     'The post processor of %s failed transcoding record %s: %s\n\nContinuing...' %
                     (type(transcoder).__name__, record_id, str(e))
                 )
+
+    def generate_graphviz_concept_relations(self):
+        """
+        Returns a graph that shows possible concept mining reasoning paths.
+
+        Returns:
+            graphviz.Digraph
+        """
+
+        graph = Digraph(
+            node_attr={'fontname': 'sans', 'shape': 'box', 'style': 'rounded'},
+            edge_attr={'fontname': 'sans'},
+            graph_attr={'sep': '+8', 'overlap': 'false', 'outputorder': 'edgesfirst', 'splines': 'true'},
+            engine='sfdp',
+            strict='true'
+        )
+
+        self._ontology.generate_graph_property_concepts(graph)
+        return graph
 
     @classmethod
     def describe_transcoder(cls, source_name):

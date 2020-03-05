@@ -4,6 +4,7 @@ python-dateutil
 iso3166
 pytz
 termcolor
+graphviz
 typing
 pytest
 ipy
