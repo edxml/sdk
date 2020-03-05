@@ -3,7 +3,7 @@
 import edxml
 
 from lxml import etree
-from typing import Any
+from typing import Any, Generator, Optional
 from typing import Dict
 
 from edxml.ontology import OntologyElement
@@ -49,3 +49,6 @@ class Concept(OntologyElement):
     def update(self, concept: 'Concept') -> 'Concept': ...
 
     def generate_xml(self) -> etree.Element: ...
+
+    @classmethod
+    def generate_refinements(cls, concept_name: str, base_concept_name: Optional[str]='') -> Generator[str]: ...
