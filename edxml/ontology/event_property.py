@@ -29,7 +29,7 @@ class EventProperty(OntologyElement):
     MERGE_MAX = 'max'
     """Merge strategy 'max'"""
 
-    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=True, multivalued=False,
+    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=False, multivalued=False,
                  merge='drop', similar=''):
 
         self.__attr = {

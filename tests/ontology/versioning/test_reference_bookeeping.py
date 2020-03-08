@@ -20,7 +20,7 @@ def test_property_reference_bookkeeping():
     # instance is an update of the previous one.
     a2 = EventType(o1, 'a').set_version(2)
     a2.create_property('a', 'a')
-    a2.create_property('b', 'a')
+    a2.create_property('b', 'a').make_optional()
 
     # We add the event type update to the ontology
     # which will update its internal copy. Because
@@ -39,7 +39,7 @@ def test_property_reference_bookkeeping():
     # entire structure consistent.
     a3 = EventType(o1, 'a').set_version(3)
     a3.create_property('a', 'a')
-    a3.create_property('b', 'a', description='different')
+    a3.create_property('b', 'a', description='different').make_optional()
     o1._add_event_type(a3)
 
     # Create another ontology o2 which is identical to o1.
@@ -47,7 +47,7 @@ def test_property_reference_bookkeeping():
     o2.create_object_type('a')
     a4 = o2.create_event_type('a').set_version(3)
     a4.create_property('a', 'a')
-    a4.create_property('b', 'a', description='different')
+    a4.create_property('b', 'a', description='different').make_optional()
 
     # When the internal event type references are inconsistent
     # then the versions of the event types stored in the two
@@ -70,7 +70,7 @@ def test_property_concept_reference_bookkeeping():
     # instance is an update of the previous one.
     a2 = EventType(o1, 'a').set_version(2)
     a2.create_property('a', 'a')
-    a2.create_property('b', 'a').identifies('a', confidence=1)
+    a2.create_property('b', 'a').make_optional().identifies('a', confidence=1)
 
     # We add the event type update to the ontology
     # which will update its internal copy. Because
@@ -89,7 +89,7 @@ def test_property_concept_reference_bookkeeping():
     # entire structure consistent.
     a3 = EventType(o1, 'a').set_version(3)
     a3.create_property('a', 'a')
-    a3.create_property('b', 'a').identifies('a', confidence=2)
+    a3.create_property('b', 'a').make_optional().identifies('a', confidence=2)
     o1._add_event_type(a3)
 
     # Create another ontology o2 which is identical to o1.
@@ -98,7 +98,7 @@ def test_property_concept_reference_bookkeeping():
     o2.create_concept('a')
     a4 = o2.create_event_type('a').set_version(3)
     a4.create_property('a', 'a')
-    a4.create_property('b', 'a').identifies('a', confidence=2)
+    a4.create_property('b', 'a').make_optional().identifies('a', confidence=2)
 
     # When the internal event type references are inconsistent
     # then the versions of the event types stored in the two
