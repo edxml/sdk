@@ -322,6 +322,8 @@ class XmlTranscoderMediator(TranscoderMediator):
                 )
                 log.warning('XML element was: %s' % etree.tostring(element, pretty_print=True, encoding='unicode'))
 
+        self._num_input_records_processed += 1
+
         return b''.join(outputs)
 
     def _get_tags(self):

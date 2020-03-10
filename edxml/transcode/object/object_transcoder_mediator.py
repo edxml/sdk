@@ -137,4 +137,6 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                         'no %s event generated. Record was: %s' % (record_type, input_record)
                     )
 
+        self._num_input_records_processed += 1
+
         return b''.join(outputs)

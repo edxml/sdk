@@ -56,6 +56,8 @@ class TranscoderMediator(object):
         self._ignore_post_process_exceptions = False
         self._output_source_uri = None
 
+        self._num_input_records_processed = 0
+
         self.__disable_buffering = False
         self.__validate_events = True
         self.__log_repaired_events = False
