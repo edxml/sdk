@@ -740,11 +740,12 @@ class Ontology(OntologyElement):
                 if event_property.get_merge_strategy() in ('min', 'max'):
                     if not event_property.get_data_type().is_numerical():
                         if not event_property.get_data_type().is_datetime():
-                            raise EDXMLValidationError(
-                                'Property "%s" of event type "%s" has data type %s, which '
-                                'cannot be used with merge strategy %s.'
-                                % (property_name, event_type_name, event_property.get_data_type(),
-                                   event_property.get_merge_strategy())
+                            if event_property.get_data_type().get_family() != 'sequence':
+                                raise EDXMLValidationError(
+                                    'Property "%s" of event type "%s" has data type %s, which '
+                                    'cannot be used with merge strategy %s.'
+                                    % (property_name, event_type_name, event_property.get_data_type(),
+                                       event_property.get_merge_strategy())
                             )
 
         # Check if unique properties have their merge strategies set
