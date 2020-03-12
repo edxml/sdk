@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 Testing event structure validation, verify
-if multi-valued property having merge="replace" is rejected
+if an event type that defines an event version using
+an optional property is rejected
 -->
 <edxml xmlns="http://edxml.org/edxml" version="3.0.0">
   <ontology>
@@ -14,8 +15,8 @@ if multi-valued property having merge="replace" is rejected
       <eventtype name="a" description="a" event-version="c" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
         <properties>
           <property name="a" object-type="a" description="c" unique="true" optional="false" multivalued="false" merge="match"/>
-          <property name="b" object-type="a" description="c" unique="false" optional="false" multivalued="true" merge="replace"/>
-          <property name="c" object-type="b" description="c" unique="false" optional="false" multivalued="false" merge="max"/>
+          <property name="b" object-type="a" description="c" unique="false" optional="false" multivalued="false" merge="replace"/>
+          <property name="c" object-type="b" description="c" unique="false" optional="true" multivalued="false" merge="max"/>
         </properties>
         <relations/>
       </eventtype>

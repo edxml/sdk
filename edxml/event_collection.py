@@ -121,9 +121,9 @@ class EventCollection(list):
             if len(events) < 2:
                 result.append(events.pop())
                 continue
-            first = events.pop(0)
-            first.merge_with(events, self._ontology)
-            result.append(first)
+            result.append(
+                self._ontology.get_event_type(events[0].get_type_name()).merge(events)
+            )
 
         return result
 

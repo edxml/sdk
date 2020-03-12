@@ -9,10 +9,11 @@ Testing if resolving event collisions within a single input file works as expect
       <objecttype name="b" description="b" display-name-singular="b" display-name-plural="b" version="1" data-type="datetime"/>
       <objecttype name="c" description="c" display-name-singular="c" display-name-plural="c" version="1" data-type="number:int"/>
       <objecttype name="d" description="d" display-name-singular="d" display-name-plural="d" version="1" data-type="string:255:cs"/>
+      <objecttype name="e" description="d" display-name-singular="d" display-name-plural="d" version="1" data-type="sequence"/>
     </objecttypes>
     <concepts/>
     <eventtypes>
-      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+      <eventtype name="a" description="a" event-version="v" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
         <properties>
           <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
           <property name="b" object-type="b" description="b" unique="false" optional="false" multivalued="false" merge="min"/>
@@ -21,6 +22,7 @@ Testing if resolving event collisions within a single input file works as expect
           <property name="e" object-type="d" description="e" unique="false" optional="true" multivalued="false" merge="replace"/>
           <property name="f" object-type="d" description="f" unique="false" optional="true" multivalued="true" merge="drop"/>
           <property name="g" object-type="d" description="g" unique="false" optional="true" multivalued="false" merge="replace"/>
+          <property name="v" object-type="e" description="g" unique="false" optional="false" multivalued="false" merge="max"/>
         </properties>
         <relations/>
       </eventtype>
@@ -34,6 +36,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>a</a>
       <b>1800-01-01T12:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/" parents="e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98,84a516841ba77a5b4648de2cd0dfcb30ea46dbb4">
@@ -41,6 +44,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>a</a>
       <b>1800-01-02T12:00:00.000000Z</b>
       <c>0</c>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -48,6 +52,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>b</a>
       <b>1800-01-02T12:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -55,6 +60,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>b</a>
       <b>1800-01-01T12:00:00.000000Z</b>
       <c>0</c>
+      <v>2</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -62,6 +68,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>d</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>2</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -69,6 +76,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>d</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>1</c>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -76,6 +84,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>e</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>2</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -83,6 +92,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>e</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>3</c>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -90,6 +100,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>f</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -98,6 +109,7 @@ Testing if resolving event collisions within a single input file works as expect
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <d>One</d>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -106,6 +118,7 @@ Testing if resolving event collisions within a single input file works as expect
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <d>Two</d>
+      <v>3</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -115,6 +128,7 @@ Testing if resolving event collisions within a single input file works as expect
       <c>0</c>
       <d>Three</d>
       <d>Four</d>
+      <v>2</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -123,6 +137,7 @@ Testing if resolving event collisions within a single input file works as expect
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <f>Blue</f>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -131,6 +146,7 @@ Testing if resolving event collisions within a single input file works as expect
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <e>Two</e>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -140,6 +156,7 @@ Testing if resolving event collisions within a single input file works as expect
       <c>0</c>
       <e>Three</e>
       <f>Red</f>
+      <v>2</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -148,6 +165,7 @@ Testing if resolving event collisions within a single input file works as expect
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <g>DeleteMe</g>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -155,6 +173,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>h</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -162,6 +181,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>i</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -169,6 +189,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>i</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -176,6 +197,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>j</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -183,6 +205,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>j</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -190,6 +213,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>k</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -197,6 +221,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>k</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -204,6 +229,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>l</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -211,6 +237,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>l</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -218,6 +245,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>m</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -225,6 +253,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>m</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -232,6 +261,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>n</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -239,6 +269,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>n</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -246,6 +277,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>o</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -253,6 +285,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>o</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -260,6 +293,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>p</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -267,6 +301,7 @@ Testing if resolving event collisions within a single input file works as expect
       <a>p</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
 </edxml>

@@ -9,10 +9,11 @@ Testing if resolving event collisions between consecutive input files works as e
       <objecttype name="b" description="b" display-name-singular="b" display-name-plural="b" version="1" data-type="datetime"/>
       <objecttype name="c" description="c" display-name-singular="c" display-name-plural="c" version="1" data-type="number:int"/>
       <objecttype name="d" description="d" display-name-singular="d" display-name-plural="d" version="1" data-type="string:255:cs"/>
+      <objecttype name="e" description="d" display-name-singular="d" display-name-plural="d" version="1" data-type="sequence"/>
     </objecttypes>
     <concepts/>
     <eventtypes>
-      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
+      <eventtype name="a" description="a" event-version="v" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1">
         <properties>
           <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
           <property name="b" object-type="b" description="b" unique="false" optional="false" multivalued="false" merge="min"/>
@@ -21,6 +22,7 @@ Testing if resolving event collisions between consecutive input files works as e
           <property name="e" object-type="d" description="e" unique="false" optional="true" multivalued="false" merge="replace"/>
           <property name="f" object-type="d" description="f" unique="false" optional="true" multivalued="true" merge="drop"/>
           <property name="g" object-type="d" description="g" unique="false" optional="true" multivalued="false" merge="replace"/>
+          <property name="v" object-type="e" description="g" unique="false" optional="false" multivalued="false" merge="max"/>
         </properties>
         <relations/>
       </eventtype>
@@ -34,6 +36,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>a</a>
       <b>1800-01-01T12:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -41,6 +44,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>b</a>
       <b>1800-01-02T12:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -48,6 +52,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>d</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>2</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -55,6 +60,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>e</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>2</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -62,6 +68,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>f</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -70,6 +77,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <d>One</d>
+      <v>1</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -78,6 +86,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <f>Blue</f>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -86,6 +95,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
       <g>DeleteMe</g>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -93,6 +103,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>i</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -100,6 +111,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>i</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -107,6 +119,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>j</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -114,6 +127,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>k</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -121,6 +135,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>l</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -128,6 +143,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>m</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -135,6 +151,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>n</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -142,6 +159,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>o</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
   <event event-type="a" source-uri="/test/">
@@ -149,6 +167,7 @@ Testing if resolving event collisions between consecutive input files works as e
       <a>p</a>
       <b>2000-01-01T00:00:00.000000Z</b>
       <c>0</c>
+      <v>0</v>
     </properties>
   </event>
 </edxml>

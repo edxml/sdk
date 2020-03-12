@@ -153,6 +153,66 @@ def test_change_timespan_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
+def test_set_event_version_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('sequence', data_type=DataType.FAMILY_SEQUENCE)
+    a = o.create_event_type('a')
+    a.create_property('version', 'sequence').merge_max()
+
+    # Create a copy that sets the event version property.
+    b = copy.deepcopy(a).set_version_property_name('version').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_change_event_version_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('sequence', data_type=DataType.FAMILY_SEQUENCE)
+    a = o.create_event_type('a')
+    a.create_property('version-a', 'sequence').merge_max()
+    a.create_property('version-b', 'sequence').merge_max()
+    a.set_version_property_name('version-a')
+
+    # Create a copy that sets a different version property.
+    b = copy.deepcopy(a).set_version_property_name('version-b').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_set_event_sequence_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('sequence', data_type=DataType.FAMILY_SEQUENCE)
+    a = o.create_event_type('a')
+    a.create_property('sequence', 'sequence')
+
+    # Create a copy that sets the event sequence property.
+    b = copy.deepcopy(a).set_sequence_property_name('sequence').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_change_event_sequence_not_allowed():
+
+    o = Ontology()
+    o.create_object_type('sequence', data_type=DataType.FAMILY_SEQUENCE)
+    a = o.create_event_type('a')
+    a.create_property('sequence-a', 'sequence')
+    a.create_property('sequence-b', 'sequence')
+    a.set_sequence_property_name('sequence-a')
+
+    # Create a copy that sets a different event sequence property.
+    b = copy.deepcopy(a).set_sequence_property_name('sequence-b').set_version(2)
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_timeless_to_timeful_not_allowed():
 
     o = Ontology()

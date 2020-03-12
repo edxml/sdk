@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Testing event conflict detection.
+-->
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:0:cs"/>
+      <objecttype name="b" description="b" display-name-singular="b" display-name-plural="b" version="1" data-type="string:0:cs"/>
+      <objecttype name="c" description="c" display-name-singular="c" display-name-plural="c" version="1" data-type="sequence"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="a" story="a" version="1" event-version="c">
+        <properties>
+          <property name="a" object-type="a" description="a" unique="true" optional="false" multivalued="false" merge="match"/>
+          <property name="b" object-type="b" description="b" unique="false" optional="false" multivalued="false" merge="replace"/>
+          <property name="c" object-type="c" description="c" unique="false" optional="false" multivalued="false" merge="max"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources>
+      <source uri="/test/" description="a" date-acquired="20000101" version="1"/>
+    </sources>
+  </ontology>
+  <!-- Below we define two physical instances of the same logical
+       event (a == a) both of which having the same version (2 == 2)
+       and having a conflicting value for property b ('one' != 'two') -->
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <a>a</a>
+      <b>one</b>
+      <c>2</c>
+    </properties>
+  </event>
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <a>a</a>
+      <b>two</b>
+      <c>2</c>
+    </properties>
+  </event>
+  <!-- Below, we also add an older version (c == 1) of the
+       above events, which should be ignored when merging. -->
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <a>a</a>
+      <b>zero</b>
+      <c>1</c>
+    </properties>
+  </event>
+  <!-- Below, we also add an newer version (c == 3) of the
+       above events, which should NOT be considered as the
+       resolution of the above conflict. Newer event versions
+       are generally not replacements of older versions, all
+       information from all colliding events must be considered
+       in the merge process. -->
+  <event event-type="a" source-uri="/test/">
+    <properties>
+      <a>a</a>
+      <b>one or two</b>
+      <c>3</c>
+    </properties>
+  </event>
+</edxml>

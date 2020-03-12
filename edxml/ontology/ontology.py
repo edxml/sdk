@@ -746,7 +746,7 @@ class Ontology(OntologyElement):
                                     'cannot be used with merge strategy %s.'
                                     % (property_name, event_type_name, event_property.get_data_type(),
                                        event_property.get_merge_strategy())
-                            )
+                                )
 
         # Check if unique properties have their merge strategies set
         # to 'match'

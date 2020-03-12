@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import base64
 import binascii
+from decimal import Decimal
 from typing import Dict
 
 import re
 
 from io import BytesIO
-from collections import MutableMapping
+from collections import MutableMapping, defaultdict
 from lxml import etree
 from lxml.builder import ElementMaker
 
 import edxml
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLValidationError, EDXMLMergeConflictError
 from edxml.ontology import OntologyElement, normalize_xml_token
 
 
@@ -42,6 +43,8 @@ class EventType(OntologyElement, MutableMapping):
             'story': story.replace('\n', '[[NEWPAR:]]'),
             'timespan-start': None,
             'timespan-end': None,
+            'event-version': None,
+            'sequence': None,
             'version': 1
         }
 
@@ -184,6 +187,30 @@ class EventType(OntologyElement, MutableMapping):
             str:
         """
         return self.__attr['timespan-end']
+
+    def get_version_property_name(self):
+        """
+
+        Returns the name of the property that defines the version of
+        the events that is used to merge colliding events. Returns
+        None when the event type does not define an event version.
+
+        Returns:
+            Optional[str]:
+        """
+        return self.__attr['event-version']
+
+    def get_sequence_property_name(self):
+        """
+
+        Returns the name of the property that defines the sequence
+        numbers of the events. Returns None when the event type does
+        not define a sequence number.
+
+        Returns:
+            Optional[str]:
+        """
+        return self.__attr['sequence']
 
     def get_classes(self):
         """
@@ -857,6 +884,38 @@ class EventType(OntologyElement, MutableMapping):
         self._set_attr('timespan-end', property_name)
         return self
 
+    def set_version_property_name(self, property_name):
+        """
+
+        Sets the name of the property that defines the versions
+        of the events that is used to merge colliding events.
+
+        Args:
+            property_name (str):
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+
+        """
+        self._set_attr('event-version', property_name)
+        return self
+
+    def set_sequence_property_name(self, property_name):
+        """
+
+        Sets the name of the property that defines the sequence
+        numbers of the events.
+
+        Args:
+            property_name (str):
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+
+        """
+        self._set_attr('sequence', property_name)
+        return self
+
     def evaluate_template(self, edxml_event, which='story', capitalize=True, colorize=False):
         """
 
@@ -982,6 +1041,71 @@ class EventType(OntologyElement, MutableMapping):
                     (self.__attr['name'], self.__attr['timespan-end'])
                 )
 
+        if self.__attr['event-version'] is not None:
+            if not self.__attr['event-version'] in self.get_properties().keys():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event version '
+                    'by means of property "%s", which does not exist.' %
+                    (self.__attr['name'], self.__attr['event-version'])
+                )
+            if self.get_properties()[self.__attr['event-version']].get_data_type().get_family() != 'sequence':
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event version '
+                    'by means of property "%s", which does not have the sequence data type.' %
+                    (self.__attr['name'], self.__attr['event-version'])
+                )
+            if self.get_properties()[self.__attr['event-version']].get_merge_strategy() != 'max':
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event version '
+                    'by means of property "%s", which does not have the "max" merge strategy.' %
+                    (self.__attr['name'], self.__attr['event-version'])
+                )
+            if self.get_properties()[self.__attr['event-version']].is_optional():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event version '
+                    'by means of property "%s", which is optional. Version properties must not be optional.' %
+                    (self.__attr['name'], self.__attr['event-version'])
+                )
+            if self.get_properties()[self.__attr['event-version']].is_multi_valued():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event version '
+                    'by means of property "%s", which is multi-valued. Version properties must not be multi-valued.' %
+                    (self.__attr['name'], self.__attr['event-version'])
+                )
+
+        if self.__attr['sequence'] is not None:
+            if not self.__attr['sequence'] in self.get_properties().keys():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event sequence numbers '
+                    'by means of property "%s", which does not exist.' %
+                    (self.__attr['name'], self.__attr['sequence'])
+                )
+            if self.get_properties()[self.__attr['sequence']].get_data_type().get_family() != 'sequence':
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event sequence numbers '
+                    'by means of property "%s", which does not have the sequence data type.' %
+                    (self.__attr['name'], self.__attr['sequence'])
+                )
+            if self.get_properties()[self.__attr['sequence']].is_optional():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event sequence numbers '
+                    'by means of property "%s", which is optional. Sequences must not be optional.' %
+                    (self.__attr['name'], self.__attr['sequence'])
+                )
+            if self.get_properties()[self.__attr['sequence']].is_multi_valued():
+                raise EDXMLValidationError(
+                    'Event type "%s" defines the event sequence numbers '
+                    'by means of property "%s", which is multi-valued. Sequences must not be multi-valued.' %
+                    (self.__attr['name'], self.__attr['sequence'])
+                )
+
+        if [p for p in self.get_properties().values() if p.get_merge_strategy() == 'replace']:
+            if self.get_version_property_name() is None:
+                raise EDXMLValidationError(
+                    'Event type "%s" defines one or more properties with merge strategy "replace" '
+                    'but it does not have a property containing event versions.' % self.__attr['name']
+                )
+
         if normalize_xml_token(self.__attr['story']) != self.__attr['story']:
             raise EDXMLValidationError(
                 'The story template of event type "%s" contains illegal whitespace characters: "%s"' % (
@@ -1034,7 +1158,9 @@ class EventType(OntologyElement, MutableMapping):
             type_element.attrib['story']
         ).set_version(type_element.attrib['version'])\
          .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
-         .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))
+         .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))\
+         .set_version_property_name(type_element.attrib.get('event-version'))\
+         .set_sequence_property_name(type_element.attrib.get('sequence'))
 
         property_names = []
         relation_ids = []
@@ -1121,6 +1247,14 @@ class EventType(OntologyElement, MutableMapping):
         if new.get_parent() is None and old.get_parent() is not None:
             # New version is missing the parent definition that
             # the old one has. No upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if new.get_version_property_name() != old.get_version_property_name():
+            # The version properties differ, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if new.get_sequence_property_name() != old.get_sequence_property_name():
+            # The sequence properties differ, no upgrade possible.
             equal = is_valid_upgrade = False
 
         if old.get_properties().keys() != new.get_properties().keys():
@@ -1663,3 +1797,103 @@ class EventType(OntologyElement, MutableMapping):
         # to instantiate a RelaxNG object fails with 'schema is empty'. If we
         # convert the schema to a string and parse it back gain, all is good.
         return etree.parse(BytesIO(etree.tostring(etree.ElementTree(schema))))
+
+    def merge(self, events):
+        """
+
+        Merges the specified events and returns the merged event.
+        The merged event is an instance of the same class as the
+        first input event.
+
+        Args:
+          events (List[edxml.EDXMLEvent]): List of events
+
+        Returns:
+          edxml.EDXMLEvent: Merged event
+        """
+
+        event_properties = defaultdict(list)
+        parents = set()
+
+        # First we make sure that the events are ordered correctly
+        # in case event order is relevant.
+        version_property = self.get_version_property_name()
+        if version_property is not None:
+            # Event type has a version property, which means we need
+            # to check for merge conflicts.
+            events = sorted(events, key=lambda e: int(e.get_any(version_property)))
+            self._check_merge_conflict(events, version_property)
+
+        # For each property we accumulate all values from all events.
+        for event in events:
+            parents.update(event.get_explicit_parents())
+            for property_name, values in event.items():
+                event_properties[property_name].extend(values)
+
+        output_properties = {}
+        for property_name, objects in event_properties.items():
+            strategy = self.__properties[property_name].get_merge_strategy()
+            data_type = self.__properties[property_name].get_data_type().get_split()
+            if strategy == 'min':
+                if data_type[0] == 'datetime':
+                    # Datetime objects can be ordered lexicographically.
+                    output_properties[property_name] = [min(event_properties[property_name])]
+                elif data_type[0] == 'number':
+                    if data_type[1] in ('float', 'double'):
+                        output_properties[property_name] = [min(event_properties[property_name], key=float)]
+                    elif data_type[1] == 'decimal':
+                        output_properties[property_name] = [min(event_properties[property_name], key=Decimal)]
+            elif strategy == 'max':
+                if data_type[0] == 'datetime':
+                    # Datetime objects can be ordered lexicographically.
+                    output_properties[property_name] = [max(event_properties[property_name])]
+                elif data_type[0] == 'number':
+                    if data_type[1] in ('float', 'double'):
+                        output_properties[property_name] = [max(event_properties[property_name], key=float)]
+                    elif data_type[1] == 'decimal':
+                        output_properties[property_name] = [max(event_properties[property_name], key=Decimal)]
+                    else:
+                        # Data type must be one of the integer types
+                        output_properties[property_name] = [max(event_properties[property_name], key=int)]
+                else:
+                    # Data type must be 'sequence'
+                    output_properties[property_name] = [max(event_properties[property_name], key=int)]
+            elif strategy == 'add':
+                output_properties[property_name] = set(event_properties[property_name])
+            elif strategy == 'replace':
+                # Take the value of the last event
+                output_properties[property_name] = events[-1][property_name]
+            else:
+                # Merge strategy 'drop', should not matter which
+                # value to pick, we pick the first one.
+                output_properties[property_name] = event_properties[property_name][0]
+
+        return events[0].copy().set_properties(output_properties).set_parents(parents)
+
+    def _check_merge_conflict(self, events, version_property):
+        # Compile all events that share a particular version, these
+        # are the events that can potentially conflict.
+        events_by_version = defaultdict(list)
+        for event in events:
+            events_by_version[event.get_any(version_property)].append(event)
+
+        # Now check the event sets that share a single version.
+        for version, version_events in events_by_version.items():
+            # For each property of all events that share the same
+            # version we accumulate all value sets from all events.
+            property_object_sets = defaultdict(set)
+            for event in version_events:
+                for property_name in self.__properties.keys():
+                    property_object_sets[property_name].add(tuple(sorted(event[property_name])))
+            # Now we check for each property if the object sets of all
+            # events that share a version are mutually consistent.
+            for property_name, object_sets in property_object_sets.items():
+                strategy = self.__properties[property_name].get_merge_strategy()
+                if strategy in [edxml.ontology.EventProperty.MERGE_MATCH, edxml.ontology.EventProperty.MERGE_DROP]:
+                    # No conflict possible because the object values are either identical (match)
+                    # or any differences are insignificant (drop)
+                    continue
+                if len(object_sets) > 1:
+                    # There is more than one unique set of object values
+                    # for this property.
+                    raise EDXMLMergeConflictError(version_events)
