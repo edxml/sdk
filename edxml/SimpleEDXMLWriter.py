@@ -56,6 +56,7 @@ class SimpleEDXMLWriter(object):
         self.__ignore_invalid_events = False
         self.__log_invalid_events = False
         self.__log_repaired_events = False
+        self.__repairable_event_types = set()
         self.__event_buffers = {}
         self.__previous_event_buffers = {}
         self.__ontology = Ontology()
@@ -151,6 +152,46 @@ class SimpleEDXMLWriter(object):
         self.__ignore_invalid_events = True
         self.__log_invalid_events = warn
 
+        return self
+
+    def enable_event_repair(self, event_type_name):
+        """
+
+        Enables automatic repair of events of specified type. Whenever an
+        invalid event is written into the event writer it will try to repair
+        the event by normalizing object values.
+        When also configured to ignore invalid object values the writer will
+        remove object values in case normalization does not work.
+
+        Args:
+            event_type_name (str):
+
+        Returns:
+            edxml.EDXMLWriter
+        """
+        if self.__writer:
+            self.__writer.enable_event_repair(event_type_name)
+        else:
+            self.__repairable_event_types.add(event_type_name)
+        return self
+
+    def disable_event_repair(self, event_type_name):
+        """
+
+        Disables automatic repair of events of specified type. Whenever an
+        invalid event of this type is written into the event writer it will
+        raise an exception.
+
+        Args:
+            event_type_name (str):
+
+        Returns:
+            edxml.EDXMLWriter
+        """
+        if self.__writer:
+            self.__writer.disable_event_repair(event_type_name)
+        else:
+            self.__repairable_event_types.discard(event_type_name)
         return self
 
     def log_repaired_events(self):
@@ -249,6 +290,9 @@ class SimpleEDXMLWriter(object):
         self.__writer = EDXMLWriter(
             self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
         )
+
+        for event_type_name in self.__repairable_event_types:
+            self.__writer.enable_event_repair(event_type_name)
 
         if self.__wrote_ontology_before:
             # We wrote an ontology before, let us write it again.
@@ -396,6 +440,10 @@ class SimpleEDXMLWriter(object):
             self.__writer = EDXMLWriter(
                 self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
             )
+
+            for event_type_name in self.__repairable_event_types:
+                self.__writer.enable_event_repair(event_type_name)
+
             # Instantiation of the writer produces output to initialize the stream,
             # so let us flush the writer to get it.
             output += self.__writer.flush()
@@ -501,6 +549,10 @@ class SimpleEDXMLWriter(object):
             self.__writer = EDXMLWriter(
                 self.__output, self.__validate, self.__log_repaired_events, self.__ignore_invalid_objects
             )
+
+            for event_type_name in self.__repairable_event_types:
+                self.__writer.enable_event_repair(event_type_name)
+
             outputs.append(self._write_ontology())
 
         if flush and self.__ontology.is_modified_since(self.__last_written_ontology_version):

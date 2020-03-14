@@ -89,6 +89,7 @@ class EDXMLWriter(object):
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
         self.__ignore_invalid_objects = ignore_invalid_objects
+        self.__repairable_event_types = set()
         self.__log_repaired_events = log_repaired_events
         self.__invalid_event_count = 0
         self.__pretty_print = pretty_print
@@ -124,6 +125,40 @@ class EDXMLWriter(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def enable_event_repair(self, event_type_name):
+        """
+
+        Enables automatic repair of events of specified type. Whenever an
+        invalid event is written into the event writer it will try to repair
+        the event by normalizing object values.
+        When also configured to ignore invalid object values the writer will
+        remove object values in case normalization does not work.
+
+        Args:
+            event_type_name (str):
+
+        Returns:
+            edxml.EDXMLWriter
+        """
+        self.__repairable_event_types.add(event_type_name)
+        return self
+
+    def disable_event_repair(self, event_type_name):
+        """
+
+        Disables automatic repair of events of specified type. Whenever an
+        invalid event of this type is written into the event writer it will
+        raise an exception.
+
+        Args:
+            event_type_name (str):
+
+        Returns:
+            edxml.EDXMLWriter
+        """
+        self.__repairable_event_types.discard(event_type_name)
+        return self
 
     def get_output(self):
         return self.__output
@@ -389,7 +424,10 @@ class EDXMLWriter(object):
             schema = self.get_event_type_schema(event_type_name, isinstance(event, ParsedEvent))
 
             if not schema.validate(event_element):
-                # Event does not validate. We will try to repair it. Note that, since event_element
+                # Event does not validate.
+                if event.get_type_name() not in self.__repairable_event_types:
+                    self.__generate_event_validation_exception(event, event_element, schema)
+                # We will try to repair the event. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
                 event = self._repair_event(event, schema)
