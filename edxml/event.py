@@ -255,7 +255,7 @@ class EDXMLEvent(MutableMapping):
         names to strings.
 
         Args:
-          properties (Dict[str,List[str]]): Dictionary of properties
+          properties (Dict[str,Set[str]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -550,14 +550,14 @@ class EDXMLEvent(MutableMapping):
                 for property_element in element:
                     property_name = property_element.tag
                     if property_name not in property_objects:
-                        property_objects[property_name] = []
-                    property_objects[property_name].append(property_element.text)
+                        property_objects[property_name] = set()
+                    property_objects[property_name].add(property_element.text)
             elif element.tag == '{http://edxml.org/edxml}properties':
                 for property_element in element:
                     property_name = property_element.tag[24:]
                     if property_name not in property_objects:
-                        property_objects[property_name] = []
-                    property_objects[property_name].append(property_element.text)
+                        property_objects[property_name] = set()
+                    property_objects[property_name].add(property_element.text)
             elif element.tag == 'attachments':
                 for attachment in element:
                     attachments[attachment.tag] = attachment.text

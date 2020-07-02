@@ -9,7 +9,7 @@ from typing import Dict, Union, Generator, List, Set, Iterable
 
 class EDXMLEvent(MutableMapping):
 
-    def __init__(self, properties: Dict[str, List[str]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Dict[str, Set[str]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = {}) -> None:
 
         self.properties = ...     # type: Dict[str, Set[str]]
