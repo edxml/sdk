@@ -531,6 +531,15 @@ class Transcoder(object):
                         (property_name, event_type_name, cls.__name__)
                     )
 
+        const_with_property_sub_keys = [
+            'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
+            'TYPE_PROPERTY_MERGE_STRATEGIES'
+        ]
+
+        const_with_property_lists = [
+            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES', 'TYPE_UNIQUE_PROPERTIES'
+        ]
+
         for event_type_name in existing_types:
             existing_properties = set(cls.TYPE_PROPERTIES.get(event_type_name, {}).keys())
 
@@ -540,59 +549,25 @@ class Transcoder(object):
                     % (cls.__name__, event_type_name)
                 )
 
-            properties_with_descriptions = set(cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}).keys())
-            if properties_with_descriptions.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_PROPERTY_DESCRIPTIONS contains property names that are not in TYPE_PROPERTIES.'
-                    % cls.__name__
-                )
+            for constant_name in const_with_property_sub_keys:
+                constant = getattr(cls, constant_name)
+                if set(constant.get(event_type_name, {}).keys()).difference(existing_properties) != set():
+                    raise ValueError(
+                        f"{cls.__name__}.{constant_name} contains property names that are not in TYPE_PROPERTIES."
+                    )
 
-            properties_with_similarity = set(cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}).keys())
-            if properties_with_similarity.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_PROPERTY_SIMILARITY contains property names that are not in TYPE_PROPERTIES.' %
-                    cls.__name__
-                )
-
-            multi_valued_properties = set(cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []))
-            if multi_valued_properties.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_MULTI_VALUED_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
-                    cls.__name__
-                )
+            for constant_name in const_with_property_lists:
+                constant = getattr(cls, constant_name)
+                if set(constant.get(event_type_name, [])).difference(existing_properties) != set():
+                    raise ValueError(
+                        f"{cls.__name__}.{constant_name} contains property names that are not in TYPE_PROPERTIES."
+                    )
 
             optional_properties = cls.TYPE_OPTIONAL_PROPERTIES.get(event_type_name, [])
             if optional_properties is not True and set(optional_properties).difference(existing_properties) != set():
                 raise ValueError(
                     '%s.TYPE_OPTIONAL_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
                     cls.__name__
-                )
-
-            mandatory_properties = set(cls.TYPE_MANDATORY_PROPERTIES.get(event_type_name, []))
-            if mandatory_properties.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_MANDATORY_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
-                    cls.__name__
-                )
-
-            properties_with_merge_strategies = set(cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}).keys())
-            if properties_with_merge_strategies.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_PROPERTY_MERGE_STRATEGIES contains property names that are not in TYPE_PROPERTIES[%s].'
-                    % (cls.__name__, event_type_name)
-                )
-
-            properties_with_post_processor = set(cls.TYPE_PROPERTY_POST_PROCESSORS.get(event_type_name, {}).keys())
-            if properties_with_post_processor.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_PROPERTY_POST_PROCESSORS contains property names that are not in TYPE_PROPERTIES[%s].'
-                    % (cls.__name__, event_type_name)
-                )
-
-            unique_properties = set(cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, []))
-            if unique_properties.difference(existing_properties) != set():
-                raise ValueError(
-                    '%s.TYPE_UNIQUE_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' % cls.__name__
                 )
 
             if event_type_name in cls.PARENT_MAPPINGS:
@@ -622,81 +597,22 @@ class Transcoder(object):
                                 % (cls.__name__, child_siblings[2])
                             )
 
-        types_with_properties = set(cls.TYPE_PROPERTIES.keys())
-        if types_with_properties.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
+        const_with_event_type_keys = [
+            'TYPE_DESCRIPTIONS', 'TYPE_DISPLAY_NAMES', 'TYPE_SUMMARIES', 'TYPE_STORIES', 'TYPE_PROPERTIES',
+            'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
+            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_UNIQUE_PROPERTIES', 'PARENTS_CHILDREN',
+            'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_ATTACHMENTS',
+            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
+            'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',
+            'TYPE_ATTACHMENT_ENCODINGS'
+        ]
 
-        types_with_descriptions = set(cls.TYPE_DESCRIPTIONS.keys())
-        if types_with_descriptions.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_DESCRIPTIONS contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_display_names = set(cls.TYPE_DISPLAY_NAMES.keys())
-        if types_with_display_names.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_DISPLAY_NAMES contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_summaries = set(cls.TYPE_SUMMARIES.keys())
-        if types_with_summaries.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_SUMMARIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_stories = set(cls.TYPE_STORIES.keys())
-        if types_with_stories.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_STORIES contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_timespans = set(cls.TYPE_TIMESPANS.keys())
-        if types_with_timespans.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_TIMESPANS contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_multi_valued_props = set(cls.TYPE_MULTI_VALUED_PROPERTIES.keys())
-        if types_with_multi_valued_props.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_MULTI_VALUED_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_optional_props = set(cls.TYPE_OPTIONAL_PROPERTIES.keys())
-        if types_with_optional_props.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_OPTIONAL_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_mandatory_props = set(cls.TYPE_MANDATORY_PROPERTIES.keys())
-        if types_with_mandatory_props.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_MANDATORY_PROPERTIES contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_attachments = set(cls.TYPE_ATTACHMENTS.keys())
-        if types_with_attachments.difference(existing_types) != set():
-            raise ValueError('%s.TYPE_ATTACHMENTS contains event type names that are not in TYPE_MAP.' % cls.__name__)
-
-        types_with_attachment_media_types = set(cls.TYPE_ATTACHMENT_MEDIA_TYPES.keys())
-        if types_with_attachment_media_types.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_ATTACHMENT_MEDIA_TYPES contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_attachment_display_names = set(cls.TYPE_ATTACHMENT_DISPLAY_NAMES.keys())
-        if types_with_attachment_display_names.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_ATTACHMENT_DISPLAY_NAMES contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_attachment_descriptions = set(cls.TYPE_ATTACHMENT_DESCRIPTIONS.keys())
-        if types_with_attachment_descriptions.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_ATTACHMENT_DESCRIPTIONS contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_attachment_encodings = set(cls.TYPE_ATTACHMENT_ENCODINGS.keys())
-        if types_with_attachment_encodings.difference(existing_types) != set():
-            raise ValueError(
-                '%s.TYPE_ATTACHMENT_ENCODINGS contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
-
-        types_with_parents = set(cls.PARENT_MAPPINGS.keys())
-        if types_with_parents.difference(existing_types) != set():
-            raise ValueError(
-                '%s.PARENT_MAPPINGS contains event type names that are not in TYPE_MAP.' % cls.__name__
-            )
+        for constant_name in const_with_event_type_keys:
+            constant = getattr(cls, constant_name)
+            if isinstance(constant, dict) and set(constant.keys()).difference(existing_types) != set():
+                raise ValueError(
+                    f"{cls.__name__}.{constant_name} contains event type names that are not in TYPE_MAP."
+                )
 
     def _post_process_properties(self, event_type_name, properties):
         for property_name in properties:
