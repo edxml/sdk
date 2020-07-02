@@ -1,5 +1,11 @@
+import logging
+
 from edxml import EventCollection, EDXMLPushParser
 from edxml.transcode import TranscoderMediator
+
+
+logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler())
 
 
 class TestHarnessParser(EDXMLPushParser):
