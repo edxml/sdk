@@ -1,6 +1,7 @@
 import logging
 
 from edxml import EventCollection, EDXMLPushParser
+from edxml.error import EDXMLValidationError
 from edxml.transcode import TranscoderMediator
 
 
@@ -27,6 +28,9 @@ class TestHarnessParser(EDXMLPushParser):
 
     def write(self, edxml_data):
         self.feed(edxml_data)
+
+    def _parsed_ontology(self, ontology):
+        self._event_set._ontology.update(ontology)
 
     def _parsed_event(self, event):
         self._event_set.append(event)
