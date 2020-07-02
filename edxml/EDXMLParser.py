@@ -301,7 +301,16 @@ class EDXMLParserBase(object):
         try:
             self.__schema.assertValid(self.__root_element)
         except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
-            # XML structure is invalid.
+            # XML syntax is incorrect or the structure does not validate against the RelaxNG schema.
+            if isinstance(ValidationError, etree.DocumentInvalid):
+                # Document is not valid according to schema. This is most likely
+                # due to a problem with an <ontology> element. See if we have
+                # an ontology element in the tree and try to process it. That
+                # will yield a better exception message than the errors
+                # produced by the RelaxNG validator.
+                if self.__root_element.find('{http://edxml.org/edxml}ontology') is not None:
+                    self.__process_ontology(self.__root_element.find('{http://edxml.org/edxml}ontology'))
+
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\n"
                 "The RelaxNG validator generated the following error: %s\nDetails: %s" %
@@ -313,13 +322,6 @@ class EDXMLParserBase(object):
             )
 
     def __process_ontology(self, ontology_element):
-        # Before parsing the ontology information, we validate
-        # the generic structure of the ontology element, using
-        # the RelaxNG schema.
-        self.__validate_root_element()
-
-        # We survived XML structure validation. We can proceed
-        # and process the new ontology information.
         if self._ontology is None:
             self._ontology = edxml.ontology.Ontology()
 
@@ -412,6 +414,13 @@ class EDXMLParserBase(object):
             elif elem.tag == '{http://edxml.org/edxml}ontology':
                 if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
                     raise EDXMLValidationError("Found a misplaced <ontology> element.")
+                # Before parsing the ontology information, we validate
+                # the generic structure of the ontology element, using
+                # the RelaxNG schema.
+                self.__validate_root_element()
+
+                # We survived XML structure validation. We can proceed
+                # and process the new ontology information.
                 self.__process_ontology(elem)
                 # Now that we parsed an <ontology> element, we want to delete it from
                 # the XML tree. Unless it is the first <ontology> element we come across,
@@ -519,9 +528,10 @@ class EDXMLParserBase(object):
                 # error is, by validating using the EventType class.
                 try:
                     self._ontology.get_event_type(event_type_name).validate_event_structure(event)
-
                     # EventType structure checks out alright. Let us check the object values.
                     self._ontology.get_event_type(event_type_name).validate_event_objects(event)
+                    # Object values also check out alright. Let us check the attachments.
+                    self._ontology.get_event_type(event_type_name).validate_event_attachments(event)
 
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
