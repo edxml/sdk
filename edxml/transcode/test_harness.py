@@ -41,6 +41,10 @@ class TranscoderTestHarness(TranscoderMediator):
     This class is a substitute for the transcoder mediators which can be
     used to test transcoders. It provides the means to feed input records
     to transcoders and make assertions about the output events.
+
+    After processing is completed, either by closing the context or by
+    explicitly calling close(), any colliding events are merged. This
+    means that unit tests will also test the merging logic of the events.
     """
 
     def __init__(self, transcoder):
@@ -85,3 +89,7 @@ class TranscoderTestHarness(TranscoderMediator):
                     self._write_event(selector, post_processed_event)
             else:
                 self._write_event(selector, event)
+
+    def close(self, flush=True):
+        super().close(flush)
+        self.events = self.events.resolve_collisions()
