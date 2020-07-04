@@ -69,12 +69,10 @@ class TranscoderTestHarness(TranscoderMediator):
         transcoder to generate an EDXML event and adding
         the event to the event set.
 
-        The event is also written into an EDXML writer, which
-        triggers all validation that would be applied to the
-        event when using a regular transcoder mediator. Note
-        that each output event is written into a fresh instance
-        of the EDXML writer, producing a full EDXML
-        representation for each individual event.
+        The event is also written into an EDXML writer and parsed
+        back to an event object. This means that all validation
+        that would be applied to the event when using the real
+        transcoder mediator has been applied.
 
         Args:
           record: The input record
