@@ -1,5 +1,6 @@
 import logging
 
+import edxml
 from edxml import EventCollection, EDXMLPushParser
 from edxml.error import EDXMLValidationError
 from edxml.transcode import TranscoderMediator
@@ -23,7 +24,7 @@ class TestHarnessParser(EDXMLPushParser):
     verify which events were output by the writer.
     """
     def __init__(self, event_set):
-        self._event_set = event_set
+        self._event_set = event_set  # type: edxml.EventCollection
         super().__init__()
 
     def write(self, edxml_data):
