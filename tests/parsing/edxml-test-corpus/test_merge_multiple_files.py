@@ -1,4 +1,6 @@
 import os
+from difflib import unified_diff
+
 import pytest
 from glob import glob
 
@@ -46,4 +48,13 @@ def test_parse_sequence(corpus_item):
     parsed = parsed.resolve_collisions()
     if 'expected' in corpus_item:
         expected = EventCollection.from_edxml(corpus_item['expected'].read())
-        assert parsed.is_equivalent_of(expected) is True
+        try:
+            assert parsed.is_equivalent_of(expected) is True
+        except AssertionError:
+            parsed_edxml = parsed.to_edxml().decode('utf-8')
+            expected_edxml = expected.to_edxml().decode('utf-8')
+            diff = list(unified_diff(parsed_edxml.split('\n'), expected_edxml.split('\n')))
+            raise AssertionError(
+                'Merging the following corpus items did not yield expected result:\n\n%s\n\nDifference:\n%s' %
+                ('\n'.join(corpus_item['input_paths']), '\n'.join(diff))
+            )
