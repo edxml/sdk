@@ -31,7 +31,7 @@ class TestHarnessParser(EDXMLPushParser):
         self.feed(edxml_data)
 
     def _parsed_ontology(self, ontology):
-        self._event_set._ontology.update(ontology)
+        self._event_set.update_ontology(ontology)
 
     def _parsed_event(self, event):
         self._event_set.append(event)

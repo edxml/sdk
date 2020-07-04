@@ -101,6 +101,16 @@ class EventCollection(list):
         self._ontology = ontology
         return self
 
+    def update_ontology(self, ontology):
+        """
+        Updates the ontology that is associated with the
+        evens in the collection using the given ontology.
+
+        Args:
+            ontology (edxml.ontology.Ontology):
+        """
+        self._ontology.update(ontology)
+
     def resolve_collisions(self):
         """
         Returns a new EventCollection that contains only a
