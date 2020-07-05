@@ -149,6 +149,23 @@ def test_spurious_post_processor_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_property_concept_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'spurious': {}}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_concept_cnp_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS_CNP = {'event-type.a': {'spurious': {}}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
 def test_spurious_child_type_exception(transcoder):
     type(transcoder).TYPE_PROPERTIES = {

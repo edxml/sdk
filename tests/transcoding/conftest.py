@@ -31,6 +31,7 @@ def transcoder():
 
     t = TestTranscoder()
     ontology = Ontology()
+    ontology.create_concept('concept-a', 'concept')
     ontology.create_object_type('object-type.string')
     ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
     t.set_ontology(ontology)

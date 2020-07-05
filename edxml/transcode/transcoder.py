@@ -113,6 +113,43 @@ class Transcoder(object):
 
     """
 
+    TYPE_PROPERTY_CONCEPTS = {}
+    """
+    The TYPE_PROPERTY_CONCEPTS attribute is a dictionary mapping EDXML event type names to property
+    concept associations. The associations are dictionaries mapping property names to their associated
+    concepts. Each associated concept is a dictionary containing the names of the associated concepts
+    as keys and their association confidences as values.
+
+    Example::
+
+        {
+          'event.type.name': {
+            'property-a': [{'concept.name': 8}],
+            'property-b': [{'concept.name': 8}, {'another.concept.name': 7}],
+          }
+        }
+
+    """
+
+    TYPE_PROPERTY_CONCEPTS_CNP = {}
+    """
+    The TYPE_PROPERTY_CONCEPTS_CNP attribute is a dictionary mapping EDXML event type names to property
+    concept naming priorities (CNP). The priorities are dictionaries mapping property names to concept CNPs.
+    Each concept CNP is a dictionary containing the names of the associated concepts as keys and their
+    CNPs as values.
+    When the CNP of a concept association is not specified, it will have the default value of 128.
+
+    Example::
+
+        {
+          'event.type.name': {
+            'property-a': [{'concept.name': 192}],
+            'property-b': [{'concept.name': 64}, {'another.concept.name': 0}],
+          }
+        }
+
+    """
+
     TYPE_PROPERTY_DESCRIPTIONS = {}
     """
     The TYPE_PROPERTY_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to property
@@ -475,6 +512,14 @@ class Transcoder(object):
                     cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name][property_name])
             if property_name in cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, {}):
                 event_type[property_name].unique()
+            if property_name in cls.TYPE_PROPERTY_CONCEPTS.get(event_type_name, {}):
+                concept_associations = cls.TYPE_PROPERTY_CONCEPTS[event_type_name][property_name]
+                for concept_name, confidence in concept_associations.items():
+                    cnp = cls.TYPE_PROPERTY_CONCEPTS_CNP\
+                        .get(event_type_name, {})\
+                        .get(property_name, {})\
+                        .get(concept_name, 128)
+                    event_type[property_name].identifies(concept_name, confidence, cnp)
 
         for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
             attachment = event_type.create_attachment(attachment_name)
@@ -533,7 +578,7 @@ class Transcoder(object):
 
         const_with_property_sub_keys = [
             'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
-            'TYPE_PROPERTY_MERGE_STRATEGIES'
+            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_PROPERTY_CONCEPTS', 'TYPE_PROPERTY_CONCEPTS_CNP'
         ]
 
         const_with_property_lists = [

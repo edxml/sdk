@@ -207,6 +207,25 @@ def test_optional_mandatory_properties_b(transcoder):
         assert event_type.get_properties()['property-b'].is_mandatory()
 
 
+def test_concept_associations(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_DESCRIPTIONS = {'event-type.a': {'property-a': 'test description'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 1}}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS_CNP = {'event-type.a': {'property-a': {'concept-a': 0}}}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    for event_type in event_types.values():
+        assert list(event_type['property-a'].get_concept_associations().keys()) == ['concept-a']
+
+        association = event_type['property-a'].get_concept_associations()['concept-a']
+
+        assert association.get_confidence() == 1
+        assert association.get_concept_naming_priority() == 0
+
+
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
 def test_event_type_parents(transcoder):
     type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['property-a']}
