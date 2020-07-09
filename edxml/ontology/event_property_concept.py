@@ -142,13 +142,20 @@ class PropertyConcept(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, concept_element, event_type, property):
-        return cls(
-            event_type,
-            property,
-            concept_element.attrib['name'],
-            int(concept_element.attrib['confidence']),
-            int(concept_element.attrib['cnp'])
-        )
+        try:
+            return cls(
+                event_type,
+                property,
+                concept_element.attrib['name'],
+                int(concept_element.attrib['confidence']),
+                int(concept_element.attrib['cnp'])
+            )
+        except (ValueError, KeyError) as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate a property-concept association from the following definition:\n" +
+                etree.tostring(concept_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

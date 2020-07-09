@@ -238,13 +238,20 @@ class EventTypeParent(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, parent_element, child_event_type):
-        return cls(
-            child_event_type,
-            parent_element.attrib['eventtype'],
-            parent_element.attrib['propertymap'],
-            parent_element.attrib['parent-description'],
-            parent_element.attrib['siblings-description']
-        )
+        try:
+            return cls(
+                child_event_type,
+                parent_element.attrib['eventtype'],
+                parent_element.attrib['propertymap'],
+                parent_element.attrib['parent-description'],
+                parent_element.attrib['siblings-description']
+            )
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an event type parent from the following definition:\n" +
+                etree.tostring(parent_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

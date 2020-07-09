@@ -301,8 +301,20 @@ class PropertyRelation(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, relation_element, event_type, ontology):
-        source = relation_element.attrib['property1']
-        target = relation_element.attrib['property2']
+        try:
+            source = relation_element.attrib['property1']
+        except KeyError:
+            raise EDXMLValidationError(
+                'Failed to parse definition of event type "%s": '
+                'It is missing the source property attribute (property1)' % event_type.get_name()
+            )
+        try:
+            target = relation_element.attrib['property2']
+        except KeyError:
+            raise EDXMLValidationError(
+                'Failed to parse definition of event type "%s": '
+                'It is missing the target property attribute (property2)' % event_type.get_name()
+            )
 
         for propertyName in (source, target):
             if propertyName not in event_type:
@@ -310,18 +322,40 @@ class PropertyRelation(OntologyElement):
                     'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
                     (event_type.get_name(), propertyName))
 
-        return cls(
-            event_type,
-            event_type[relation_element.attrib['property1']],
-            event_type[relation_element.attrib['property2']],
-            ontology.get_concept(relation_element.attrib.get('concept1')),
-            ontology.get_concept(relation_element.attrib.get('concept2')),
-            relation_element.attrib['description'],
-            relation_element.tag[24:],
-            relation_element.attrib['predicate'],
-            relation_element.attrib['confidence'],
-            relation_element.get('directed', 'true') == 'true'
-        )
+        concept1_name = relation_element.attrib.get('concept1')
+        concept2_name = relation_element.attrib.get('concept2')
+
+        concept1 = ontology.get_concept(concept1_name)
+        concept2 = ontology.get_concept(concept2_name)
+
+        if concept1_name is not None and concept1 is None:
+            raise EDXMLValidationError(
+                'Failed to instantiate a property relation, source concept "%s" does not exist.' % concept1_name
+            )
+        if concept2_name is not None and concept2 is None:
+            raise EDXMLValidationError(
+                'Failed to instantiate a property relation, target concept "%s" does not exist.' % concept2_name
+            )
+
+        try:
+            return cls(
+                event_type,
+                event_type[source],
+                event_type[target],
+                concept1,
+                concept2,
+                relation_element.attrib['description'],
+                relation_element.tag[24:],
+                relation_element.attrib['predicate'],
+                relation_element.attrib['confidence'],
+                relation_element.get('directed', 'true') == 'true'
+            )
+        except (ValueError, KeyError) as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate a property relation from the following definition:\n" +
+                etree.tostring(relation_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

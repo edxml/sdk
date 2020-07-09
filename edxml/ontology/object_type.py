@@ -482,17 +482,24 @@ class ObjectType(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, type_element, ontology):
-        return cls(
-            ontology,
-            type_element.attrib['name'],
-            type_element.attrib['display-name-singular'],
-            type_element.attrib['display-name-plural'],
-            type_element.attrib['description'],
-            type_element.attrib['data-type'],
-            type_element.get('compress', 'false') == 'true',
-            type_element.get('fuzzy-matching', 'none'),
-            type_element.get('regexp')
-        ).set_version(type_element.attrib['version'])
+        try:
+            return cls(
+                ontology,
+                type_element.attrib['name'],
+                type_element.attrib['display-name-singular'],
+                type_element.attrib['display-name-plural'],
+                type_element.attrib['description'],
+                type_element.attrib['data-type'],
+                type_element.get('compress', 'false') == 'true',
+                type_element.get('fuzzy-matching', 'none'),
+                type_element.get('regexp')
+            ).set_version(type_element.attrib['version'])
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an object type from the following definition:\n" +
+                etree.tostring(type_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

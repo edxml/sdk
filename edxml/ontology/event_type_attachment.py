@@ -304,15 +304,22 @@ class EventTypeAttachment(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, element, event_type):
-        return cls(
-            event_type,
-            element.attrib['name'],
-            element.attrib['media-type'],
-            element.attrib['display-name-singular'],
-            element.attrib['display-name-plural'],
-            element.attrib['description'],
-            element.attrib['encoding'] == 'base64'
-        )
+        try:
+            return cls(
+                event_type,
+                element.attrib['name'],
+                element.attrib['media-type'],
+                element.attrib['display-name-singular'],
+                element.attrib['display-name-plural'],
+                element.attrib['description'],
+                element.attrib['encoding'] == 'base64'
+            )
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an event attachment from the following definition:\n" +
+                etree.tostring(element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

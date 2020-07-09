@@ -233,13 +233,20 @@ class Concept(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, type_element, ontology):
-        return cls(
-            ontology,
-            type_element.attrib['name'],
-            type_element.attrib['display-name-singular'],
-            type_element.attrib['display-name-plural'],
-            type_element.attrib['description'],
-        ).set_version(type_element.attrib['version'])
+        try:
+            return cls(
+                ontology,
+                type_element.attrib['name'],
+                type_element.attrib['display-name-singular'],
+                type_element.attrib['display-name-plural'],
+                type_element.attrib['description'],
+            ).set_version(type_element.attrib['version'])
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate a concept from the following definition:\n" +
+                etree.tostring(type_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

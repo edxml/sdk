@@ -594,27 +594,34 @@ class EventProperty(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, property_element, ontology, parent_event_type):
-        name = property_element.attrib['name']
-        object_type_name = property_element.attrib['object-type']
-        object_type = ontology.get_object_type(object_type_name)
+        try:
+            name = property_element.attrib['name']
+            object_type_name = property_element.attrib['object-type']
+            object_type = ontology.get_object_type(object_type_name)
 
-        if not object_type:
-            raise EDXMLValidationError(
-                'Property "%s" of event type "%s" refers to undefined object type "%s".' %
-                (name, parent_event_type.get_name(), object_type_name)
+            if not object_type:
+                raise EDXMLValidationError(
+                    'Property "%s" of event type "%s" refers to undefined object type "%s".' %
+                    (name, parent_event_type.get_name(), object_type_name)
+                )
+
+            property = cls(
+                parent_event_type,
+                property_element.attrib['name'],
+                object_type,
+                property_element.attrib['description'],
+                property_element.get('unique', 'false') == 'true',
+                property_element.get('optional') == 'true',
+                property_element.get('multivalued') == 'true',
+                property_element.get('merge', 'drop'),
+                property_element.get('similar', '')
             )
-
-        property = cls(
-            parent_event_type,
-            property_element.attrib['name'],
-            object_type,
-            property_element.attrib['description'],
-            property_element.get('unique', 'false') == 'true',
-            property_element.get('optional') == 'true',
-            property_element.get('multivalued') == 'true',
-            property_element.get('merge', 'drop'),
-            property_element.get('similar', '')
-        )
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an event property from the following definition:\n" +
+                etree.tostring(property_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
         concept_names = []
         for element in property_element:

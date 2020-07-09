@@ -186,12 +186,19 @@ class EventSource(OntologyElement):
 
     @classmethod
     def create_from_xml(cls, source_element, ontology):
-        return cls(
-            ontology,
-            source_element.attrib['uri'],
-            source_element.attrib['description'],
-            source_element.attrib['date-acquired']
-        ).set_version(source_element.attrib['version'])
+        try:
+            return cls(
+                ontology,
+                source_element.attrib['uri'],
+                source_element.attrib['description'],
+                source_element.attrib['date-acquired']
+            ).set_version(source_element.attrib['version'])
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an event source from the following definition:\n" +
+                etree.tostring(source_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def __cmp__(self, other):
 

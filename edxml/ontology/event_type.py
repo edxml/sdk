@@ -1147,20 +1147,27 @@ class EventType(OntologyElement, MutableMapping):
 
     @classmethod
     def create_from_xml(cls, type_element, ontology):
-        event_type = cls(
-            ontology,
-            type_element.attrib['name'],
-            type_element.attrib['display-name-singular'],
-            type_element.attrib['display-name-plural'],
-            type_element.attrib['description'],
-            type_element.attrib.get('classlist', ''),
-            type_element.attrib['summary'],
-            type_element.attrib['story']
-        ).set_version(type_element.attrib['version'])\
-         .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
-         .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))\
-         .set_version_property_name(type_element.attrib.get('event-version'))\
-         .set_sequence_property_name(type_element.attrib.get('sequence'))
+        try:
+            event_type = cls(
+                ontology,
+                type_element.attrib['name'],
+                type_element.attrib['display-name-singular'],
+                type_element.attrib['display-name-plural'],
+                type_element.attrib['description'],
+                type_element.attrib.get('classlist', ''),
+                type_element.attrib['summary'],
+                type_element.attrib['story']
+            ).set_version(type_element.attrib['version'])\
+             .set_timespan_property_name_start(type_element.attrib.get('timespan-start'))\
+             .set_timespan_property_name_end(type_element.attrib.get('timespan-end'))\
+             .set_version_property_name(type_element.attrib.get('event-version'))\
+             .set_sequence_property_name(type_element.attrib.get('sequence'))
+        except KeyError as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an event type from the following definition:\n" +
+                etree.tostring(type_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
         property_names = []
         relation_ids = []
