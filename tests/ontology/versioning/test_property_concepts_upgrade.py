@@ -121,6 +121,24 @@ def test_change_associated_concept_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
+def test_change_attribute_name_extension_not_allowed():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    a['a'].identifies('a').set_attribute('a', display_name_singular='a')
+    b['a'].identifies('a').set_attribute('b', display_name_singular='b')
+
+    # An attempt to upgrade to a version having a different
+    # concept attribute name extension must fail.
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_add_concept_association():
 
     o = Ontology()
@@ -212,6 +230,110 @@ def test_incompatible_cnp_upgrade():
 
     # The versions are now incompatible.
     assert_invalid_ontology_upgrade(a, b)
+
+
+def test_display_name_upgrade_singular():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    a['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='a')
+    b['a'].identifies('a').set_attribute('a', display_name_singular='b', display_name_plural='a')
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_incompatible_display_name_upgrade_singular():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    # We change the display name without incrementing the version.
+    b = copy.deepcopy(a)
+
+    a['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='a')
+    b['a'].identifies('a').set_attribute('a', display_name_singular='b', display_name_plural='a')
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_display_name_upgrade_plural():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    b = copy.deepcopy(a).set_version(2)
+
+    a['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='a')
+    b['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='b')
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_incompatible_display_name_upgrade_plural():
+    o = Ontology()
+    o.create_object_type('a')
+    o.create_concept('a')
+    o.create_concept('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a')
+
+    # We change the display name without incrementing the version.
+    b = copy.deepcopy(a)
+
+    a['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='a')
+    b['a'].identifies('a').set_attribute('a', display_name_singular='a', display_name_plural='b')
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_change_inherited_object_type_display_name():
+    o1 = Ontology()
+    o2 = Ontology()
+
+    # Create two versions of the object type with differing display names,
+    # each in its own ontology.
+    o1.create_object_type('a', display_name_singular='s', display_name_plural='p').set_version(1)
+    o2.create_object_type('a', display_name_singular='s2', display_name_plural='p2').set_version(2)
+
+    # Now create identically defined event types in both ontologies. The
+    # only difference is the object type of the property. The concept attribute
+    # has no custom display name, so it inherits the display name from the
+    # object type. Yet, the difference in object types does *not* mean that the
+    # event types are now different.
+    o1.create_concept('a')
+    o2.create_concept('a')
+
+    a = o1.create_event_type('a')
+    a.create_property('a', 'a')
+
+    b = o2.create_event_type('a')
+    b.create_property('a', 'a')
+
+    a['a'].identifies('a')
+    b['a'].identifies('a')
+
+    # Both event types should still be considered equal.
+    assert a == b
 
 
 # We can run pytest directly in our debugger

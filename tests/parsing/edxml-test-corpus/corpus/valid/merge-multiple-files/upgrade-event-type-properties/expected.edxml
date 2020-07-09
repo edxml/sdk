@@ -5,16 +5,16 @@ Test if upgrading of properties of an event type works as expected.
 <edxml xmlns="http://edxml.org/edxml" version="3.0.0">
   <ontology>
     <objecttypes>
-      <objecttype name="a" description="a" display-name-singular="a" display-name-plural="a" version="1" compress="true" data-type="string:10:cs"/>
+      <objecttype name="a" description="a" display-name-singular="changed-dn-singular" display-name-plural="changed-dn-plural" version="2" compress="true" data-type="string:10:cs"/>
     </objecttypes>
     <concepts>
       <concept name="a" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
     </concepts>
     <eventtypes>
-      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="10">
+      <eventtype name="a" description="a" display-name-singular="a" display-name-plural="a" summary="[[a]]" story="[[a]]" version="12">
         <properties>
           <property name="a" object-type="a" description="changed-description" unique="true" optional="true" multivalued="true" merge="match" similar="changed-similar">
-            <property-concept name="a" confidence="9" cnp="9"/>
+            <property-concept name="a" confidence="9" cnp="9" attr-extension="ext" attr-display-name-singular="singular" attr-display-name-plural="plural"/>
           </property>
           <property name="b" object-type="a" description="b" unique="true" optional="true" multivalued="true" merge="match"/>
         </properties>
