@@ -277,17 +277,31 @@ class EventType(OntologyElement, MutableMapping):
 
         return self.__cachedHashProperties
 
-    def get_property_relations(self):
+    def get_property_relations(self, rtype=None, source=None, target=None):
         """
 
         Returns a dictionary containing the property relations that
         are defined in the event type. The keys are relation IDs that
         should be considered opaque.
 
+        Optionally, the relations can be filtered on type, source and  target.
+
+        Args:
+            rtype (str): Relation type
+            source (str): Name of source property
+            target (str): Name of target property
+
         Returns:
           Dict[str,edxml.ontology.PropertyRelation]:
         """
-        return self.__relations
+        relations = self.__relations
+        if rtype is not None:
+            relations = {k: r for k, r in relations.items() if r.get_type() == rtype}
+        if source is not None:
+            relations = {k: r for k, r in relations.items() if r.get_source() == source}
+        if target is not None:
+            relations = {k: r for k, r in relations.items() if r.get_target() == target}
+        return relations
 
     def get_attachment(self, name):
         """
