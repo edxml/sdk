@@ -1617,7 +1617,7 @@ class EventType(OntologyElement, MutableMapping):
                         f"Attachment value is:\n\n{attachment_value}"
                     )
 
-    def normalize_event_objects(self, event):
+    def normalize_event_objects(self, event, property_names):
         """
 
         Normalizes the object values in the event, resulting in
@@ -1626,6 +1626,7 @@ class EventType(OntologyElement, MutableMapping):
 
         Args:
           event (edxml.EDXMLEvent):
+          property_names (List[str]):
 
         Raises:
           EDXMLValidationError
@@ -1635,6 +1636,9 @@ class EventType(OntologyElement, MutableMapping):
         """
 
         for propertyName, objects in event.items():
+            if propertyName not in property_names:
+                # This is not a property that we are supposed to normalize.
+                continue
 
             try:
                 property_object_type = self.__properties[propertyName].get_object_type()
