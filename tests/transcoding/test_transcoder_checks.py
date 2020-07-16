@@ -144,7 +144,7 @@ def test_spurious_optional_property_exception(transcoder):
 def test_spurious_post_processor_exception(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
-    type(transcoder).TYPE_PROPERTY_POST_PROCESSORS = {'event-type.a': {'spurious': lambda x: x}}
+    type(transcoder).TYPE_PROPERTY_POST_PROCESSORS = {'event-type.a': {'spurious': lambda x: [x]}}
     with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
         dict(transcoder.generate_event_types())
 

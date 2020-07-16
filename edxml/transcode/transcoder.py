@@ -97,17 +97,16 @@ class Transcoder(object):
     TYPE_PROPERTY_POST_PROCESSORS = {}
     """
     The TYPE_PROPERTY_POST_PROCESSORS attribute is a dictionary mapping EDXML event type names to property
-    processors. Each property processors is a dictionary mapping property names to processors. A processor
+    processors. The property processors are a dictionary mapping property names to processors. A processor
     is a function that accepts a value from the input field that corresponds with the property and returns
-    the value as it should be stored in the output event. When it returns None, the value will be omitted
-    in the output event.
+    an iterable yielding zero or more values which will be stored in the output event.
     The processors will be applied to input record values before using them to create output events.
 
     Example::
 
         {
           'event_type_name': {
-            'property-a': lambda x: x.lower()
+            'property-a': lambda x: yield x.lower()
           }
         }
 
@@ -664,8 +663,6 @@ class Transcoder(object):
             if self.TYPE_PROPERTY_POST_PROCESSORS.get(event_type_name, {}).get(property_name):
                 processed = []
                 for value in properties[property_name]:
-                    processed_value = self.TYPE_PROPERTY_POST_PROCESSORS[event_type_name][property_name](value)
-                    if processed_value:
-                        processed.append(processed_value)
+                    processed.extend(self.TYPE_PROPERTY_POST_PROCESSORS[event_type_name][property_name](value))
                 properties[property_name] = processed
         return properties
