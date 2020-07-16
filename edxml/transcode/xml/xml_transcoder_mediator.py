@@ -18,25 +18,15 @@ class XmlTranscoderMediator(TranscoderMediator):
     transcode the types of XML element that they support.
     """
 
-    _XPATH_MATCHERS = {}
-
-    _transcoder_tags = {}
-
     def __init__(self, output=None):
         super(XmlTranscoderMediator, self).__init__(output)
         self._transcoder_positions = {}
         self._last_used_transcoder_xpath = None
         self._last_parent_xpath = None
+        self._xpath_matchers = {}
+        self._transcoder_tags = {}
 
-    @classmethod
-    def clear_registrations(cls):
-        super(XmlTranscoderMediator, cls).clear_registrations()
-        cls._XPATH_MATCHERS = {}
-        cls._transcoder_tags = {}
-        cls._transcoder_positions = {}
-
-    @classmethod
-    def register(cls, xpath_expression, transcoder, tag=None):
+    def register(self, xpath_expression, transcoder, tag=None):
         """
 
         Register a transcoder for processing XML elements matching
@@ -71,14 +61,14 @@ class XmlTranscoderMediator(TranscoderMediator):
           transcoder (XmlTranscoder): XmlTranscoder class
           tag (Optional[str]): XML tag name
         """
-        super(XmlTranscoderMediator, cls).register(xpath_expression, transcoder)
+        super(XmlTranscoderMediator, self).register(xpath_expression, transcoder)
 
         if tag is not None:
-            cls._transcoder_tags[xpath_expression] = tag
+            self._transcoder_tags[xpath_expression] = tag
         else:
             if xpath_expression is None:
                 raise ValueError("When registering a fallback transcoder, you must supply the tag parameter.")
-            cls._transcoder_tags[xpath_expression] = cls.get_visited_tag_name(xpath_expression)
+            self._transcoder_tags[xpath_expression] = self.get_visited_tag_name(xpath_expression)
 
         if xpath_expression is None:
             return
@@ -86,7 +76,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # Create and cache a compiled function for evaluating the
         # XPath expression.
         try:
-            cls._XPATH_MATCHERS[xpath_expression] = etree.XPath(
+            self._xpath_matchers[xpath_expression] = etree.XPath(
                 xpath_expression, namespaces={
                     're': 'http://exslt.org/regular-expressions'}
             )
@@ -96,8 +86,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                 (type(transcoder).__name__, xpath_expression)
             )
 
-    @classmethod
-    def _get_transcoder(cls, xpath_expression=None):
+    def _get_transcoder(self, xpath_expression=None):
         """
 
         Returns a XmlTranscoder instance for transcoding
@@ -111,7 +100,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         Returns:
           edxml.transcode.xml.XmlTranscoder:
         """
-        return super(XmlTranscoderMediator, cls)._get_transcoder(xpath_expression)
+        return super(XmlTranscoderMediator, self)._get_transcoder(xpath_expression)
 
     def parse(self, input_file, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True,
               remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, recover=None,
@@ -258,7 +247,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # match multiple elements.
         element_xpath = tree.getpath(element)
 
-        transcoder_xpaths = list(XmlTranscoderMediator._XPATH_MATCHERS.keys())
+        transcoder_xpaths = list(self._xpath_matchers.keys())
 
         matching_element_xpath = None
 
@@ -271,7 +260,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         # Below, we try to match the XPath expressions of each of the registered
         # transcoders with the XPath expression of the current element.
         for matching_xpath in transcoder_xpaths:
-            if element in XmlTranscoderMediator._XPATH_MATCHERS[matching_xpath](tree):
+            if element in self._xpath_matchers[matching_xpath](tree):
                 # The element is among the elements that match the
                 # XPath expression of one of the transcoders.
                 matching_element_xpath = matching_xpath

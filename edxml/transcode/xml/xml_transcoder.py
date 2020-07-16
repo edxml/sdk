@@ -80,10 +80,10 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
     """
 
-    _XPATH_MATCHERS = {}   # type: Dict[str, etree.XPath]
-
     def __init__(self):
         super(XmlTranscoder, self).__init__()
+
+        self._xpath_matchers = {}  # type: Dict[str, etree.XPath]
 
         # TODO: It would be nicer to put functions into a
         # namespace, but lxml throws weird exceptions on repeated
@@ -220,11 +220,11 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         """
 
         for event_type_xpath, event_type_name in self.TYPE_MAP.items():
-            if event_type_xpath not in XmlTranscoder._XPATH_MATCHERS:
+            if event_type_xpath not in self._xpath_matchers:
                 # Create and cache a compiled function for evaluating the
                 # XPath expression.
                 try:
-                    XmlTranscoder._XPATH_MATCHERS[event_type_xpath] = etree.XPath(
+                    self._xpath_matchers[event_type_xpath] = etree.XPath(
                         event_type_xpath, namespaces={
                             're': 'http://exslt.org/regular-expressions'}
                     )
@@ -234,7 +234,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                             type(self).__name__, event_type_name, event_type_xpath)
                     )
 
-            for sub_element in self._XPATH_MATCHERS[event_type_xpath](element):
+            for sub_element in self._xpath_matchers[event_type_xpath](element):
                 yield self._generate_event(event_type_name, sub_element)
 
     def _generate_event(self, event_type_name, element):
@@ -243,11 +243,11 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         for xpath, property_name in self.PROPERTY_MAP[event_type_name].items():
 
-            if xpath not in XmlTranscoder._XPATH_MATCHERS:
+            if xpath not in self._xpath_matchers:
                 # Create and cache a compiled function for evaluating the
                 # XPath expression.
                 try:
-                    XmlTranscoder._XPATH_MATCHERS[xpath] = etree.XPath(
+                    self._xpath_matchers[xpath] = etree.XPath(
                         xpath, namespaces={
                             're': 'http://exslt.org/regular-expressions'}
                     )
@@ -258,7 +258,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                     )
 
             # Use the XPath evaluation function to find matches
-            for property in XmlTranscoder._XPATH_MATCHERS[xpath](element):
+            for property in self._xpath_matchers[xpath](element):
 
                 if property_name not in properties:
                     properties[property_name] = []

@@ -64,10 +64,10 @@ def edxml_extract(edxml, path):
 
 
 def test_duplicate_registration_exception(object_transcoder):
-    ObjectTranscoderMediator.clear_registrations()
     with pytest.raises(Exception, match='Attempt to register multiple transcoders'):
-        ObjectTranscoderMediator.register('test_record', object_transcoder)
-        ObjectTranscoderMediator.register('test_record', object_transcoder)
+        mediator = ObjectTranscoderMediator()
+        mediator.register('test_record', object_transcoder)
+        mediator.register('test_record', object_transcoder)
 
 
 def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record):
@@ -75,12 +75,10 @@ def test_process_single_transcoder_single_event_type(object_transcoder_mediator,
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    object_transcoder_mediator.clear_registrations()
-    object_transcoder_mediator.register('test_record', object_transcoder)
-
     output = BytesIO()
 
     with object_transcoder_mediator(output) as mediator:
+        mediator.register('test_record', object_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.process(record)
@@ -102,14 +100,12 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    object_transcoder_mediator.clear_registrations()
-    object_transcoder_mediator.register(None, object_transcoder)
-
     # Below, we set the record type to some type for
     # which no transcoder has been registered.
     record['type'] = 'nonexistent'
 
     with object_transcoder_mediator(BytesIO()) as mediator:
+        mediator.register(None, object_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -134,12 +130,10 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    SourceGeneratingMediator.clear_registrations()
-    SourceGeneratingMediator.register('test_record', object_transcoder)
-
     output = BytesIO()
 
     with SourceGeneratingMediator(output) as mediator:
+        mediator.register('test_record', object_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -160,11 +154,9 @@ def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, 
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.integer'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    object_transcoder_mediator.clear_registrations()
-    object_transcoder_mediator.register('test_record', object_transcoder)
-
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
+            mediator.register('test_record', object_transcoder)
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
@@ -185,12 +177,10 @@ def test_post_process(object_transcoder_mediator, object_transcoder, record):
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    object_transcoder_mediator.clear_registrations()
-    object_transcoder_mediator.register('test_record', PostProcessingTranscoder)
-
     output = BytesIO()
 
     with object_transcoder_mediator(output) as mediator:
+        mediator.register('test_record', PostProcessingTranscoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -213,11 +203,9 @@ def test_post_processor_invalid_event_exception(object_transcoder_mediator, obje
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    object_transcoder_mediator.clear_registrations()
-    object_transcoder_mediator.register('test_record', PostProcessingTranscoder)
-
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
+            mediator.register('test_record', PostProcessingTranscoder)
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()

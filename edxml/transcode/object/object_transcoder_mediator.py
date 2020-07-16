@@ -35,8 +35,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
       using None as record type.
     """
 
-    @classmethod
-    def register(cls, record_type_identifier, transcoder):
+    def register(self, record_type_identifier, transcoder):
         """
 
         Register a transcoder for processing objects of specified
@@ -55,10 +54,9 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
           record_type_identifier (Optional[str]): Name of the record type
           transcoder (ObjectTranscoder): ObjectTranscoder class
         """
-        super(ObjectTranscoderMediator, cls).register(record_type_identifier, transcoder)
+        super(ObjectTranscoderMediator, self).register(record_type_identifier, transcoder)
 
-    @classmethod
-    def _get_transcoder(cls, record_type_name=None):
+    def _get_transcoder(self, record_type_name=None):
         """
 
         Returns a ObjectTranscoder instance for transcoding
@@ -71,7 +69,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         Returns:
           ObjectTranscoder:
         """
-        return super(ObjectTranscoderMediator, cls)._get_transcoder(record_type_name)
+        return super(ObjectTranscoderMediator, self)._get_transcoder(record_type_name)
 
     def process(self, input_record):
         """

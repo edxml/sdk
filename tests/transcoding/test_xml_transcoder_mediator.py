@@ -84,8 +84,6 @@ def test_parse_single_transcoder_single_event_type(xml_transcoder, xml):
         'source-uri': '/test/uri/'
     }
 
-    XmlTranscoderMediator.clear_registrations()
-
 
 def test_generate(xml_transcoder, xml):
     xml_transcoder.TYPE_MAP = {'a': 'test-event-type.a'}
@@ -101,8 +99,6 @@ def test_generate(xml_transcoder, xml):
     edxml = etree.fromstring(b''.join(output_strings))
 
     assert len(edxml_extract(edxml, '/edxml/event')) == 2
-
-    XmlTranscoderMediator.clear_registrations()
 
 
 def test_parse_nested_transcoders(xml):
@@ -147,12 +143,11 @@ def test_parse_nested_transcoders(xml):
         'test-event-type.b': {'@attr': 'property-b'}
     }
 
-    XmlTranscoderMediator.register('/root/records', OuterTranscoder)
-    XmlTranscoderMediator.register('/root/records/a', InnerTranscoder)
-
     output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
+        mediator.register('/root/records', OuterTranscoder)
+        mediator.register('/root/records/a', InnerTranscoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.parse(BytesIO(xml))
@@ -169,16 +164,14 @@ def test_parse_nested_transcoders(xml):
     assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.b"]/properties/property-b')[0].text == 'b1'
     assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.b"]/properties/property-b')[1].text == 'b2'
 
-    XmlTranscoderMediator.clear_registrations()
-
 
 def test_log_skipped_element(xml_transcoder, xml, caplog):
 
-    # Below we deliberately set the tag that the parser should visit
-    # to 'b' while we register a transcoder for elements having tag 'a'
-    XmlTranscoderMediator.register('/root/records/a', xml_transcoder, tag='b')
-
     with XmlTranscoderMediator(BytesIO()) as mediator:
+        # Below we deliberately set the tag that the parser should visit
+        # to 'b' while we register a transcoder for elements having tag 'a'
+        mediator.register('/root/records/a', xml_transcoder, tag='b')
+
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -187,22 +180,17 @@ def test_log_skipped_element(xml_transcoder, xml, caplog):
     assert '/root/records/b[1] does not match any XPath' in ''.join(caplog.messages)
     assert '/root/records/b[2] does not match any XPath' in ''.join(caplog.messages)
 
-    XmlTranscoderMediator.clear_registrations()
-
 
 def test_log_fallback_transcoder(xml_transcoder, xml, caplog):
 
-    XmlTranscoderMediator.register(None, xml_transcoder, tag='records')
-
     with XmlTranscoderMediator(BytesIO()) as mediator:
+        mediator.register(None, xml_transcoder, tag='records')
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
         mediator.parse(BytesIO(xml))
 
     assert 'passing to fallback transcoder' in ''.join(caplog.messages)
-
-    XmlTranscoderMediator.clear_registrations()
 
 
 def test_ontology_update(xml_transcoder, xml):
@@ -221,11 +209,10 @@ def test_ontology_update(xml_transcoder, xml):
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
 
-    SourceGeneratingMediator.register('/root/records/a', xml_transcoder)
-
     output = BytesIO()
 
     with SourceGeneratingMediator(output) as mediator:
+        mediator.register('/root/records/a', xml_transcoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -236,8 +223,6 @@ def test_ontology_update(xml_transcoder, xml):
     assert len(edxml_extract(edxml, '/edxml/ontology')) == 2
     assert len(edxml_extract(edxml, '/edxml/ontology/sources/source[@uri="/another/test/uri/"]')) == 1
 
-    XmlTranscoderMediator.clear_registrations()
-
 
 def test_invalid_event_exception(xml_transcoder, xml):
 
@@ -247,16 +232,13 @@ def test_invalid_event_exception(xml_transcoder, xml):
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.integer'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
 
-    XmlTranscoderMediator.register('/root/records/a', xml_transcoder)
-
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with XmlTranscoderMediator(BytesIO()) as mediator:
+            mediator.register('/root/records/a', xml_transcoder)
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
             mediator.parse(BytesIO(xml))
-
-    XmlTranscoderMediator.clear_registrations()
 
 
 def test_post_process(xml_transcoder, xml):
@@ -273,11 +255,10 @@ def test_post_process(xml_transcoder, xml):
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
 
-    XmlTranscoderMediator.register('/root/records/a', PostProcessingTranscoder)
-
     output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
+        mediator.register('/root/records/a', PostProcessingTranscoder)
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -286,8 +267,6 @@ def test_post_process(xml_transcoder, xml):
     edxml = etree.fromstring(output.getvalue())
 
     assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]/properties/property-a')[0].text == 'b1'
-
-    XmlTranscoderMediator.clear_registrations()
 
 
 def test_post_processor_invalid_event_exception(xml_transcoder, xml):
@@ -302,13 +281,10 @@ def test_post_processor_invalid_event_exception(xml_transcoder, xml):
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
 
-    XmlTranscoderMediator.register('/root/records/a', PostProcessingTranscoder)
-
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with XmlTranscoderMediator(BytesIO()) as mediator:
+            mediator.register('/root/records/a', PostProcessingTranscoder)
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
             mediator.parse(BytesIO(xml))
-
-    XmlTranscoderMediator.clear_registrations()

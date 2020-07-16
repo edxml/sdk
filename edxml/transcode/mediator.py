@@ -25,10 +25,6 @@ class TranscoderMediator(object):
     output buffer when the mediator goes out of scope.
     """
 
-    __record_transcoders = {}
-    __transcoders = {}  # type: Dict[any, edxml.transcode.Transcoder]
-    __auto_merge_eventtypes = []
-
     def __init__(self, output=None):
         """
 
@@ -62,6 +58,10 @@ class TranscoderMediator(object):
         self.__validate_events = True
         self.__repairable_event_types = set()
         self.__log_repaired_events = False
+
+        self.__record_transcoders = {}
+        self.__transcoders = {}              # type: Dict[any, edxml.transcode.Transcoder]
+        self.__auto_merge_eventtypes = []
 
         self.__sources = []
         self.__closed = False
@@ -98,22 +98,13 @@ class TranscoderMediator(object):
             self._write_initial_ontology()
         return self.__writer
 
-    @classmethod
-    def clear_registrations(cls):
-        # TODO: Remove this method as soon as registrations are
-        #       no longer kept in class constants.
-        cls.__record_transcoders = {}
-        cls.__transcoders = {}
-        cls.__sources = []
-
     @staticmethod
     def _transcoder_is_postprocessor(transcoder):
         this_method = getattr(type(transcoder), 'post_process')
         base_method = getattr(Transcoder, 'post_process')
         return this_method != base_method
 
-    @classmethod
-    def register(cls, record_selector, record_transcoder):
+    def register(self, record_selector, record_transcoder):
         """
 
         Register a transcoder for processing records identified by
@@ -135,17 +126,17 @@ class TranscoderMediator(object):
           record_selector: Record type selector
           record_transcoder (class): Transcoder class
         """
-        if record_selector in cls.__record_transcoders:
+        if record_selector in self.__record_transcoders:
             raise Exception(
                 "Attempt to register multiple transcoders for record selector '%s'" % record_selector
             )
 
-        if record_transcoder not in cls.__transcoders:
-            cls.__transcoders[record_transcoder] = record_transcoder()
-            cls.__auto_merge_eventtypes.extend(
-                cls.__transcoders[record_transcoder].get_auto_merge_event_types())
+        if record_transcoder not in self.__transcoders:
+            self.__transcoders[record_transcoder] = record_transcoder()
+            self.__auto_merge_eventtypes.extend(
+                self.__transcoders[record_transcoder].get_auto_merge_event_types())
 
-        cls.__record_transcoders[record_selector] = record_transcoder
+        self.__record_transcoders[record_selector] = record_transcoder
 
     def debug(self, disable_buffering=True, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
         """
@@ -343,8 +334,7 @@ class TranscoderMediator(object):
         self._output_source_uri = source_uri
         return self
 
-    @classmethod
-    def _get_transcoder(cls, record_selector=None):
+    def _get_transcoder(self, record_selector=None):
         """
 
         Returns a Transcoder instance for transcoding
@@ -358,8 +348,8 @@ class TranscoderMediator(object):
           Transcoder:
         """
 
-        if record_selector in cls.__record_transcoders:
-            return cls.__transcoders[cls.__record_transcoders[record_selector]]
+        if record_selector in self.__record_transcoders:
+            return self.__transcoders[self.__record_transcoders[record_selector]]
 
     def _prepare_write_event(self):
         if self._ontology.is_modified_since(self._last_written_ontology_version):
@@ -382,13 +372,12 @@ class TranscoderMediator(object):
         self._writer.add_ontology(self._ontology)
         self._last_written_ontology_version = self._ontology.get_version()
 
-    @classmethod
-    def _initialize_ontology(cls, ontology):
+    def _initialize_ontology(self, ontology):
 
         # First, we accumulate the object types into an
         # empty ontology.
         object_types = Ontology()
-        for transcoder in cls.__transcoders.values():
+        for transcoder in self.__transcoders.values():
             transcoder.set_ontology(object_types)
             transcoder.create_object_types()
 
@@ -398,7 +387,7 @@ class TranscoderMediator(object):
         # Then, we accumulate the concepts into an
         # empty ontology.
         concepts = Ontology()
-        for transcoder in cls.__transcoders.values():
+        for transcoder in self.__transcoders.values():
             transcoder.set_ontology(concepts)
             transcoder.create_concepts()
 
@@ -410,7 +399,7 @@ class TranscoderMediator(object):
         # to create two event types that share the same name. That is
         # a common pattern in transcoders that inherit event type definitions
         # from their parent, adjust the event type and finally rename it.
-        for transcoder in cls.__transcoders.values():
+        for transcoder in self.__transcoders.values():
             transcoder.set_ontology(Ontology())
             transcoder.update_ontology(object_types, validate=False)
             transcoder.update_ontology(concepts, validate=False)
@@ -554,8 +543,7 @@ class TranscoderMediator(object):
         self._ontology.generate_graph_property_concepts(graph)
         return graph
 
-    @classmethod
-    def describe_transcoder(cls, source_name):
+    def describe_transcoder(self, source_name):
         """
         Returns a reStructuredText description for a transcoder that
         uses this mediator. This is done by combining the ontologies
@@ -570,14 +558,14 @@ class TranscoderMediator(object):
         """
 
         ontology = Ontology()
-        cls._initialize_ontology(ontology)
+        self._initialize_ontology(ontology)
 
         description = f"\n\nThis transcoder reads {source_name} and outputs "\
-                      f"`EDXML <http://edxml.org/>`_ containing {cls._describe_event_types(ontology)}.\n"
+                      f"`EDXML <http://edxml.org/>`_ containing {self._describe_event_types(ontology)}.\n"
 
-        relates_inter = cls._describe_inter_concept_relations(ontology)
-        relates_intra = cls._describe_intra_concept_relations(ontology)
-        concept_refinements = cls._describe_concept_refinements(
+        relates_inter = self._describe_inter_concept_relations(ontology)
+        relates_intra = self._describe_intra_concept_relations(ontology)
+        concept_refinements = self._describe_concept_refinements(
             ontology,
             '\n- {concept_source} as {concept_target} (using {event_type})'
         )
@@ -611,10 +599,10 @@ class TranscoderMediator(object):
                 description += ', '.join(object_type_dn)
 
         if concept_refinements:
-            description += '\nThe transcoder identifies\n' + '\n'.join(concept_refinements)
+            description += '\n\nThe transcoder identifies\n' + '\n'.join(concept_refinements)
 
-        concepts = cls._describe_concepts(ontology)
-        object_types = cls._describe_object_types(ontology)
+        concepts = self._describe_concepts(ontology)
+        object_types = self._describe_object_types(ontology)
 
         description += '\n\nThe output can be auto-correlated with third party data sources that share any of the ' \
                        'concepts and object types generated by this transcoder. These are listed below.'
