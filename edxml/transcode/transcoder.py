@@ -364,6 +364,32 @@ class Transcoder(object):
       {'event_type_name': {'my-attachment': 'unicode'}}
     """
 
+    TYPE_AUTO_REPAIR_NORMALIZE = {}
+    """
+    The TYPE_AUTO_REPAIR_NORMALIZE attribute is a dictionary mapping EDXML event type names to properties
+    which should be repaired automatically by normalizing their object values. This means that the transcoder
+    is not required to store valid EDXML string representations in its output events. Rather, it may store any
+    type of value which can be normalized into valid string representations automatically. Please refer to the
+    :func:`~edxml.ontology.DataType.normalize_objects` method for a list of supported value types.
+    The names of properties for which values may be normalized are specified as a list.
+    Example::
+
+      {'event-type-name': ['some-property']}
+    """
+
+    TYPE_AUTO_REPAIR_DROP = {}
+    """
+    The TYPE_AUTO_REPAIR_DROP attribute is a dictionary mapping EDXML event type names to properties
+    which should be repaired automatically by dropping invalid object values. This means that the transcoder
+    is permitted to store object values which cause the output event to be invalid. The EDXML writer will
+    attempt to repair invalid output events. First, it will try to normalize object values when configured
+    to do so. As a last resort, it can try to drop any offending object values.
+    The names of properties for which values may be dropped are specified as a list.
+    Example::
+
+      {'event-type-name': ['some-property']}
+    """
+
     def __init__(self):
         super(Transcoder, self).__init__()
 
@@ -581,7 +607,8 @@ class Transcoder(object):
         ]
 
         const_with_property_lists = [
-            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES', 'TYPE_UNIQUE_PROPERTIES'
+            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES', 'TYPE_UNIQUE_PROPERTIES',
+            'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP'
         ]
 
         for event_type_name in existing_types:
@@ -648,7 +675,7 @@ class Transcoder(object):
             'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_ATTACHMENTS',
             'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
             'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',
-            'TYPE_ATTACHMENT_ENCODINGS'
+            'TYPE_ATTACHMENT_ENCODINGS', 'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP'
         ]
 
         for constant_name in const_with_event_type_keys:

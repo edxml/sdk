@@ -39,6 +39,18 @@ def test_spurious_type_mandatory_properties_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_type_auto_normalize_properties_exception(transcoder):
+    type(transcoder).TYPE_AUTO_REPAIR_NORMALIZE = {'spurious': []}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_type_auto_drop_properties_exception(transcoder):
+    type(transcoder).TYPE_AUTO_REPAIR_DROP = {'spurious': []}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
 def test_spurious_type_summary_exception(transcoder):
     type(transcoder).TYPE_SUMMARIES = {'spurious': 'test'}
     with pytest.raises(ValueError, match='not in TYPE_MAP'):
