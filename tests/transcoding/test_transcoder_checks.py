@@ -1,4 +1,5 @@
 import pytest
+from edxml.error import EDXMLValidationError
 
 from edxml.ontology import EventProperty
 from conftest import create_transcoder
@@ -178,6 +179,15 @@ def test_spurious_property_concept_cnp_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_property_concept_attribute_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'spurious': {}}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
 def test_spurious_child_type_exception(transcoder):
     type(transcoder).TYPE_PROPERTIES = {
@@ -245,4 +255,35 @@ def test_parent_children_siblings_inconsistency_exception(transcoder):
     type(transcoder).PARENTS_CHILDREN = [['event-type.a', 'of', 'event-type.b']]
     type(transcoder).CHILDREN_SIBLINGS = [['event-type.b', 'in', 'event-type.b']]
     with pytest.raises(ValueError, match='that event type has no children'):
+        dict(transcoder.generate_event_types())
+
+
+def test_concept_attribute_no_list_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': 'foo'}}}
+    with pytest.raises(ValueError, match='not a list'):
+        dict(transcoder.generate_event_types())
+
+
+def test_invalid_concept_attribute_name_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': ['attr']}}}
+    with pytest.raises(ValueError, match='does not contain a colon'):
+        dict(transcoder.generate_event_types())
+
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': []}}}
+    with pytest.raises(ValueError, match='not a list of length 1, 2 or 3'):
+        dict(transcoder.generate_event_types())
+
+
+def test_wrong_concept_attribute_name_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': ['foo:attr']}}}
+    with pytest.raises(EDXMLValidationError, match="must begin with 'object-type.string:'"):
         dict(transcoder.generate_event_types())

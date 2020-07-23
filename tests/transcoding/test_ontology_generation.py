@@ -213,6 +213,9 @@ def test_concept_associations(transcoder):
     type(transcoder).TYPE_PROPERTY_DESCRIPTIONS = {'event-type.a': {'property-a': 'test description'}}
     type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 1}}}
     type(transcoder).TYPE_PROPERTY_CONCEPTS_CNP = {'event-type.a': {'property-a': {'concept-a': 0}}}
+    type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {
+        'event-type.a': {'property-a': {'concept-a': ['object-type.string:attr', 'attr-s', 'attr-p']}}
+    }
 
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
@@ -224,6 +227,9 @@ def test_concept_associations(transcoder):
 
         assert association.get_confidence() == 1
         assert association.get_concept_naming_priority() == 0
+        assert association.get_attribute_name_extension() == 'attr'
+        assert association.get_attribute_display_name_singular() == 'attr-s'
+        assert association.get_attribute_display_name_plural() == 'attr-p'
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])

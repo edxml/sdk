@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import edxml
+from edxml.error import EDXMLValidationError
 from edxml.logger import log
 from edxml.ontology import EventTypeParent
 
@@ -116,15 +117,15 @@ class Transcoder(object):
     """
     The TYPE_PROPERTY_CONCEPTS attribute is a dictionary mapping EDXML event type names to property
     concept associations. The associations are dictionaries mapping property names to their associated
-    concepts. Each associated concept is a dictionary containing the names of the associated concepts
-    as keys and their association confidences as values.
+    concepts. The associated concepts are specified as a dictionary containing the names of the associated
+    concepts as keys and their association confidences as values.
 
     Example::
 
         {
           'event.type.name': {
-            'property-a': [{'concept.name': 8}],
-            'property-b': [{'concept.name': 8}, {'another.concept.name': 7}],
+            'property-a': {'concept.name': 8},
+            'property-b': {'concept.name': 8}, {'another.concept.name': 7},
           }
         }
 
@@ -133,17 +134,39 @@ class Transcoder(object):
     TYPE_PROPERTY_CONCEPTS_CNP = {}
     """
     The TYPE_PROPERTY_CONCEPTS_CNP attribute is a dictionary mapping EDXML event type names to property
-    concept naming priorities (CNP). The priorities are dictionaries mapping property names to concept CNPs.
-    Each concept CNP is a dictionary containing the names of the associated concepts as keys and their
-    CNPs as values.
+    concept naming priorities (CNP). The priorities are specified as dictionaries mapping property names
+    to concept CNPs. The concept CNPs are specified as a dictionary containing the names of the associated
+    concepts as keys and their CNPs as values.
     When the CNP of a concept association is not specified, it will have the default value of 128.
 
     Example::
 
         {
           'event.type.name': {
-            'property-a': [{'concept.name': 192}],
-            'property-b': [{'concept.name': 64}, {'another.concept.name': 0}],
+            'property-a': {'concept.name': 192},
+            'property-b': {'concept.name': 64}, {'another.concept.name': 0},
+          }
+        }
+
+    """
+
+    TYPE_PROPERTY_ATTRIBUTES = {}
+    """
+    The TYPE_PROPERTY_ATTRIBUTES attribute is a dictionary mapping EDXML event type names to concept
+    attributes. The concept attributes are specified as a dictionary mapping property names to attributes.
+    Each attribute is a list containing the full attribute name, the singular display name and the
+    plural display name, in that order. When the plural display name is omitted, it will be guessed by
+    taking the singular form and appending an 's' to it. When both singular and plural display names are
+    omitted, they will be inherited from the object type.
+    When the attribute of a concept association is not specified, it will inherit from the object type
+    as per the EDXML specification.
+
+    Example::
+
+        {
+          'event.type.name': {
+            'property-a': {'concept.name': ['object.type.name:attribute.name-extension']},
+            'property-b': {'concept.name': ['object.type.name:attribute.name-extension', 'singular', 'plural']},
           }
         }
 
@@ -544,7 +567,20 @@ class Transcoder(object):
                         .get(event_type_name, {})\
                         .get(property_name, {})\
                         .get(concept_name, 128)
-                    event_type[property_name].identifies(concept_name, confidence, cnp)
+                    association = event_type[property_name].identifies(concept_name, confidence, cnp)
+                    attribute_details = cls.TYPE_PROPERTY_ATTRIBUTES\
+                        .get(event_type_name, {})\
+                        .get(property_name, {})\
+                        .get(concept_name)
+                    if attribute_details:
+                        attr_object_type_name, attr_name_extension = attribute_details[0].split(':')
+                        if event_type[property_name].get_object_type_name() != attr_object_type_name:
+                            raise EDXMLValidationError(
+                                f"The attribute name extension of concept {concept_name} associated with property "
+                                f"'{property_name}' of event type '{event_type_name}' must begin with "
+                                f"'{object_type_name}:' but it begins with '{attr_object_type_name}:'."
+                            )
+                        association.set_attribute(attr_name_extension, *attribute_details[1:])
 
         for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
             attachment = event_type.create_attachment(attachment_name)
@@ -603,7 +639,8 @@ class Transcoder(object):
 
         const_with_property_sub_keys = [
             'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
-            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_PROPERTY_CONCEPTS', 'TYPE_PROPERTY_CONCEPTS_CNP'
+            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_PROPERTY_CONCEPTS', 'TYPE_PROPERTY_CONCEPTS_CNP',
+            'TYPE_PROPERTY_ATTRIBUTES'
         ]
 
         const_with_property_lists = [
@@ -640,6 +677,27 @@ class Transcoder(object):
                     '%s.TYPE_OPTIONAL_PROPERTIES contains property names that are not in TYPE_PROPERTIES.' %
                     cls.__name__
                 )
+
+            if event_type_name in cls.TYPE_PROPERTY_ATTRIBUTES:
+                for property_name, concept_attr in cls.TYPE_PROPERTY_ATTRIBUTES[event_type_name].items():
+                    for concept_name, attr in concept_attr.items():
+                        if not isinstance(attr, list):
+                            raise ValueError(
+                                '%s.TYPE_PROPERTY_ATTRIBUTES contains a concept attribute that is not a list.' %
+                                cls.__name__
+                            )
+                        if len(attr) not in [1, 2, 3]:
+                            raise ValueError(
+                                '%s.TYPE_PROPERTY_ATTRIBUTES contains a concept attribute that is not '
+                                'a list of length 1, 2 or 3.' %
+                                cls.__name__
+                            )
+                        if ':' not in attr[0]:
+                            raise ValueError(
+                                '%s.TYPE_PROPERTY_ATTRIBUTES contains a concept attribute name that does not contain a '
+                                'colon (":"). You must specify full attribute names which include the object type name.'
+                                % cls.__name__
+                            )
 
             if event_type_name in cls.PARENT_MAPPINGS:
                 parent_event_type_name = None
