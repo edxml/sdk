@@ -1159,7 +1159,7 @@ class EventType(OntologyElement, MutableMapping):
         except EDXMLValidationError as e:
             raise EDXMLValidationError(
                 'The story template of event type "%s" is invalid: "%s"\nThe validator said: %s' % (
-                    self.__attr['name'], self.__attr['summary'], str(e))
+                    self.__attr['name'], self.__attr['story'], str(e))
             )
 
         for propertyName, eventProperty in self.get_properties().items():
