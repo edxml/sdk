@@ -180,17 +180,17 @@ class EDXMLWriter(object):
         else:
             return self.__event_type_schema_cache.get(event_type_name)
 
-    def __generate_event_validation_exception(self, event, event_element, schema):
+    def __generate_event_validation_exception(self, event, event_element, schema, property_name=None):
         try:
             if schema.error_log.last_error.path.startswith('/event/properties/'):
                 # Something is wrong with event properties.
-                self.__ontology.get_event_type(event.get_type_name()).validate_event_objects(event)
+                self.__ontology.get_event_type(event.get_type_name()).validate_event_objects(event, property_name)
             elif schema.error_log.last_error.path.startswith('/event/attachments/'):
                 # Something is wrong with event attachments.
                 self.__ontology.get_event_type(event.get_type_name()).validate_event_attachments(event)
-            else:
-                # Something else is wrong.
-                self.__ontology.get_event_type(event.get_type_name()).validate_event_structure(event)
+
+            # Something else is wrong.
+            self.__ontology.get_event_type(event.get_type_name()).validate_event_structure(event)
 
             # EventType validation did not find the issue. We have
             # no other option than to raise a RelaxNG validation error.
@@ -342,7 +342,9 @@ class EDXMLWriter(object):
                 if offending_property_name not in self.__allow_repair_drop.get(event.get_type_name(), []):
                     # Offending property is not one that we should try to fix.
                     # Raise a validation exception.
-                    self.__generate_event_validation_exception(event, event.get_element(), schema)
+                    self.__generate_event_validation_exception(
+                        event, event.get_element(), schema, offending_property_name
+                    )
 
                 offending_property_values_all = {str(v) for v in event[offending_property_name]}
                 offending_property_values_bad = [b.text for b in event.get_element().xpath(last_error.path)]

@@ -1560,7 +1560,7 @@ class EventType(OntologyElement, MutableMapping):
 
         return self
 
-    def validate_event_objects(self, event):
+    def validate_event_objects(self, event, property_name=None):
         """
 
         Validates the object values in the event by comparing
@@ -1568,8 +1568,12 @@ class EventType(OntologyElement, MutableMapping):
         that are much more readable than standard XML validation
         exceptions.
 
+        Optionally the validation can be limited to a specific
+        property only by setting the property_name argument.
+
         Args:
           event (edxml.EDXMLEvent):
+          property_name (str):
 
         Raises:
           EDXMLValidationError
@@ -1579,6 +1583,9 @@ class EventType(OntologyElement, MutableMapping):
         """
 
         for propertyName, objects in event.items():
+            if property_name is not None and propertyName != property_name:
+                # We are not asked to check this property.
+                continue
 
             property_object_type = self.__properties[propertyName].get_object_type()
 
