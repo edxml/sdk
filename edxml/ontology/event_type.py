@@ -588,6 +588,20 @@ class EventType(OntologyElement, MutableMapping):
 
                 target_concept_name = list(self[target].get_concept_associations().keys())[0]
 
+        if source_concept_name is not None and self.__ontology.get_concept(source_concept_name) is None:
+            raise Exception(
+                "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
+                "the source concept (%s) is not defined." %
+                (type, source, target, self.get_display_name_singular(), source_concept_name)
+            )
+
+        if target_concept_name is not None and self.__ontology.get_concept(target_concept_name) is None:
+            raise Exception(
+                "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
+                "the target concept (%s) is not defined." %
+                (type, source, target, self.get_display_name_singular(), target_concept_name)
+            )
+
         relation = edxml.ontology.PropertyRelation(
             self, self[source], self[target], self.__ontology.get_concept(source_concept_name, True),
             self.__ontology.get_concept(target_concept_name, True), description, type,
