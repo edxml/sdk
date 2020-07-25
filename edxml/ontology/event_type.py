@@ -1567,8 +1567,7 @@ class EventType(OntologyElement, MutableMapping):
                 if len(edxml_event[property_name]) > 1:
                     raise EDXMLValidationError(
                         ('An event of type %s has multiple objects of property %s, '
-                         'while it cannot have more than one due to its configured merge strategy '
-                         'or due to a implicit parent definition.') %
+                         'while it is a single-valued property.') %
                         (self.__attr['name'], property_name)
                     )
 
