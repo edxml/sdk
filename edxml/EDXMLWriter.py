@@ -35,6 +35,7 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
+import sys
 from collections import deque
 
 from typing import Dict
@@ -80,7 +81,7 @@ class EDXMLWriter(object):
         def write(self, data):
             self.buffer.append(data)
 
-    def __init__(self, output=None, validate=True, log_repaired_events=False, pretty_print=True):
+    def __init__(self, output=sys.stdout.buffer, validate=True, log_repaired_events=False, pretty_print=True):
 
         super(EDXMLWriter, self).__init__()
 

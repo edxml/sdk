@@ -193,7 +193,7 @@ class EventCollection(list):
 
         edxml_data = b''
 
-        writer = edxml.EDXMLWriter()
+        writer = edxml.EDXMLWriter(output=None)
         edxml_data += writer.add_ontology(self._ontology)
 
         for event in self:
