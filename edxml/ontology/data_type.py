@@ -1043,20 +1043,32 @@ class DataType(object):
                 elif split_data_type[1] == 'decimal':
                     if len(split_data_type) >= 4:
                         try:
-                            int(split_data_type[2])
-                            int(split_data_type[3])
+                            decimal_num_digits = int(split_data_type[2])
                         except ValueError:
-                            pass
+                            raise EDXMLValidationError(
+                                "Total number of digits specified in data type %s is invalid." % self.type
+                            )
+                        if decimal_num_digits < 1:
+                            raise EDXMLValidationError(
+                                "Total number of digits specified in data type %s must be positive." % self.type
+                            )
+                        try:
+                            decimal_num_decimals = int(split_data_type[3])
+                        except ValueError:
+                            raise EDXMLValidationError(
+                                "Number of decimals specified in data type %s is invalid." % self.type
+                            )
+                        if decimal_num_digits <= decimal_num_decimals:
+                            raise EDXMLValidationError(
+                                "Total number of digits specified in data type %s must be greater than "
+                                "the number of decimals." % self.type
+                            )
+                        if len(split_data_type) > 4:
+                            if len(split_data_type) == 5:
+                                if split_data_type[4] == 'signed':
+                                    return self
                         else:
-                            if int(split_data_type[3]) > int(split_data_type[2]):
-                                raise EDXMLValidationError(
-                                    "Invalid Decimal: " + self.type)
-                            if len(split_data_type) > 4:
-                                if len(split_data_type) == 5:
-                                    if split_data_type[4] == 'signed':
-                                        return self
-                            else:
-                                return self
+                            return self
         elif split_data_type[0] == 'hex':
             try:
                 hex_length = int(split_data_type[1])
