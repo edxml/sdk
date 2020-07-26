@@ -5,6 +5,7 @@ from conftest import create_transcoder
 
 
 def test_event_type(transcoder):
+    type(transcoder).VERSION = 2
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
 
@@ -12,6 +13,7 @@ def test_event_type(transcoder):
     transcoder._ontology.validate()
 
     assert list(event_types.keys()) == ['event-type.a']
+    assert event_types['event-type.a'].get_version() == 2
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
