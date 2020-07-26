@@ -920,6 +920,16 @@ class DataType(object):
                 if geo_lon < -180 or geo_lon > 180:
                     raise EDXMLValidationError(
                         "The geo:point value '%s' contains a longitude that is not within range [-180,180]." % value)
+                if not re.match(r'[+-]\d+', split_geo_point[0]):
+                    raise EDXMLValidationError(
+                        "The geo:point value '%s' contains a latitude that is not formatted correctly. "
+                        "Please check the specification for formatting requirements." % value
+                    )
+                if not re.match(r'[+-]\d+', split_geo_point[1]):
+                    raise EDXMLValidationError(
+                        "The geo:point value '%s' contains a longitude that is not formatted correctly. "
+                        "Please check the specification for formatting requirements." % value
+                    )
             else:
                 raise EDXMLValidationError(
                     "Invalid geo data type: '%s'" % value)
