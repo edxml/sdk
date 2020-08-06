@@ -1,6 +1,9 @@
 EDXML SDK
 =========
 
+.. image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+.. image:: https://github.com/edxml/sdk/workflows/tests/badge.svg
+
 EDXML_ is a versatile, simple and semantic data representation that facilitates
 complex data integration projects.
 
