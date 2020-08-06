@@ -414,7 +414,7 @@ def test_compute_sticky_hash(event, ontology):
     # computation works for all event types. Exhaustive
     # testing of hash computation is done elsewhere.
     hash_hex = codecs.encode(hashlib.sha1(
-        '/a/\na\nsmiley:😀\n'.encode()
+        '/a/\na\nsmiley:😀'.encode()
     ).digest(), 'hex').decode()
 
     assert event.compute_sticky_hash(ontology) == hash_hex

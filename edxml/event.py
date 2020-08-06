@@ -895,12 +895,13 @@ class EDXMLEvent(MutableMapping):
 
         """
 
+        object_separator = b'\xff\xff\xff\xff'
+
         event_type = ontology.get_event_type(self.get_type_name())
         objects = self.get_properties()
         hash_properties = event_type.get_hash_properties()
 
-        object_strings = set('%s:%s' % (p, v)
-                             for p in objects if p in hash_properties for v in objects[p])
+        object_strings = set(('%s:%s' % (p, v)).encode() for p in objects if p in hash_properties for v in objects[p])
 
         # Now we compute the SHA1 hash value of the byte
         # string representation of the event, and output in hex
@@ -908,22 +909,22 @@ class EDXMLEvent(MutableMapping):
         if event_type.is_unique():
             return codecs.encode(hashlib.sha1(
                 (
-                    '%s\n%s\n%s' % (self.get_source_uri(), self.get_type_name(), '\n'.join(sorted(object_strings)))
-                ).encode()
+                    b'%s\n%s\n%s' % (
+                        self.get_source_uri().encode(),
+                        self.get_type_name().encode(),
+                        object_separator.join(sorted(object_strings))
+                    )
+                )
             ).digest(), encoding).decode()
         else:
-            attachment_strings = [
-                '%s:%s' % (name, attachment.replace('\n', '\\n')) for name, attachment in self.get_attachments().items()
-            ]
             return codecs.encode(hashlib.sha1(
                 (
-                    '%s\n%s\n%s\n%s' % (
-                        self.get_source_uri(),
-                        self.get_type_name(),
-                        '\n'.join(sorted(object_strings)),
-                        '\n'.join(sorted(attachment_strings))
+                    b'%s\n%s\n%s' % (
+                        self.get_source_uri().encode(),
+                        self.get_type_name().encode(),
+                        object_separator.join(sorted(object_strings))
                     )
-                ).encode()
+                )
             ).digest(), encoding).decode()
 
     def is_valid(self, ontology):
