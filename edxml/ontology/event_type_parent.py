@@ -313,7 +313,7 @@ class EventTypeParent(OntologyElement):
 
         raise EDXMLValidationError(
             "Definitions of event type {} are {} due to the following difference in their parent definitions:\n"
-            "Old version:\n{}\nNew version:\n{}".format(
+            "Version {}:\n{}\nVersion {}:\n{}".format(
                 self._childEventType.get_name(),
                 problem,
                 old_version,
