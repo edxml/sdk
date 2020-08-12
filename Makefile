@@ -9,6 +9,7 @@ dependencies:
 	python3 -m pip install --upgrade pip
 	pip3 install flake8 pytest
 	pip3 install -r requirements.txt
+	git submodule update --init  edxml/schema
 
 dist:
 	python3 setup.py sdist
