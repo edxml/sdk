@@ -33,6 +33,9 @@ class Concept(OntologyElement):
 
         self.__versions = {1: copy.copy(self)}
 
+    def __repr__(self):
+        return f"{self._attr['name']} ({self._attr['display-name-singular']})"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self._ontology._child_modified_callback()

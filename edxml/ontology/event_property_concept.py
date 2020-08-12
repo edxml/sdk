@@ -26,6 +26,9 @@ class PropertyConcept(OntologyElement):
         self.__event_type = event_type  # type: edxml.ontology.EventType
         self.__property = property  # type: edxml.ontology.EventProperty
 
+    def __repr__(self):
+        return f"{self.__property.get_name()} => {self.__attr['name']}"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__property._child_modified_callback()

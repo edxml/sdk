@@ -31,6 +31,9 @@ class PropertyRelation(OntologyElement):
 
         self.__event_type = event_type  # type: edxml.ontology.EventType
 
+    def __repr__(self):
+        return f"{self.__attr['property1']} {self.__attr['predicate']} {self.__attr['property2']}"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__event_type._child_modified_callback()

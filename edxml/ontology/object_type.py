@@ -47,6 +47,9 @@ class ObjectType(OntologyElement):
         new.__attr = self.__attr.copy()
         return new
 
+    def __repr__(self):
+        return f"{self.__attr['name']} ({self.__attr['data-type']}))"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__ontology._child_modified_callback()

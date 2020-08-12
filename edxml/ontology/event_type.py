@@ -111,6 +111,9 @@ class EventType(OntologyElement, MutableMapping):
         for propertyName, prop in self.__properties.items():
             yield propertyName
 
+    def __repr__(self):
+        return f"{self.__attr['name']} ({self.__attr['display-name-singular']})"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__cachedUniqueProperties = None

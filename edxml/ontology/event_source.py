@@ -29,6 +29,9 @@ class EventSource(OntologyElement):
 
         self._ontology = ontology  # type: edxml.ontology.Ontology
 
+    def __repr__(self):
+        return self._attr['uri']
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self._ontology._child_modified_callback()

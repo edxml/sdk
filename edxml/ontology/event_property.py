@@ -48,6 +48,9 @@ class EventProperty(OntologyElement):
         self.__data_type = object_type.get_data_type()  # type: edxml.ontology.ObjectType
         self.__concepts = {}      # type: Dict[str, edxml.ontology.PropertyConcept]
 
+    def __repr__(self):
+        return f"{self.__event_type.get_name()}::{self.__attr['name']} (object type {self.__attr['object-type']})"
+
     def _set_event_type(self, event_type):
         self.__event_type = event_type
         return self

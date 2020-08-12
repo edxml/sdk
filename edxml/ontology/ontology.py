@@ -27,6 +27,10 @@ class Ontology(OntologyElement):
         self.__sources = {}        # type: Dict[str, edxml.ontology.EventSource]
         self.__concepts = {}       # type: Dict[str, edxml.ontology.Concept]
 
+    def __repr__(self):
+        return f"{len(self.__event_types)} event types, {len(self.__object_types)} object types, " \
+               f"{len(self.__sources)} sources and {len(self.__concepts)} concepts"
+
     def clear(self):
         """
 
