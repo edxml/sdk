@@ -548,8 +548,9 @@ class DataType(object):
                             ), type='string'
                         )
                 else:
-                    # zero groups means empty string.
-                    element = e.value(type='string')
+                    # zero groups means empty string. Empty strings
+                    # are not valid in EDXML.
+                    raise TypeError('Invalid hex data type (group size is zero): ' + self.type)
             else:
                 # Simple hexadecimal value. Note that we restrict
                 # the character space to lowercase characters.
