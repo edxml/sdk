@@ -571,7 +571,11 @@ class DataType(object):
             if length > 0:
                 etree.SubElement(element, 'param',
                                  name='maxLength').text = str(length)
-            if not is_unicode:
+            if is_unicode:
+                if not is_case_sensitive:
+                    etree.SubElement(
+                        element, 'param', name='pattern').text = r'[\s\S-[\p{Lu}]]*'
+            else:
                 if is_case_sensitive:
                     etree.SubElement(
                         element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
