@@ -428,7 +428,7 @@ class EventProperty(OntologyElement):
         """
         return not self.__attr['multivalued']
 
-    def identifies(self, concept_name, confidence=10):
+    def identifies(self, concept_name, confidence=10, cnp=128):
         """
 
         Marks the property as an identifier for specified
@@ -437,12 +437,13 @@ class EventProperty(OntologyElement):
         Args:
           concept_name (str): concept name
           confidence (int): concept identification confidence [0, 10]
+          cnp (int): concept naming priority [0,255]
 
         Returns:
           edxml.ontology.PropertyConcept: The PropertyConcept association
         """
         self.__concepts[concept_name] = edxml.ontology.PropertyConcept(
-            self.__event_type, self, concept_name, confidence
+            self.__event_type, self, concept_name, confidence=confidence, naming_priority=cnp
         )
         return self.__concepts[concept_name]
 
