@@ -540,32 +540,40 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent:
         """
-        event_type_name = event_element.attrib["event-type"]
-        source_uri = event_element.attrib["source-uri"]
+        try:
+            event_type_name = event_element.attrib["event-type"]
+            source_uri = event_element.attrib["source-uri"]
 
-        attachments = {}
-        property_objects = {}
-        for element in event_element:
-            if element.tag == 'properties':
-                for property_element in element:
-                    property_name = property_element.tag
-                    if property_name not in property_objects:
-                        property_objects[property_name] = set()
-                    property_objects[property_name].add(property_element.text)
-            elif element.tag == '{http://edxml.org/edxml}properties':
-                for property_element in element:
-                    property_name = property_element.tag[24:]
-                    if property_name not in property_objects:
-                        property_objects[property_name] = set()
-                    property_objects[property_name].add(property_element.text)
-            elif element.tag == 'attachments':
-                for attachment in element:
-                    attachments[attachment.tag] = attachment.text
-            elif element.tag == '{http://edxml.org/edxml}attachments':
-                for attachment in element:
-                    attachments[attachment.tag[24:]] = attachment.text
+            attachments = {}
+            property_objects = {}
+            for element in event_element:
+                if element.tag == 'properties':
+                    for property_element in element:
+                        property_name = property_element.tag
+                        if property_name not in property_objects:
+                            property_objects[property_name] = set()
+                        property_objects[property_name].add(property_element.text)
+                elif element.tag == '{http://edxml.org/edxml}properties':
+                    for property_element in element:
+                        property_name = property_element.tag[24:]
+                        if property_name not in property_objects:
+                            property_objects[property_name] = set()
+                        property_objects[property_name].add(property_element.text)
+                elif element.tag == 'attachments':
+                    for attachment in element:
+                        attachments[attachment.tag] = attachment.text
+                elif element.tag == '{http://edxml.org/edxml}attachments':
+                    for attachment in element:
+                        attachments[attachment.tag[24:]] = attachment.text
 
-        return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), attachments)
+            return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), attachments)
+
+        except (ValueError, KeyError) as e:
+            raise EDXMLValidationError(
+                "Failed to instantiate an EDXML event from the following definition:\n" +
+                etree.tostring(event_element, pretty_print=True, encoding='unicode') +
+                "\nError message: " + str(e)
+            )
 
     def set_properties(self, properties):
         """
