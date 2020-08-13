@@ -1603,7 +1603,12 @@ class EventType(OntologyElement, MutableMapping):
                 # We are not asked to check this property.
                 continue
 
-            property_object_type = self.__properties[propertyName].get_object_type()
+            try:
+                property_object_type = self.__properties[propertyName].get_object_type()
+            except KeyError:
+                raise EDXMLValidationError(
+                    'Event type %s has no property named "%s".' % (self.__attr['name'], propertyName)
+                )
 
             for objectValue in objects:
                 try:
