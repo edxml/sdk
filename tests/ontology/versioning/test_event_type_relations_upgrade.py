@@ -54,6 +54,58 @@ def test_relation_order_is_insignificant():
     assert a == b
 
 
+def test_change_relation_concept_source():
+
+    o1 = Ontology()
+    o1.create_object_type("a")
+    o1.create_concept("a")
+    o1.create_concept("b")
+    o2 = copy.deepcopy(o1)
+
+    a = o1.create_event_type("a")
+    b = o2.create_event_type("a").set_version(2)
+
+    # The two event type versions will have inter-concept
+    # relations that have different source concepts.
+    a.create_property("a", "a").identifies('a')
+    a.create_property("b", "a").identifies('a')
+    a["a"].relate_inter('related to', 'b')
+
+    b.create_property("a", "a").identifies('b')
+    b.create_property("b", "a").identifies('a')
+    b["a"].relate_inter('related to', 'b')
+
+    # The two versions of the event type are now incompatible and
+    # cannot be compared.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_change_relation_concept_target():
+
+    o1 = Ontology()
+    o1.create_object_type("a")
+    o1.create_concept("a")
+    o1.create_concept("b")
+    o2 = copy.deepcopy(o1)
+
+    a = o1.create_event_type("a")
+    b = o2.create_event_type("a").set_version(2)
+
+    # The two event type versions will have inter-concept
+    # relations that have different target concepts.
+    a.create_property("a", "a").identifies('a')
+    a.create_property("b", "a").identifies('a')
+    a["a"].relate_inter('related to', 'b')
+
+    b.create_property("a", "a").identifies('a')
+    b.create_property("b", "a").identifies('b')
+    b["a"].relate_inter('related to', 'b')
+
+    # The two versions of the event type are now incompatible and
+    # cannot be compared.
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_add_relation():
 
     o1 = Ontology()

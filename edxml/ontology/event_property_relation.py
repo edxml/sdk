@@ -396,6 +396,14 @@ class PropertyRelation(OntologyElement):
             # The properties in the relations are different, no upgrade possible.
             equal = is_valid_upgrade = False
 
+        if old.get_source_concept() != new.get_source_concept():
+            # The concepts in the relations are different, no upgrade possible.
+            equal = is_valid_upgrade = False
+
+        if old.get_target_concept() != new.get_target_concept():
+            # The concepts in the relations are different, no upgrade possible.
+            equal = is_valid_upgrade = False
+
         if old.is_directed() != new.is_directed():
             # The relation directedness is different, no upgrade possible.
             equal = is_valid_upgrade = False
