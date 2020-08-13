@@ -1168,7 +1168,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
             attachments = OrderedDict()
             for attachment in attachments_element if attachments_element is not None else []:
-                attachments[attachment.tag[24:]] = attachment.text
+                attachments[attachment.tag[24:]] = attachment.text if attachment.text is not None else ''
 
             self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
 
