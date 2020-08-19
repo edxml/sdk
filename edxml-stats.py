@@ -49,10 +49,11 @@ class StatsParser(EDXMLPullParser):
     def __init__(self):
         super(StatsParser, self).__init__(validate=False)
         self.event_type_counters = defaultdict(int)
-        self.property_stats = defaultdict(lambda: defaultdict(lambda: {'0': 0, '1': 0, '>1': 0}))
+        self.property_stats = defaultdict(lambda: defaultdict(lambda: {'total': 0, '0': 0, '1': 0, '>1': 0}))
         self.source_uris = defaultdict(int)
         self.object_type_counters = defaultdict(int)
         self.object_value_counters = defaultdict(lambda: defaultdict(int))
+        self.property_value_counters = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         self.concepts = defaultdict(set)
         self.timespan = [None, None]  # type: List[Optional[str], Optional[str]]
         self.type_time_spans = defaultdict(lambda: [None, None])  # type: Dict[str, List[Optional[str], Optional[str]]]
@@ -66,6 +67,7 @@ class StatsParser(EDXMLPullParser):
 
         for property_name in event_type.get_properties().keys():
             objects = event[property_name]
+            self.property_stats[event_type_name][property_name]['total'] += len(objects)
             if len(objects) == 0:
                 self.property_stats[event_type_name][property_name]['0'] += 1
             elif len(objects) == 1:
@@ -83,6 +85,7 @@ class StatsParser(EDXMLPullParser):
             self.object_type_counters[object_type_name] += len(objects)
             for object_value in objects:
                 self.object_value_counters[object_type_name][object_value] += 1
+                self.property_value_counters[event_type_name][property_name][object_value] += 1
 
         timespan_start, timespan_end = event_type.get_timespan_property_names()
 
@@ -180,10 +183,12 @@ def print_property_stats(parser, event_type_name):
     total = parser.event_type_counters.get(event_type_name)
     for property_name, stats in parser.property_stats.get(event_type_name, {}).items():
         print(
-            '%s %-6s %-6s %-6s %-6s' %
+            '%s %-6s %-6s %-6s %-6s %-6s %-6s' %
             (
                 property_name.ljust(32),
                 format_count(total),
+                sum(parser.property_value_counters[event_type_name][property_name].values()),
+                len(parser.property_value_counters[event_type_name][property_name]),
                 format_count(stats['0']),
                 format_count(stats['1']),
                 format_count(stats['>1'])
@@ -271,9 +276,10 @@ def main():
     parser.add_argument(
         '--property-stats',
         type=str,
-        help='Prints statistics for each of the properties of specified event type. The printed statistics'
-             'are the total number of events, the number of events that have no values for the property,'
-             'the number of events that have exactly one value and the number of events that have multiple'
+        help='Prints statistics for each of the properties of specified event type. The printed statistics '
+             'are the total number of events, the total number of values for the property, the number of '
+             'events that have no values for the property, '
+             'the number of events that have exactly one value and the number of events that have multiple '
              'values for the property, in that order. All other output is suppressed.'
     )
 
