@@ -26,14 +26,14 @@ class EventTypeParent(OntologyElement):
             'siblings-description': siblings_description
         }
 
-        self._childEventType = child_event_type
+        self._child_event_type = child_event_type
 
     def __repr__(self):
-        return f"({self._childEventType.get_name()} has parent {self._attr['eventtype']})"
+        return f"({self._child_event_type.get_name()} has parent {self._attr['eventtype']})"
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
-        self._childEventType._child_modified_callback()
+        self._child_event_type._child_modified_callback()
         return self
 
     def _set_attr(self, key, value):
@@ -220,7 +220,7 @@ class EventTypeParent(OntologyElement):
             raise EDXMLValidationError(
                 'The parent-description attribute in the implicit parent definition of event type "%s" '
                 'contains illegal whitespace characters: "%s"' % (
-                    self._childEventType.get_name(), self._attr['parent-description'])
+                    self._child_event_type.get_name(), self._attr['parent-description'])
             )
 
         if not 1 <= len(self._attr['siblings-description']) <= 128:
@@ -234,7 +234,7 @@ class EventTypeParent(OntologyElement):
             raise EDXMLValidationError(
                 'The siblings-description attribute in the implicit parent definition of event type "%s" '
                 'contains illegal whitespace characters: "%s"' % (
-                    self._childEventType.get_name(), self._attr['siblings-description'])
+                    self._child_event_type.get_name(), self._attr['siblings-description'])
             )
 
         return self
@@ -263,8 +263,8 @@ class EventTypeParent(OntologyElement):
 
         # Note that parent definitions are part of event type definitions,
         # so we look at the version of the event type for which this property is defined.
-        other_is_newer = other._childEventType.get_version() > self._childEventType.get_version()
-        versions_differ = other._childEventType.get_version() != self._childEventType.get_version()
+        other_is_newer = other._child_event_type.get_version() > self._child_event_type.get_version()
+        versions_differ = other._child_event_type.get_version() != self._child_event_type.get_version()
 
         if other_is_newer:
             new = other
@@ -279,7 +279,7 @@ class EventTypeParent(OntologyElement):
         equal = not versions_differ
         is_valid_upgrade = True
 
-        if old._childEventType.get_name() != new._childEventType.get_name():
+        if old._child_event_type.get_name() != new._child_event_type.get_name():
             raise EDXMLValidationError(
                 "Attempt to compare event type parent definitions from two different child event types"
             )
@@ -308,8 +308,8 @@ class EventTypeParent(OntologyElement):
 
         problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
 
-        old_version = str(old._childEventType.get_version())
-        new_version = str(new._childEventType.get_version())
+        old_version = str(old._child_event_type.get_version())
+        new_version = str(new._child_event_type.get_version())
 
         if not versions_differ:
             new_version += ' (conflicting definition)'
@@ -317,7 +317,7 @@ class EventTypeParent(OntologyElement):
         raise EDXMLValidationError(
             "Definitions of event type {} are {} due to the following difference in their parent definitions:\n"
             "Version {}:\n{}\nVersion {}:\n{}".format(
-                self._childEventType.get_name(),
+                self._child_event_type.get_name(),
                 problem,
                 old_version,
                 etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
@@ -353,7 +353,7 @@ class EventTypeParent(OntologyElement):
             # The new definition is indeed newer. Update self.
             self.set_parent_description(parent.get_parent_description())
             self.set_siblings_description(parent.get_siblings_description())
-            self._childEventType = parent._childEventType
+            self._child_event_type = parent._child_event_type
 
         return self
 

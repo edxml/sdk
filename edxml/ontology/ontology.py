@@ -965,7 +965,6 @@ class Ontology(OntologyElement):
         Returns:
           edxml.ontology.Ontology: The ontology
         """
-
         if isinstance(other_ontology, Ontology):
             if validate:
                 other_ontology.validate()

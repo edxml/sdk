@@ -11,7 +11,7 @@ class OntologyElement(object):
     def validate(self):
         return self
 
-    def update(self, object_type):
+    def update(self, element):
         return self
 
     def __cmp__(self, other):

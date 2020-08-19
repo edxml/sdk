@@ -122,14 +122,15 @@ parser.add_argument(
 )
 
 # Program starts here. Check commandline arguments.
+# TODO: Introduce a main() method
 args = parser.parse_args()
 
 event_input = open(args.file) if args.file else sys.stdin.buffer
 
 source_filter = re.compile(args.source_uri or '.*')
 
-with EDXMLEventGroupFilter(source_filter, args.event_type) as eventFilter:
+with EDXMLEventGroupFilter(source_filter, args.event_type) as event_filter:
     try:
-        eventFilter.parse(event_input)
+        event_filter.parse(event_input)
     except KeyboardInterrupt:
         pass

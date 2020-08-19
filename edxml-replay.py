@@ -135,7 +135,7 @@ class EDXMLReplay(EDXMLPullFilter):
             # their values with the current time.
             for property_name, objects in date_time_objects:
                 event[property_name] = [DataType.format_utc_datetime(
-                    datetime.now(tz=pytz.utc)) for Object in objects]
+                    datetime.now(tz=pytz.utc)) for _ in objects]
 
         EDXMLPullFilter._parsed_event(self, event)
 

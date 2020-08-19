@@ -26,8 +26,8 @@ class EventType(OntologyElement):
         self.__relax_ng = None          # type: etree.RelaxNG
         self.__ontology = ...           # type: edxml.ontology.Ontology
 
-        self.__cachedUniqueProperties = ...  # type: Dict[str, edxml.ontology.EventProperty]
-        self.__cachedHashProperties = ...    # type: Dict[str, edxml.ontology.EventProperty]
+        self.__cached_unique_properties = ...  # type: Dict[str, edxml.ontology.EventProperty]
+        self.__cached_hash_properties = ...    # type: Dict[str, edxml.ontology.EventProperty]
 
     def __getitem__(self, property_name: str) -> edxml.ontology.EventProperty: ...
 

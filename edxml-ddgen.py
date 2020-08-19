@@ -157,8 +157,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
                     for property_name in ['g', 'h']:
                         # Random values in range [-0.5,0.5]
-                        property_objects['property-' +
-                                         property_name] = ['%1.9f' % (random.random() - 0.5)]
+                        property_objects['property-' + property_name] = ['%1.9f' % (random.random() - 0.5)]
 
                 if self.generate_collisions:
                     # For property-a, which is the unique property, we

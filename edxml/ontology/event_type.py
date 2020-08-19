@@ -58,10 +58,10 @@ class EventType(OntologyElement, MutableMapping):
         self.__parent_description = None  # type: str
 
         # type: Dict[str, edxml.ontology.EventProperty]
-        self.__cachedUniqueProperties = None
+        self.__cached_unique_properties = None
         # type: Dict[str, edxml.ontology.EventProperty]
         self.__cached_is_timeless = None
-        self.__cachedHashProperties = None
+        self.__cached_hash_properties = None
 
     def __delitem__(self, property_name):
         if property_name in self.__properties:
@@ -116,9 +116,9 @@ class EventType(OntologyElement, MutableMapping):
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
-        self.__cachedUniqueProperties = None
+        self.__cached_unique_properties = None
         self.__cached_is_timeless = None
-        self.__cachedHashProperties = None
+        self.__cached_hash_properties = None
         self.__ontology._child_modified_callback()
         return self
 
@@ -265,7 +265,7 @@ class EventType(OntologyElement, MutableMapping):
            Dict[str, edxml.ontology.EventProperty]: Properties
         """
 
-        if self.__cachedHashProperties is None:
+        if self.__cached_hash_properties is None:
             props = {}
 
             for n, p in self.__properties.items():
@@ -276,9 +276,9 @@ class EventType(OntologyElement, MutableMapping):
                         # Floating point objects are ignored.
                         props[n] = p
 
-            self.__cachedHashProperties = props
+            self.__cached_hash_properties = props
 
-        return self.__cachedHashProperties
+        return self.__cached_hash_properties
 
     def get_property_relations(self, rtype=None, source=None, target=None):
         """
@@ -354,13 +354,13 @@ class EventType(OntologyElement, MutableMapping):
         Returns:
           bool:
         """
-        if self.__cachedUniqueProperties is None:
-            self.__cachedUniqueProperties = {}
-            for propertyName, eventProperty in self.__properties.items():
-                if eventProperty.is_unique():
-                    self.__cachedUniqueProperties[propertyName] = eventProperty
+        if self.__cached_unique_properties is None:
+            self.__cached_unique_properties = {}
+            for property_name, event_property in self.__properties.items():
+                if event_property.is_unique():
+                    self.__cached_unique_properties[property_name] = event_property
 
-        return len(self.__cachedUniqueProperties) > 0
+        return len(self.__cached_unique_properties) > 0
 
     def get_timespan_property_names(self):
         """
@@ -386,8 +386,8 @@ class EventType(OntologyElement, MutableMapping):
         """
         if self.__cached_is_timeless is None:
             self.__cached_is_timeless = True
-            for propertyName, eventProperty in self.__properties.items():
-                if eventProperty.get_data_type().is_datetime():
+            for property_name, event_property in self.__properties.items():
+                if event_property.get_data_type().is_datetime():
                     self.__cached_is_timeless = False
 
         return self.__cached_is_timeless
@@ -699,15 +699,15 @@ class EventType(OntologyElement, MutableMapping):
         # also exist in the child event type, we can create
         # a default property map.
         property_map = {}
-        for propertyName, eventProperty in parent.get_unique_properties().items():
-            if propertyName in self:
-                property_map[propertyName] = propertyName
+        for property_name, event_property in parent.get_unique_properties().items():
+            if property_name in self:
+                property_map[property_name] = property_name
             else:
                 property_map = {}
                 break
 
-        for childProperty, parentProperty in property_map.items():
-            self.__parent.map(childProperty, parentProperty)
+        for child_property, parent_property in property_map.items():
+            self.__parent.map(child_property, parent_property)
 
         self._child_modified_callback()
         return self.__parent
@@ -1165,8 +1165,8 @@ class EventType(OntologyElement, MutableMapping):
                     self.__attr['name'], self.__attr['story'], str(e))
             )
 
-        for propertyName, eventProperty in self.get_properties().items():
-            eventProperty.validate()
+        for property_name, event_property in self.get_properties().items():
+            event_property.validate()
 
         for relation in self.__relations.values():
             relation.validate()
@@ -1598,25 +1598,25 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        for propertyName, objects in event.items():
-            if property_name is not None and propertyName != property_name:
+        for event_property_name, objects in event.items():
+            if property_name is not None and event_property_name != property_name:
                 # We are not asked to check this property.
                 continue
 
             try:
-                property_object_type = self.__properties[propertyName].get_object_type()
+                property_object_type = self.__properties[event_property_name].get_object_type()
             except KeyError:
                 raise EDXMLValidationError(
-                    'Event type %s has no property named "%s".' % (self.__attr['name'], propertyName)
+                    'Event type %s has no property named "%s".' % (self.__attr['name'], event_property_name)
                 )
 
-            for objectValue in objects:
+            for object_value in objects:
                 try:
-                    property_object_type.validate_object_value(objectValue)
+                    property_object_type.validate_object_value(object_value)
                 except EDXMLValidationError as e:
                     raise EDXMLValidationError(
                         'Invalid value for property %s of event type %s: %s' % (
-                            propertyName, self.__attr['name'], e)
+                            event_property_name, self.__attr['name'], e)
                     )
 
         return self
@@ -1663,23 +1663,23 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        for propertyName, objects in event.items():
-            if propertyName not in property_names:
+        for property_name, objects in event.items():
+            if property_name not in property_names:
                 # This is not a property that we are supposed to normalize.
                 continue
 
             try:
-                property_object_type = self.__properties[propertyName].get_object_type()
+                property_object_type = self.__properties[property_name].get_object_type()
             except KeyError:
-                raise EDXMLValidationError("Event type '%s' has no property '%s'." % (self.get_name(), propertyName))
+                raise EDXMLValidationError("Event type '%s' has no property '%s'." % (self.get_name(), property_name))
 
             try:
-                event[propertyName] = property_object_type.get_data_type(
+                event[property_name] = property_object_type.get_data_type(
                 ).normalize_objects(objects)
             except EDXMLValidationError as e:
                 raise EDXMLValidationError(
                     'Invalid value for property %s of event type %s: %s' % (
-                        propertyName, self.__attr['name'], e)
+                        property_name, self.__attr['name'], e)
                 )
 
         return self

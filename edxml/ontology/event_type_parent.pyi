@@ -14,7 +14,7 @@ class EventTypeParent(OntologyElement):
                  parent_description: str = None, siblings_description: str = None) -> None:
 
         self._attr = ...
-        self._childEventType = ...  # type: edxml.ontology.EventType
+        self._child_event_type = ...  # type: edxml.ontology.EventType
 
     @classmethod
     def create(cls, child_event_type: edxml.ontology.EventType, parent_event_type_name: str,
