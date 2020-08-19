@@ -1529,22 +1529,7 @@ class EventType(OntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        if self.get_parent() is not None:
-            parent_property_mapping = self.get_parent().get_property_map()
-        else:
-            parent_property_mapping = {}
-
         for property_name, objects in edxml_event.items():
-
-            if property_name in parent_property_mapping and len(objects) > 1:
-                raise EDXMLValidationError(
-                    ('An event of type %s contains multiple objects of property %s, '
-                     'but this property can only have one object due to it being used '
-                     'in an implicit parent definition.') % (self.__attr['name'], property_name)
-                )
-
-            # Check if the property is actually
-            # supposed to be in this event.
             if property_name not in self.get_properties():
                 raise EDXMLValidationError(
                     ('An event of type %s contains an object of property %s, '
