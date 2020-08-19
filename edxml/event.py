@@ -273,6 +273,9 @@ class EDXMLEvent(MutableMapping):
 
         self._replace_invalid_characters = False
 
+    def __repr__(self):
+        return f"Event of type {self.get_type_name()} from {self.get_source_uri()}"
+
     def __str__(self):
         return "\n".join(
             ['%20s:%s' % (property_name, ','.join(values))
