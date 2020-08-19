@@ -336,7 +336,7 @@ def main():
         help='By default, all generated object values are fixed valued strings. This option '
              'enables generation of random object values. Note that when event collisions '
              'are generated, the unique property of each event is more or less random, '
-             'ragardless of the use of the --random-objects option. Note: This has a '
+             'regardless of the use of the --random-objects option. Note: This has a '
              'performance impact.'
     )
 
