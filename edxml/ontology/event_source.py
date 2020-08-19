@@ -229,8 +229,8 @@ class EventSource(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_description() == new.get_description()
-        equal &= old.get_acquisition_date_string() == new.get_acquisition_date_string()
+        for attr in ['description', 'date-acquired']:
+            equal &= old._attr[attr] == new._attr[attr]
 
         if equal:
             return 0

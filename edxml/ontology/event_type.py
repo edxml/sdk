@@ -1270,11 +1270,8 @@ class EventType(OntologyElement, MutableMapping):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_display_name_singular() == new.get_display_name_singular()
-        equal &= old.get_display_name_plural() == new.get_display_name_plural()
-        equal &= old.get_description() == new.get_description()
-        equal &= old.get_summary_template() == new.get_summary_template()
-        equal &= old.get_story_template() == new.get_story_template()
+        for attr in ['display-name-singular', 'display-name-plural', 'description', 'summary', 'story']:
+            equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
 

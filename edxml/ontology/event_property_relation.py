@@ -415,9 +415,8 @@ class PropertyRelation(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_description() == new.get_description()
-        equal &= old.get_predicate() == new.get_predicate()
-        equal &= old.get_confidence() == new.get_confidence()
+        for attr in ['description', 'predicate', 'confidence']:
+            equal &= old.__attr[attr] == new.__attr[attr]
 
         if equal:
             return 0

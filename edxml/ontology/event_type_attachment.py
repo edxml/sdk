@@ -368,9 +368,8 @@ class EventTypeAttachment(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_description() == new.get_description()
-        equal &= old.get_display_name_singular() == new.get_display_name_singular()
-        equal &= old.get_display_name_plural() == new.get_display_name_plural()
+        for attr in ['description', 'display-name-singular', 'display-name-plural']:
+            equal &= old._attr[attr] == new._attr[attr]
 
         if equal:
             return 0

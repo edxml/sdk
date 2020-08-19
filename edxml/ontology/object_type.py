@@ -531,11 +531,8 @@ class ObjectType(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_display_name_singular() == new.get_display_name_singular()
-        equal &= old.get_display_name_plural() == new.get_display_name_plural()
-        equal &= old.get_description() == new.get_description()
-        equal &= old.is_compressible() == new.is_compressible()
-        equal &= old.get_fuzzy_matching() == new.get_fuzzy_matching()
+        for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching']:
+            equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
 

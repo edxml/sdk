@@ -321,10 +321,8 @@ class PropertyConcept(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_confidence() == new.get_confidence()
-        equal &= old.get_concept_naming_priority() == new.get_concept_naming_priority()
-        equal &= old.__attr['attr-display-name-singular'] == new.__attr['attr-display-name-singular']
-        equal &= old.__attr['attr-display-name-plural'] == new.__attr['attr-display-name-plural']
+        for attr in ['confidence', 'cnp', 'attr-display-name-singular', 'attr-display-name-plural']:
+            equal &= old.__attr[attr] == new.__attr[attr]
 
         if equal:
             return 0

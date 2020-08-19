@@ -297,8 +297,8 @@ class EventTypeParent(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        equal &= old.get_parent_description() == new.get_parent_description()
-        equal &= old.get_siblings_description() == new.get_siblings_description()
+        for attr in ['parent-description', 'siblings-description']:
+            equal &= old._attr[attr] == new._attr[attr]
 
         if equal:
             return 0
