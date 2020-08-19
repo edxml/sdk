@@ -300,6 +300,29 @@ class PropertyRelation(OntologyElement):
                     (self.get_type(), self.__attr['property1'], self.__attr['property2'])
                 )
 
+        # Verify that inter / intra relations are defined between
+        # properties that refer to concepts, in the right way
+        if self.get_type() in ('inter', 'intra'):
+            source_concepts = self.__event_type[self.get_source()].get_concept_associations()
+            target_concepts = self.__event_type[self.get_target()].get_concept_associations()
+
+            if len(source_concepts) == 0 or len(target_concepts) == 0:
+                raise EDXMLValidationError(
+                    'Both properties %s and %s in the inter/intra-concept relation in event type %s must '
+                    'refer to a concept.' % (self.get_source(), self.get_target(), self.__event_type.get_name())
+                )
+
+            if self.get_type() == 'intra':
+                source_primitive = self.get_source_concept().split('.', 2)[0]
+                target_primitive = self.get_target_concept().split('.', 2)[0]
+                if source_primitive != target_primitive:
+                    raise EDXMLValidationError(
+                        'Properties %s and %s in the intra-concept relation in event type %s must '
+                        'both refer to the same primitive concept.' % (
+                            self.get_source(), self.get_target(), self.__event_type.get_name()
+                        )
+                    )
+
         return self
 
     @classmethod

@@ -591,6 +591,34 @@ class EventProperty(OntologyElement):
             raise EDXMLValidationError(
                 'Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
+        # Check if merge strategies make sense for the
+        # configured property merge strategies
+        if self.get_merge_strategy() in ('min', 'max'):
+            if not self.get_data_type().is_numerical():
+                if not self.get_data_type().is_datetime():
+                    if self.get_data_type().get_family() != 'sequence':
+                        raise EDXMLValidationError(
+                            'Property "%s" of event type "%s" has data type %s, which '
+                            'cannot be used with merge strategy %s.' % (
+                                self.get_name(), self.__event_type.get_name(), self.get_data_type(),
+                                self.get_merge_strategy()
+                            )
+                        )
+
+        if self.is_unique():
+            if self.get_merge_strategy() != 'match':
+                raise EDXMLValidationError(
+                    'Unique property "%s" of event type "%s" does not have its merge strategy set to "match".' %
+                    (self.get_name(), self.__event_type.get_name())
+                )
+        else:
+            if self.get_merge_strategy() == 'match':
+                raise EDXMLValidationError(
+                    'Property "%s" of event type "%s" is not unique but it does '
+                    'have its merge strategy set to "match".' %
+                    (self.get_name(), self.__event_type.get_name())
+                )
+
         for concept_association in self.__concepts.values():
             concept_association.validate()
 

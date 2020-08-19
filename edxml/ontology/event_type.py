@@ -1165,6 +1165,17 @@ class EventType(OntologyElement, MutableMapping):
                     self.__attr['name'], self.__attr['story'], str(e))
             )
 
+        # Verify that non-unique event type only have
+        # properties with merge strategy 'drop'.
+        if not self.is_unique():
+            for property_name, event_property in self.__properties.items():
+                if event_property.get_merge_strategy() != 'drop':
+                    raise EDXMLValidationError(
+                        'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
+                        (self.get_name(), property_name,
+                         event_property.get_merge_strategy())
+                    )
+
         for property_name, event_property in self.get_properties().items():
             event_property.validate()
 

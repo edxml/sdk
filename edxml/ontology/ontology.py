@@ -679,7 +679,6 @@ class Ontology(OntologyElement):
 
         # Check if all event type parents are defined
         for event_type_name, event_type in self.__event_types.items():
-            event_type.validate()
             if event_type.get_parent() is not None:
                 if event_type.get_parent().get_event_type() not in self.__event_types:
                     raise EDXMLValidationError(
@@ -713,52 +712,6 @@ class Ontology(OntologyElement):
                         raise EDXMLValidationError(
                             'Property "%s" of event type "%s" refers to undefined concept "%s".' %
                             (property_name, event_type_name, concept_name)
-                        )
-
-        # Check if merge strategies make sense for the
-        # configured property merge strategies
-        for event_type_name, event_type in self.__event_types.items():
-            for property_name, event_property in event_type.items():
-                if event_property.get_merge_strategy() in ('min', 'max'):
-                    if not event_property.get_data_type().is_numerical():
-                        if not event_property.get_data_type().is_datetime():
-                            if event_property.get_data_type().get_family() != 'sequence':
-                                raise EDXMLValidationError(
-                                    'Property "%s" of event type "%s" has data type %s, which '
-                                    'cannot be used with merge strategy %s.'
-                                    % (property_name, event_type_name, event_property.get_data_type(),
-                                       event_property.get_merge_strategy())
-                                )
-
-        # Check if unique properties have their merge strategies set
-        # to 'match'
-        # TODO: Still needed for EDXML 3?
-        for event_type_name, event_type in self.__event_types.items():
-            for property_name, event_property in event_type.items():
-                if event_property.is_unique():
-                    if event_property.get_merge_strategy() != 'match':
-                        raise EDXMLValidationError(
-                            'Unique property "%s" of event type "%s" does not have its merge strategy set to "match".' %
-                            (property_name, event_type_name)
-                        )
-                else:
-                    if event_property.get_merge_strategy() == 'match':
-                        raise EDXMLValidationError(
-                            'Property "%s" of event type "%s" is not unique but it does '
-                            'have its merge strategy set to "match".' %
-                            (property_name, event_type_name)
-                        )
-
-        # Verify that non-unique event type only have
-        # properties with merge strategy 'drop'.
-        for event_type_name, event_type in self.__event_types.items():
-            if not event_type.is_unique():
-                for property_name, event_property in event_type.items():
-                    if event_property.get_merge_strategy() != 'drop':
-                        raise EDXMLValidationError(
-                            'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
-                            (event_type_name, property_name,
-                             event_property.get_merge_strategy())
                         )
 
         # Validate event parent definitions
@@ -808,35 +761,6 @@ class Ontology(OntologyElement):
                         (event_type_name, childProperty,
                             event_type[childProperty].get_merge_strategy())
                     )
-
-        # Verify that inter / intra relations are defined between
-        # properties that refer to concepts, in the right way
-        for event_type_name, event_type in self.__event_types.items():
-            for relation in event_type.get_property_relations().values():
-                if relation.get_type() in ('inter', 'intra'):
-                    source_concepts = event_type[relation.get_source(
-                    )].get_concept_associations()
-                    target_concepts = event_type[relation.get_target(
-                    )].get_concept_associations()
-
-                    if len(source_concepts) == 0 or len(target_concepts) == 0:
-                        raise EDXMLValidationError(
-                            ('Both properties %s and %s in the inter/intra-concept relation in event type %s must '
-                             'refer to a concept.') %
-                            (relation.get_source(),
-                             relation.get_target(), event_type_name)
-                        )
-
-                    if relation.get_type() == 'intra':
-                        source_primitive = relation.get_source_concept().split('.', 2)[0]
-                        target_primitive = relation.get_target_concept().split('.', 2)[0]
-                        if source_primitive != target_primitive:
-                            raise EDXMLValidationError(
-                                ('Properties %s and %s in the intra-concept relation in event type %s must '
-                                 'both refer to the same primitive concept.') %
-                                (relation.get_source(),
-                                 relation.get_target(), event_type_name)
-                            )
 
         return self
 
