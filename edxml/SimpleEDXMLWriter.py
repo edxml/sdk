@@ -471,14 +471,12 @@ class SimpleEDXMLWriter(object):
         if merge:
             for event_hash, events in self.__event_buffers[event_group_id][merge].items():
                 if (len(events)) > 1:
-                    first_event = self.__event_buffers[event_group_id][merge][event_hash].pop(
-                    )
-                    self.__event_buffers[event_group_id][merge][event_hash] = first_event.merge_with(
-                        events, self.__ontology)
+                    self.__event_buffers[event_group_id][merge][event_hash] = self.__ontology.get_event_type(
+                        events[0].get_type_name()
+                    ).merge_events(events)
                 else:
                     self.__event_buffers[event_group_id][merge][event_hash] = \
-                        self.__event_buffers[event_group_id][merge][event_hash].pop(
-                    )
+                        self.__event_buffers[event_group_id][merge][event_hash].pop()
 
         events = self.__event_buffers[event_group_id][merge].itervalues(
         ) if merge else self.__event_buffers[event_group_id][merge]

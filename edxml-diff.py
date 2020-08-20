@@ -61,7 +61,8 @@ class SortingParser(EDXMLPullParser):
         if hash in self._events_by_hash:
             # Since we compute a semantic, logical difference, we merge data
             # from all physical events that constitute the same logical event.
-            self._events_by_hash[hash].merge_with([event], self.get_ontology())
+            event_type = self.get_ontology().get_event_type(event.get_type_name())
+            self._events_by_hash[hash] = event_type.merge_events([self._events_by_hash[hash], event])
         else:
             self._events_by_hash[hash] = event
 

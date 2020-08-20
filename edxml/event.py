@@ -5,12 +5,10 @@ import hashlib
 
 
 from collections import MutableMapping, OrderedDict
-from collections import defaultdict
 from datetime import datetime
 from IPy import IP
 from lxml import etree
 from copy import deepcopy
-from decimal import Decimal
 
 import edxml
 from edxml.error import EDXMLValidationError
@@ -762,128 +760,6 @@ class EDXMLEvent(MutableMapping):
         """
         self._foreign_attribs = attribs
         return self
-
-    def merge_with(self, colliding_events, ontology):
-        """
-        Merges the event with event data from a number of colliding
-        events. It returns True when the event was updated
-        as a result of the merge, returns False otherwise.
-
-        Args:
-          colliding_events (List[EDXMLEvent]): Iterable yielding events
-          ontology (edxml.ontology.Ontology): The EDXML ontology
-
-        Returns:
-          bool: Event was changed or not
-
-        """
-
-        event_type = ontology.get_event_type(self.get_type_name())
-        properties = event_type.get_properties()
-        property_names = properties.keys()
-        unique_properties = event_type.get_unique_properties()
-
-        # There used to be a check here to count the number of unique properties and raise a TypeError if there were
-        # none. However, if the properties of an event are not unique, and it collides with another event (i.e. produce
-        # the same hash), they are the same. Merging them will result in the same event without any changes. We've
-        # removed the check altogether and the testcases that come with this comment show that these kinds of events
-        # can be merged without problems.
-        # Even events which are not the same but have no unique properties can now be merged. This will change the
-        # event data according to the normal merge strategies, and possibly the hash. This is outside of the spec
-        # but may be useful for processors, e.g. for aggregation calculations. The results of such a merge should not
-        # be considered a new valid event.
-
-        event_objects_a = self.get_properties()
-
-        # Below, we initialize three dictionaries containing
-        # event object sets. All objects are complete, in the
-        # sense that they contain a list of objects for each
-        # of the defined properties of the event type, even
-        # if the event has no objects for the property.
-        #
-        # The Original dict holds the original event, before
-        # the merge.
-        # The Target dict is what will eventually become the
-        # new, merged event.
-        # The source event holds all object values from all
-        # source events.
-
-        original = {}
-        source = {}
-        target = {}
-
-        source_parents = set()
-
-        for property_name in property_names:
-            value = event_objects_a.get(property_name, [])
-            # Note that we use separate sets for original, source and target properties.
-            # Sets are objects and assigned by reference, while we want to change them independently.
-            original[property_name] = set(value)
-            target[property_name] = set(value)
-            source[property_name] = set()
-            for event in colliding_events:
-                event_objects_b = event.get_properties()
-                source[property_name].update(event_objects_b.get(property_name, []))
-                source_parents.update(event.get_explicit_parents())
-
-        value_functions = defaultdict(lambda: int)
-        value_functions['datetime'] = lambda x: x
-        value_functions['float'] = float
-        value_functions['double'] = float
-        value_functions['decimal'] = Decimal
-
-        # Now we update the objects in Target
-        # using the values in Source
-        for property_name in source:
-
-            if property_name in unique_properties:
-                # Unique property, does not need to be merged.
-                continue
-
-            merge_strategy = properties[property_name].get_merge_strategy()
-
-            if merge_strategy in ('min', 'max'):
-                # We have a merge strategy that requires us to cast
-                # the object values into numbers.
-                split_data_type = properties[property_name].get_data_type().get_split()
-                if split_data_type[0] in ('number', 'datetime'):
-                    if merge_strategy in ('min', 'max'):
-                        values = set()
-                        if split_data_type[0] == 'datetime':
-                            # Note that we add the datetime values as
-                            # regular strings and just let min() and max()
-                            # use lexicographical sorting to determine which
-                            # of the datetime values to pick.
-                            value_func = value_functions[split_data_type[0]]
-                        else:
-                            value_func = value_functions[split_data_type[1]]
-                        # convert values according to their data type and add to the result
-                        values.update(list(map(value_func, source[property_name] | target[property_name])))
-
-                        if merge_strategy == 'min':
-                            target[property_name] = {str(min(values))}
-                        else:
-                            target[property_name] = {str(max(values))}
-
-            elif merge_strategy == 'add':
-                target[property_name].update(source[property_name])
-
-            elif merge_strategy == 'replace':
-                # Replace the property with the last value in the colliding events
-                target[property_name] = set(colliding_events[-1].get(property_name, []))
-
-        # Merge the explicit event parents
-        original_parents = set(self.get_explicit_parents())
-        # We no longer check for empty sets because setting it again has the same effect
-        self.set_parents(original_parents | source_parents)
-
-        # Determine if anything changed
-        event_updated = target != original
-        event_updated |= original_parents != source_parents
-
-        # Modify event if needed
-        self.set_properties(target)
-        return event_updated
 
     def compute_sticky_hash(self, ontology, encoding='hex'):
         """

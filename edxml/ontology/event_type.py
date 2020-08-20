@@ -1844,7 +1844,7 @@ class EventType(OntologyElement, MutableMapping):
         # convert the schema to a string and parse it back gain, all is good.
         return etree.parse(BytesIO(etree.tostring(etree.ElementTree(schema))))
 
-    def merge(self, events):
+    def merge_events(self, events):
         """
 
         Merges the specified events and returns the merged event.

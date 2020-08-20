@@ -132,7 +132,7 @@ class EventCollection(list):
                 result.append(events.pop())
                 continue
             result.append(
-                self._ontology.get_event_type(events[0].get_type_name()).merge(events)
+                self._ontology.get_event_type(events[0].get_type_name()).merge_events(events)
             )
 
         return result
