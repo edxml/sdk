@@ -191,15 +191,14 @@ class EventCollection(list):
         if self._ontology is None:
             raise RuntimeError("Event collection contains no ontology, generating EDXML output is not possible.")
 
-        edxml_data = b''
-
         writer = edxml.EDXMLWriter(output=None)
-        edxml_data += writer.add_ontology(self._ontology)
+        writer.add_ontology(self._ontology)
 
         for event in self:
-            edxml_data += writer.add_event(event)
+            writer.add_event(event)
 
-        return edxml_data + writer.close()
+        writer.close()
+        return writer.flush()
 
     def filter_type(self, event_type_name):
         """

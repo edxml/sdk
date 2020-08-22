@@ -13,8 +13,8 @@ results in an output event having source URI
 
 Again, the source URIs of the input events are unknown in advance, to the output URIs cannot be defined upfront.
 
-When using the :class:`edxml.SimpleEDXMLWriter` class to produce output events, it is possible to change the ontology while generating the events. This class will track the ontology for changes and automatically outputs the ontology updates while producing events. A code snippet illustrating this is shown below.
+It is possible to change the ontology while generating the events, simply by repeatedly adding ontology updates. A code snippet illustrating this is shown below.
 
 .. literalinclude:: dynamic-edxml-source.py
 
-In the above example code, we can see that the event write loop defines a new EDXML event source just before outputting an event. Note that a list is kept containing previously defined sources, allowing it to define a new source only when needed. This is just done for efficiency, defining the same event source multiple times is not a problem.
+In the above example code, we can see that the event write loop defines and adds a new EDXML event source just before outputting an event. Note that a list is kept containing previously defined sources, allowing it to define a new source only when needed. This is just done for efficiency, defining the same event source multiple times is not a problem.

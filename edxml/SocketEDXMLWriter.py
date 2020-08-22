@@ -1,12 +1,12 @@
-from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
+from edxml.EDXMLWriter import EDXMLWriter
 import socket
 
 
-class SocketEDXMLWriter(SimpleEDXMLWriter):
+class SocketEDXMLWriter(EDXMLWriter):
     """
     Socket EDXML stream writer
 
-    Sets up a socket as a file and uses SimpleEDXMLWriter to write to it.
+    Sets up a socket as a file and uses EDXMLWriter to write to it.
     """
 
     def __init__(self, address, validate=True):

@@ -1,7 +1,7 @@
 from edxml.ontology import Ontology
 from edxml.ontology import DataType
 import sys
-from edxml import SimpleEDXMLWriter, EDXMLEvent
+from edxml import EDXMLWriter, EDXMLEvent
 import json
 from dateutil.parser import parse
 
@@ -45,8 +45,8 @@ event_type.create_property('command', 'computing.ftp.command')
 
 source = ontology.create_event_source('/myorganization/logs/ftp/')
 
-writer = SimpleEDXMLWriter(sys.stdout)
-writer.set_ontology(ontology)
+writer = EDXMLWriter(sys.stdout)
+writer.add_ontology(ontology)
 
 for line in sys.stdin:
     properties = json.loads(line)

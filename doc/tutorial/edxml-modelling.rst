@@ -174,7 +174,7 @@ Let us add an event source definition to our ontology:
 Step 7: Producing Events
 ------------------------
 
-At this point, we have covered the minimum that is required to construct a fully working EDXML data model. Time to produce some events! We do that by instantiating a :class:`edxml.SimpleEDXMLWriter`, injecting our ontology and setting its default output event type and source:
+At this point, we have covered the minimum that is required to construct a fully working EDXML data model. Time to produce some events! We do that by instantiating an :class:`edxml.EDXMLWriter`, injecting our ontology and setting its default output event type and source:
 
 .. literalinclude:: example1.py
    :lines: 45-51
@@ -189,7 +189,7 @@ The example code lacks any error handling, we leave it as an exercise to the rea
 .. literalinclude:: example1.py
    :lines: 68
 
-This call finalizes the EDXML output stream. We need to explicitly close the output stream in this case because we did not use a Python context. Luckily, the :class:`edxml.SimpleEDXMLWriter` class features a context manager that we can use to prevent us from having to explicitly close the output stream. Using Python's :keyword:`with` keyword, we can rewrite the event writing loop to look like this:
+This call finalizes the EDXML output stream. We need to explicitly close the output stream in this case because we did not use a Python context. Luckily, the :class:`edxml.EDXMLWriter` class features a context manager that we can use to prevent us from having to explicitly close the output stream. Using Python's :keyword:`with` keyword, we can rewrite the event writing loop to look like this:
 
 .. literalinclude:: example1b.py
    :lines: 48-58

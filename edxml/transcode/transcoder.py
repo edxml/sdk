@@ -473,21 +473,6 @@ class Transcoder(object):
         """
         yield from ()
 
-    @staticmethod
-    def get_auto_merge_event_types():
-        """
-
-        Returns a list of names of event types
-        that should be automatically merged while
-        generating them. This may be useful to
-        reduce the event output rate when generating
-        large numbers of colliding events.
-
-        Returns:
-           list[str]:
-        """
-        return []
-
     def create_concepts(self):
         """
         This method may be used to generate generic EDXML

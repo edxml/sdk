@@ -90,6 +90,8 @@ class EDXMLWriter(object):
         self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
         self.__allow_repair_drop = {}
         self.__allow_repair_normalize = {}
+        self.__ignore_invalid_events = False
+        self.__log_invalid_events = False
         self.__log_repaired_events = log_repaired_events
         self.__invalid_event_count = 0
         self.__pretty_print = pretty_print
@@ -160,6 +162,29 @@ class EDXMLWriter(object):
             edxml.EDXMLWriter
         """
         self.__allow_repair_drop[event_type_name] = property_names
+        return self
+
+    def ignore_invalid_events(self, warn=False):
+        """
+
+        Instructs the EDXML writer to ignore invalid events.
+        After calling this method, any event that fails to
+        validate will be dropped. If warn is set to True,
+        a detailed warning will be printed, allowing the
+        source and cause of the problem to be determined.
+
+        Note:
+          This has no effect when event validation is disabled.
+
+        Args:
+          warn (bool`, optional): Print warnings or not
+
+        Returns:
+           EDXMLWriter: The EDXMLWriter instance
+        """
+        self.__ignore_invalid_events = True
+        self.__log_invalid_events = warn
+
         return self
 
     def get_output(self):
@@ -236,6 +261,15 @@ class EDXMLWriter(object):
                     pass
 
     def flush(self):
+        """
+        When no output was provided when creating the EDXML writer,
+        any generated EDXML data is stored in an internal buffer. In
+        that case, this method will return the content of the buffer
+        and clear it. Otherwise, an empty string is returned.
+
+        Returns:
+            bytes: Generated EDXML data
+        """
         if isinstance(self.__output, self.OutputBuffer):
             output = b''.join(self.__output.buffer)
             self.__output.buffer.clear()
@@ -248,17 +282,12 @@ class EDXMLWriter(object):
 
         Writes an EDXML ontology element into the output.
 
-        If no output was specified while instantiating this class,
-        the generated XML data will be returned as bytes.
-
         Args:
           ontology (edxml.ontology.Ontology): The ontology
 
-        Returns:
-          bytes: Generated output XML data
-
         """
-        # Below updates triggers an exception in case the update
+
+        # Below update triggers an exception in case the update
         # is incompatible or otherwise invalid.
         self.__ontology.update(ontology)
 
@@ -273,37 +302,26 @@ class EDXMLWriter(object):
         self.__event_type_schema_cache = {}
         self.__event_type_schema_cache_ns = {}
 
-        return self.flush()
-
     def close(self):
         """
 
         Finalizes the output data stream.
 
-        If no output was specified while instantiating this class,
-        the generated XML data will be returned as bytes.
-
-        Returns:
-          bytes: Generated output XML data
         """
         if self.__writer is None:
             # Already closed
-            return b''
+            return
 
         self.__writer.close()
 
         if self.__num_events_produced > 0 and (100 * self.__num_events_repaired) / self.__num_events_produced > 10:
-            log.warn(
+            log.warning(
                 '%d out of %d events were automatically repaired because they were invalid. '
                 'If performance is important, verify your event generator code to produce valid events.\n' %
                 (self.__num_events_repaired, self.__num_events_produced)
             )
 
-        string = self.flush()
-
         self.__writer = None
-
-        return string
 
     def _repair_event(self, event, schema):
         """
@@ -385,14 +403,8 @@ class EDXMLWriter(object):
 
         Adds specified event to the output data stream.
 
-        If no output was specified while instantiating this class,
-        the generated XML data will be returned as bytes.
-
         Args:
           event (edxml.EDXMLEvent): The event
-
-        Returns:
-          bytes: Generated output XML data
 
         """
         event_type_name = event.get_type_name()
@@ -434,14 +446,21 @@ class EDXMLWriter(object):
 
             if not schema.validate(event_element):
                 # Event does not validate.
-                if event_type_name not in self.__allow_repair_normalize:
+                if event_type_name not in self.__allow_repair_normalize and not self.__ignore_invalid_events:
                     self.__generate_event_validation_exception(event, event_element, schema)
                 # We will try to repair the event. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
-                event = self._repair_event(event, schema)
-                log.warning('Event validated after repairing it.')
-                event_element = event.get_element()
+                try:
+                    event = self._repair_event(event, schema)
+                    log.warning('Event validated after repairing it.')
+                    event_element = event.get_element()
+                except EDXMLValidationError as error:
+                    if self.__ignore_invalid_events:
+                        if self.__log_invalid_events:
+                            log.warning(str(error) + '\n\nContinuing anyways.\n')
+                    else:
+                        raise
 
         try:
             self.__writer.send(event_element)
@@ -453,21 +472,13 @@ class EDXMLWriter(object):
 
         self.__num_events_produced += 1
 
-        return self.flush()
-
     def add_foreign_element(self, element):
         """
 
         Adds specified foreign element to the output data stream.
 
-        If no output was specified while instantiating this class,
-        the generated XML data will be returned as bytes.
-
         Args:
           element (etree._Element): The element
-
-        Returns:
-          bytes: Generated output XML data
 
         """
         try:
@@ -477,5 +488,3 @@ class EDXMLWriter(object):
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
-
-        return self.flush()

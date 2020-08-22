@@ -9,7 +9,6 @@ from .event import EDXMLEvent, EventElement, ParsedEvent
 from .template import Template
 from .event_collection import EventCollection
 from .EDXMLWriter import EDXMLWriter
-from .SimpleEDXMLWriter import SimpleEDXMLWriter
 from .EDXMLParser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
 from .EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 
@@ -46,6 +45,6 @@ evil_xml_chars_regexp = '[%s]' % ''.join(
     ["%s-%s" % (chr(low), chr(high)) for (low, high) in ranges]
 )
 
-__all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EventCollection', 'EDXMLWriter', 'SimpleEDXMLWriter',
+__all__ = ['EDXMLEvent', 'EventElement', 'ParsedEvent', 'EventCollection', 'EDXMLWriter',
            'EDXMLPullParser', 'EDXMLPushParser', 'EDXMLOntologyPullParser', 'EDXMLOntologyPushParser',
            'EDXMLPullFilter', 'EDXMLPushFilter', 'ontology', 'transcode', 'Template', '__version__']

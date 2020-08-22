@@ -1263,8 +1263,7 @@ class EventElement(EDXMLEvent):
     This class extends EDXMLEvent to provide an EDXML event representation
     that wraps an etree Element instance, providing a convenient means to
     generate and manipulate EDXML <event> elements. Using this class is
-    preferred over using EDXMLEvent if you intend to feed it to EDXMLWriter
-    or SimpleEDXMLWriter.
+    preferred over using EDXMLEvent if you intend to feed it to EDXMLWriter.
     """
 
     def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):

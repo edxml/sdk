@@ -7,8 +7,8 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology, PropertyRelation
-from edxml.error import EDXMLValidationError, EDXMLError
-from edxml.SimpleEDXMLWriter import SimpleEDXMLWriter
+from edxml.error import EDXMLError
+from edxml.EDXMLWriter import EDXMLWriter
 
 
 class TranscoderMediator(object):
@@ -54,19 +54,16 @@ class TranscoderMediator(object):
 
         self._num_input_records_processed = 0
 
-        self.__disable_buffering = False
         self.__validate_events = True
         self.__allow_repair_normalize = {}
         self.__log_repaired_events = False
 
         self.__record_transcoders = {}
         self.__transcoders = {}              # type: Dict[any, edxml.transcode.Transcoder]
-        self.__auto_merge_eventtypes = []
 
-        self.__sources = []
         self.__closed = False
         self.__output = output
-        self.__writer = None   # var: edxml.SimpleEDXMLWriter
+        self.__writer = None   # type: Optional[edxml.EDXMLWriter]
 
         self._ontology = Ontology()
         self._last_written_ontology_version = self._ontology.get_version()
@@ -75,12 +72,7 @@ class TranscoderMediator(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # If mediator exits due to an EDXML validation exception
-        # triggered by the EDXML writer, we will not flush the event
-        # output buffer. We do that to prevent us from outputting
-        # invalid EDXML data. For other kinds of exceptions, like
-        # KeyboardInterrupt, flushing the# output buffers is fine.
-        self.close(flush=exc_type != EDXMLValidationError)
+        self.close()
 
     @property
     def _writer(self):
@@ -90,12 +82,12 @@ class TranscoderMediator(object):
         output the initial ontology on first access.
 
         Returns:
-            edxml.SimpleEDXMLWriter
+            edxml.EDXMLWriter
 
         """
         if not self.__writer:
             self._create_writer()
-            self._write_initial_ontology()
+            self._initialize_ontology(self._ontology)
         return self.__writer
 
     @staticmethod
@@ -124,7 +116,7 @@ class TranscoderMediator(object):
 
         Args:
           record_selector: Record type selector
-          record_transcoder (class): Transcoder class
+          record_transcoder (Callable[..., edxml.transcode.Transcoder]): Transcoder class
         """
         if record_selector in self.__record_transcoders:
             raise Exception(
@@ -134,8 +126,6 @@ class TranscoderMediator(object):
         if record_transcoder not in self.__transcoders:
             transcoder_instance = record_transcoder()
             self.__transcoders[record_transcoder] = transcoder_instance
-            self.__auto_merge_eventtypes.extend(
-                self.__transcoders[record_transcoder].get_auto_merge_event_types())
         else:
             transcoder_instance = self.__transcoders[record_transcoder]
 
@@ -147,32 +137,30 @@ class TranscoderMediator(object):
 
         self.__record_transcoders[record_selector] = record_transcoder
 
-    def debug(self, disable_buffering=True, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
+    def debug(self, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
         """
         Enable debugging mode, which prints informative
         messages about transcoding issues, disables
         event buffering and stops on errors.
 
         Using the keyword arguments, specific debug features
-        can be disabled. When warnNoTranscoder is set to False,
+        can be disabled. When warn_no_transcoder is set to False,
         no warnings will be generated when no matching transcoder
-        can be found. When warnFallback is set to False, no
+        can be found. When warn_fallback is set to False, no
         warnings will be generated when an input record is routed
-        to the fallback transcoder. When logRepairedEvents is set
+        to the fallback transcoder. When log_repaired_events is set
         to False, no message will be generated when an invalid
         event was repaired.
 
         Args:
-          disable_buffering  (bool): Disable output buffering
           warn_no_transcoder  (bool): Warn when no transcoder found
-          warn_fallback      (bool): Warn when using fallback transcoder
+          warn_fallback       (bool): Warn when using fallback transcoder
           log_repaired_events (bool): Log events that were repaired
 
         Returns:
           TranscoderMediator:
         """
         self._debug = True
-        self.__disable_buffering = disable_buffering
         self._warn_no_transcoder = warn_no_transcoder
         self._warn_fallback = warn_fallback
         self.__log_repaired_events = log_repaired_events
@@ -228,8 +216,9 @@ class TranscoderMediator(object):
         source and cause of the problem to be determined.
 
         Note:
-          This also implies that invalid objects will be
-          ignored.
+          If automatic event repair is enabled the writer
+          will attempt to repair any invalid events before
+          dropping them.
 
         Note:
           This has no effect when event validation is disabled.
@@ -312,9 +301,7 @@ class TranscoderMediator(object):
         Returns:
           EventSource:
         """
-        source = self._ontology.create_event_source(source_uri)
-        self.__sources.append(source)
-        return source
+        return self._ontology.create_event_source(source_uri)
 
     def set_event_source(self, source_uri):
         """
@@ -347,27 +334,6 @@ class TranscoderMediator(object):
 
         if record_selector in self.__record_transcoders:
             return self.__transcoders[self.__record_transcoders[record_selector]]
-
-    def _prepare_write_event(self):
-        if self._ontology.is_modified_since(self._last_written_ontology_version):
-            # Ontology was changed since we wrote the last ontology update,
-            # so we need to write another update.
-            # TODO: Below writes a full ontology, we should only
-            #       output any new or updated elements.
-            self._write_ontology_update()
-            self._last_written_ontology_version = self._ontology.get_version()
-
-    def _write_initial_ontology(self):
-        # Here, we write the ontology elements that are
-        # defined by the various transcoders.
-        self._initialize_ontology(self._ontology)
-
-        if len(self.__sources) == 0:
-            log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
-            self.__sources.append(self._ontology.create_event_source('/undefined/'))
-
-        self._writer.add_ontology(self._ontology)
-        self._last_written_ontology_version = self._ontology.get_version()
 
     def _initialize_ontology(self, ontology):
 
@@ -403,6 +369,15 @@ class TranscoderMediator(object):
             list(transcoder.generate_event_types())
             ontology.update(transcoder._ontology, validate=False)
 
+        if len(self._ontology.get_event_sources()) == 0:
+            log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
+            self._ontology.create_event_source('/undefined/')
+
+        # Note that below validation also triggers loading of
+        # ontology bricks that contain definitions referred to
+        # by event types.
+        ontology.validate()
+
         return ontology
 
     def _write_ontology_update(self):
@@ -410,48 +385,44 @@ class TranscoderMediator(object):
         # from adding new ontology elements while
         # generating events. Currently, this is limited
         # to event source definitions.
-        return self._writer.add_ontology(self._ontology)
+        if not self._ontology.is_modified_since(self._last_written_ontology_version):
+            # Ontology did not change since we last wrote one.
+            return
+
+        self._writer.add_ontology(self._ontology)
+        self._last_written_ontology_version = self._ontology.get_version()
 
     def _create_writer(self):
-        self.__writer = SimpleEDXMLWriter(self.__output, self.__validate_events)
-        if self.__disable_buffering:
-            self._writer.set_buffer_size(0)
+        self.__writer = EDXMLWriter(
+            output=self.__output, validate=self.__validate_events, log_repaired_events=self.__log_repaired_events
+        )
         for event_type_name, property_names in self.__allow_repair_drop.items():
             self._writer.enable_auto_repair_drop(event_type_name, property_names)
         if self._ignore_invalid_events:
             self._writer.ignore_invalid_events(self._warn_invalid_events)
-        if self.__log_repaired_events:
-            self._writer.log_repaired_events()
-        for EventTypeName in self.__auto_merge_eventtypes:  # TODO: Rename var
-            self._writer.auto_merge(EventTypeName)
         for event_type_name, property_names in self.__allow_repair_normalize.items():
             self._writer.enable_auto_repair_normalize(event_type_name, property_names)
+        for event_type_name, property_names in self.__allow_repair_drop.items():
+            self._writer.enable_auto_repair_drop(event_type_name, property_names)
 
     def _write_event(self, record_id, event):
         """
         Writes a single event using the EDXML writer.
 
-        If no output was configured for the EDXML writer the
-        generated XML data will be returned as bytes.
-
         Args:
             record_id (str): Record identifier
             event (edxml.EDXMLEvent): The EDXML event
-
-        Returns:
-            bytes:
         """
-        self._prepare_write_event()
+        self._write_ontology_update()
 
-        outputs = []
         try:
-            outputs.append(self._writer.add_event(event))
+            self._writer.add_event(event)
         except StopIteration:
             # This is raised by the coroutine in EDXMLWriter when the
             # coroutine receives a send() after is was closed.
             # TODO: Can this still happen? It looks like every send() and next() is
             #       enclosed in a try / catch that raises RuntimeException.
-            outputs.append(self._writer.close())
+            self._writer.close()
         except EDXMLError as e:
             if not self._ignore_invalid_events:
                 raise
@@ -460,7 +431,6 @@ class TranscoderMediator(object):
                     'The post processor of the transcoder for record %s produced '
                     'an invalid event: %s\n\nContinuing...' % (record_id, str(e))
                 )
-        return b''.join(outputs)
 
     def _transcode(self, record, record_id, record_selector, transcoder):
         """
@@ -468,32 +438,21 @@ class TranscoderMediator(object):
         into the configured output. When the transcoder is the fallback
         transcoder, record_selector will be None.
 
-        If no output was configured for the EDXML writer the
-        generated XML data will be returned as bytes.
-
         Args:
             record: The input record
             record_id (str): Record identifier
             record_selector (Optional[str]): Selector matching the record
             transcoder (edxml.transcode.Transcoder): The transcoder to use
-
-        Returns:
-            bytes:
-
         """
-        outputs = []
-
         for event in transcoder.generate(record, record_selector):
             if self._output_source_uri:
                 event.set_source(self._output_source_uri)
 
             if self._transcoder_is_postprocessor(transcoder):
                 for post_processed_event in self._post_process(record_id, record, transcoder, event):
-                    outputs.append(self._write_event(record_id, post_processed_event))
+                    self._write_event(record_id, post_processed_event)
             else:
-                outputs.append(self._write_event(record_id, event))
-
-        return b''.join(outputs)
+                self._write_event(record_id, event)
 
     def _post_process(self, record_id, record, transcoder, event):
         """
@@ -711,21 +670,15 @@ class TranscoderMediator(object):
         """
         return b''
 
-    def close(self, flush=True):
+    def close(self):
         """
         Finalizes the transcoding process by flushing
         the output buffer. When the mediator is not used
         as a context manager, this method must be called
         explicitly to properly close the mediator.
 
-        By default, any remaining events in the output buffer will
-        be written to the output, unless flush is set to False.
-
         If no output was specified while instantiating this class,
         any generated XML data will be returned as bytes.
-
-        Args:
-          flush (bool): Flush output buffer
 
         Returns:
           bytes: Generated output XML data
@@ -734,11 +687,7 @@ class TranscoderMediator(object):
         if self.__closed:
             return b''
 
-        if self._writer is None:
-            # Apparently, no events were generated. We will only
-            # output the ontology.
-            self._create_writer()
-            self._write_initial_ontology()
-
+        self._writer.close()
         self.__closed = True
-        return self._writer.close(flush)
+
+        return self._writer.flush()

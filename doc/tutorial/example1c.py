@@ -2,7 +2,7 @@ from edxml.ontology import Ontology
 from edxml.ontology import DataType
 import sys
 import json
-from edxml import SimpleEDXMLWriter, EDXMLEvent
+from edxml import EDXMLWriter, EDXMLEvent
 
 ontology = Ontology()
 
@@ -62,8 +62,8 @@ event_type['client'].relate_intra('communicates with', 'server') \
 
 source = ontology.create_event_source('/myorganization/logs/ftp/')
 
-with SimpleEDXMLWriter(sys.stdout) as writer:
-    writer.set_ontology(ontology)
+with EDXMLWriter(sys.stdout) as writer:
+    writer.add_ontology(ontology)
 
     for line in sys.stdin:
         properties = json.loads(line)

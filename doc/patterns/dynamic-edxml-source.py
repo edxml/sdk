@@ -3,15 +3,15 @@ import json
 
 from dateutil.parser import parse
 
-from edxml import SimpleEDXMLWriter, EDXMLEvent
+from edxml import EDXMLWriter, EDXMLEvent
 from edxml.ontology import Ontology
 
 myOntology = Ontology()
 
 # ...add event type definitions here...
 
-writer = SimpleEDXMLWriter(sys.stdout)
-writer.set_ontology(myOntology)
+writer = EDXMLWriter(sys.stdout)
+writer.add_ontology(myOntology)
 
 definedUri = []
 
@@ -27,6 +27,7 @@ for line in sys.stdin:
         acquisitionDate = parsedDateTime.strftime('%Y%m%d')
         myOntology.create_event_source(sourceUri, description=sourceDesc, acquisition_date=acquisitionDate)
         definedUri.append(sourceUri)
+        writer.add_ontology(myOntology)
 
     writer.add_event(EDXMLEvent(properties))
 

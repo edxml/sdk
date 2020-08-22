@@ -95,8 +95,6 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
         """
 
-        outputs = []
-
         if self.TYPE_FIELD is None:
             # Type field is not set, which means we must use the
             # fallback transcoder.
@@ -122,7 +120,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                     (self.TYPE_FIELD, input_record)
                 )
 
-            outputs.append(self._transcode(input_record, record_type or '', record_type, transcoder))
+            self._transcode(input_record, record_type or '', record_type, transcoder)
         else:
             if self._warn_no_transcoder:
                 if record_type is None and self.TYPE_FIELD:
@@ -137,4 +135,4 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
 
         self._num_input_records_processed += 1
 
-        return b''.join(outputs)
+        return self._writer.flush()

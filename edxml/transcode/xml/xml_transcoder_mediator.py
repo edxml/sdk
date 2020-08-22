@@ -239,8 +239,6 @@ class XmlTranscoderMediator(TranscoderMediator):
           bytes: Generated output XML data
         """
 
-        outputs = []
-
         # Get the XPath expression that matches the element. Note that this
         # is an XPath that matches only this one element, while transcoders are
         # registered on XPath expressions that are much more generic and typically
@@ -278,7 +276,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                     tree.getpath(element)
                 )
 
-            outputs.append(self._transcode(element, element_xpath, matching_element_xpath, transcoder))
+            self._transcode(element, element_xpath, matching_element_xpath, transcoder)
 
             # Delete previously transcoded elements to keep the in-memory XML
             # tree small and processing efficient. Note that lxml only allows us
@@ -313,7 +311,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
         self._num_input_records_processed += 1
 
-        return b''.join(outputs)
+        return self._writer.flush()
 
     def _get_tags(self):
         """

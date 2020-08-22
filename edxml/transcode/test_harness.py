@@ -94,8 +94,8 @@ class TranscoderTestHarness(TranscoderMediator):
             else:
                 self._write_event(selector, event)
 
-    def close(self, flush=True):
-        super().close(flush)
+    def close(self):
+        super().close()
         self.events = self.events.resolve_collisions()  # type: edxml.EventCollection
         if self._base_ontology:
             # Try to update the base ontology using the ontology
