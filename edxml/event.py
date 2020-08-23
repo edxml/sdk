@@ -254,14 +254,21 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent
         """
-        self._properties = PropertySet(properties)
+        self._properties = None
+        self._attachments = None
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
-        self._attachments = AttachmentSet(attachments if attachments is not None else {})
         self._foreign_attribs = {}
 
+        self.set_properties(properties)
+        self.set_attachments(attachments or {})
+
         self._replace_invalid_characters = False
+
+    def __update_property(self, key, value): ...
+
+    def __update_attachment(self, attachment_name, value): ...
 
     def __repr__(self):
         return f"Event of type {self.get_type_name()} from {self.get_source_uri()}"
@@ -1276,30 +1283,21 @@ class EventElement(EDXMLEvent):
         Returns:
           EventElement:
         """
-        new = etree.Element('event')
-        self.__element = new
+        self.__element = etree.Element('event')
 
         if event_type_name is not None:
-            new.set('event-type', event_type_name)
+            self.__element.set('event-type', event_type_name)
         if source_uri is not None:
-            new.set('source-uri', source_uri)
+            self.__element.set('source-uri', source_uri)
 
         # We cannot simply set parents to an empty value, because this produces an empty attribute.
         # Instead, if the value is empty, it should be left out altogether.
         if parents:
-            new.set('parents', ','.join(parents))
+            self.__element.set('parents', ','.join(parents))
 
-        etree.SubElement(new, 'properties')
-        self.set_properties(properties)
+        etree.SubElement(self.__element, 'properties')
 
-        if attachments is not None:
-            self.set_attachments(attachments)
-        else:
-            self._attachments = AttachmentSet({}, update_attachment=self.__update_attachment)
-
-        self._properties = PropertySet(
-            properties, update_property=self.__update_property
-        )
+        super().__init__(properties, event_type_name, source_uri, parents, attachments)
 
     def __str__(self):
         return etree.tostring(self.__element, encoding='unicode')
