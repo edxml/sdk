@@ -155,11 +155,12 @@ class PropertyObjectSet(set, MutableSet):
 class AttachmentSet(object):
     def __init__(self, attachments=None, update_attachment=None):
         self.__attachments = OrderedDict()
-        for attachment_name, value in attachments.items() or {}:
-            try:
-                self.__attachments[attachment_name] = '' + value
-            except TypeError as e:
-                raise TypeError(f"Failed to set event attachment {attachment_name}: {e}")
+        if attachments is not None:
+            for attachment_name, value in attachments.items() or {}:
+                try:
+                    self.__attachments[attachment_name] = '' + value
+                except TypeError as e:
+                    raise TypeError(f"Failed to set event attachment {attachment_name}: {e}")
 
         if update_attachment is not None:
             self._update_attachment = update_attachment
@@ -232,7 +233,7 @@ class EDXMLEvent(MutableMapping):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -257,7 +258,7 @@ class EDXMLEvent(MutableMapping):
         self._event_type_name = event_type_name
         self._source_uri = source_uri
         self._parents = set(parents) if parents is not None else set()
-        self._attachments = AttachmentSet(attachments)
+        self._attachments = AttachmentSet(attachments if attachments is not None else {})
         self._foreign_attribs = {}
 
         self._replace_invalid_characters = False
@@ -846,8 +847,8 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
-        super(ParsedEvent, self).__init__(properties, event_type_name, source_uri, parents, attachments)
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
+        super().__init__(properties, event_type_name, source_uri, parents, attachments)
         raise NotImplementedError('ParsedEvent objects can only be created by parsers')
 
     def __str__(self):
@@ -1257,7 +1258,7 @@ class EventElement(EDXMLEvent):
     preferred over using EDXMLEvent if you intend to feed it to EDXMLWriter.
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
+    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -1291,7 +1292,7 @@ class EventElement(EDXMLEvent):
         etree.SubElement(new, 'properties')
         self.set_properties(properties)
 
-        if attachments != {}:
+        if attachments is not None:
             self.set_attachments(attachments)
         else:
             self._attachments = AttachmentSet({}, update_attachment=self.__update_attachment)
@@ -1395,7 +1396,7 @@ class EventElement(EDXMLEvent):
         return deepcopy(self)
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments={}):
+    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
