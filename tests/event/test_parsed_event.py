@@ -54,7 +54,7 @@ def parsed_event(ontology, sha1_hash):
 
 
 def test_direct_instantiation_not_possible():
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(AssertionError):
         ParsedEvent({})
     with pytest.raises(NotImplementedError):
         ParsedEvent.create({})

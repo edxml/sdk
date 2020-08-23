@@ -4,7 +4,7 @@ import re
 import hashlib
 
 
-from collections import MutableMapping, OrderedDict
+from collections import MutableMapping, OrderedDict, MutableSet
 from datetime import datetime
 from IPy import IP
 from lxml import etree
@@ -43,11 +43,12 @@ def to_edxml_object(property_name, value):
         )
 
 
-class PropertySet(object):
+class PropertySet(OrderedDict):
     def __init__(self, properties=None, update_property=None):
-        self.__properties = OrderedDict()
-        for property_name, values in properties.items() or {}:
-            self.__properties[property_name] = PropertyObjectSet(property_name, values, update_property)
+        super().__init__()
+        if properties is not None:
+            for property_name, values in properties.items() or {}:
+                super().__setitem__(property_name, PropertyObjectSet(property_name, values, update_property))
 
         if update_property is not None:
             self._update_property = update_property
@@ -56,106 +57,96 @@ class PropertySet(object):
         pass
 
     def replace_object_set(self, property_name, object_set):
-        self.__properties[property_name] = object_set
+        super().__setitem__(property_name, object_set)
 
     def items(self):
-        return [(key, values) for key, values in self.__properties.items() if len(values) > 0]
+        return [(key, values) for key, values in super().items() if len(values) > 0]
 
     def keys(self):
-        return [key for key, values in self.__properties.items() if len(values) > 0]
-
-    def values(self):
-        return self.__properties.values()
-
-    def get(self, property_name, default=None):
-        return self.__properties.get(property_name, default)
-
-    def copy(self):
-        return deepcopy(self)
+        return [key for key, values in super().items() if len(values) > 0]
 
     def __iter__(self):
-        for p in self.__properties.keys():
-            if len(self.__properties[p]) > 0:
+        for p, objects in super().items():
+            if len(objects) > 0:
                 yield p
 
     def __len__(self):
         return len(self.keys())
 
     def __eq__(self, other):
-        return dict(other) == {p: v for p, v in self.__properties.items() if len(v) > 0}
+        return dict(other) == {p: v for p, v in super().items() if len(v) > 0}
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    def __contains__(self, item):
+        return item in super().keys() and len(super().__getitem__(item)) > 0
 
     def __setitem__(self, key, value):
-        self.__properties[key] = PropertyObjectSet(key, value, self._update_property)
+        super().__setitem__(key, PropertyObjectSet(key, value, self._update_property))
         self._update_property(key, value)
 
     def __getitem__(self, item):
         try:
-            return self.__properties[item]
+            return super().__getitem__(item)
         except KeyError:
             if not isinstance(item, str):
                 raise TypeError('Property name is not a string: ' + repr(item))
-            self.__properties[item] = PropertyObjectSet(item, update=self._update_property)
-            return self.__properties[item]
+            super().__setitem__(item, PropertyObjectSet(item, update=self._update_property))
+            return super().__getitem__(item)
 
     def __delitem__(self, key):
         try:
-            del self.__properties[key]
+            super().__delitem__(key)
             self._update_property(key, None)
         except KeyError:
             pass
 
-    def __repr__(self):
-        return repr(self.__properties)
+    def __deepcopy__(self, memodict={}):
+        return PropertySet(dict(self), update_property=self._update_property)
 
 
-class PropertyObjectSet(object):
+class PropertyObjectSet(set, MutableSet):
     def __init__(self, property_name, objects=None, update=None):
+        super().__init__()
         if property_name is None:
             raise ValueError()
         self.__property_name = property_name
         if isinstance(objects, set):
-            self.__objects = objects
+            self.update(objects)
         else:
             if isinstance(objects, (str, int, bool, float, datetime, IP)):
                 objects = (objects,)
-            self.__objects = set(iter(objects or []))
+            self.update(set(iter(objects or [])))
         if update is not None:
             self._update = update
 
-    def __iter__(self):
-        return iter(self.__objects)
-
-    def __len__(self):
-        return len(self.__objects)
+    def __deepcopy__(self, memodict={}):
+        return PropertyObjectSet(self.__property_name, [deepcopy(v) for v in self], self._update)
 
     def __eq__(self, other):
-        return self.__objects == other
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __contains__(self, item):
-        return item in self.__objects
-
-    def __repr__(self):
-        return repr(self.__objects)
+        return set(self) == other
 
     def add(self, value):
-        self.__objects.add(value)
-        self._update(self.__property_name, self.__objects)
+        super().add(value)
+        self._update(self.__property_name, self)
+
+    def remove(self, element):
+        super().remove(element)
+        self._update(self.__property_name, self)
 
     def update(self, values):
-        self.__objects.update(values)
-        self._update(self.__property_name, self.__objects)
+        super().update(values)
+        self._update(self.__property_name, self)
 
-    def difference(self, other):
-        return self.__objects.difference(other)
+    def clear(self):
+        super().clear()
+        self._update(self.__property_name, self)
 
-    def intersection(self, other):
-        return self.__objects.intersection(other)
+    def discard(self, element):
+        super().discard(element)
+        self._update(self.__property_name, self)
+
+    def pop(self):
+        super().pop()
+        self._update(self.__property_name, self)
 
     def _update(self, property_name, values):
         pass
@@ -1327,7 +1318,15 @@ class EventElement(EDXMLEvent):
         return len(self.get_properties())
 
     def __update_property(self, key, value):
-        props = self.__element.find('properties')
+        try:
+            props = self.__element.find('properties')
+        except AttributeError:
+            # This happens while the event is copied. The copy
+            # implementation sets dictionary keys while there
+            # is no __element attribute yet.
+            self.__element = etree.Element('event')
+            props = etree.SubElement(self.__element, 'properties')
+
         for existing_value in props.findall(key):
             props.remove(existing_value)
 

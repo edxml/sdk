@@ -2,10 +2,36 @@
 
 import edxml
 
-from collections import MutableMapping
+from collections import MutableMapping, OrderedDict
 from lxml import etree
-from typing import Dict, Union, Generator, List, Set, Iterable
+from typing import Dict, Union, Generator, List, Set, Iterable, Tuple, Any
 
+
+class PropertySet(OrderedDict):
+    def __init__(self, properties=None, update_property=None):
+        self.__properties = Dict[PropertyObjectSet]
+
+    def _update_property(self, property_name: str, values): ...
+
+    def replace_object_set(self, property_name, object_set) -> None: ...
+
+    def items(self) -> List[Tuple]: ...
+
+    def keys(self) -> List: ...
+
+    def values(self) -> List: ...
+
+    def get(self, property_name: str, default=None): ...
+
+    def copy(self) -> 'PropertySet': ...
+
+    def __len__(self) -> int: ...
+
+    def __setitem__(self, key, value): ...
+
+    def __getitem__(self, item): ...
+
+    def __delitem__(self, key): ...
 
 class EDXMLEvent(MutableMapping):
 
