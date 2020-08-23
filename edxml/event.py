@@ -353,7 +353,7 @@ class EDXMLEvent(MutableMapping):
 
     @property
     def properties(self):
-        return self._properties
+        return self.get_properties()
 
     @properties.setter
     def properties(self, new_properties):
@@ -1021,14 +1021,6 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
         return self
 
-    @property
-    def properties(self):
-        return self.get_properties()
-
-    @properties.setter
-    def properties(self, new_properties):
-        self.set_properties(new_properties)
-
     def get_properties(self):
         try:
             return self._properties
@@ -1486,14 +1478,6 @@ class EventElement(EDXMLEvent):
             self._attachments = None
 
         return self
-
-    @property
-    def properties(self):
-        return self.get_properties()
-
-    @properties.setter
-    def properties(self, new_properties):
-        self.set_properties(new_properties)
 
     def get_properties(self):
         if self._properties is None:
