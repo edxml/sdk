@@ -285,6 +285,18 @@ def test_delete_property(event):
     assert event.get_properties() == {"smiley": {"😀"}}
 
 
+def test_copy_event_properties(event):
+    assert event.copy().properties == event.properties
+
+
+def test_copy_event_attachments(event_with_attachment):
+    assert event_with_attachment.copy().attachments == event_with_attachment.attachments
+
+
+def test_copy_event_parents(event_with_explicit_parent):
+    assert event_with_explicit_parent.copy().get_explicit_parents() == event_with_explicit_parent.get_explicit_parents()
+
+
 def test_copy_property(event):
     source = event
     target = source.copy()
