@@ -3,8 +3,8 @@ import codecs
 import re
 import hashlib
 
-
-from collections import MutableMapping, OrderedDict, MutableSet
+from collections.abc import MutableMapping, MutableSet
+from collections import OrderedDict
 from datetime import datetime
 from IPy import IP
 from lxml import etree
