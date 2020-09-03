@@ -8,3 +8,4 @@ graphviz
 typing
 pytest
 ipy
+coverage
