@@ -25,7 +25,7 @@ check:
 
 test: dependencies
 	@echo "Running tests:"
-	@python3 -m pytest
+	@python3 -m pytest tests
 
 coverage: dependencies
 	@echo "Gathering coverage data:"
