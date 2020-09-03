@@ -25,11 +25,11 @@ check:
 
 test: dependencies
 	@echo "Running tests:"
-	@python3 -m pytest tests
+	@python3 -m pytest tests -W ignore::DeprecationWarning
 
 coverage: dependencies
 	@echo "Gathering coverage data:"
-	@python3 -m coverage run -m pytest tests
+	@python3 -m coverage run -m pytest tests -W ignore::DeprecationWarning
 
 clean:
 	find . -name '*.py[co]' -delete
