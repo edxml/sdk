@@ -1,6 +1,6 @@
 # Make file for creating the PyPI package and generating sphinx docs
 
-.PHONY: all dependencies dist doc check test clean
+.PHONY: all dependencies dist doc check test coverage clean
 
 all: dependencies dist doc check test clean
 
@@ -26,6 +26,10 @@ check:
 test: dependencies
 	@echo "Running tests:"
 	@python3 -m pytest
+
+coverage: dependencies
+	@echo "Gathering coverage data:"
+	@python3 -m coverage run -m pytest tests
 
 clean:
 	find . -name '*.py[co]' -delete
