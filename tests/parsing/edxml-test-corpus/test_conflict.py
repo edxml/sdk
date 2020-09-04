@@ -1,9 +1,8 @@
-import os
-
 from edxml import EventCollection
 from edxml.error import EDXMLMergeConflictError
+from edxml_test_corpus import CORPUS_PATH
 
-corpus_path = os.path.dirname(os.path.abspath(__file__)) + '/corpus/conflict'
+corpus_path = CORPUS_PATH + '/conflict'
 
 
 def test_parse_conflict():

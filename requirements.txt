@@ -9,3 +9,4 @@ typing
 pytest
 ipy
 coverage
+edxml-test-corpus==3.0.0.dev2

@@ -5,8 +5,10 @@ import pytest
 
 from edxml import EDXMLPullParser
 from edxml.error import EDXMLValidationError
+from edxml_test_corpus import CORPUS_PATH
 
-corpus_path = os.path.dirname(os.path.abspath(__file__)) + '/corpus/invalid'
+
+corpus_path = CORPUS_PATH + '/invalid'
 
 # This glob pattern can be used to select a subset of
 # files that will be tested, which may be useful when

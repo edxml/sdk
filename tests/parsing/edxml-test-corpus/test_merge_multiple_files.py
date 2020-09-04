@@ -5,8 +5,9 @@ import pytest
 from glob import glob
 
 from edxml import EventCollection
+from edxml_test_corpus import CORPUS_PATH
 
-corpus_path = os.path.dirname(os.path.abspath(__file__)) + '/corpus/valid/merge-multiple-files'
+corpus_path = CORPUS_PATH + '/valid/merge-multiple-files'
 
 # This glob pattern can be used to select a subset of
 # directories that will be tested, which may be useful when
