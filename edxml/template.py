@@ -645,7 +645,7 @@ class Template(object):
                         if colorize:
                             object_string = ', '.join(
                                 colored(object_string, 'white', attrs=['bold']) for object_string in object_strings
-                            ) + ' and ' + last_object_value
+                            ) + ' and ' + colored(last_object_value, 'white', attrs=['bold'])
                         else:
                             object_string = ', '.join(object_strings) + ' and ' + last_object_value
                     else:
