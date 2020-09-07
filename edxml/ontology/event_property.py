@@ -22,6 +22,8 @@ class EventProperty(OntologyElement):
     """Merge strategy 'drop'"""
     MERGE_ADD = 'add'
     """Merge strategy 'add'"""
+    MERGE_SET = 'set'
+    """Merge strategy 'set'"""
     MERGE_REPLACE = 'replace'
     """Merge strategy 'replace'"""
     MERGE_MIN = 'min'
@@ -497,6 +499,17 @@ class EventProperty(OntologyElement):
         self.set_merge_strategy('replace')
         return self
 
+    def merge_set(self):
+        """
+
+        Set merge strategy to 'set'.
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self.set_merge_strategy('set')
+        return self
+
     def merge_drop(self):
         """
 
@@ -587,9 +600,8 @@ class EventProperty(OntologyElement):
                     'name']
             )
 
-        if not self.__attr['merge'] in ('drop', 'add', 'replace', 'min', 'max', 'match'):
-            raise EDXMLValidationError(
-                'Invalid property merge strategy: "%s"' % self.__attr['merge'])
+        if not self.__attr['merge'] in ('drop', 'add', 'replace', 'set', 'min', 'max', 'match'):
+            raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
         # Check if merge strategies make sense for the
         # configured property merge strategies

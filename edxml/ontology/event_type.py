@@ -1909,6 +1909,11 @@ class EventType(OntologyElement, MutableMapping):
             elif strategy == 'replace':
                 # Take the value of the last event
                 output_properties[property_name] = events[-1][property_name]
+            elif strategy == 'set':
+                # Take the first non-empty value, if available
+                output_properties[property_name] = next(
+                    (e[property_name] for e in events if e[property_name] != set()), set()
+                )
             else:
                 # Merge strategy 'drop', should not matter which
                 # value to pick, we pick the first one.
