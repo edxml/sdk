@@ -1,8 +1,10 @@
 import re
+from typing import Dict
 
 from dateutil import relativedelta
 from dateutil.parser import parse
 from edxml.error import EDXMLValidationError
+from edxml.ontology import DataType
 from iso3166 import countries
 from termcolor import colored
 
@@ -12,7 +14,7 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-        'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'MERGE',
+        'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'MERGE',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
     )
 
@@ -35,7 +37,7 @@ class Template(object):
         """
 
         zero_argument_formatters = [
-            'LATITUDE', 'LONGITUDE', 'BYTECOUNT', 'COUNTRYCODE', 'BOOLEAN_ON_OFF',
+            'BYTECOUNT', 'COUNTRYCODE', 'BOOLEAN_ON_OFF',
             'BOOLEAN_IS_ISNOT', 'UPPERCASE'
         ]
 
@@ -363,11 +365,14 @@ class Template(object):
         # placeholders themselves, with and without brackets included.
         placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
 
+        property_data_types = {}  # type: Dict[str, DataType]
+
         # Format object values based on their data type to make them
         # more human friendly.
         for property_name, values in event_object_values.items():
-            if event_type[property_name].get_data_type().get_family() == 'number':
-                if event_type[property_name].get_data_type().get_split()[1] in ('float', 'double'):
+            property_data_types[property_name] = event_type[property_name].get_data_type()
+            if property_data_types[property_name].get_family() == 'number':
+                if property_data_types[property_name].get_split()[1] in ('float', 'double'):
                     # Floating point numbers are normalized in scientific notation,
                     # here we format it to whatever is the most suitable for the value.
                     event_object_values[property_name] = {'%f' % float(value) for value in values}
@@ -471,38 +476,6 @@ class Template(object):
 
                 for object_value in values:
                     object_strings.append(cls._format_byte_count(int(object_value)))
-
-            elif formatter == 'LATITUDE':
-
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
-                    degrees = int(object_value)
-                    minutes = int((object_value - degrees) * 60.0)
-                    seconds = int((object_value - degrees - (minutes / 60.0)) * 3600.0)
-
-                    object_strings.append('%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S'))
-
-            elif formatter == 'LONGITUDE':
-
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
-                    degrees = int(object_value)
-                    minutes = int((object_value - degrees) * 60.0)
-                    seconds = int((object_value - degrees - (minutes / 60.0)) * 3600.0)
-
-                    object_strings.append('%d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W'))
 
             elif formatter == 'UPPERCASE':
 
@@ -633,6 +606,35 @@ class Template(object):
             elif formatter == 'NEWPAR':
 
                 object_strings.append('\n')
+
+            else:
+
+                # String has no associated formatter but maybe the the data
+                # type implies an appropriate value format.
+                property_name = arguments[0]
+                if property_data_types[property_name].type == 'geo:point':
+                    try:
+                        values = event_object_values[property_name]
+                    except KeyError:
+                        # Property has no object, which implies that
+                        # we must produce an empty result.
+                        return ''
+
+                    for object_value in values:
+                        lat, long = object_value.split(',')
+                        degrees = int(lat)
+                        minutes = int((lat - degrees) * 60.0)
+                        seconds = int((lat - degrees - (minutes / 60.0)) * 3600.0)
+
+                        lat_long = '%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S')
+
+                        degrees = int(long)
+                        minutes = int((long - degrees) * 60.0)
+                        seconds = int((long - degrees - (minutes / 60.0)) * 3600.0)
+
+                        lat_long += ' %d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W')
+
+                        object_strings.append(lat_long)
 
             if len(object_strings) > 0:
                 if len(object_strings) > 1:
