@@ -3,6 +3,7 @@
 import codecs
 import hashlib
 from collections import OrderedDict
+from copy import deepcopy
 from datetime import datetime
 from IPy import IP
 
@@ -289,12 +290,35 @@ def test_copy_event_properties(event):
     assert event.copy().properties == event.properties
 
 
+def test_deepcopy_event_properties(event):
+    assert deepcopy(event).properties == event.properties
+
+
 def test_copy_event_attachments(event_with_attachment):
     assert event_with_attachment.copy().attachments == event_with_attachment.attachments
 
 
+def test_deepcopy_event_attachments(event_with_attachment):
+    assert deepcopy(event_with_attachment).attachments == event_with_attachment.attachments
+
+
 def test_copy_event_parents(event_with_explicit_parent):
     assert event_with_explicit_parent.copy().get_explicit_parents() == event_with_explicit_parent.get_explicit_parents()
+
+
+def test_deepcopy_event_parents(event_with_explicit_parent):
+    assert deepcopy(event_with_explicit_parent).get_explicit_parents() == \
+           event_with_explicit_parent.get_explicit_parents()
+
+
+def test_copy_event_foreign_attributes(event_with_foreign_attribute):
+    assert event_with_foreign_attribute.copy().get_foreign_attributes() == \
+           event_with_foreign_attribute.get_foreign_attributes()
+
+
+def test_deepcopy_event_foreign_attributes(event_with_foreign_attribute):
+    assert deepcopy(event_with_foreign_attribute).get_foreign_attributes() == \
+           event_with_foreign_attribute.get_foreign_attributes()
 
 
 def test_copy_property(event):
