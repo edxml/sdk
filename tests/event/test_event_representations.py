@@ -84,7 +84,7 @@ def event_with_attachment(request, ontology, sha1_hash):
         return create_parsed_event(ontology, edxml_event)
 
 
-@pytest.fixture(params=('EdxmlEvent', 'ParsedEvent'))
+@pytest.fixture(params=('EdxmlEvent', 'ParsedEvent', 'EventElement'))
 def event_with_explicit_parent(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
         properties={"smiley": "😀"},
@@ -95,11 +95,13 @@ def event_with_explicit_parent(request, ontology, sha1_hash):
 
     if request.param == 'EdxmlEvent':
         return edxml_event
+    elif request.param == 'EventElement':
+        return create_event_element(edxml_event)
     else:
         return create_parsed_event(ontology, edxml_event)
 
 
-@pytest.fixture(params=('EdxmlEvent', 'ParsedEvent'))
+@pytest.fixture(params=('EdxmlEvent', 'ParsedEvent', 'EventElement'))
 def event_with_foreign_attribute(request, ontology, sha1_hash):
     edxml_event = EDXMLEvent(
         properties={"smiley": "😀"},
@@ -109,6 +111,8 @@ def event_with_foreign_attribute(request, ontology, sha1_hash):
 
     if request.param == 'EdxmlEvent':
         return edxml_event
+    elif request.param == 'EventElement':
+        return create_event_element(edxml_event)
     else:
         return create_parsed_event(ontology, edxml_event)
 
