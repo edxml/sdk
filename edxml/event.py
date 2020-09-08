@@ -152,13 +152,13 @@ class PropertyObjectSet(set, MutableSet):
         pass
 
 
-class AttachmentSet(object):
+class AttachmentSet(OrderedDict):
     def __init__(self, attachments=None, update_attachment=None):
-        self.__attachments = OrderedDict()
+        super().__init__()
         if attachments is not None:
             for attachment_name, value in attachments.items() or {}:
                 try:
-                    self.__attachments[attachment_name] = '' + value
+                    self[attachment_name] = '' + value
                 except TypeError as e:
                     raise TypeError(f"Failed to set event attachment {attachment_name}: {e}")
 
@@ -168,55 +168,31 @@ class AttachmentSet(object):
     def _update_attachment(self, attachment_name, value):
         pass
 
-    def items(self):
-        return self.__attachments.items()
-
-    def keys(self):
-        return self.__attachments.keys()
-
-    def values(self):
-        return self.__attachments.values()
-
-    def get(self, attachment_name, default=None):
-        return self.__attachments.get(attachment_name, default)
-
-    def copy(self):
-        return deepcopy(self)
-
     def __iter__(self):
-        for p in self.__attachments.keys():
-            if len(self.__attachments[p]) > 0:
-                yield p
-
-    def __len__(self):
-        return len(self.__attachments)
+        for name, value in super().items():
+            if len(value) > 0:
+                yield name
 
     def __eq__(self, other):
-        return other == {a: v for a, v in self.__attachments.items() if len(v) > 0}
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
+        return other == {a: v for a, v in super().items() if len(v) > 0}
 
     def __setitem__(self, key, value):
-        self.__attachments[key] = value
+        super().__setitem__(key, value)
         self._update_attachment(key, value)
 
     def __getitem__(self, item):
         try:
-            return self.__attachments[item]
+            return super().__getitem__(item)
         except KeyError:
-            self.__attachments[item] = ''
-            return self.__attachments[item]
+            self[item] = ''
+            return self[item]
 
     def __delitem__(self, key):
         try:
-            del self.__attachments[key]
+            super().__delitem__(key)
             self._update_attachment(key, None)
         except KeyError:
             pass
-
-    def __repr__(self):
-        return repr(self.__attachments)
 
 
 class EDXMLEvent(MutableMapping):
@@ -1346,7 +1322,16 @@ class EventElement(EDXMLEvent):
                     props[-1].text = to_edxml_object(key, v)
 
     def __update_attachment(self, attachment_name, value):
-        attachments_element = self.__element.find('attachments')
+        try:
+            attachments_element = self.__element.find('attachments')
+        except AttributeError:
+            # This happens while the event is copied. The copy
+            # implementation sets dictionary keys while there
+            # is no __element attribute yet.
+            self.__element = etree.Element('event')
+            etree.SubElement(self.__element, 'properties')
+            attachments_element = etree.SubElement(self.__element, 'attachments')
+
         if attachments_element is None:
             attachments_element = etree.SubElement(self.__element, 'attachments')
 
