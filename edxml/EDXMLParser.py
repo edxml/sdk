@@ -37,12 +37,11 @@ import re
 from lxml.etree import XMLSyntaxError
 from typing import Dict, List, Any
 
-import edxml
-
 from collections import defaultdict
 from lxml import etree
 from edxml.error import EDXMLValidationError
 from edxml import ParsedEvent
+from edxml.ontology import Ontology
 
 
 class ProcessingInterrupted(Exception):
@@ -64,7 +63,7 @@ class EDXMLParserBase(object):
           validate (bool, optional): Validate input or not
         """
 
-        self._ontology = None                # type: edxml.ontology.Ontology
+        self._ontology = None                 # type: Ontology
         self._element_iterator = None         # type: etree.Element
         self._event_class = None
 
@@ -247,7 +246,7 @@ class EDXMLParserBase(object):
         Returns:
            edxml.ontology.Ontology: The parsed ontology
         """
-        return self._ontology or edxml.ontology.Ontology()
+        return self._ontology or Ontology()
 
     def get_event_type_schema(self, event_type_name):
         """
@@ -323,7 +322,7 @@ class EDXMLParserBase(object):
 
     def __process_ontology(self, ontology_element):
         if self._ontology is None:
-            self._ontology = edxml.ontology.Ontology()
+            self._ontology = Ontology()
 
         try:
             self._ontology.update(ontology_element)

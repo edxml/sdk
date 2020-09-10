@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import edxml.transcode
-
+from edxml.transcode import Transcoder
 from edxml import EDXMLEvent
 
 
-class ObjectTranscoder(edxml.transcode.Transcoder):
+class ObjectTranscoder(Transcoder):
 
     PROPERTY_MAP = {}
     """

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import edxml
+from edxml.ontology import Ontology, ObjectType, Concept
 from typing import List
 
 
 class Brick(object):
 
     @classmethod
-    def generate_object_types(cls, target_ontology: edxml.ontology.Ontology) -> List[edxml.ontology.ObjectType]: ...
+    def generate_object_types(cls, target_ontology: Ontology) -> List[ObjectType]: ...
 
     @classmethod
-    def generate_concepts(cls, target_ontology: edxml.ontology.Ontology) -> List[edxml.ontology.Concept]: ...
+    def generate_concepts(cls, target_ontology: Ontology) -> List[Concept]: ...
 
     @classmethod
     def test(cls): ...

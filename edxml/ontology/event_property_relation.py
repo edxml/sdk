@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import re
+
+import edxml.template
 import edxml.ontology
 
 from lxml import etree
 from edxml.error import EDXMLValidationError
-from edxml.ontology import EventProperty, OntologyElement, normalize_xml_token
+from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class PropertyRelation(OntologyElement):
@@ -247,11 +249,11 @@ class PropertyRelation(OntologyElement):
           edxml.ontology.PropertyRelation: The PropertyRelation instance
 
         """
-        if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property1']):
+        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property1']):
             raise EDXMLValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['property1'])
 
-        if not re.match(EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property2']):
+        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property2']):
             raise EDXMLValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['property2'])
 

@@ -5,9 +5,13 @@ import sre_constants
 
 from lxml import etree
 
-import edxml
+import edxml.ontology
+
 from edxml.error import EDXMLValidationError
-from edxml.ontology import DataType, OntologyElement, normalize_xml_token
+
+from .data_type import DataType
+from .ontology_element import OntologyElement
+from .util import normalize_xml_token
 
 
 class ObjectType(OntologyElement):

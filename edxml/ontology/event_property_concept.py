@@ -2,9 +2,9 @@
 
 from lxml import etree
 
-import edxml
+
 from edxml.error import EDXMLValidationError
-from edxml.ontology import OntologyElement, normalize_xml_token
+from edxml.ontology import OntologyElement, EventType, EventProperty, normalize_xml_token
 
 
 class PropertyConcept(OntologyElement):
@@ -23,8 +23,8 @@ class PropertyConcept(OntologyElement):
             'attr-display-name-plural': '',
         }
 
-        self.__event_type = event_type  # type: edxml.ontology.EventType
-        self.__property = property  # type: edxml.ontology.EventProperty
+        self.__event_type = event_type  # type: EventType
+        self.__property = property      # type: EventProperty
 
     def __repr__(self):
         return f"{self.__property.get_name()} => {self.__attr['name']}"

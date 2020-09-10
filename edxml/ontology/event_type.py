@@ -11,9 +11,16 @@ from collections import MutableMapping, defaultdict
 from lxml import etree
 from lxml.builder import ElementMaker
 
-import edxml
+import edxml.template
+import edxml.ontology
+
+from .ontology_element import OntologyElement
+from .event_property import EventProperty
+from .event_type_parent import EventTypeParent
+from .event_property_relation import PropertyRelation
+from .event_type_attachment import EventTypeAttachment
+from .util import normalize_xml_token
 from edxml.error import EDXMLValidationError, EDXMLMergeConflictError
-from edxml.ontology import OntologyElement, normalize_xml_token
 
 
 class EventType(OntologyElement, MutableMapping):
@@ -48,18 +55,16 @@ class EventType(OntologyElement, MutableMapping):
             'version': 1
         }
 
-        self.__properties = {}      # type: Dict[str, edxml.ontology.EventProperty]
-        self.__relations = {}       # type: Dict[str,edxml.ontology.PropertyRelation]
-        self.__parent = parent      # type: edxml.ontology.EventTypeParent
-        self.__attachments = {}     # type: Dict[str, edxml.ontology.EventTypeAttachment]
+        self.__properties = {}      # type: Dict[str, EventProperty]
+        self.__relations = {}       # type: Dict[str, PropertyRelation]
+        self.__parent = parent      # type: EventTypeParent
+        self.__attachments = {}     # type: Dict[str, EventTypeAttachment]
         self.__relax_ng = None      # type: etree.RelaxNG
         self.__ontology = ontology  # type: edxml.ontology.Ontology
 
         self.__parent_description = None  # type: str
 
-        # type: Dict[str, edxml.ontology.EventProperty]
-        self.__cached_unique_properties = None
-        # type: Dict[str, edxml.ontology.EventProperty]
+        self.__cached_unique_properties = None  # type: Dict[str, EventProperty]
         self.__cached_is_timeless = None
         self.__cached_hash_properties = None
 
@@ -69,7 +74,7 @@ class EventType(OntologyElement, MutableMapping):
             self._child_modified_callback()
 
     def __setitem__(self, property_name, property_instance):
-        if isinstance(property_instance, edxml.ontology.EventProperty):
+        if isinstance(property_instance, EventProperty):
             self.__properties[property_name] = property_instance
             self._child_modified_callback()
         else:
@@ -86,7 +91,7 @@ class EventType(OntologyElement, MutableMapping):
           property_name (str): Name of an event property
 
         Returns:
-          edxml.ontology.EventProperty:
+          EventProperty:
         """
         try:
             return self.__properties[property_name]
@@ -106,7 +111,7 @@ class EventType(OntologyElement, MutableMapping):
         """
 
         Yields:
-          Dict[str, edxml.ontology.EventProperty]
+          Dict[str, EventProperty]
         """
         for propertyName, prop in self.__properties.items():
             yield propertyName
@@ -235,7 +240,7 @@ class EventType(OntologyElement, MutableMapping):
         EDXMLProperty instances.
 
         Returns:
-           Dict[str,edxml.ontology.EventProperty]: Properties
+           Dict[str,EventProperty]: Properties
         """
         return self.__properties
 
@@ -248,7 +253,7 @@ class EventType(OntologyElement, MutableMapping):
         EDXMLProperty instances.
 
         Returns:
-           Dict[str, edxml.ontology.EventProperty]: Properties
+           Dict[str, EventProperty]: Properties
         """
         return {n: p for n, p in self.__properties.items() if p.is_unique()}
 
@@ -262,7 +267,7 @@ class EventType(OntologyElement, MutableMapping):
         EDXMLProperty instances.
 
         Returns:
-           Dict[str, edxml.ontology.EventProperty]: Properties
+           Dict[str, EventProperty]: Properties
         """
 
         if self.__cached_hash_properties is None:
@@ -295,7 +300,7 @@ class EventType(OntologyElement, MutableMapping):
             target (str): Name of target property
 
         Returns:
-          Dict[str,edxml.ontology.PropertyRelation]:
+          Dict[str,PropertyRelation]:
         """
         relations = self.__relations
         if rtype is not None:
@@ -315,7 +320,7 @@ class EventType(OntologyElement, MutableMapping):
             KeyError
 
         Returns:
-          edxml.ontology.EventTypeAttachment:
+          EventTypeAttachment:
         """
         return self.__attachments[name]
 
@@ -326,7 +331,7 @@ class EventType(OntologyElement, MutableMapping):
         are defined for the event type. The keys are attachment IDs.
 
         Returns:
-          Dict[str,edxml.ontology.EventTypeAttachment]:
+          Dict[str,EventTypeAttachment]:
         """
         return self.__attachments
 
@@ -462,7 +467,7 @@ class EventType(OntologyElement, MutableMapping):
           description (str): Property description
 
         Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
+          EventProperty: The EventProperty instance
         """
         if name not in self.__properties:
             object_type = self.__ontology.get_object_type(object_type_name)
@@ -472,7 +477,7 @@ class EventType(OntologyElement, MutableMapping):
                 self.__ontology._import_object_type_from_brick(object_type_name)
                 object_type = self.__ontology.get_object_type(object_type_name)
             if object_type:
-                self.__properties[name] = edxml.ontology.EventProperty(self, name, object_type, description).validate()
+                self.__properties[name] = EventProperty(self, name, object_type, description).validate()
             else:
                 raise Exception(
                     'Attempt to create property "%s" of event type "%s" referring to undefined object type "%s".' %
@@ -493,7 +498,7 @@ class EventType(OntologyElement, MutableMapping):
         Add specified property
 
         Args:
-          prop (edxml.ontology.EventProperty): EventProperty instance
+          prop (EventProperty): EventProperty instance
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -543,7 +548,7 @@ class EventType(OntologyElement, MutableMapping):
           directed (bool): Directed relation True / False
 
         Returns:
-          edxml.ontology.PropertyRelation: The PropertyRelation instance
+          PropertyRelation: The PropertyRelation instance
         """
 
         if source not in self:
@@ -605,7 +610,7 @@ class EventType(OntologyElement, MutableMapping):
                 (type, source, target, self.get_display_name_singular(), target_concept_name)
             )
 
-        relation = edxml.ontology.PropertyRelation(
+        relation = PropertyRelation(
             self, self[source], self[target], self.__ontology.get_concept(source_concept_name, True),
             self.__ontology.get_concept(target_concept_name, True), description, type,
             predicate, confidence, directed
@@ -624,7 +629,7 @@ class EventType(OntologyElement, MutableMapping):
         a syntax that yields more readable code.
 
         Args:
-          relation (edxml.ontology.PropertyRelation): Property relation
+          relation (PropertyRelation): Property relation
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -646,9 +651,9 @@ class EventType(OntologyElement, MutableMapping):
             name (str): attachment name
 
         Returns:
-            edxml.ontology.EventTypeAttachment
+            EventTypeAttachment
         """
-        attachment = edxml.ontology.EventTypeAttachment(self, name)
+        attachment = EventTypeAttachment(self, name)
         self.add_attachment(attachment)
 
         return attachment
@@ -659,7 +664,7 @@ class EventType(OntologyElement, MutableMapping):
         Add specified attachment definition to the event type.
 
         Args:
-            attachment (edxml.ontology.EventTypeAttachment): attachment definition
+            attachment (EventTypeAttachment): attachment definition
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -685,12 +690,12 @@ class EventType(OntologyElement, MutableMapping):
           parent (edxml.ontology.EventType): Parent event type
 
         Returns:
-          edxml.ontology.EventTypeParent: The event type parent definition
+          EventTypeParent: The event type parent definition
         """
 
         if self.__parent_description:
-            self.__parent = edxml.ontology.EventTypeParent(self, parent.get_name(), '', self.__parent_description,
-                                                           siblings_description)
+            self.__parent = EventTypeParent(self, parent.get_name(), '', self.__parent_description,
+                                            siblings_description)
         else:
             raise Exception(
                 'You must call is_parent() on the parent before calling make_children().')
@@ -759,7 +764,7 @@ class EventType(OntologyElement, MutableMapping):
           which results in more readable code.
 
         Args:
-          parent (edxml.ontology.EventTypeParent): Parent event type
+          parent (EventTypeParent): Parent event type
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -1216,10 +1221,10 @@ class EventType(OntologyElement, MutableMapping):
         attachments = []
         for element in type_element:
             if element.tag == '{http://edxml.org/edxml}parent':
-                event_type.set_parent(edxml.ontology.EventTypeParent.create_from_xml(element, event_type))
+                event_type.set_parent(EventTypeParent.create_from_xml(element, event_type))
             elif element.tag == '{http://edxml.org/edxml}properties':
                 for property_element in element:
-                    prop = edxml.ontology.EventProperty.create_from_xml(property_element, ontology, event_type)
+                    prop = EventProperty.create_from_xml(property_element, ontology, event_type)
                     if prop.get_name() in property_names:
                         raise EDXMLValidationError(
                             'EDXML <properties> element contains duplicate definition of "%s"' % prop.get_name()
@@ -1229,7 +1234,7 @@ class EventType(OntologyElement, MutableMapping):
 
             elif element.tag == '{http://edxml.org/edxml}relations':
                 for relation_element in element:
-                    relation = edxml.ontology.PropertyRelation.create_from_xml(relation_element, event_type, ontology)
+                    relation = PropertyRelation.create_from_xml(relation_element, event_type, ontology)
                     if relation.get_persistent_id() in relation_ids:
                         raise EDXMLValidationError(
                             'EDXML <relations> element contains duplicate definition '
@@ -1244,7 +1249,7 @@ class EventType(OntologyElement, MutableMapping):
 
             elif element.tag == '{http://edxml.org/edxml}attachments':
                 for attachment_element in element:
-                    attachment = edxml.ontology.EventTypeAttachment.create_from_xml(attachment_element, event_type)
+                    attachment = EventTypeAttachment.create_from_xml(attachment_element, event_type)
                     if attachment.get_name() in attachments:
                         raise EDXMLValidationError(
                             'EDXML <attachments> element contains duplicate definition of "%s"' % attachment.get_name()
@@ -1690,7 +1695,7 @@ class EventType(OntologyElement, MutableMapping):
         data stream that has a default namespace that events will inherit.
 
         Args:
-          ontology (edxml.ontology.Ontology): Ontology containing the event type
+          ontology (Ontology): Ontology containing the event type
           namespaced (bool): Require a namespace specification or not
 
         Returns:
@@ -1940,7 +1945,7 @@ class EventType(OntologyElement, MutableMapping):
             # events that share a version are mutually consistent.
             for property_name, object_sets in property_object_sets.items():
                 strategy = self.__properties[property_name].get_merge_strategy()
-                if strategy in [edxml.ontology.EventProperty.MERGE_MATCH, edxml.ontology.EventProperty.MERGE_DROP]:
+                if strategy in [EventProperty.MERGE_MATCH, EventProperty.MERGE_DROP]:
                     # No conflict possible because the object values are either identical (match)
                     # or any differences are insignificant (drop)
                     continue

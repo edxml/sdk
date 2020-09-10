@@ -1,10 +1,11 @@
 import re
 from typing import Dict
 
+import edxml.ontology
+
 from dateutil import relativedelta
 from dateutil.parser import parse
 from edxml.error import EDXMLValidationError
-from edxml.ontology import DataType
 from iso3166 import countries
 from termcolor import colored
 
@@ -365,7 +366,7 @@ class Template(object):
         # placeholders themselves, with and without brackets included.
         placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
 
-        property_data_types = {}  # type: Dict[str, DataType]
+        property_data_types = {}  # type: Dict[str, edxml.ontology.DataType]
 
         # Format object values based on their data type to make them
         # more human friendly.

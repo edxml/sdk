@@ -2,7 +2,7 @@ from io import BytesIO
 from collections import defaultdict
 from typing import Dict, List
 
-import edxml
+from edxml import EDXMLWriter, EDXMLPullParser, EDXMLEvent
 from edxml.ontology import Ontology
 
 
@@ -39,7 +39,7 @@ class EventCollection(list):
             Dict[str, EventCollection]
         """
         hash_dict = defaultdict(EventCollection)  # type: Dict[str, EventCollection]
-        for event in self:  # type: edxml.event.EDXMLEvent
+        for event in self:  # type: EDXMLEvent
             hash_dict[event.compute_sticky_hash(self._ontology)].append(event)
         return hash_dict
 
@@ -122,8 +122,8 @@ class EventCollection(list):
             edxml.EventCollection
 
         """
-        hash_dict = defaultdict(list)  # type: Dict[str, List[edxml.event.EDXMLEvent]]
-        for event in self:  # type: edxml.event.EDXMLEvent
+        hash_dict = defaultdict(list)  # type: Dict[str, List[EDXMLEvent]]
+        for event in self:  # type: EDXMLEvent
             hash_dict[event.compute_sticky_hash(self._ontology)].append(event)
 
         result = EventCollection(ontology=self._ontology)
@@ -159,7 +159,7 @@ class EventCollection(list):
             EventCollection:
 
         """
-        class Parser(edxml.EDXMLPullParser):
+        class Parser(EDXMLPullParser):
             def __init__(self, events):
                 super(Parser, self).__init__()
                 self.event_set = events
@@ -171,7 +171,7 @@ class EventCollection(list):
                 self.event_set.append(event)
 
         event_set = EventCollection()
-        event_set._ontology = edxml.ontology.Ontology()
+        event_set._ontology = Ontology()
 
         input_file = BytesIO(edxml_data)
         parser = Parser(event_set)
@@ -191,7 +191,7 @@ class EventCollection(list):
         if self._ontology is None:
             raise RuntimeError("Event collection contains no ontology, generating EDXML output is not possible.")
 
-        writer = edxml.EDXMLWriter(output=None)
+        writer = EDXMLWriter(output=None)
         writer.add_ontology(self._ontology)
 
         for event in self:

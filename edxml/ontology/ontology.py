@@ -2,12 +2,14 @@
 from collections import defaultdict
 from typing import Dict
 
-import edxml.ontology
-
 from .util import truncate_string
 from lxml import etree
 from edxml.error import EDXMLValidationError
-from edxml.ontology import ObjectType, Concept, EventType, EventSource, OntologyElement
+from .object_type import ObjectType
+from .concept import Concept
+from .event_type import EventType
+from .event_source import EventSource
+from .ontology_element import OntologyElement
 
 
 class Ontology(OntologyElement):
@@ -18,14 +20,14 @@ class Ontology(OntologyElement):
     __bricks = {
         'object_types': None,
         'concepts': None
-    }  # type: Dict[str, edxml.ontology.Ontology]
+    }  # type: Dict[str, Ontology]
 
     def __init__(self):
         self.__version = 0
-        self.__event_types = {}    # type: Dict[str, edxml.ontology.EventType]
-        self.__object_types = {}   # type: Dict[str, edxml.ontology.ObjectType]
-        self.__sources = {}        # type: Dict[str, edxml.ontology.EventSource]
-        self.__concepts = {}       # type: Dict[str, edxml.ontology.Concept]
+        self.__event_types = {}    # type: Dict[str, EventType]
+        self.__object_types = {}   # type: Dict[str, ObjectType]
+        self.__sources = {}        # type: Dict[str, EventSource]
+        self.__concepts = {}       # type: Dict[str, Concept]
 
     def __repr__(self):
         return f"{len(self.__event_types)} event types, {len(self.__object_types)} object types, " \
@@ -94,9 +96,9 @@ class Ontology(OntologyElement):
         """
 
         if not cls.__bricks['object_types']:
-            cls.__bricks['object_types'] = edxml.ontology.Ontology()
+            cls.__bricks['object_types'] = Ontology()
         if not cls.__bricks['concepts']:
-            cls.__bricks['concepts'] = edxml.ontology.Ontology()
+            cls.__bricks['concepts'] = Ontology()
 
         for _ in brick.generate_object_types(cls.__bricks['object_types']):
             pass

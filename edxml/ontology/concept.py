@@ -4,7 +4,8 @@ import re
 
 from lxml import etree
 
-import edxml
+import edxml.ontology
+
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 

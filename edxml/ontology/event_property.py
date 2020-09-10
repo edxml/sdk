@@ -47,7 +47,7 @@ class EventProperty(OntologyElement):
 
         self.__event_type = event_type  # type: edxml.ontology.EventType
         self.__object_type = object_type  # type: edxml.ontology.ObjectType
-        self.__data_type = object_type.get_data_type()  # type: edxml.ontology.ObjectType
+        self.__data_type = object_type.get_data_type()  # type: edxml.ontology.DataType
         self.__concepts = {}      # type: Dict[str, edxml.ontology.PropertyConcept]
 
     def __repr__(self):

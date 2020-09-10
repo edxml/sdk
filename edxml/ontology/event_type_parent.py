@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import re
-import edxml
+
+import edxml.ontology
 
 from lxml import etree
 from edxml.error import EDXMLValidationError

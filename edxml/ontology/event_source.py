@@ -5,7 +5,8 @@ from datetime import datetime
 
 from lxml import etree
 
-import edxml
+import edxml.ontology
+
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement
 

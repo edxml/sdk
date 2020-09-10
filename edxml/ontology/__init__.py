@@ -42,20 +42,20 @@ sources, and so on.
 """
 
 
-from edxml.ontology.util import normalize_xml_token
-from edxml.ontology.ontology_element import OntologyElement
-from edxml.ontology.data_type import DataType
-from edxml.ontology.event_type import EventType
-from edxml.ontology.event_property import EventProperty
-from edxml.ontology.event_property_concept import PropertyConcept
-from edxml.ontology.event_property_relation import PropertyRelation
-from edxml.ontology.event_source import EventSource
-from edxml.ontology.event_type_parent import EventTypeParent
-from edxml.ontology.event_type_attachment import EventTypeAttachment
-from edxml.ontology.object_type import ObjectType
-from edxml.ontology.concept import Concept
-from edxml.ontology.ontology import Ontology
-from edxml.ontology.brick import Brick
+from .ontology_element import OntologyElement
+from .util import normalize_xml_token
+from .ontology import Ontology
+from .data_type import DataType
+from .object_type import ObjectType
+from .event_type import EventType
+from .event_property import EventProperty
+from .event_property_concept import PropertyConcept
+from .event_property_relation import PropertyRelation
+from .event_source import EventSource
+from .event_type_parent import EventTypeParent
+from .event_type_attachment import EventTypeAttachment
+from .concept import Concept
+from .brick import Brick
 
 
 __all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
