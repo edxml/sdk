@@ -665,11 +665,11 @@ class EDXMLEvent(MutableMapping):
         for source, targets in property_map.items():
             try:
                 for target in (targets if isinstance(targets, list) else [targets]):
-                    if len(source_event._properties[source]) == 0:
+                    if source not in source_event:
                         continue
                     if target not in props:
                         props[target] = PropertyObjectSet(target)
-                    props[target].update(source_event._properties[source])
+                    props[target].update(source_event[source])
             except KeyError:
                 # Source property does not exist.
                 pass
