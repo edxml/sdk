@@ -104,28 +104,19 @@ class StatsParser(EDXMLPullParser):
                 self.type_time_spans[event_type_name][0], *timespan_start_objects
             )
 
-            if timespan_end:
-                # Event time span has both a beginning and an end. This means
-                # it really is a span, not a single point in time.
-                if self.timespan[1] is None:
-                    self.timespan[1] = max(timespan_end_objects)
-                if self.type_time_spans[event_type_name][1] is None:
-                    self.type_time_spans[event_type_name][1] = max(timespan_end_objects)
-
-                self.timespan[1] = max(self.timespan[1], *timespan_end_objects)
-                self.type_time_spans[event_type_name][1] = max(
-                    self.type_time_spans[event_type_name][1], *timespan_end_objects
-                )
-            else:
+            if timespan_end is None:
                 # Event time span has a beginning but no end. It is a point in time.
-                if self.timespan[1] is None:
-                    self.timespan[1] = max(timespan_start_objects)
-                if self.type_time_spans[event_type_name][1] is None:
-                    self.type_time_spans[event_type_name][1] = max(timespan_start_objects)
-                self.timespan[1] = max(self.timespan[1], *timespan_start_objects)
-                self.type_time_spans[event_type_name][1] = max(
-                    self.type_time_spans[event_type_name][1], *timespan_start_objects
-                )
+                # The start and end of the time span will be identical.
+                timespan_end_objects = timespan_start_objects
+
+            if self.timespan[1] is None:
+                self.timespan[1] = max(timespan_end_objects)
+            if self.type_time_spans[event_type_name][1] is None:
+                self.type_time_spans[event_type_name][1] = max(timespan_end_objects)
+            self.timespan[1] = max(self.timespan[1], *timespan_end_objects)
+            self.type_time_spans[event_type_name][1] = max(
+                self.type_time_spans[event_type_name][1], *timespan_end_objects
+            )
         else:
             # Event has no defined time span. It can still contain datetime
             # values, from which we will take the min / max values.
@@ -218,8 +209,7 @@ def print_source_stats(parser):
         print('%s: %s' % (uri.ljust(64), parser.source_uris.get(uri)))
 
 
-def main():
-
+def parse_args():
     parser = argparse.ArgumentParser(
         description="This utility prints various statistics for one or more EDXML input files."
     )
@@ -283,7 +273,31 @@ def main():
              'values for the property, in that order. All other output is suppressed.'
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def print_full_stats(parser):
+    print('\nTotal event count: %s' % parser.get_event_counter())
+
+    print('\nTotal covered time span: %s - %s\n' % tuple(format_timespan(parser.timespan)))
+    print_covered_time_spans(parser)
+
+    print('\nEvent counts per type:\n')
+    print_event_counts_per_type(parser)
+
+    print("\nSource URIs:\n")
+    print_source_stats(parser)
+
+    print("\nGenerated values per object type (unique in parenthesis):\n")
+    print_object_type_stats(parser)
+
+    print("\nConcept seeds:\n")
+    print_concept_stats(parser)
+
+
+def main():
+
+    args = parse_args()
 
     if args.file is None:
 
@@ -306,48 +320,20 @@ def main():
 
     if args.count:
         print(parser.get_event_counter())
-        return
-
-    if args.event_types:
+    elif args.event_types:
         print('\n'.join(parser.get_ontology().get_event_type_names()))
-        return
-
-    if args.object_types:
+    elif args.object_types:
         print('\n'.join(parser.get_ontology().get_object_type_names()))
-        return
-
-    if args.source_uris:
+    elif args.source_uris:
         print('\n'.join(parser.get_ontology().get_event_source_uris()))
-        return
-
-    if args.concepts:
+    elif args.concepts:
         print('\n'.join(parser.get_ontology().get_concept_names()))
-        return
-
-    if args.object_values:
+    elif args.object_values:
         print_object_values(parser, args.object_values)
-        return
-
-    if args.property_stats:
+    elif args.property_stats:
         print_property_stats(parser, args.property_stats)
-        return
-
-    print('\nTotal event count: %s' % parser.get_event_counter())
-
-    print('\nTotal covered time span: %s - %s\n' % tuple(format_timespan(parser.timespan)))
-    print_covered_time_spans(parser)
-
-    print('\nEvent counts per type:\n')
-    print_event_counts_per_type(parser)
-
-    print("\nSource URIs:\n")
-    print_source_stats(parser)
-
-    print("\nGenerated values per object type (unique in parenthesis):\n")
-    print_object_type_stats(parser)
-
-    print("\nConcept seeds:\n")
-    print_concept_stats(parser)
+    else:
+        print_full_stats(parser)
 
 
 if __name__ == "__main__":
