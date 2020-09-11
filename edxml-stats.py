@@ -47,7 +47,7 @@ from edxml.EDXMLParser import EDXMLPullParser
 class StatsParser(EDXMLPullParser):
 
     def __init__(self):
-        super(StatsParser, self).__init__(validate=False)
+        super().__init__(validate=False)
         self.event_type_counters = defaultdict(int)
         self.property_stats = defaultdict(lambda: defaultdict(lambda: {'total': 0, '0': 0, '1': 0, '>1': 0}))
         self.source_uris = defaultdict(int)

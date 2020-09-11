@@ -53,7 +53,7 @@ class EDXML2CSV(EDXMLPullParser):
         self.__output_attachment_names = attachment_names or []
         self.__print_header_line = print_header_line
         self.__first_line_written = False
-        super(EDXML2CSV, self).__init__()
+        super().__init__()
 
     def _parsed_ontology(self, ontology):
 

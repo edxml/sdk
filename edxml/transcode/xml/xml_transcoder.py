@@ -81,7 +81,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
     """
 
     def __init__(self):
-        super(XmlTranscoder, self).__init__()
+        super().__init__()
 
         self._xpath_matchers = {}  # type: Dict[str, etree.XPath]
 

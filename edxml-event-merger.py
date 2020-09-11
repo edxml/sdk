@@ -54,8 +54,7 @@ from edxml.error import EDXMLValidationError
 class EDXMLEventMerger(EDXMLPullFilter):
 
     def __init__(self):
-
-        super(EDXMLEventMerger, self).__init__(sys.stdout.buffer)
+        super().__init__(sys.stdout.buffer)
         self.HashBuffer = {}
 
     def _parsed_event(self, event):
@@ -75,7 +74,7 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
 
     def __init__(self, event_buffer_size, latency):
 
-        super(BufferingEDXMLEventMerger, self).__init__(sys.stdout.buffer)
+        super().__init__(sys.stdout.buffer)
         self.__buffer_size = 0
         self.__max_latency = latency
         self.__max_buffer_size = event_buffer_size

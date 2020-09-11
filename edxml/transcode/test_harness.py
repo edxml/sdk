@@ -65,7 +65,7 @@ class TranscoderTestHarness(TranscoderMediator):
         parser = TestHarnessParser(self.events)
         # Below we use the parser as output of the mediator. The
         # parser will populate self.events.
-        super(TranscoderTestHarness, self).__init__(output=parser)
+        super().__init__(output=parser)
         self.transcoder = transcoder
 
     def process(self, record, selector=None):

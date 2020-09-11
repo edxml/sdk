@@ -43,8 +43,7 @@ from edxml.EDXMLFilter import EDXMLPullFilter
 
 class EDXMLEventGroupFilter(EDXMLPullFilter):
     def __init__(self, source_uri_pattern, event_type_name):
-
-        super(EDXMLEventGroupFilter, self).__init__(sys.stdout, False)
+        super().__init__(sys.stdout, False)
         self.__source_uri_pattern = source_uri_pattern
         self.__event_type_name = event_type_name
         self.__pass_through = True
@@ -69,7 +68,7 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
 
         parsed_ontology.validate()
 
-        super(EDXMLEventGroupFilter, self)._parsed_ontology(parsed_ontology)
+        super()._parsed_ontology(parsed_ontology)
 
     def _open_event_group(self, event_type_name, event_source_uri):
 
@@ -86,12 +85,11 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
             event_source_uri = None
 
         if self.__pass_through:
-            super(EDXMLEventGroupFilter, self)._open_event_group(
-                event_type_name, event_source_uri)
+            super()._open_event_group(event_type_name, event_source_uri)
 
     def _parsed_event(self, event):
         if self.__pass_through:
-            super(EDXMLEventGroupFilter, self)._parsed_event(event)
+            super()._parsed_event(event)
 
 
 parser = argparse.ArgumentParser(

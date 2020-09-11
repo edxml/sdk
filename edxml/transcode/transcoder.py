@@ -422,7 +422,7 @@ class Transcoder(object):
     """
 
     def __init__(self):
-        super(Transcoder, self).__init__()
+        super().__init__()
 
         self._ontology = None  # type: edxml.ontology.Ontology
 

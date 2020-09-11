@@ -84,7 +84,7 @@ class EDXMLWriter(object):
 
     def __init__(self, output=sys.stdout.buffer, validate=True, log_repaired_events=False, pretty_print=True):
 
-        super(EDXMLWriter, self).__init__()
+        super().__init__()
 
         self.__ontology = Ontology()            # type: Ontology
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]

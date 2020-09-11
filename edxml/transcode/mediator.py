@@ -41,7 +41,7 @@ class TranscoderMediator(object):
           output (file, optional): a file-like object
         """
 
-        super(TranscoderMediator, self).__init__()
+        super().__init__()
         self._debug = False
         self._warn_no_transcoder = False
         self._warn_fallback = False

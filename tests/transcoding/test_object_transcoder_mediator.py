@@ -35,7 +35,7 @@ def object_transcoder():
 
         @classmethod
         def create_event_type(cls, event_type_name, ontology):
-            event_type = super(TestObjectTranscoder, cls).create_event_type(event_type_name, ontology)
+            event_type = super().create_event_type(event_type_name, ontology)
 
             for prop in event_type.get_properties().values():
                 # For convenience we make all properties multi-valued to
@@ -118,7 +118,7 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
 
     class SourceGeneratingMediator(object_transcoder_mediator):
         def process(self, record):
-            super(SourceGeneratingMediator, self).process(record)
+            super().process(record)
             # After processing each element and outputting the resulting
             # event we generate an EDXML source uri that was not initially
             # added to the mediator. This forces the mediator to output

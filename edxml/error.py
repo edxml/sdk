@@ -21,7 +21,7 @@ class EDXMLMergeConflictError(EDXMLError):
         Args:
             events (List[edxml.EDXMLEvent]): Conflicting events
         """
-        super(EDXMLMergeConflictError, self).__init__(
+        super().__init__(
             'A merge conflict was detected between the following events:' + '\n'.join(
                 [etree.tostring(e, pretty_print=True, encoding='unicode') for e in events]
             )

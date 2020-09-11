@@ -197,7 +197,7 @@ def test_ontology_update(xml_transcoder, xml):
 
     class SourceGeneratingMediator(XmlTranscoderMediator):
         def process(self, element, tree=None):
-            super(SourceGeneratingMediator, self).process(element, tree)
+            super().process(element, tree)
             # After processing each element and outputting the resulting
             # event we generate an EDXML source uri that was not initially
             # added to the mediator. This forces the mediator to output

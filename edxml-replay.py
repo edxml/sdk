@@ -73,8 +73,7 @@ class EDXMLReplay(EDXMLPullFilter):
         self.current_event_type_name = None
 
         # Call parent class constructor
-        super(EDXMLReplay, self).__init__(
-            EDXMLReplay.UnbufferedStdout(sys.stdout))
+        super().__init__(EDXMLReplay.UnbufferedStdout(sys.stdout))
 
     def _parsed_event(self, event):
 

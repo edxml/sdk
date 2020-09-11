@@ -42,8 +42,7 @@ from edxml.EDXMLParser import EDXMLPullParser
 class EDXMLEventPrinter(EDXMLPullParser):
 
     def __init__(self, print_summaries=False, print_colorized=False):
-
-        super(EDXMLEventPrinter, self).__init__()
+        super().__init__()
         self.__print_summaries = print_summaries
         self.__colorize = print_colorized
 

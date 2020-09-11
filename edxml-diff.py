@@ -53,7 +53,7 @@ from edxml.event import EventElement
 class SortingParser(EDXMLPullParser):
 
     def __init__(self):
-        super(SortingParser, self).__init__()
+        super().__init__()
         self._events_by_hash = {}
 
     def _parsed_event(self, event):

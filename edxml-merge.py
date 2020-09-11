@@ -60,11 +60,11 @@ from edxml.EDXMLParser import ProcessingInterrupted
 class EDXMLMerger(EDXMLPullFilter):
     def __init__(self, merged_definitions):
         # Initialize source id / url mappings
-        super(EDXMLMerger, self).__init__(sys.stdout)
+        super().__init__(sys.stdout)
         self.merged_definitions = merged_definitions
 
     def _parsed_ontology(self, parsed_ontology):
-        super(EDXMLMerger, self)._parsed_ontology(self.merged_definitions)
+        super()._parsed_ontology(self.merged_definitions)
 
 
 parser = argparse.ArgumentParser(

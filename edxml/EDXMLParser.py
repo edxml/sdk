@@ -673,7 +673,7 @@ class EDXMLPushParser(EDXMLParserBase):
     """
 
     def __init__(self, validate=True, foreign_element_tags=[]):
-        super(EDXMLPushParser, self).__init__(validate)
+        super().__init__(validate)
         self.__foreign_element_tags = foreign_element_tags
         self.__inputParser = None
         self.__feed_target = None
@@ -756,7 +756,7 @@ class EDXMLOntologyPullParser(EDXMLPullParser):
     # an option to scan the full data stream for ontology info.
 
     def _parsed_ontology(self, ontology):
-        super(EDXMLOntologyPullParser, self)._parsed_ontology(ontology)
+        super()._parsed_ontology(ontology)
         raise ProcessingInterrupted
 
 
@@ -774,5 +774,5 @@ class EDXMLOntologyPushParser(EDXMLPushParser):
     # an option to scan the full data stream for ontology info.
 
     def _parsed_ontology(self, ontology):
-        super(EDXMLOntologyPushParser, self)._parsed_ontology(ontology)
+        super()._parsed_ontology(ontology)
         raise ProcessingInterrupted

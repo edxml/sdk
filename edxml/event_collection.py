@@ -22,12 +22,12 @@ class EventCollection(list):
             ontology (edxml.ontology.Ontology): Corresponding ontology
         """
         self._ontology = Ontology() if ontology is None else ontology
-        super(EventCollection, self).__init__(events)
+        super().__init__(events)
 
     def extend(self, iterable):
         if isinstance(iterable, EventCollection):
             self._ontology.update(iterable._ontology)
-        super(EventCollection, self).extend(iterable)
+        super().extend(iterable)
 
     def create_dict_by_hash(self):
         """
@@ -161,7 +161,7 @@ class EventCollection(list):
         """
         class Parser(EDXMLPullParser):
             def __init__(self, events):
-                super(Parser, self).__init__()
+                super().__init__()
                 self.event_set = events
 
             def _parsed_ontology(self, parsed_ontology):

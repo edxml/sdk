@@ -17,7 +17,7 @@ class XmlTranscoderTestHarness(TranscoderTestHarness):
             transcoder (edxml.transcode.Transcoder): The transcoder under test
             base_ontology (edxml.Ontology): Base ontology
         """
-        super(XmlTranscoderTestHarness, self).__init__(transcoder, base_ontology=base_ontology)
+        super().__init__(transcoder, base_ontology=base_ontology)
         self.fixtures_path = fixtures_path
 
     def process_xml(self, filename, transcoder_root='/', element_root=None):

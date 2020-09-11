@@ -150,7 +150,7 @@ Sometimes, you may need to inspect multiple fields in the input records in order
 
     def process(self, json):
       json['ctype'] = str(json['type']) + ':' + str(json['subtype'])
-      super(MyMediator, self).process(json)
+      super().process(json)
 
 Now we can register a transcoder using a record type of ``42:4673`` for instance. If you need even more complex record routing logic, writing a full replacement for the ``process()`` method is the way to go.
 

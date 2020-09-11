@@ -15,7 +15,7 @@ class ProcessingInterrupted(Exception):
 class EDXMLParserBase(object):
 
     def __init__(self, validate: bool=True) -> None:
-        super(EDXMLParserBase, self).__init__()
+        super().__init__()
 
         self._ontology = ...                # type: Ontology
         self._element_iterator = ...         # type: etree.Element
@@ -84,7 +84,7 @@ class EDXMLPullParser(EDXMLParserBase):
 class EDXMLPushParser(EDXMLParserBase):
 
     def __init__(self, validate: bool = True) -> None:
-        super(EDXMLPushParser).__init__(validate)
+        super().__init__(validate)
         self.__input_parser = ... # type: etree.XMLPullParser
         self.__feed_target = ... # type: object
 

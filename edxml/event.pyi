@@ -127,7 +127,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
     def __init__(self, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = None,
                  foreign_attribs: Dict[str, str]=None) -> None:
-        super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, attachments)
+        super().__init__(properties, event_type_name, source_uri, parents, attachments)
         self.__properties = ...  # type: Dict[str, Set[str]]
 
     def replace_invalid_characters(self, replace: bool=True) -> etree.Element: ...
@@ -175,7 +175,7 @@ class EventElement(EDXMLEvent):
     def __init__(self, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, str] = None,
                  foreign_attribs: Dict[str, str]=None) -> None:
-        super(EDXMLEvent).__init__(properties, event_type_name, source_uri, parents, attachments)
+        super().__init__(properties, event_type_name, source_uri, parents, attachments)
         self.__properties = ...  # type: Dict[str, Set[str]]
         self.__element = ...      # type: etree.Element
 

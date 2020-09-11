@@ -49,7 +49,7 @@ class EDXMLFilter(EDXMLParserBase):
     """
 
     def __init__(self):
-        super(EDXMLFilter, self).__init__()
+        super().__init__()
         self._writer = None  # type: EDXMLWriter
 
     def __enter__(self):
@@ -73,7 +73,7 @@ class EDXMLFilter(EDXMLParserBase):
           parsed_ontology (edxml.ontology.Ontology): The ontology
 
         """
-        super(EDXMLFilter, self)._parsed_ontology(parsed_ontology)
+        super()._parsed_ontology(parsed_ontology)
         self._writer.add_ontology(parsed_ontology)
 
     def _parsed_event(self, event):
@@ -90,7 +90,7 @@ class EDXMLFilter(EDXMLParserBase):
           event (edxml.ParsedEvent): The event
 
         """
-        super(EDXMLFilter, self)._parsed_event(event)
+        super()._parsed_event(event)
         self._writer.add_event(event)
 
 
@@ -104,7 +104,7 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
     """
 
     def __init__(self, output, validate=True):
-        super(EDXMLPullFilter, self).__init__()
+        super().__init__()
         self._writer = EDXMLWriter(output, validate)
 
     def _parsed_event(self, event):
@@ -121,5 +121,5 @@ class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
     """
 
     def __init__(self, output, validate=True):
-        super(EDXMLPushFilter, self).__init__()
+        super().__init__()
         self._writer = EDXMLWriter(output, validate)
