@@ -48,7 +48,7 @@ from edxml.ontology import Ontology
 from edxml.logger import log
 
 
-namespace = {None: 'http://edxml.org/edxml'}
+NAMESPACE_MAP = {None: 'http://edxml.org/edxml'}
 
 
 class EDXMLWriter(object):
@@ -247,7 +247,7 @@ class EDXMLWriter(object):
                 raise Exception(
                     'The installed version of lxml is too old. Please install version >= 3.4.')
             writer.write_declaration()
-            with writer.element('edxml', version='3.0.0', nsmap=namespace):
+            with writer.element('edxml', version='3.0.0', nsmap=NAMESPACE_MAP):
                 writer.flush()
                 try:
                     while True:
