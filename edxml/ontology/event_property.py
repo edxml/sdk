@@ -544,21 +544,8 @@ class EventProperty(OntologyElement):
         self.set_merge_strategy('max')
         return self
 
-    def validate(self):
-        """
+    def _validate_attributes(self):
 
-        Checks if the property definition is valid. It only looks
-        at the attributes of the property itself. Since it does
-        not have access to the full ontology, the context of
-        the property is not considered. For example, it does not
-        check if the object type in the property actually exist.
-
-        Raises:
-          EDXMLValidationError
-        Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
-
-        """
         if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
             raise EDXMLValidationError(
                 'Invalid property name in property definition: "%s"' % self.__attr['name'])
@@ -587,6 +574,23 @@ class EventProperty(OntologyElement):
                 'characters: "%s"' % (
                     self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
             )
+
+    def validate(self):
+        """
+
+        Checks if the property definition is valid. It only looks
+        at the attributes of the property itself. Since it does
+        not have access to the full ontology, the context of
+        the property is not considered. For example, it does not
+        check if the object type in the property actually exist.
+
+        Raises:
+          EDXMLValidationError
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+
+        """
+        self._validate_attributes()
 
         if self.__attr['merge'] in ('min', 'max') and self.is_optional():
             raise EDXMLValidationError(
