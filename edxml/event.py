@@ -131,7 +131,7 @@ class PropertySet(OrderedDict):
         except KeyError:
             pass
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict=None):
         return PropertySet(dict(self), update_property=self._update_property)
 
 
@@ -150,7 +150,7 @@ class PropertyObjectSet(set, MutableSet):
         if update is not None:
             self._update = update
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict=None):
         return PropertyObjectSet(self.__property_name, [deepcopy(v) for v in self], self._update)
 
     def __eq__(self, other):
