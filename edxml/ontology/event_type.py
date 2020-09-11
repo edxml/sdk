@@ -1863,6 +1863,21 @@ class EventType(OntologyElement, MutableMapping):
           edxml.EDXMLEvent: Merged event
         """
 
+        # Below is a mapping from EDXML data types to Python types
+        # used for comparing object values.
+        types = {
+            'datetime': str,  # Datetime objects can be ordered lexicographically.
+            'sequence': int,
+            'number:tinyint': int,
+            'number:smallint': int,
+            'number:mediumint': int,
+            'number:int': int,
+            'number:bigint': int,
+            'number:float': float,
+            'number:double': float,
+            'number:decimal': Decimal
+        }
+
         event_properties = defaultdict(list)
         parents = set()
 
@@ -1884,31 +1899,11 @@ class EventType(OntologyElement, MutableMapping):
         output_properties = {}
         for property_name, objects in event_properties.items():
             strategy = self.__properties[property_name].get_merge_strategy()
-            data_type = self.__properties[property_name].get_data_type().get_split()
+            data_type = ':'.join(self.__properties[property_name].get_data_type().get_split()[0:2])
             if strategy == 'min':
-                if data_type[0] == 'datetime':
-                    # Datetime objects can be ordered lexicographically.
-                    output_properties[property_name] = [min(event_properties[property_name])]
-                elif data_type[0] == 'number':
-                    if data_type[1] in ('float', 'double'):
-                        output_properties[property_name] = [min(event_properties[property_name], key=float)]
-                    elif data_type[1] == 'decimal':
-                        output_properties[property_name] = [min(event_properties[property_name], key=Decimal)]
+                output_properties[property_name] = [min(event_properties[property_name], key=types[data_type])]
             elif strategy == 'max':
-                if data_type[0] == 'datetime':
-                    # Datetime objects can be ordered lexicographically.
-                    output_properties[property_name] = [max(event_properties[property_name])]
-                elif data_type[0] == 'number':
-                    if data_type[1] in ('float', 'double'):
-                        output_properties[property_name] = [max(event_properties[property_name], key=float)]
-                    elif data_type[1] == 'decimal':
-                        output_properties[property_name] = [max(event_properties[property_name], key=Decimal)]
-                    else:
-                        # Data type must be one of the integer types
-                        output_properties[property_name] = [max(event_properties[property_name], key=int)]
-                else:
-                    # Data type must be 'sequence'
-                    output_properties[property_name] = [max(event_properties[property_name], key=int)]
+                output_properties[property_name] = [max(event_properties[property_name], key=types[data_type])]
             elif strategy == 'add':
                 output_properties[property_name] = set(event_properties[property_name])
             elif strategy == 'replace':
