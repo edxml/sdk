@@ -248,7 +248,7 @@ class DataType(object):
           DataType:
         """
 
-        return cls('base64')
+        return cls('base64:%d' % length)
 
     @classmethod
     def enum(cls, *choices):
@@ -811,6 +811,178 @@ class DataType(object):
                         [repr(value) for value in values])
                 )
 
+    def _validate_value_datetime(self, value):
+        if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
+            raise EDXMLValidationError("Invalid value for data type %s: '%s'." % (self.type, value))
+
+    def _validate_value_sequence(self, value):
+        try:
+            int(value)
+        except (TypeError, ValueError):
+            raise EDXMLValidationError("Invalid sequence value '%s'." % value)
+        if int(value) < 0:
+            raise EDXMLValidationError("Negative sequence value: %s" % value)
+
+    def _validate_value_number(self, value):
+        split_data_type = self.type.split(':')
+
+        if split_data_type[1] == 'decimal':
+            try:
+                Decimal(value)
+            except decimal.InvalidOperation:
+                raise EDXMLValidationError("Invalid EDXML decimal value: '%s'." % value)
+            if len(split_data_type) < 5:
+                # Decimal is unsigned.
+                if Decimal(value) < 0:
+                    raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
+        elif split_data_type[1] == 'float' or split_data_type[1] == 'double':
+            try:
+                float(value)
+            except ValueError:
+                raise EDXMLValidationError("Invalid floating point number '%s'." % value)
+            if len(split_data_type) < 3:
+                # number is unsigned.
+                if float(value) < 0:
+                    raise EDXMLValidationError("Unsigned floating point value is negative: '%s'." % value)
+            pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
+            if not re.match(r'^' + pattern + r'$', value):
+                raise EDXMLValidationError("Invalid EDXML floating point value: '%s'." % value)
+
+        else:
+            try:
+                value = int(value)
+            except (TypeError, ValueError):
+                raise EDXMLValidationError("Invalid number '%s'." % value)
+
+            if len(split_data_type) < 3:
+                # number is unsigned.
+                if value < 0:
+                    raise EDXMLValidationError("Unsigned integer value is negative: '%s'." % value)
+
+    def _validate_value_hex(self, value):
+        split_data_type = self.type.split(':')
+
+        if value.lower() != value:
+            raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+
+        if len(split_data_type) > 2:
+            # TODO: Also check for empty groups, or more generically: group size.
+            hex_separator = split_data_type[3]
+            if len(hex_separator) == 0 and len(split_data_type) == 5:
+                hex_separator = ':'
+            value = ''.join(c for c in str(value) if c != hex_separator)
+
+        try:
+            codecs.decode(value.encode(), 'hex')
+        except (TypeError, ValueError):
+            raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
+
+    def _validate_value_uuid(self, value):
+        if not re.match(self.UUID_PATTERN, value):
+            raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
+
+    def _validate_value_geo(self, value):
+        split_data_type = self.type.split(':')
+
+        if split_data_type[1] != 'point':
+            raise EDXMLValidationError("Unknown geo data type family member: '%s'" % split_data_type[1])
+
+        split_geo_point = value.split(',')
+
+        if len(split_geo_point) != 2:
+            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        if len(split_geo_point[0].split('.')) != 2:
+            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        if len(split_geo_point[1].split('.')) != 2:
+            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        if len(split_geo_point[0].split('.')[1]) != 6:
+            raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
+        if len(split_geo_point[1].split('.')[1]) != 6:
+            raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
+        try:
+            geo_lat = float(split_geo_point[0])
+            geo_lon = float(split_geo_point[1])
+        except (TypeError, ValueError):
+            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        if geo_lat < -90 or geo_lat > 90:
+            raise EDXMLValidationError(
+                "The geo:point value '%s' contains a latitude that is not within range [-90,90]." % value)
+        if geo_lon < -180 or geo_lon > 180:
+            raise EDXMLValidationError(
+                "The geo:point value '%s' contains a longitude that is not within range [-180,180]." % value)
+        if not re.match(r'[+-]\d+', split_geo_point[0]):
+            raise EDXMLValidationError(
+                "The geo:point value '%s' contains a latitude that is not formatted correctly. "
+                "Please check the specification for formatting requirements." % value
+            )
+        if not re.match(r'[+-]\d+', split_geo_point[1]):
+            raise EDXMLValidationError(
+                "The geo:point value '%s' contains a longitude that is not formatted correctly. "
+                "Please check the specification for formatting requirements." % value
+            )
+
+    def _validate_value_string(self, value):
+        split_data_type = self.type.split(':')
+
+        # Check length of object value
+        max_string_length = int(split_data_type[1])
+        if max_string_length > 0:
+            if len(value) > max_string_length:
+                raise EDXMLValidationError("string too long for data type %s: '%s'" % (self.type, value))
+
+        if split_data_type[2] == 'ci':
+            if value.lower() != value:
+                raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+
+        # Check character set of object value
+        if len(split_data_type) < 4 or 'u' not in split_data_type[3]:
+            # String should only contain latin1 characters.
+            try:
+                str(value).encode('latin1')
+            except (LookupError, ValueError):
+                raise EDXMLValidationError(
+                    "string of data type %s contains unicode characters: %s" % (self.type, value)
+                )
+
+    def _validate_value_uri(self, value):
+        # URI values can be any string, nothing to validate.
+        ...
+
+    def _validate_value_base64(self, value):
+        split_data_type = self.type.split(':')
+
+        try:
+            decoded = base64.decodebytes(value.encode())
+        except (AttributeError, ValueError):
+            raise EDXMLValidationError("Invalid base64 encoded string: '%s'" % value)
+
+        max_string_length = int(split_data_type[1])
+
+        if max_string_length > 0:
+            if len(decoded) > max_string_length:
+                raise EDXMLValidationError("base64 encoded string too long for data type %s: '%s'" % (self.type, value))
+
+    def _validate_value_hashlink(self, value):
+        if not re.match(self.HASHLINK_PATTERN, value):
+            raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
+
+    def _validate_value_ip(self, value):
+        try:
+            ip = IP(value)
+        except ValueError:
+            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+        if ip.version() != 4 or ip.strNormal() != value:
+            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+
+    def _validate_value_boolean(self, value):
+        if value not in ['true', 'false']:
+            raise EDXMLValidationError("Invalid boolean: '%s'" % value)
+
+    def _validate_value_enum(self, value):
+        split_data_type = self.type.split(':')
+        if value not in split_data_type[1:]:
+            raise EDXMLValidationError("Invalid value for data type %s: '%s'" % (self.type, value))
+
     def validate_object_value(self, value):
         """
 
@@ -826,176 +998,41 @@ class DataType(object):
            edxml.ontology.DataType:
         """
         if not isinstance(value, str):
-            raise EDXMLValidationError(
-                'Value for data type %s is not a string: %s' % (self.type, repr(value)))
+            raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
 
         if value == '':
-            raise EDXMLValidationError("Value of %s object is empty." % self.type)
+            raise EDXMLValidationError(
+                "Value of %s object is empty. Empty object values are not valid and must be omitted." % self.type
+            )
 
-        split_data_type = self.type.split(':')
+        data_type_family = self.get_family()
 
-        if split_data_type[0] == 'datetime':
-            if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
-                raise EDXMLValidationError(
-                    "Invalid value for data type %s: '%s'." % (self.type, value))
-        elif split_data_type[0] == 'sequence':
-            try:
-                int(value)
-            except (TypeError, ValueError):
-                raise EDXMLValidationError(
-                    "Invalid sequence value '%s'." % value)
-            if int(value) < 0:
-                raise EDXMLValidationError("Negative sequence value: %s" % value)
-        elif split_data_type[0] == 'number':
-            if split_data_type[1] == 'decimal':
-                try:
-                    Decimal(value)
-                except decimal.InvalidOperation:
-                    raise EDXMLValidationError("Invalid EDXML decimal value: '%s'." % value)
-                if len(split_data_type) < 5:
-                    # Decimal is unsigned.
-                    if Decimal(value) < 0:
-                        raise EDXMLValidationError(
-                            "Unsigned decimal value '%s' is negative." % value)
-            elif split_data_type[1] == 'float' or split_data_type[1] == 'double':
-                try:
-                    float(value)
-                except ValueError:
-                    raise EDXMLValidationError(
-                        "Invalid floating point number '%s'." % value)
-                if len(split_data_type) < 3:
-                    # number is unsigned.
-                    if float(value) < 0:
-                        raise EDXMLValidationError(
-                            "Unsigned floating point value is negative: '%s'." % value)
-                pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
-                if not re.match(r'^' + pattern + r'$', value):
-                    raise EDXMLValidationError("Invalid EDXML floating point value: '%s'." % value)
-
-            else:
-                try:
-                    value = int(value)
-                except (TypeError, ValueError):
-                    raise EDXMLValidationError("Invalid number '%s'." % value)
-                if len(split_data_type) < 3:
-                    # number is unsigned.
-                    if value < 0:
-                        raise EDXMLValidationError(
-                            "Unsigned integer value is negative: '%s'." % value)
-        elif split_data_type[0] == 'hex':
-            if value.lower() != value:
-                raise EDXMLValidationError(
-                    "string of data type %s must be all lowercase: %s" % (self.type, value))
-            if len(split_data_type) > 2:
-                # TODO: Also check for empty groups, or more generically: group size.
-                hex_separator = split_data_type[3]
-                if len(hex_separator) == 0 and len(split_data_type) == 5:
-                    hex_separator = ':'
-                value = ''.join(c for c in str(value) if c != hex_separator)
-            try:
-                codecs.decode(value.encode('utf-8'), 'hex')
-            except (TypeError, ValueError):
-                raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
-        elif split_data_type[0] == 'uuid':
-            if not re.match(self.UUID_PATTERN, value):
-                raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
-        elif split_data_type[0] == 'geo':
-            if split_data_type[1] == 'point':
-                # This is the only option at the moment.
-                split_geo_point = value.split(',')
-                if len(split_geo_point) != 2:
-                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
-                if len(split_geo_point[0].split('.')) != 2:
-                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
-                if len(split_geo_point[1].split('.')) != 2:
-                    raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
-                if len(split_geo_point[0].split('.')[1]) != 6:
-                    raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
-                if len(split_geo_point[1].split('.')[1]) != 6:
-                    raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
-                try:
-                    geo_lat = float(split_geo_point[0])
-                    geo_lon = float(split_geo_point[1])
-                except (TypeError, ValueError):
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' is not formatted correctly." % value)
-                if geo_lat < -90 or geo_lat > 90:
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' contains a latitude that is not within range [-90,90]." % value)
-                if geo_lon < -180 or geo_lon > 180:
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' contains a longitude that is not within range [-180,180]." % value)
-                if not re.match(r'[+-]\d+', split_geo_point[0]):
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' contains a latitude that is not formatted correctly. "
-                        "Please check the specification for formatting requirements." % value
-                    )
-                if not re.match(r'[+-]\d+', split_geo_point[1]):
-                    raise EDXMLValidationError(
-                        "The geo:point value '%s' contains a longitude that is not formatted correctly. "
-                        "Please check the specification for formatting requirements." % value
-                    )
-            else:
-                raise EDXMLValidationError(
-                    "Invalid geo data type: '%s'" % value)
-        elif split_data_type[0] == 'string':
-
-            # Check length of object value
-            max_string_length = int(split_data_type[1])
-            if max_string_length > 0:
-                if len(value) > max_string_length:
-                    raise EDXMLValidationError(
-                        "string too long for data type %s: '%s'" % (self.type, value))
-
-            if split_data_type[2] == 'ci':
-                if value.lower() != value:
-                    raise EDXMLValidationError(
-                        "string of data type %s must be all lowercase: %s" % (self.type, value))
-
-            # Check character set of object value
-            if len(split_data_type) < 4 or 'u' not in split_data_type[3]:
-                # String should only contain latin1 characters.
-                try:
-                    str(value).encode('latin1')
-                except (LookupError, ValueError):
-                    raise EDXMLValidationError(
-                        "string of data type %s contains unicode characters: %s" % (self.type, value))
-        elif split_data_type[0] == 'uri':
-            # URI values can be any string, nothing to validate.
-            pass
-        elif split_data_type[0] == 'base64':
-
-            # Check length of object value
-            try:
-                decoded = base64.decodebytes(value.encode('utf-8'))
-            except (AttributeError, ValueError):
-                raise EDXMLValidationError(
-                    "Invalid base64 encoded string: '%s'" % value)
-
-            max_string_length = int(split_data_type[1])
-
-            if max_string_length > 0:
-                if len(decoded) > max_string_length:
-                    raise EDXMLValidationError(
-                        "base64 encoded string too long for data type %s: '%s'" % (self.type, value))
-        elif split_data_type[0] == 'hashlink':
-            if not re.match(self.HASHLINK_PATTERN, value):
-                raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
-        elif split_data_type[0] == 'ip':
-            try:
-                ip = IP(value)
-            except ValueError:
-                raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
-            if ip.version() != 4 or ip.strNormal() != value:
-                raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
-        elif split_data_type[0] == 'boolean':
-            object_string = value.lower()
-            if object_string not in ['true', 'false']:
-                raise EDXMLValidationError("Invalid boolean: '%s'" % value)
-        elif split_data_type[0] == 'enum':
-            if value not in split_data_type[1:]:
-                raise EDXMLValidationError(
-                    "Invalid value for data type %s: '%s'" % (self.type, value))
+        if data_type_family == 'datetime':
+            self._validate_value_datetime(value)
+        elif data_type_family == 'sequence':
+            self._validate_value_sequence(value)
+        elif data_type_family == 'number':
+            self._validate_value_number(value)
+        elif data_type_family == 'hex':
+            self._validate_value_hex(value)
+        elif data_type_family == 'uuid':
+            self._validate_value_uuid(value)
+        elif data_type_family == 'geo':
+            self._validate_value_geo(value)
+        elif data_type_family == 'string':
+            self._validate_value_string(value)
+        elif data_type_family == 'uri':
+            self._validate_value_uri(value)
+        elif data_type_family == 'base64':
+            self._validate_value_base64(value)
+        elif data_type_family == 'hashlink':
+            self._validate_value_hashlink(value)
+        elif data_type_family == 'ip':
+            self._validate_value_ip(value)
+        elif data_type_family == 'boolean':
+            self._validate_value_boolean(value)
+        elif data_type_family == 'enum':
+            self._validate_value_enum(value)
         else:
             raise EDXMLValidationError("Invalid data type: '%s'" % self.type)
 
