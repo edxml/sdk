@@ -7,10 +7,10 @@ from lxml import etree
 import edxml.ontology
 
 from edxml.error import EDXMLValidationError
-from edxml.ontology import OntologyElement, normalize_xml_token
+from edxml.ontology import VersionedOntologyElement, normalize_xml_token
 
 
-class Concept(OntologyElement):
+class Concept(VersionedOntologyElement):
     """
     Class representing an EDXML concept
     """

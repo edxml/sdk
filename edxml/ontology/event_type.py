@@ -14,7 +14,7 @@ from lxml.builder import ElementMaker
 import edxml.template
 import edxml.ontology
 
-from .ontology_element import OntologyElement
+from .ontology_element import VersionedOntologyElement
 from .event_property import EventProperty
 from .event_type_parent import EventTypeParent
 from .event_property_relation import PropertyRelation
@@ -23,7 +23,7 @@ from .util import normalize_xml_token
 from edxml.error import EDXMLValidationError, EDXMLMergeConflictError
 
 
-class EventType(OntologyElement, MutableMapping):
+class EventType(VersionedOntologyElement, MutableMapping):
     """
     Class representing an EDXML event type. The class provides
     access to event properties by means of a dictionary interface.

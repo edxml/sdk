@@ -42,7 +42,7 @@ sources, and so on.
 """
 
 
-from .ontology_element import OntologyElement
+from .ontology_element import OntologyElement, VersionedOntologyElement
 from .util import normalize_xml_token
 from .ontology import Ontology
 from .data_type import DataType
@@ -60,4 +60,4 @@ from .brick import Brick
 
 __all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
            'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick', 'PropertyConcept', 'EventTypeAttachment',
-           'normalize_xml_token']
+           'normalize_xml_token', 'VersionedOntologyElement']

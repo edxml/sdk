@@ -8,10 +8,10 @@ from lxml import etree
 import edxml.ontology
 
 from edxml.error import EDXMLValidationError
-from edxml.ontology import OntologyElement
+from edxml.ontology import VersionedOntologyElement
 
 
-class EventSource(OntologyElement):
+class EventSource(VersionedOntologyElement):
     """
     Class representing an EDXML event source
     """

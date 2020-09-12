@@ -10,11 +10,11 @@ import edxml.ontology
 from edxml.error import EDXMLValidationError
 
 from .data_type import DataType
-from .ontology_element import OntologyElement
+from .ontology_element import VersionedOntologyElement
 from .util import normalize_xml_token
 
 
-class ObjectType(OntologyElement):
+class ObjectType(VersionedOntologyElement):
     """
     Class representing an EDXML object type
     """

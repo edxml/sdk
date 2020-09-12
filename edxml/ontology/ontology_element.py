@@ -28,3 +28,20 @@ class OntologyElement(object):
 
     def generate_xml(self):
         return None
+
+
+class VersionedOntologyElement(OntologyElement):
+    """
+    An ontology element that is versioned, such as an object type,
+    concept, event type or an event source.
+    """
+
+    def get_version(self):
+        """
+
+        Returns the version of the ontology element
+
+        Returns:
+            int: Element version
+        """
+        return 0
