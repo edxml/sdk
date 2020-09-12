@@ -5,6 +5,7 @@ from lxml import etree
 
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, EventType, EventProperty, normalize_xml_token
+from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
 
 class PropertyConcept(OntologyElement):
@@ -333,25 +334,7 @@ class PropertyConcept(OntologyElement):
         if is_valid_upgrade and versions_differ:
             return -1 if other_is_newer else 1
 
-        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
-
-        old_version = str(old.__event_type.get_version())
-        new_version = str(new.__event_type.get_version())
-
-        if not versions_differ:
-            new_version += ' (conflicting definition)'
-
-        raise EDXMLValidationError(
-            "Definitions of event type {} are {} due to the following difference in property concept associations:\n"
-            "Version {}:\n{}\nVersion {}:\n{}".format(
-                self.__event_type.get_name(),
-                problem,
-                old_version,
-                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
-                new_version,
-                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
-            )
-        )
+        event_type_element_upgrade_error('property/concept association', old, new, old.__event_type, new.__event_type)
 
     def __eq__(self, other):
         return self.__cmp__(other) == 0

@@ -8,6 +8,7 @@ import edxml.ontology
 
 from edxml.error import EDXMLValidationError
 from edxml.ontology import VersionedOntologyElement, normalize_xml_token
+from edxml.ontology.ontology_element import ontology_element_upgrade_error
 
 
 class Concept(VersionedOntologyElement):
@@ -291,24 +292,7 @@ class Concept(VersionedOntologyElement):
         if versions_differ:
             return -1 if other_is_newer else 1
 
-        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
-
-        old_version = str(old.get_version())
-        new_version = str(new.get_version())
-
-        if not versions_differ:
-            new_version += ' (conflicting definition)'
-
-        raise EDXMLValidationError(
-            "Concept definitions are {} due to the following difference in their definitions:\n"
-            "Version {}:\n{}\nVersion {}:\n{}".format(
-                problem,
-                old_version,
-                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
-                new_version,
-                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
-            )
-        )
+        ontology_element_upgrade_error('concept', old, new)
 
     def __eq__(self, other):
         return self.__cmp__(other) == 0

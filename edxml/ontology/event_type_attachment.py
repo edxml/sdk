@@ -6,6 +6,7 @@ from lxml import etree
 
 import edxml.template
 
+from edxml.ontology.ontology_element import event_type_element_upgrade_error
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 
@@ -382,27 +383,7 @@ class EventTypeAttachment(OntologyElement):
         if is_valid_upgrade and versions_differ:
             return -1 if other_is_newer else 1
 
-        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
-
-        old_version = str(old._event_type.get_version())
-        new_version = str(new._event_type.get_version())
-
-        if not versions_differ:
-            new_version += ' (conflicting definition)'
-
-        raise EDXMLValidationError(
-            "Definitions of event type {} are {} due to the following difference in the definitions "
-            "of their {} attachment:"
-            "\nVersion {}:\n{}\nVersion {}:\n{}".format(
-                self._event_type.get_name(),
-                problem,
-                self.get_name(),
-                old_version,
-                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
-                new_version,
-                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
-            )
-        )
+        event_type_element_upgrade_error('attachment', old, new, old._event_type, new._event_type)
 
     def __eq__(self, other):
         return self.__cmp__(other) == 0

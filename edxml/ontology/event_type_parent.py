@@ -7,6 +7,7 @@ import edxml.ontology
 from lxml import etree
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
+from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
 
 class EventTypeParent(OntologyElement):
@@ -310,24 +311,8 @@ class EventTypeParent(OntologyElement):
         if is_valid_upgrade and versions_differ:
             return -1 if other_is_newer else 1
 
-        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
-
-        old_version = str(old._child_event_type.get_version())
-        new_version = str(new._child_event_type.get_version())
-
-        if not versions_differ:
-            new_version += ' (conflicting definition)'
-
-        raise EDXMLValidationError(
-            "Definitions of event type {} are {} due to the following difference in their parent definitions:\n"
-            "Version {}:\n{}\nVersion {}:\n{}".format(
-                self._child_event_type.get_name(),
-                problem,
-                old_version,
-                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
-                new_version,
-                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
-            )
+        event_type_element_upgrade_error(
+            'child/parent association', old, new, old._child_event_type, new._child_event_type
         )
 
     def __eq__(self, other):

@@ -14,7 +14,7 @@ from lxml.builder import ElementMaker
 import edxml.template
 import edxml.ontology
 
-from .ontology_element import VersionedOntologyElement
+from .ontology_element import VersionedOntologyElement, ontology_element_upgrade_error
 from .event_property import EventProperty
 from .event_type_parent import EventTypeParent
 from .event_property_relation import PropertyRelation
@@ -1389,24 +1389,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         if is_valid_upgrade and versions_differ:
             return -1 if other_is_newer else 1
 
-        problem = 'invalid upgrades / downgrades of one another' if versions_differ else 'in conflict'
-
-        old_version = str(old.get_version())
-        new_version = str(new.get_version())
-
-        if not versions_differ:
-            new_version += ' (conflicting definition)'
-
-        raise EDXMLValidationError(
-            "Event type definitions are {} due to the following difference in their definitions:\n"
-            "Version {}:\n{}\nVersion {}:\n{}".format(
-                problem,
-                old_version,
-                etree.tostring(old.generate_xml(), pretty_print=True, encoding='unicode'),
-                new_version,
-                etree.tostring(new.generate_xml(), pretty_print=True, encoding='unicode')
-            )
-        )
+        ontology_element_upgrade_error('event type', old, new)
 
     def __eq__(self, other):
         return self.__cmp__(other) == 0
