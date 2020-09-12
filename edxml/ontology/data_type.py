@@ -647,6 +647,138 @@ class DataType(object):
 
         return element
 
+    def _normalize_datetime(self, values):
+        normalized = set()
+        for value in values:
+            if isinstance(value, datetime):
+                normalized.add(self.format_utc_datetime(value))
+            elif isinstance(value, str):
+                try:
+                    normalized.add(self.format_utc_datetime(parse(value)))
+                except Exception:
+                    raise EDXMLValidationError('Invalid datetime string: %s' % value)
+        return normalized
+
+    def _normalize_number(self, values):
+        split_data_type = self.type.split(':')
+
+        if split_data_type[1] == 'decimal':
+            decimal_precision = split_data_type[3]
+            try:
+                return {('%.' + decimal_precision + 'f') % Decimal(value) for value in values}
+            except TypeError:
+                raise EDXMLValidationError(
+                    'Invalid decimal value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
+        elif split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
+            try:
+                return {'%d' % int(value) for value in values}
+            except (TypeError, ValueError):
+                raise EDXMLValidationError(
+                    'Invalid integer value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
+        elif split_data_type[1] in ['float', 'double']:
+            try:
+                normalized = set()
+                for value in values:
+                    value = '%.6E' % float(value)
+                    mantissa, exponent = value.split('E')
+                    if mantissa in ('0.000000', '-0.000000'):
+                        normalized.add('0.000000E+000')
+                    else:
+                        normalized.add('%sE%+04d' % (mantissa, int(exponent)))
+            except ValueError:
+                raise EDXMLValidationError(
+                    'Invalid floating point value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
+            else:
+                return normalized
+
+    def _normalize_hex(self, values):
+        try:
+            return {str(value.lower()) for value in values}
+        except AttributeError:
+            raise EDXMLValidationError(
+                'Invalid hexadecimal value in list: "%s"' % '","'.join([repr(value) for value in values])
+            )
+
+    def _normalize_uri(self, values):
+        split_data_type = self.type.split(':')
+        path_separator = ':' if split_data_type[1] == '' else split_data_type[1]
+
+        normalized = set()
+        for value in values:
+            # Note that we cannot safely re-quote URIs in case there
+            # is a problem with quoting of special characters. For example,
+            # the path may contain both literal slashes and escaped ones. The
+            # server may interpret the literal slashes as path separators but not
+            # the quoted ones. When unquoting and requoting, this difference is
+            # lost. So we will not attempt to do that here. We will only apply
+            # quoting in case there are illegal characters in the URI and no percent
+            # encoding is present, which implies that the URI has not been quoted at all.
+            try:
+                scheme, netloc, path, qs, anchor = urlsplit(value)
+            except ValueError:
+                continue
+
+            # Note that a path may start with a slash irrespective of the actual path separator.
+            path = urllib.parse.quote(path, '/' + path_separator)
+            # Quote the query part.
+            qs = urllib.parse.quote_plus(qs, ':&=')
+            # Reconstruct normalized value.
+            normalized.add(urlunsplit(
+                (scheme, netloc, path, qs, anchor))
+            )
+        return normalized
+
+    def _normalize_ip(self, values):
+        normalized = set()
+        for value in values:
+            if not isinstance(value, IP):
+                try:
+                    value = IP(value)
+                except (ValueError, TypeError):
+                    raise EDXMLValidationError(
+                        'Invalid IPv4 address in list: "%s"' % '","'.join([repr(value) for value in values])
+                    )
+            normalized.add(str(value))
+        return normalized
+
+    def _normalize_geo(self, values):
+        split_data_type = self.type.split(':')
+        if split_data_type[1] == 'point':
+            try:
+                return {'%.6f,%.6f' % tuple(float(coord) for coord in value.split(',')) for value in values}
+            except (ValueError, TypeError):
+                raise EDXMLValidationError(
+                    'Invalid geo:point value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
+
+    def _normalize_string(self, values):
+        split_data_type = self.type.split(':')
+
+        try:
+            if split_data_type[2] == 'ci':
+                return {str(value.lower()) for value in values}
+            else:
+                return {str(value) for value in values}
+        except AttributeError:
+            raise EDXMLValidationError(
+                'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
+            )
+
+    def _normalize_base64(self, values):
+        try:
+            {base64.decodebytes(value.encode('utf-8')) for value in values}
+        except (AttributeError, ValueError):
+            raise EDXMLValidationError(
+                'Invalid base64 value in list: "%s"' % '","'.join([repr(value) for value in values])
+            )
+        return values
+
+    def _normalize_boolean(self, values):
+        return {'true' if value in (True, 'true', 'True', 1) else 'false' for value in values}
+
     def normalize_objects(self, values):
         """Normalize values to valid EDXML object value strings
 
@@ -675,140 +807,30 @@ class DataType(object):
         split_data_type = self.type.split(':')
 
         if split_data_type[0] == 'datetime':
-            normalized = set()
-            for value in values:
-                if isinstance(value, datetime):
-                    normalized.add(self.format_utc_datetime(value))
-                elif isinstance(value, str):
-                    try:
-                        normalized.add(self.format_utc_datetime(parse(value)))
-                    except Exception:
-                        raise EDXMLValidationError(
-                            'Invalid datetime string: %s' % value)
-            return normalized
+            return self._normalize_datetime(values)
         elif split_data_type[0] == 'number':
-            if split_data_type[1] == 'decimal':
-                decimal_precision = split_data_type[3]
-                try:
-                    return {('%.' + decimal_precision + 'f') % Decimal(value) for value in values}
-                except TypeError:
-                    raise EDXMLValidationError(
-                        'Invalid decimal value in list: "%s"' % '","'.join(
-                            [repr(value) for value in values])
-                    )
-            elif split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
-                try:
-                    return {'%d' % int(value) for value in values}
-                except (TypeError, ValueError):
-                    raise EDXMLValidationError(
-                        'Invalid integer value in list: "%s"' % '","'.join(
-                            [repr(value) for value in values])
-                    )
-            elif split_data_type[1] in ['float', 'double']:
-                try:
-                    normalized = set()
-                    for value in values:
-                        value = '%.6E' % float(value)
-                        mantissa, exponent = value.split('E')
-                        if mantissa in ('0.000000', '-0.000000'):
-                            normalized.add('0.000000E+000')
-                        else:
-                            normalized.add('%sE%+04d' % (mantissa, int(exponent)))
-                except ValueError:
-                    raise EDXMLValidationError(
-                        'Invalid floating point value in list: "%s"' % '","'.join(
-                            [repr(value) for value in values])
-                    )
-                else:
-                    return normalized
-
+            return self._normalize_number(values)
         elif split_data_type[0] == 'hex':
-            try:
-                return {str(value.lower()) for value in values}
-            except AttributeError:
-                raise EDXMLValidationError(
-                    'Invalid hexadecimal value in list: "%s"' % '","'.join(
-                        [repr(value) for value in values])
-                )
-
+            return self._normalize_hex(values)
         elif split_data_type[0] == 'uri':
-            path_separator = ':' if split_data_type[1] == '' else split_data_type[1]
-            normalized = set()
-            for value in values:
-                # Note that we cannot safely re-quote URIs in case there
-                # is a problem with quoting of special characters. For example,
-                # the path may contain both literal slashes and escaped ones. The
-                # server may interpret the literal slashes as path separators but not
-                # the quoted ones. When unquoting and requoting, this difference is
-                # lost. So we will not attempt to do that here. We will only apply
-                # quoting in case there are illegal characters in the URI and no percent
-                # encoding is present, which implies that the URI has not been quoted at all.
-                try:
-                    scheme, netloc, path, qs, anchor = urlsplit(value)
-                except ValueError:
-                    continue
-
-                # Note that a path may start with a slash irrespective of the actual path separator.
-                path = urllib.parse.quote(path, '/' + path_separator)
-                # Quote the query part.
-                qs = urllib.parse.quote_plus(qs, ':&=')
-                # Reconstruct normalized value.
-                normalized.add(urlunsplit(
-                    (scheme, netloc, path, qs, anchor))
-                )
-            return normalized
-
+            return self._normalize_uri(values)
         elif split_data_type[0] == 'ip':
-            normalized = set()
-            for value in values:
-                if not isinstance(value, IP):
-                    try:
-                        value = IP(value)
-                    except (ValueError, TypeError):
-                        raise EDXMLValidationError(
-                            'Invalid IPv4 address in list: "%s"' % '","'.join(
-                                [repr(value) for value in values])
-                        )
-                normalized.add(str(value))
-            return normalized
+            return self._normalize_ip(values)
         elif split_data_type[0] == 'geo':
-            if split_data_type[1] == 'point':
-                try:
-                    return {'%.6f,%.6f' % tuple(float(coord) for coord in value.split(',')) for value in values}
-                except (ValueError, TypeError):
-                    raise EDXMLValidationError(
-                        'Invalid geo:point value in list: "%s"' % '","'.join(
-                            [repr(value) for value in values])
-                    )
+            return self._normalize_geo(values)
         elif split_data_type[0] == 'string':
-            try:
-                if split_data_type[2] == 'ci':
-                    return {str(value.lower()) for value in values}
-                else:
-                    return {str(value) for value in values}
-            except AttributeError:
-                raise EDXMLValidationError(
-                    'Invalid string value in list: "%s"' % '","'.join(
-                        [repr(value) for value in values])
-                )
+            return self._normalize_string(values)
         elif split_data_type[0] == 'base64':
-            try:
-                {base64.decodebytes(value.encode('utf-8')) for value in values}
-            except (AttributeError, ValueError):
-                raise EDXMLValidationError(
-                    'Invalid byte string value in list: "%s"' % '","'.join(
-                        [repr(value) for value in values])
-                )
-            return values
+            return self._normalize_base64(values)
         elif split_data_type[0] == 'boolean':
-            return {'true' if value in (True, 'true', 'True', 1) else 'false' for value in values}
+            return self._normalize_boolean(values)
         else:
             try:
                 return {str(value) for value in values}
             except AttributeError:
                 raise EDXMLValidationError(
-                    'Invalid string value in list: "%s"' % '","'.join(
-                        [repr(value) for value in values])
+                    'Failed to convert one or more of the following values into a string: "%s"' %
+                    '","'.join([repr(value) for value in values])
                 )
 
     def _validate_value_datetime(self, value):
