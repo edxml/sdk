@@ -53,6 +53,9 @@ class EventProperty(OntologyElement):
     def __repr__(self):
         return f"{self.__event_type.get_name()}::{self.__attr['name']} (object type {self.__attr['object-type']})"
 
+    def __str__(self):
+        return self.__attr['name']
+
     def _set_event_type(self, event_type):
         self.__event_type = event_type
         return self

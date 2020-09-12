@@ -33,6 +33,9 @@ class Ontology(OntologyElement):
         return f"{len(self.__event_types)} event types, {len(self.__object_types)} object types, " \
                f"{len(self.__sources)} sources and {len(self.__concepts)} concepts"
 
+    def __str__(self):
+        return 'ontology'
+
     def clear(self):
         """
 

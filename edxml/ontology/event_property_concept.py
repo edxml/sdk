@@ -29,6 +29,9 @@ class PropertyConcept(OntologyElement):
     def __repr__(self):
         return f"{self.__property.get_name()} => {self.__attr['name']}"
 
+    def __str__(self):
+        return f"{self.__property.get_name()}=>{self.__attr['name']}"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__property._child_modified_callback()

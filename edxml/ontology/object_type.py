@@ -54,6 +54,9 @@ class ObjectType(VersionedOntologyElement):
     def __repr__(self):
         return f"{self.__attr['name']} ({self.__attr['data-type']}))"
 
+    def __str__(self):
+        return self.__attr['name']
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__ontology._child_modified_callback()

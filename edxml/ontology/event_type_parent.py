@@ -32,6 +32,9 @@ class EventTypeParent(OntologyElement):
     def __repr__(self):
         return f"({self._child_event_type.get_name()} has parent {self._attr['eventtype']})"
 
+    def __str__(self):
+        return f"{self._child_event_type.get_name()}=>{self._attr['eventtype']}"
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self._child_event_type._child_modified_callback()

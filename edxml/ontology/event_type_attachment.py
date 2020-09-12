@@ -56,6 +56,9 @@ class EventTypeAttachment(OntologyElement):
     def __repr__(self):
         return f"{self._attr['name']} of event type {self._event_type.get_name()}"
 
+    def __str__(self):
+        return self._attr['name']
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self._event_type._child_modified_callback()

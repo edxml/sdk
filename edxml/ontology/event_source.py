@@ -33,6 +33,9 @@ class EventSource(VersionedOntologyElement):
     def __repr__(self):
         return self._attr['uri']
 
+    def __str__(self):
+        return self._attr['uri']
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self._ontology._child_modified_callback()

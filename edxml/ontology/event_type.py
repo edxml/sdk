@@ -119,6 +119,9 @@ class EventType(VersionedOntologyElement, MutableMapping):
     def __repr__(self):
         return f"{self.__attr['name']} ({self.__attr['display-name-singular']})"
 
+    def __str__(self):
+        return self.__attr['name']
+
     def _child_modified_callback(self):
         """Callback for change tracking"""
         self.__cached_unique_properties = None
