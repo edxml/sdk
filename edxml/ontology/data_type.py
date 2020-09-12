@@ -1001,6 +1001,86 @@ class DataType(object):
 
         return self
 
+    def _validate_decimal(self):
+        split_data_type = self.type.split(':')
+
+        if len(split_data_type) < 4:
+            raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
+
+        try:
+            decimal_num_digits = int(split_data_type[2])
+        except ValueError:
+            raise EDXMLValidationError("Total number of digits specified in data type %s is invalid." % self.type)
+        if decimal_num_digits < 1:
+            raise EDXMLValidationError(
+                "Total number of digits specified in data type %s must be positive." % self.type
+            )
+
+        try:
+            decimal_num_decimals = int(split_data_type[3])
+        except ValueError:
+            raise EDXMLValidationError("Number of decimals specified in data type %s is invalid." % self.type)
+        if decimal_num_digits <= decimal_num_decimals:
+            raise EDXMLValidationError(
+                "Total number of digits specified in data type %s must be greater than "
+                "the number of decimals." % self.type
+            )
+
+        if len(split_data_type) > 4:
+            if len(split_data_type) == 5:
+                if split_data_type[4] == 'signed':
+                    return
+        else:
+            return
+
+        raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
+
+    def _validate_number(self):
+        split_data_type = self.type.split(':')
+        if len(split_data_type) >= 2:
+            if split_data_type[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double'):
+                if len(split_data_type) == 3:
+                    if split_data_type[2] == 'signed':
+                        return
+                else:
+                    return
+            elif split_data_type[1] == 'decimal':
+                self._validate_decimal()
+                return
+
+        raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
+
+    def _validate_hex(self):
+        split_data_type = self.type.split(':')
+        try:
+            hex_length = int(split_data_type[1])
+        except (KeyError, ValueError):
+            raise EDXMLValidationError("Hex datatype does not specify a valid length: " + self.type)
+        if hex_length == 0:
+            raise EDXMLValidationError("Length of hex datatype must be greater than zero: " + self.type)
+        if len(split_data_type) > 2:
+            try:
+                digit_group_length = int(split_data_type[2])
+            except ValueError:
+                pass
+            else:
+                if digit_group_length == 0:
+                    raise EDXMLValidationError("Group length in hex datatype must be greater than zero: " + self.type)
+                if hex_length % digit_group_length != 0:
+                    raise EDXMLValidationError(
+                        "Length of hex datatype is not a multiple of separator distance: " + self.type
+                    )
+                if len(split_data_type[3]) == 0:
+                    if len(split_data_type) == 5:
+                        # This happens if the colon ':' is used as separator
+                        return
+                else:
+                    return
+        else:
+            return
+
+        raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
+
     def validate(self):
         """
 
@@ -1013,99 +1093,26 @@ class DataType(object):
         Returns:
            edxml.ontology.DataType:
         """
+
+        # Check simple data types first
+        if self.type in ('enum', 'datetime', 'sequence', 'ip', 'hashlink', 'boolean', 'uuid'):
+            return self
+
         split_data_type = self.type.split(':')
 
         if split_data_type[0] == 'enum':
             if len(split_data_type) > 1:
-                return self
-        elif split_data_type[0] == 'datetime':
-            if len(split_data_type) == 1:
-                return self
-        elif split_data_type[0] == 'sequence':
-            if len(split_data_type) == 1:
-                return self
-        elif split_data_type[0] == 'ip':
-            if len(split_data_type) == 1:
-                return self
-        elif split_data_type[0] == 'hashlink':
-            if len(split_data_type) == 1:
-                return self
-        elif split_data_type[0] == 'boolean':
-            if len(split_data_type) == 1:
                 return self
         elif split_data_type[0] == 'geo':
             if len(split_data_type) == 2:
                 if split_data_type[1] == 'point':
                     return self
         elif split_data_type[0] == 'number':
-            if len(split_data_type) >= 2:
-                if split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double']:
-                    if len(split_data_type) == 3:
-                        if split_data_type[2] == 'signed':
-                            return self
-                    else:
-                        return self
-                elif split_data_type[1] == 'decimal':
-                    if len(split_data_type) >= 4:
-                        try:
-                            decimal_num_digits = int(split_data_type[2])
-                        except ValueError:
-                            raise EDXMLValidationError(
-                                "Total number of digits specified in data type %s is invalid." % self.type
-                            )
-                        if decimal_num_digits < 1:
-                            raise EDXMLValidationError(
-                                "Total number of digits specified in data type %s must be positive." % self.type
-                            )
-                        try:
-                            decimal_num_decimals = int(split_data_type[3])
-                        except ValueError:
-                            raise EDXMLValidationError(
-                                "Number of decimals specified in data type %s is invalid." % self.type
-                            )
-                        if decimal_num_digits <= decimal_num_decimals:
-                            raise EDXMLValidationError(
-                                "Total number of digits specified in data type %s must be greater than "
-                                "the number of decimals." % self.type
-                            )
-                        if len(split_data_type) > 4:
-                            if len(split_data_type) == 5:
-                                if split_data_type[4] == 'signed':
-                                    return self
-                        else:
-                            return self
+            self._validate_number()
+            return self
         elif split_data_type[0] == 'hex':
-            try:
-                hex_length = int(split_data_type[1])
-            except (KeyError, ValueError):
-                raise EDXMLValidationError(
-                    "Hex datatype does not specify a valid length: " + self.type)
-            if hex_length == 0:
-                raise EDXMLValidationError(
-                    "Length of hex datatype must be greater than zero: " + self.type)
-            if len(split_data_type) > 2:
-                try:
-                    digit_group_length = int(split_data_type[2])
-                except ValueError:
-                    pass
-                else:
-                    if digit_group_length == 0:
-                        raise EDXMLValidationError(
-                            "Group length in hex datatype must be greater than zero: " + self.type)
-                    if hex_length % digit_group_length != 0:
-                        raise EDXMLValidationError(
-                            "Length of hex datatype is not a multiple of separator distance: " + self.type)
-                    if len(split_data_type[3]) == 0:
-                        if len(split_data_type) == 5:
-                            # This happens if the colon ':' is used as separator
-                            return self
-                    else:
-                        return self
-            else:
-                return self
-        elif split_data_type[0] == 'uuid':
-            if len(split_data_type) == 1:
-                return self
+            self._validate_hex()
+            return self
         elif split_data_type[0] == 'string':
             if re.match(self.STRING_PATTERN, self.type):
                 return self
@@ -1116,8 +1123,7 @@ class DataType(object):
             if re.match(self.URI_PATTERN, self.type):
                 return self
 
-        raise EDXMLValidationError(
-            'Data type "%s" is not a valid EDXML data type.' % self.type)
+        raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
 
     @classmethod
     def format_utc_datetime(cls, date_time):
