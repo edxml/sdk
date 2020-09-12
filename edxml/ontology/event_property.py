@@ -579,6 +579,21 @@ class EventProperty(OntologyElement):
                     self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
             )
 
+    def _validate_merge_strategy(self):
+        # Check if merge strategies make sense for the
+        # configured property merge strategies
+        if self.get_merge_strategy() in ('min', 'max'):
+            if not self.get_data_type().is_numerical():
+                if not self.get_data_type().is_datetime():
+                    if self.get_data_type().get_family() != 'sequence':
+                        raise EDXMLValidationError(
+                            'Property "%s" of event type "%s" has data type %s, which '
+                            'cannot be used with merge strategy %s.' % (
+                                self.get_name(), self.__event_type.get_name(), self.get_data_type(),
+                                self.get_merge_strategy()
+                            )
+                        )
+
     def validate(self):
         """
 
@@ -611,19 +626,7 @@ class EventProperty(OntologyElement):
         if not self.__attr['merge'] in ('drop', 'add', 'replace', 'set', 'min', 'max', 'match'):
             raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
-        # Check if merge strategies make sense for the
-        # configured property merge strategies
-        if self.get_merge_strategy() in ('min', 'max'):
-            if not self.get_data_type().is_numerical():
-                if not self.get_data_type().is_datetime():
-                    if self.get_data_type().get_family() != 'sequence':
-                        raise EDXMLValidationError(
-                            'Property "%s" of event type "%s" has data type %s, which '
-                            'cannot be used with merge strategy %s.' % (
-                                self.get_name(), self.__event_type.get_name(), self.get_data_type(),
-                                self.get_merge_strategy()
-                            )
-                        )
+        self._validate_merge_strategy()
 
         if self.is_unique():
             if self.get_merge_strategy() != 'match':
