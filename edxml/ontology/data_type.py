@@ -396,256 +396,313 @@ class DataType(object):
 
         return self.type.split(':')[0] == 'datetime'
 
-    def generate_relaxng(self, regexp):
+    def _generate_schema_datetime(self):
+        # We use a a restricted dateTime data type,
+        # which does not allow dates before 1583 or the 24th
+        # hour. Also, it requires an explicit UTC timezone
+        # and 6 decimal fractional seconds.
+        e = ElementMaker()
+        return e.data(
+            e.param(self.DATETIME_PATTERN, name='pattern'),
+            type='dateTime'
+        )
 
+    def _generate_schema_sequence(self):
+        return ElementMaker().data(type='unsignedLong')
+
+    def _generate_schema_number(self):
         e = ElementMaker()
         split_data_type = self.type.split(':')
 
-        if split_data_type[0] == 'datetime':
-            # We use a a restricted dateTime data type,
-            # which does not allow dates before 1583 or the 24th
-            # hour. Also, it requires an explicit UTC timezone
-            # and 6 decimal fractional seconds.
-            element = e.data(
-                e.param(self.DATETIME_PATTERN, name='pattern'),
-                type='dateTime'
-            )
-
-        elif split_data_type[0] == 'sequence':
-            element = e.data(type='unsignedLong')
-
-        elif split_data_type[0] == 'number':
-            if split_data_type[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint'):
-                if split_data_type[1] == 'tinyint':
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='byte')
-                    else:
-                        element = e.data(type='unsignedByte')
-
-                elif split_data_type[1] == 'smallint':
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='short')
-                    else:
-                        element = e.data(type='unsignedShort')
-
-                elif split_data_type[1] == 'mediumint':
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(
-                            e.param(str(-(2**23) + 1), name='minInclusive'),
-                            e.param(str(+(2**23) - 1), name='maxInclusive'),
-                            type='int'
-                        )
-                    else:
-                        element = e.data(
-                            e.param(str((2**24) - 1), name='maxInclusive'),
-                            type='unsignedInt'
-                        )
-
-                elif split_data_type[1] == 'int':
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='int')
-                    else:
-                        element = e.data(type='unsignedInt')
-
-                else:
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='long')
-                    else:
-                        element = e.data(type='unsignedLong')
-
+        if split_data_type[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint'):
+            if split_data_type[1] == 'tinyint':
                 if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                    # Assure that values are not zero padded, zero is
-                    # not signed and no plus sign is present
-                    etree.SubElement(element, 'param',
-                                     name='pattern').text = r'(-?[1-9]\d*)|0'
+                    element = e.data(type='byte')
                 else:
-                    # Assure that values are not zero padded and no
-                    # plus sign is present
-                    etree.SubElement(element, 'param',
-                                     name='pattern').text = r'([1-9]\d*)|0'
+                    element = e.data(type='unsignedByte')
 
-            elif split_data_type[1] in ('float', 'double'):
-                if split_data_type[1] == 'float':
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='float')
-                    else:
-                        element = e.data(
-                            e.param(str(0), name='minInclusive'), type='float')
-                else:
-                    if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                        element = e.data(type='double')
-                    else:
-                        element = e.data(
-                            e.param(str(0), name='minInclusive'), type='double')
-
+            elif split_data_type[1] == 'smallint':
                 if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                    # Assure that values are in 1.234567E+001 format, no leading
-                    # plus sign is present and zero is not signed.
-                    etree.SubElement(
-                        element, 'param', name='pattern').text = self.FLOAT_PATTERN_SIGNED
+                    element = e.data(type='short')
                 else:
-                    # Assure that values are in 1.234567E+001 format and not leading
-                    # plus sign is present.
-                    etree.SubElement(
-                        element, 'param', name='pattern').text = self.FLOAT_PATTERN_UNSIGNED
+                    element = e.data(type='unsignedShort')
 
-            elif split_data_type[1] == 'decimal':
-                digits, fractional = split_data_type[2:4]
-                element = e.data(
-                    e.param(digits, name='totalDigits'),
-                    e.param(fractional, name='fractionDigits'),
-                    type='decimal'
-                )
-
-                if len(split_data_type) < 5:
-                    etree.SubElement(element, 'param',
-                                     name='minInclusive').text = str(0)
-                    # Assure that integer part is not zero padded, fractional part
-                    # is padded and no plus sign is present
-                    etree.SubElement(element, 'param', name='pattern').text = \
-                        r'([^+0][^+]*\..{%d})|(0\..{%d})' % (
-                            int(fractional), int(fractional))
+            elif split_data_type[1] == 'mediumint':
+                if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                    element = e.data(
+                        e.param(str(-(2 ** 23) + 1), name='minInclusive'),
+                        e.param(str(+(2 ** 23) - 1), name='maxInclusive'),
+                        type='int'
+                    )
                 else:
-                    # Assure that integer part is not zero padded, fractional part
-                    # is padded, zero is unsigned and no plus sign is present
-                    etree.SubElement(element, 'param', name='pattern').text = \
-                        r'(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % \
-                        (int(fractional), int(fractional))
+                    element = e.data(
+                        e.param(str((2 ** 24) - 1), name='maxInclusive'),
+                        type='unsignedInt'
+                    )
+
+            elif split_data_type[1] == 'int':
+                if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                    element = e.data(type='int')
+                else:
+                    element = e.data(type='unsignedInt')
+
             else:
-                raise TypeError('Unknown data type: ' + split_data_type[0])
-
-        elif split_data_type[0] == 'uri':
-            # Note that anyURI XML data type allows virtually anything,
-            # we need to use a regular expression to restrict it to the
-            # set of characters allowed in an URI.
-            element = e.data(type='anyURI')
-
-        elif split_data_type[0] == 'hex':
-            digits = int(split_data_type[1])
-            if len(split_data_type) > 2:
-                # We have separated digit groups.
-                group_length = int(split_data_type[2])
-                group_separator = split_data_type[3]
-                num_groups = digits / group_length
-                if len(group_separator) == 0:
-                    if len(split_data_type) == 5:
-                        # This happens if the colon ':' is used as separator
-                        group_separator = ':'
-                if num_groups > 0:
-                    if num_groups > 1:
-                        element = e.data(
-                            e.param(
-                                r'[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' % (group_length,
-                                                                     group_separator, group_length, num_groups - 1),
-                                name='pattern'
-                            ), type='string'
-                        )
-                    else:
-                        element = e.data(
-                            e.param(
-                                r'[a-f\d]{%d}' % group_length,
-                                name='pattern'
-                            ), type='string'
-                        )
+                if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                    element = e.data(type='long')
                 else:
-                    # zero groups means empty string. Empty strings
-                    # are not valid in EDXML.
-                    raise TypeError('Invalid hex data type (group size is zero): ' + self.type)
-            else:
-                # Simple hexadecimal value. Note that we restrict
-                # the character space to lowercase characters.
-                element = e.data(
-                    e.param(r'[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
+                    element = e.data(type='unsignedLong')
 
-        elif split_data_type[0] == 'uuid':
-            # Note that we restrict the character space to lowercase characters.
-            element = e.data(e.param(
-                r'[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}', name='pattern'), type='string')
-
-        elif split_data_type[0] == 'string':
-            length = int(split_data_type[1])
-            is_unicode = len(split_data_type) > 3 and 'u' in split_data_type[3]
-            is_case_sensitive = split_data_type[2] == 'cs'
-            element = e.data(type='string')
-            etree.SubElement(element, 'param', name='minLength').text = '1'
-            if length > 0:
+            if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                # Assure that values are not zero padded, zero is
+                # not signed and no plus sign is present
                 etree.SubElement(element, 'param',
-                                 name='maxLength').text = str(length)
-            if is_unicode:
-                if not is_case_sensitive:
-                    etree.SubElement(
-                        element, 'param', name='pattern').text = r'[\s\S-[\p{Lu}]]*'
+                                 name='pattern').text = r'(-?[1-9]\d*)|0'
             else:
-                if is_case_sensitive:
-                    etree.SubElement(
-                        element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+                # Assure that values are not zero padded and no
+                # plus sign is present
+                etree.SubElement(element, 'param', name='pattern').text = r'([1-9]\d*)|0'
+
+            return element
+
+        elif split_data_type[1] in ('float', 'double'):
+            if split_data_type[1] == 'float':
+                if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                    element = e.data(type='float')
                 else:
-                    etree.SubElement(
-                        element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
-            if regexp is not None:
-                etree.SubElement(element, 'param', name='pattern').text = regexp
+                    element = e.data(e.param(str(0), name='minInclusive'), type='float')
+            else:
+                if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                    element = e.data(type='double')
+                else:
+                    element = e.data(e.param(str(0), name='minInclusive'), type='double')
 
-        elif split_data_type[0] == 'base64':
-            # Because we do not allow whitespace in base64 values,
-            # we use a pattern to restrict the data type.
+            if len(split_data_type) > 2 and split_data_type[2] == 'signed':
+                # Assure that values are in 1.234567E+001 format, no leading
+                # plus sign is present and zero is not signed.
+                etree.SubElement(element, 'param', name='pattern').text = self.FLOAT_PATTERN_SIGNED
+            else:
+                # Assure that values are in 1.234567E+001 format and not leading
+                # plus sign is present.
+                etree.SubElement(element, 'param', name='pattern').text = self.FLOAT_PATTERN_UNSIGNED
+
+            return element
+
+        elif split_data_type[1] == 'decimal':
+            digits, fractional = split_data_type[2:4]
             element = e.data(
-                e.param('1', name='minLength'),
-                e.param(split_data_type[1], name='maxLength'),
-                e.param(r'\S*', name='pattern'),
-                type='base64Binary'
+                e.param(digits, name='totalDigits'),
+                e.param(fractional, name='fractionDigits'),
+                type='decimal'
             )
 
-        elif split_data_type[0] == 'boolean':
-            # Because we do not allow the value strings '0' and '1'
-            # while the RelaxNG data type does, we need to add
-            # these two values as exceptions.
-            element = e.data(
-                e('except',
-                  e.choice(
-                      e.value('0', type='string'),
-                      e.value('1', type='string'),
-                  )
-                  ), type='boolean'
-            )
+            if len(split_data_type) < 5:
+                etree.SubElement(element, 'param', name='minInclusive').text = str(0)
+                # Assure that integer part is not zero padded, fractional part
+                # is padded and no plus sign is present
+                etree.SubElement(element, 'param', name='pattern').text = \
+                    r'([^+0][^+]*\..{%d})|(0\..{%d})' % (int(fractional), int(fractional))
+            else:
+                # Assure that integer part is not zero padded, fractional part
+                # is padded, zero is unsigned and no plus sign is present
+                etree.SubElement(element, 'param', name='pattern').text = \
+                    r'(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % (int(fractional), int(fractional))
 
-        elif split_data_type[0] == 'enum':
-            element = e.choice()
-            for allowedValue in split_data_type[1:]:
-                element.append(e.value(allowedValue))
-
-        elif split_data_type[0] == 'ip':
-            # There is no data type in RelaxNG for IP addresses,
-            # so we use a pattern restriction. The regular expression
-            # checks for four octets containing a integer number in
-            # range [0,255].
-            element = e.data(
-                e.param(
-                    '((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]).){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])',
-                    name='pattern'
-                ), type='string'
-            )
-
-        elif split_data_type[0] == 'hashlink':
-            # Hashlink is a hex encoded 20-byte SHA1
-            element = e.data(e.param('20', name='length'), type='hexBinary')
-
-        elif split_data_type[0] == 'geo' and split_data_type[1] == 'point':
-            # Comma separated latitude and longitude. We check for
-            # these components to be in their valid ranges. For latitude
-            # this is [-90, +90]. For longitude [-180, +180].
-            element = e.data(
-                e.param(
-                    (
-                        r'-?((([1-8][0-9]|[0-9])(\.\d{6}))|(90\.0{6})),'
-                        r'-?((([1-9][0-9]|1[0-7]\d|[0-9])\.\d{6})|(180\.0{6}))'
-                    ),
-                    name='pattern'), type='string'
-            )
+            return element
 
         else:
-            raise TypeError('Unknown EDXML data type: "%s"' % self.type)
+            raise TypeError('Unknown data type: ' + split_data_type[0])
+
+    def _generate_schema_uri(self):
+        # Note that anyURI XML data type allows virtually anything,
+        # we need to use a regular expression to restrict it to the
+        # set of characters allowed in an URI.
+        return ElementMaker().data(type='anyURI')
+
+    def _generate_schema_hex(self):
+        e = ElementMaker()
+        split_data_type = self.type.split(':')
+
+        digits = int(split_data_type[1])
+        if len(split_data_type) <= 2:
+            # Simple hexadecimal value. Note that we restrict
+            # the character space to lowercase characters only.
+            return e.data(e.param(r'[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
+
+        group_length = int(split_data_type[2])
+        group_separator = split_data_type[3]
+        num_groups = digits / group_length
+
+        if len(group_separator) == 0:
+            if len(split_data_type) == 5:
+                # This happens if the colon ':' is used as separator
+                group_separator = ':'
+
+        if num_groups == 0:
+            # zero groups means empty string. Empty strings
+            # are not valid in EDXML.
+            raise TypeError('Invalid hex data type (group size is zero): ' + self.type)
+
+        if num_groups == 1:
+            # We have just one digit group, so no separators are used.
+            return e.data(e.param(r'[a-f\d]{%d}' % group_length, name='pattern'), type='string')
+
+        return e.data(
+            e.param(
+                r'[a-f\d]{%d}(%s[a-f\d]{%d}){%d}' %
+                (group_length, group_separator, group_length, num_groups - 1),
+                name='pattern'
+            ), type='string'
+        )
+
+    def _generate_schema_uuid(self):
+        e = ElementMaker()
+        # Note that we restrict the character space to lowercase characters only.
+        return e.data(
+            e.param(r'[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}', name='pattern'),
+            type='string'
+        )
+
+    def _generate_schema_string(self, regexp):
+        e = ElementMaker()
+        split_data_type = self.type.split(':')
+
+        length = int(split_data_type[1])
+        is_unicode = len(split_data_type) > 3 and 'u' in split_data_type[3]
+        is_case_sensitive = split_data_type[2] == 'cs'
+
+        element = e.data(type='string')
+        etree.SubElement(element, 'param', name='minLength').text = '1'
+
+        if length > 0:
+            etree.SubElement(element, 'param', name='maxLength').text = str(length)
+
+        if is_unicode:
+            if not is_case_sensitive:
+                etree.SubElement(element, 'param', name='pattern').text = r'[\s\S-[\p{Lu}]]*'
+        else:
+            if is_case_sensitive:
+                etree.SubElement(element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
+            else:
+                etree.SubElement(
+                    element, 'param', name='pattern'
+                ).text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
+
+        if regexp is not None:
+            etree.SubElement(element, 'param', name='pattern').text = regexp
 
         return element
+
+    def _generate_schema_base64(self):
+        e = ElementMaker()
+        split_data_type = self.type.split(':')
+
+        # Because we do not allow whitespace in base64 values,
+        # we use a pattern to restrict the data type.
+        return e.data(
+            e.param('1', name='minLength'),
+            e.param(split_data_type[1], name='maxLength'),
+            e.param(r'\S*', name='pattern'),
+            type='base64Binary'
+        )
+
+    def _generate_schema_boolean(self):
+        e = ElementMaker()
+
+        # Because we do not allow the value strings '0' and '1'
+        # while the RelaxNG data type does, we need to add
+        # these two values as exceptions.
+        return e.data(
+            e(
+                'except',
+                e.choice(
+                    e.value('0', type='string'),
+                    e.value('1', type='string'),
+                )
+            ), type='boolean'
+        )
+
+    def _generate_schema_enum(self):
+        e = ElementMaker()
+        split_data_type = self.type.split(':')
+
+        element = e.choice()
+        for allowed_value in split_data_type[1:]:
+            element.append(e.value(allowed_value))
+
+        return element
+
+    def _generate_schema_ip(self):
+        e = ElementMaker()
+
+        # There is no data type in RelaxNG for IP addresses,
+        # so we use a pattern restriction. The regular expression
+        # checks for four octets containing a integer number in
+        # range [0,255].
+        return e.data(
+            e.param(
+                '((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]).){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])',
+                name='pattern'
+            ), type='string'
+        )
+
+    def _generate_schema_hashlink(self):
+        e = ElementMaker()
+
+        # Hashlink is a hex encoded 20-byte SHA1
+        return e.data(e.param('20', name='length'), type='hexBinary')
+
+    def _generate_schema_geo(self):
+        split_data_type = self.type.split(':')
+
+        if split_data_type[1] != 'point':
+            raise TypeError('Unknown EDXML data type: "%s"' % self.type)
+
+        e = ElementMaker()
+
+        # Comma separated latitude and longitude. We check for
+        # these components to be in their valid ranges. For latitude
+        # this is [-90, +90]. For longitude [-180, +180].
+        return e.data(
+            e.param(
+                (
+                    r'-?((([1-8][0-9]|[0-9])(\.\d{6}))|(90\.0{6})),'
+                    r'-?((([1-9][0-9]|1[0-7]\d|[0-9])\.\d{6})|(180\.0{6}))'
+                ),
+                name='pattern'), type='string'
+        )
+
+    def generate_relaxng(self, regexp):
+
+        data_type_family = self.get_family()
+
+        if data_type_family == 'datetime':
+            return self._generate_schema_datetime()
+        elif data_type_family == 'sequence':
+            return self._generate_schema_sequence()
+        elif data_type_family == 'number':
+            return self._generate_schema_number()
+        elif data_type_family == 'uri':
+            return self._generate_schema_uri()
+        elif data_type_family == 'hex':
+            return self._generate_schema_hex()
+        elif data_type_family == 'uuid':
+            return self._generate_schema_uuid()
+        elif data_type_family == 'string':
+            return self._generate_schema_string(regexp)
+        elif data_type_family == 'base64':
+            return self._generate_schema_base64()
+        elif data_type_family == 'boolean':
+            return self._generate_schema_boolean()
+        elif data_type_family == 'enum':
+            return self._generate_schema_enum()
+        elif data_type_family == 'ip':
+            return self._generate_schema_ip()
+        elif data_type_family == 'hashlink':
+            return self._generate_schema_hashlink()
+        elif data_type_family == 'geo':
+            return self._generate_schema_geo()
+        else:
+            raise TypeError('Unknown EDXML data type: "%s"' % self.type)
 
     def _normalize_datetime(self, values):
         normalized = set()
