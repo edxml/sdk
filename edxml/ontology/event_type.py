@@ -1066,6 +1066,70 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
         return edxml.Template(self.__attr[which]).evaluate(self, edxml_event, capitalize, colorize)
 
+    def _validate_event_versioning(self):
+        if self.__attr['event-version'] is None:
+            # Nothing to do.
+            return
+        if not self.__attr['event-version'] in self.get_properties().keys():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event version '
+                'by means of property "%s", which does not exist.' %
+                (self.__attr['name'], self.__attr['event-version'])
+            )
+        if self.get_properties()[self.__attr['event-version']].get_data_type().get_family() != 'sequence':
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event version '
+                'by means of property "%s", which does not have the sequence data type.' %
+                (self.__attr['name'], self.__attr['event-version'])
+            )
+        if self.get_properties()[self.__attr['event-version']].get_merge_strategy() != 'max':
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event version '
+                'by means of property "%s", which does not have the "max" merge strategy.' %
+                (self.__attr['name'], self.__attr['event-version'])
+            )
+        if self.get_properties()[self.__attr['event-version']].is_optional():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event version '
+                'by means of property "%s", which is optional. Version properties must not be optional.' %
+                (self.__attr['name'], self.__attr['event-version'])
+            )
+        if self.get_properties()[self.__attr['event-version']].is_multi_valued():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event version '
+                'by means of property "%s", which is multi-valued. Version properties must not be multi-valued.' %
+                (self.__attr['name'], self.__attr['event-version'])
+            )
+
+    def _validate_event_sequencing(self):
+        if self.__attr['sequence'] is None:
+            # Nothing to do.
+            return
+        if not self.__attr['sequence'] in self.get_properties().keys():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event sequence numbers '
+                'by means of property "%s", which does not exist.' %
+                (self.__attr['name'], self.__attr['sequence'])
+            )
+        if self.get_properties()[self.__attr['sequence']].get_data_type().get_family() != 'sequence':
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event sequence numbers '
+                'by means of property "%s", which does not have the sequence data type.' %
+                (self.__attr['name'], self.__attr['sequence'])
+            )
+        if self.get_properties()[self.__attr['sequence']].is_optional():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event sequence numbers '
+                'by means of property "%s", which is optional. Sequences must not be optional.' %
+                (self.__attr['name'], self.__attr['sequence'])
+            )
+        if self.get_properties()[self.__attr['sequence']].is_multi_valued():
+            raise EDXMLValidationError(
+                'Event type "%s" defines the event sequence numbers '
+                'by means of property "%s", which is multi-valued. Sequences must not be multi-valued.' %
+                (self.__attr['name'], self.__attr['sequence'])
+            )
+
     def validate(self):
         """
 
@@ -1094,14 +1158,15 @@ class EventType(VersionedOntologyElement, MutableMapping):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
-        token_attributes = ('story', 'summary', 'display-name-singular', 'display-name-plural', 'description',
-                            'classlist')
+        token_attributes = (
+            'story', 'summary', 'display-name-singular', 'display-name-plural', 'description', 'classlist'
+        )
 
         for token_attribute in token_attributes:
-            if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
+            if normalize_xml_token(self.__attr[token_attribute]) != self.__attr[token_attribute]:
                 raise EDXMLValidationError(
                     'The %s attribute of event type "%s" contains illegal whitespace characters: "%s"' %
-                    (token_attribute, self.__attr['name'], self.__attr['display-name-singular'])
+                    (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
 
         if self.__attr['classlist'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
@@ -1125,63 +1190,8 @@ class EventType(VersionedOntologyElement, MutableMapping):
                         (self.__attr['name'], self.__attr[attribute_name])
                     )
 
-        if self.__attr['event-version'] is not None:
-            if not self.__attr['event-version'] in self.get_properties().keys():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event version '
-                    'by means of property "%s", which does not exist.' %
-                    (self.__attr['name'], self.__attr['event-version'])
-                )
-            if self.get_properties()[self.__attr['event-version']].get_data_type().get_family() != 'sequence':
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event version '
-                    'by means of property "%s", which does not have the sequence data type.' %
-                    (self.__attr['name'], self.__attr['event-version'])
-                )
-            if self.get_properties()[self.__attr['event-version']].get_merge_strategy() != 'max':
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event version '
-                    'by means of property "%s", which does not have the "max" merge strategy.' %
-                    (self.__attr['name'], self.__attr['event-version'])
-                )
-            if self.get_properties()[self.__attr['event-version']].is_optional():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event version '
-                    'by means of property "%s", which is optional. Version properties must not be optional.' %
-                    (self.__attr['name'], self.__attr['event-version'])
-                )
-            if self.get_properties()[self.__attr['event-version']].is_multi_valued():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event version '
-                    'by means of property "%s", which is multi-valued. Version properties must not be multi-valued.' %
-                    (self.__attr['name'], self.__attr['event-version'])
-                )
-
-        if self.__attr['sequence'] is not None:
-            if not self.__attr['sequence'] in self.get_properties().keys():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event sequence numbers '
-                    'by means of property "%s", which does not exist.' %
-                    (self.__attr['name'], self.__attr['sequence'])
-                )
-            if self.get_properties()[self.__attr['sequence']].get_data_type().get_family() != 'sequence':
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event sequence numbers '
-                    'by means of property "%s", which does not have the sequence data type.' %
-                    (self.__attr['name'], self.__attr['sequence'])
-                )
-            if self.get_properties()[self.__attr['sequence']].is_optional():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event sequence numbers '
-                    'by means of property "%s", which is optional. Sequences must not be optional.' %
-                    (self.__attr['name'], self.__attr['sequence'])
-                )
-            if self.get_properties()[self.__attr['sequence']].is_multi_valued():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the event sequence numbers '
-                    'by means of property "%s", which is multi-valued. Sequences must not be multi-valued.' %
-                    (self.__attr['name'], self.__attr['sequence'])
-                )
+        self._validate_event_versioning()
+        self._validate_event_sequencing()
 
         if [p for p in self.get_properties().values() if p.get_merge_strategy() == 'replace']:
             if self.get_version_property_name() is None:
