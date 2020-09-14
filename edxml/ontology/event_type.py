@@ -1364,6 +1364,31 @@ class EventType(VersionedOntologyElement, MutableMapping):
     def __lt__(self, other):
         return self.__cmp__(other) < 0
 
+    def _update_sub_elements(self, event_type):
+        if event_type.get_parent() is not None:
+            if self.get_parent() is not None:
+                self.get_parent().update(event_type.get_parent())
+            else:
+                self.set_parent(event_type.get_parent())
+
+        for property_name in self.get_properties().keys():
+            self[property_name].update(event_type[property_name])
+
+        for property_name in set(event_type.get_properties().keys()) - set(self.get_properties().keys()):
+            self.add_property(event_type.get_properties()[property_name])
+
+        for relation_id in self.get_property_relations().keys():
+            self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
+
+        for relation_id in set(event_type.get_property_relations().keys()) - set(self.get_property_relations().keys()):
+            self.add_relation(event_type.get_property_relations()[relation_id])
+
+        for attachment_name, attachment in event_type.get_attachments().items():
+            if attachment_name in self.get_attachments().keys():
+                self.get_attachments()[attachment_name].update(event_type.get_attachments()[attachment_name])
+            else:
+                self.add_attachment(attachment)
+
     def update(self, event_type):
         """
 
@@ -1383,31 +1408,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         if event_type > self:
             # The new definition is indeed newer. Update self.
-
-            if event_type.get_parent() is not None:
-                if self.get_parent() is not None:
-                    self.get_parent().update(event_type.get_parent())
-                else:
-                    self.set_parent(event_type.get_parent())
-
-            for property_name, property in self.get_properties().items():
-                self[property_name].update(event_type[property_name])
-
-            for property_name in set(event_type.get_properties().keys()) - set(self.get_properties().keys()):
-                self.add_property(event_type.get_properties()[property_name])
-
-            for relation_id, relation in self.get_property_relations().items():
-                self.get_property_relations()[relation_id].update(event_type.get_property_relations()[relation_id])
-
-            for relation_id in set(event_type.get_property_relations().keys()) - \
-                    set(self.get_property_relations().keys()):
-                self.add_relation(event_type.get_property_relations()[relation_id])
-
-            for attachment_name, attachment in event_type.get_attachments().items():
-                if attachment_name in self.get_attachments().keys():
-                    self.get_attachments()[attachment_name].update(event_type.get_attachments()[attachment_name])
-                else:
-                    self.add_attachment(attachment)
+            self._update_sub_elements(event_type)
 
             self.set_description(event_type.get_description())
             self.set_display_name(event_type.get_display_name_singular(), event_type.get_display_name_plural())
