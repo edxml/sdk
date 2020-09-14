@@ -23,6 +23,90 @@ from .util import normalize_xml_token
 from edxml.error import EDXMLValidationError, EDXMLMergeConflictError
 
 
+def _check_sub_element_upgrade(old, new, equal, is_valid_upgrade):
+    """
+
+    Checks if the given event type instances are mutually valid upgrades.
+    Returns updated values for two flags which track equality and upgrade validity.
+
+    Args:
+        old (EventType): Old event type
+        new (EventType): New event type
+        equal (bool): Instances are equal yes / no
+        is_valid_upgrade (bool): Instances are valid upgrades yes / no
+
+    Returns:
+        Tuple[bool, bool]:
+
+    """
+    if old.get_parent() is None and new.get_parent() is not None:
+        # New version adds a parent.
+        equal = False
+
+    if new.get_parent() is None and old.get_parent() is not None:
+        # New version is missing the parent definition that
+        # the old one has. No upgrade possible.
+        equal = is_valid_upgrade = False
+
+    if old.get_parent() is not None and new.get_parent() is not None:
+        if old.get_parent() != new.get_parent():
+            # Parent definitions differ, check that new definition is
+            # a valid upgrade of the old definition.
+            equal = False
+            is_valid_upgrade &= new.get_parent() > old.get_parent()
+
+    if old.get_properties().keys() != new.get_properties().keys():
+        # Adding a property is possible, removing one is not.
+        equal = False
+        missing_property_names = set(old.get_properties().keys()) - set(new.get_properties().keys())
+        new_property_names = set(new.get_properties().keys()) - set(old.get_properties().keys())
+        is_valid_upgrade &= len(missing_property_names) == 0
+
+        for property_name in new_property_names:
+            # Newly added properties must be optional.
+            is_valid_upgrade &= new.get_properties()[property_name].is_optional()
+            # A timeless event type must remain timeless.
+            if old.is_timeless():
+                is_valid_upgrade &= new.is_timeless()
+
+    for property_name in new.get_properties().keys():
+        if property_name in old:
+            if old[property_name] != new[property_name]:
+                # Property definitions differ, check that new definition is
+                # a valid upgrade of the old definition.
+                equal = False
+                is_valid_upgrade &= new[property_name] > old[property_name]
+
+    if old.get_property_relations().keys() != new.get_property_relations().keys():
+        # Adding a relation is possible, removing one is not.
+        equal = False
+        missing_relation_ids = set(old.get_property_relations().keys()) - set(new.get_property_relations().keys())
+        is_valid_upgrade &= len(missing_relation_ids) == 0
+
+    for relation_id, relation in new.get_property_relations().items():
+        if relation_id in old.get_property_relations():
+            if new.get_property_relations()[relation_id] != old.get_property_relations()[relation_id]:
+                # Relation definitions differ, check that new definition is
+                # a valid upgrade of the old definition.
+                equal = False
+                is_valid_upgrade &= \
+                    new.get_property_relations()[relation_id] > old.get_property_relations()[relation_id]
+
+    if set(old.get_attachments().keys()) - set(new.get_attachments().keys()) != set():
+        # New version removes attachments. No upgrade possible.
+        equal = is_valid_upgrade = False
+
+    for name, attachment in new.get_attachments().items():
+        if name in old.get_attachments():
+            if new.get_attachments()[name] != old.get_attachments()[name]:
+                # Attachment definitions differ, check that new definition is
+                # a valid upgrade of the old definition.
+                equal = False
+                is_valid_upgrade &= new.get_attachments()[name] > old.get_attachments()[name]
+
+    return equal, is_valid_upgrade
+
+
 class EventType(VersionedOntologyElement, MutableMapping):
     """
     Class representing an EDXML event type. The class provides
@@ -1294,45 +1378,12 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         # Check for illegal upgrade paths:
 
-        if old.get_parent() is None and new.get_parent() is not None:
-            # New version adds a parent.
-            equal = False
-
-        if new.get_parent() is None and old.get_parent() is not None:
-            # New version is missing the parent definition that
-            # the old one has. No upgrade possible.
-            equal = is_valid_upgrade = False
-
         if new.get_version_property_name() != old.get_version_property_name():
             # The version properties differ, no upgrade possible.
             equal = is_valid_upgrade = False
 
         if new.get_sequence_property_name() != old.get_sequence_property_name():
             # The sequence properties differ, no upgrade possible.
-            equal = is_valid_upgrade = False
-
-        if old.get_properties().keys() != new.get_properties().keys():
-            # Adding a property is possible, removing one is not.
-            equal = False
-            missing_property_names = set(old.get_properties().keys()) - set(new.get_properties().keys())
-            new_property_names = set(new.get_properties().keys()) - set(old.get_properties().keys())
-            is_valid_upgrade &= versions_differ and len(missing_property_names) == 0
-
-            for property_name in new_property_names:
-                # Newly added properties must be optional.
-                is_valid_upgrade &= new.get_properties()[property_name].is_optional()
-                # A timeless event type must remain timeless.
-                if old.is_timeless():
-                    is_valid_upgrade &= new.is_timeless()
-
-        if old.get_property_relations().keys() != new.get_property_relations().keys():
-            # Adding a relation is possible, removing one is not.
-            equal = False
-            missing_relation_ids = set(old.get_property_relations().keys()) - set(new.get_property_relations().keys())
-            is_valid_upgrade &= versions_differ and len(missing_relation_ids) == 0
-
-        if set(old.get_attachments().keys()) - set(new.get_attachments().keys()) != set():
-            # New version removes attachments. No upgrade possible.
             equal = is_valid_upgrade = False
 
         if set(old.get_classes()) != set(new.get_classes()):
@@ -1349,39 +1400,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             equal = is_valid_upgrade = False
 
         # Check upgrade paths for sub-elements:
-
-        if old.get_parent() is not None and new.get_parent() is not None:
-            if old.get_parent() != new.get_parent():
-                # Parent definitions differ, check that new definition is
-                # a valid upgrade of the old definition.
-                equal = False
-                is_valid_upgrade &= new.get_parent() > old.get_parent()
-
-        for property_name, property in new.get_properties().items():
-            if property_name in old:
-                if old[property_name] != new[property_name]:
-                    # Property definitions differ, check that new definition is
-                    # a valid upgrade of the old definition.
-                    equal = False
-                    is_valid_upgrade &= new[property_name] > old[property_name]
-
-        for relation_id, relation in new.get_property_relations().items():
-            if relation_id in old.get_property_relations():
-                if new.get_property_relations()[relation_id] != old.get_property_relations()[relation_id]:
-                    # Relation definitions differ, check that new definition is
-                    # a valid upgrade of the old definition.
-                    equal = False
-                    is_valid_upgrade &= \
-                        new.get_property_relations()[relation_id] > old.get_property_relations()[relation_id]
-
-        for name, attachment in new.get_attachments().items():
-            if name in old.get_attachments():
-                if new.get_attachments()[name] != old.get_attachments()[name]:
-                    # Attachment definitions differ, check that new definition is
-                    # a valid upgrade of the old definition.
-                    equal = False
-                    is_valid_upgrade &= \
-                        new.get_attachments()[name] > old.get_attachments()[name]
+        equal, is_valid_upgrade = _check_sub_element_upgrade(old, new, equal, is_valid_upgrade)
 
         if equal:
             return 0
