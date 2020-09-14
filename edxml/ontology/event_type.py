@@ -1081,54 +1081,28 @@ class EventType(VersionedOntologyElement, MutableMapping):
           EventType: The EventType instance
 
         """
-        if not len(self.__attr['name']) <= 64:
-            raise EDXMLValidationError(
-                'The name of event type "%s" is too long.' % self.__attr['name'])
+
+        attribute_lengths = {'name': 64, 'display-name-singular': 32, 'display-name-plural': 32, 'description': 128}
+
+        for attribute_name, max_length in attribute_lengths.items():
+            if len(self.__attr[attribute_name]) > max_length:
+                raise EDXMLValidationError(
+                    'The %s attribute of event type "%s" is too long.' % attribute_name
+                )
+
         if not re.match(self.NAME_PATTERN, self.__attr['name']):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
-        if not len(self.__attr['display-name-singular']) <= 32:
-            raise EDXMLValidationError(
-                'The singular display name of event type "%s" is too long: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-singular'])
-            )
+        token_attributes = ('story', 'summary', 'display-name-singular', 'display-name-plural', 'description',
+                            'classlist')
 
-        if not len(self.__attr['display-name-plural']) <= 32:
-            raise EDXMLValidationError(
-                'The plural display name of event type "%s" is too long: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-plural'])
-            )
-
-        if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
-            raise EDXMLValidationError(
-                'The singular display name of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-singular'])
-            )
-
-        if normalize_xml_token(self.__attr['display-name-plural']) != self.__attr['display-name-plural']:
-            raise EDXMLValidationError(
-                'The plural display name of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-plural'])
-            )
-
-        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
-            raise EDXMLValidationError(
-                'The description of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['description'])
-            )
-
-        if not len(self.__attr['description']) <= 128:
-            raise EDXMLValidationError(
-                'The description of event type "%s" is too long: "%s"' % (
-                    self.__attr['name'], self.__attr['description'])
-            )
-
-        if normalize_xml_token(self.__attr['classlist']) != self.__attr['classlist']:
-            raise EDXMLValidationError(
-                'The class list of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['classlist'])
-            )
+        for token_attribute in token_attributes:
+            if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
+                raise EDXMLValidationError(
+                    'The %s attribute of event type "%s" contains illegal whitespace characters: "%s"' %
+                    (token_attribute, self.__attr['name'], self.__attr['display-name-singular'])
+                )
 
         if self.__attr['classlist'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
             raise EDXMLValidationError(
@@ -1136,33 +1110,20 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 (self.__attr['name'], self.__attr['classlist'])
             )
 
-        if self.__attr['timespan-start'] is not None:
-            if not self.__attr['timespan-start'] in self.get_properties().keys():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the start of its event time spans '
-                    'by means of property "%s", which does not exist.' %
-                    (self.__attr['name'], self.__attr['timespan-start'])
-                )
-            if not self.get_properties()[self.__attr['timespan-start']].get_data_type().is_datetime():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the start of its event time spans '
-                    'by means of property "%s", which does not have a datetime data type.' %
-                    (self.__attr['name'], self.__attr['timespan-start'])
-                )
-
-        if self.__attr['timespan-end'] is not None:
-            if not self.__attr['timespan-end'] in self.get_properties().keys():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the end of its event time spans '
-                    'by means of property "%s", which does not exist.' %
-                    (self.__attr['name'], self.__attr['timespan-end'])
-                )
-            if not self.get_properties()[self.__attr['timespan-end']].get_data_type().is_datetime():
-                raise EDXMLValidationError(
-                    'Event type "%s" defines the end of its event time spans '
-                    'by means of property "%s", which does not have a datetime data type.' %
-                    (self.__attr['name'], self.__attr['timespan-end'])
-                )
+        for attribute_name in ('timespan-start', 'timespan-end'):
+            if self.__attr[attribute_name] is not None:
+                if not self.__attr[attribute_name] in self.get_properties().keys():
+                    raise EDXMLValidationError(
+                        'Event type "%s" defines its event time spans '
+                        'by means of property "%s", which does not exist.' %
+                        (self.__attr['name'], self.__attr[attribute_name])
+                    )
+                if not self.get_properties()[self.__attr[attribute_name]].get_data_type().is_datetime():
+                    raise EDXMLValidationError(
+                        'Event type "%s" defines its event time spans '
+                        'by means of property "%s", which does not have a datetime data type.' %
+                        (self.__attr['name'], self.__attr[attribute_name])
+                    )
 
         if self.__attr['event-version'] is not None:
             if not self.__attr['event-version'] in self.get_properties().keys():
@@ -1229,33 +1190,14 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     'but it does not have a property containing event versions.' % self.__attr['name']
                 )
 
-        if normalize_xml_token(self.__attr['story']) != self.__attr['story']:
-            raise EDXMLValidationError(
-                'The story template of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['story'])
-            )
-
-        if normalize_xml_token(self.__attr['summary']) != self.__attr['summary']:
-            raise EDXMLValidationError(
-                'The summary template of event type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['summary'])
-            )
-
-        try:
-            edxml.Template(self.__attr['summary']).validate(self)
-        except EDXMLValidationError as e:
-            raise EDXMLValidationError(
-                'The summary template of event type "%s" is invalid: "%s"\nThe validator said: %s' % (
-                    self.__attr['name'], self.__attr['summary'], str(e))
-            )
-
-        try:
-            edxml.Template(self.__attr['story']).validate(self)
-        except EDXMLValidationError as e:
-            raise EDXMLValidationError(
-                'The story template of event type "%s" is invalid: "%s"\nThe validator said: %s' % (
-                    self.__attr['name'], self.__attr['story'], str(e))
-            )
+        for attribute_name in ('summary', 'story'):
+            try:
+                edxml.Template(self.__attr[attribute_name]).validate(self)
+            except EDXMLValidationError as e:
+                raise EDXMLValidationError(
+                    'The %s template of event type "%s" is invalid: "%s"\nThe validator said: %s' %
+                    (attribute_name, self.__attr['name'], self.__attr['summary'], str(e))
+                )
 
         # Verify that non-unique event type only have
         # properties with merge strategy 'drop'.
