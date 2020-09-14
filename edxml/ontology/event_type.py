@@ -617,6 +617,44 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         return self
 
+    def _select_relation_concepts(self, relation_type, source, target, source_concept_name, target_concept_name):
+        for property_name, concept_name in ((source, source_concept_name), (target, target_concept_name)):
+            if concept_name is None:
+                if len(self[property_name].get_concept_associations()) == 0:
+                    raise ValueError(
+                        "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
+                        "property %s is not associated with any concepts." %
+                        (relation_type, source, target, self.get_display_name_singular(), property_name)
+                    )
+
+                if len(self[property_name].get_concept_associations()) > 1:
+                    raise ValueError(
+                        "Attempt to create an %s-concept relation between the %s and %s of a %s while "
+                        "property %s is associated with multiple concepts. Creation failed because "
+                        "it was not specified  which concept to relate to." %
+                        (relation_type, source, target, self.get_display_name_singular(), property_name)
+                    )
+
+        # If any of the two concepts are unspecified, pick the first one. We can safely
+        # do that because we just verified that there is just one associated concept.
+        if source_concept_name is None:
+            source_concept_name = next(iter(self[source].get_concept_associations().keys()))
+        if target_concept_name is None:
+            target_concept_name = next(iter(self[target].get_concept_associations().keys()))
+
+        source_concept = self.__ontology.get_concept(source_concept_name)
+        target_concept = self.__ontology.get_concept(target_concept_name)
+
+        for concept in (source_concept, target_concept):
+            if concept is None:
+                raise EDXMLValidationError(
+                    "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
+                    "one of the associated concepts (%s) is not defined." %
+                    (relation_type, source, target, self.get_display_name_singular(), source_concept_name)
+                )
+
+        return source_concept, target_concept
+
     def create_relation(self, source, target, description, relation_type, predicate, source_concept_name=None,
                         target_concept_name=None, confidence=1.0, directed=True):
         """
@@ -639,68 +677,23 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
 
         if source not in self:
-            raise KeyError('Cannot find property %s in event relation_type %s.' %
-                           (source, self.__attr['name']))
+            raise KeyError('Cannot find property %s in event relation_type %s.' % (source, self.__attr['name']))
 
         if target not in self:
-            raise KeyError('Cannot find property %s in event relation_type %s.' %
-                           (target, self.__attr['name']))
+            raise KeyError('Cannot find property %s in event relation_type %s.' % (target, self.__attr['name']))
 
         if relation_type in ('inter', 'intra'):
-            if source_concept_name is None:
-                if len(self[source].get_concept_associations()) == 0:
-                    raise ValueError(
-                        "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
-                        "the source property (%s) is not associated with any concepts." %
-                        (relation_type, source, target, self.get_display_name_singular(), source)
-                    )
-
-                if len(self[source].get_concept_associations()) > 1:
-                    raise ValueError(
-                        "Attempt to create an %s-concept relation between the %s and %s of a %s while "
-                        "the source property (%s) is associated with multiple concepts. Creation failed because "
-                        "it was not specified  which concept to relate to." %
-                        (relation_type, source, target, self.get_display_name_singular(), source)
-                    )
-
-                source_concept_name = list(self[source].get_concept_associations().keys())[0]
-
-            if target_concept_name is None:
-                if len(self[target].get_concept_associations()) == 0:
-                    raise ValueError(
-                        "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
-                        "the target property (%s) is not associated with any concepts." %
-                        (relation_type, source, target, self.get_display_name_singular(), target)
-                    )
-
-                if len(self[target].get_concept_associations()) > 1:
-                    raise ValueError(
-                        "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
-                        "the target property (%s) is associated with multiple concepts. Creation failed because "
-                        "it was not specified which concept to relate to." %
-                        (relation_type, source, target, self.get_display_name_singular(), target)
-                    )
-
-                target_concept_name = list(self[target].get_concept_associations().keys())[0]
-
-        if source_concept_name is not None and self.__ontology.get_concept(source_concept_name) is None:
-            raise Exception(
-                "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
-                "the source concept (%s) is not defined." %
-                (relation_type, source, target, self.get_display_name_singular(), source_concept_name)
+            source_concept, target_concept = self._select_relation_concepts(
+                relation_type, source, target, source_concept_name, target_concept_name
             )
-
-        if target_concept_name is not None and self.__ontology.get_concept(target_concept_name) is None:
-            raise Exception(
-                "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
-                "the target concept (%s) is not defined." %
-                (relation_type, source, target, self.get_display_name_singular(), target_concept_name)
-            )
+        else:
+            source_concept = None
+            target_concept = None
 
         relation = PropertyRelation(
-            self, self[source], self[target], self.__ontology.get_concept(source_concept_name, True),
-            self.__ontology.get_concept(target_concept_name, True), description, relation_type,
-            predicate, confidence, directed
+            self, self[source], self[target],
+            source_concept, target_concept,
+            description, relation_type, predicate, confidence, directed
         )
 
         self.__relations[relation.get_persistent_id()] = relation.validate()

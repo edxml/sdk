@@ -90,6 +90,10 @@ class EventType(OntologyElement):
 
     def remove_property(self, property_name: str) -> 'EventType': ...
 
+    def _select_relation_concepts(
+            self, relation_type: str, source: str, target: str, source_concept_name: str, target_concept_name: str
+    ) -> Tuple[edxml.ontology.Concept, edxml.ontology.Concept]: ...
+
     def create_relation(
             self, source: str, target: str, description: str, type: str, predicate: str,
             source_concept_name=None, target_concept_name=None, confidence: float = 1.0, directed: bool = True
