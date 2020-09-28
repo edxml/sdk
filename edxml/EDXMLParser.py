@@ -602,7 +602,7 @@ class EDXMLPullParser(EDXMLParserBase):
         supplied. The tags must prepend the namespace in James
         Clark notation. Example:
 
-        ['{http://some/foreign/namespace}attribute']
+        ['{http://some/foreign/namespace}tag']
 
         These elements will be passed to the _parse_foreign_element() when encountered.
 
