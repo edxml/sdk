@@ -1,6 +1,6 @@
 # Make file for creating the PyPI package and generating sphinx docs
 
-.PHONY: all dependencies dist doc check test coverage clean
+.PHONY: all dependencies dist pypi doc check test coverage clean
 
 all: dependencies dist doc check test clean
 
@@ -12,8 +12,10 @@ dependencies:
 	git submodule update --init  edxml/schema
 
 dist:
-	python3 setup.py sdist
-	python3 setup.py sdist upload
+	python3 setup.py sdist bdist_wheel
+
+pypi:
+	python3 setup.py sdist bdist_wheel upload
 
 doc:
 	pip3 install -e .[doc]
