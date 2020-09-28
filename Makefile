@@ -35,4 +35,4 @@ coverage: dependencies
 
 clean:
 	find . -name '*.py[co]' -delete
-
+	rm -rf build dist edxml.egg-info
