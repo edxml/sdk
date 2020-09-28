@@ -1,11 +1,12 @@
 EDXML SDK
 =========
 
-|license| |tests| |coverage|
+|license| |tests| |coverage| |pyversion|
 
 .. |license| image::  https://img.shields.io/badge/License-LGPL%20v3-blue.svg
 .. |tests| image::    https://github.com/edxml/sdk/workflows/tests/badge.svg
 .. |coverage| image:: https://scrutinizer-ci.com/g/edxml/sdk/badges/coverage.png?b=experimental&s=f5b930dde8dc4f0f6c4a050cc4c107aa6ff6e921
+.. |pyversion| image::  https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
 
 EDXML_ is a versatile, simple and semantic data representation that facilitates
 complex data integration projects.
