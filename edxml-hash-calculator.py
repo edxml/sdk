@@ -41,9 +41,8 @@ from edxml.EDXMLParser import EDXMLPullParser
 class EDXMLEventHasher(EDXMLPullParser):
 
     def _parsed_event(self, event):
-
-        ontology = self.get_ontology()
-        print(event.compute_sticky_hash(ontology))
+        event_type = self.get_ontology().get_event_type(event.get_type_name())
+        print(event.compute_sticky_hash(event_type))
 
 
 def main():

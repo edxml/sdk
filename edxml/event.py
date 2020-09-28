@@ -771,7 +771,7 @@ class EDXMLEvent(MutableMapping):
         self._foreign_attribs = attribs
         return self
 
-    def compute_sticky_hash(self, ontology, encoding='hex'):
+    def compute_sticky_hash(self, event_type, encoding='hex'):
         """
 
         Computes the sticky hash of the event. By default, the hash
@@ -780,12 +780,8 @@ class EDXMLEvent(MutableMapping):
         encoding that is supported by the str.encode() method.
 
         Args:
-          ontology (edxml.ontology.Ontology): An EDXML ontology
+          event_type (edxml.ontology.EventType): The event type
           encoding (str): Desired output encoding
-
-        Note:
-          The object values of the event must be valid EDXML object value strings or
-          values that can be cast to valid EDXML object value strings.
 
         Returns:
           str: String representation of the hash.
@@ -794,7 +790,6 @@ class EDXMLEvent(MutableMapping):
 
         object_separator = b'\xff\xff\xff\xff'
 
-        event_type = ontology.get_event_type(self.get_type_name())
         objects = self.get_properties()
         hash_properties = event_type.get_hash_properties()
 

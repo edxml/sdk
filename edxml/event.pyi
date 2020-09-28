@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from edxml.ontology import Ontology
+from edxml.ontology import Ontology, EventType
 
 from collections import MutableMapping, OrderedDict, MutableSet
 from lxml import etree
@@ -119,7 +119,7 @@ class EDXMLEvent(MutableMapping):
 
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'EDXMLEvent': ...
 
-    def compute_sticky_hash(self, ontology: Ontology, encoding: str ='hex'): ...
+    def compute_sticky_hash(self, event_type: EventType, encoding: str ='hex') -> str: ...
 
 
 class ParsedEvent(EDXMLEvent, etree.ElementBase):
@@ -166,8 +166,6 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'ParsedEvent': ...
 
     def merge_with(self, colliding_events: List['ParsedEvent'], ontology: Ontology) -> bool: ...
-
-    def compute_sticky_hash(self, ontology: Ontology, encoding: str='hex'): ...
 
 
 class EventElement(EDXMLEvent):
@@ -217,5 +215,3 @@ class EventElement(EDXMLEvent):
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'EventElement': ...
 
     def merge_with(self, colliding_events: List['EventElement'], ontology: Ontology) -> bool: ...
-
-    def compute_sticky_hash(self, ontology: Ontology, encoding: str ='hex'): ...

@@ -460,7 +460,9 @@ def test_compute_sticky_hash(event, ontology):
         '/a/\na\nsmiley:😀'.encode()
     ).digest(), 'hex').decode()
 
-    assert event.compute_sticky_hash(ontology) == hash_hex
+    event_type = ontology.get_event_type(event.get_type_name())
+
+    assert event.compute_sticky_hash(event_type) == hash_hex
 
 
 def test_sort_event(event):

@@ -57,14 +57,14 @@ class SortingParser(EDXMLPullParser):
         self._events_by_hash = {}
 
     def _parsed_event(self, event):
-        hash = event.compute_sticky_hash(self.get_ontology())
-        if hash in self._events_by_hash:
+        event_type = self.get_ontology().get_event_type(event.get_type_name())
+        event_hash = event.compute_sticky_hash(event_type)
+        if event_hash in self._events_by_hash:
             # Since we compute a semantic, logical difference, we merge data
             # from all physical events that constitute the same logical event.
-            event_type = self.get_ontology().get_event_type(event.get_type_name())
-            self._events_by_hash[hash] = event_type.merge_events([self._events_by_hash[hash], event])
+            self._events_by_hash[event_hash] = event_type.merge_events([self._events_by_hash[event_hash], event])
         else:
-            self._events_by_hash[hash] = event
+            self._events_by_hash[event_hash] = event
 
     def generate_sorted_edxml(self):
         edxml = BytesIO()

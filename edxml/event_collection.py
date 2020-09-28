@@ -40,7 +40,8 @@ class EventCollection(list):
         """
         hash_dict = defaultdict(EventCollection)  # type: Dict[str, EventCollection]
         for event in self:  # type: EDXMLEvent
-            hash_dict[event.compute_sticky_hash(self._ontology)].append(event)
+            event_type = self._ontology.get_event_type(event.get_type_name())
+            hash_dict[event.compute_sticky_hash(event_type)].append(event)
         return hash_dict
 
     def is_equivalent_of(self, other):
@@ -124,7 +125,8 @@ class EventCollection(list):
         """
         hash_dict = defaultdict(list)  # type: Dict[str, List[EDXMLEvent]]
         for event in self:  # type: EDXMLEvent
-            hash_dict[event.compute_sticky_hash(self._ontology)].append(event)
+            event_type = self._ontology.get_event_type(event.get_type_name())
+            hash_dict[event.compute_sticky_hash(event_type)].append(event)
 
         result = EventCollection(ontology=self._ontology)
         for events in self.create_dict_by_hash().values():

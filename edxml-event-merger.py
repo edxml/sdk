@@ -58,8 +58,8 @@ class EDXMLEventMerger(EDXMLPullFilter):
         self.HashBuffer = {}
 
     def _parsed_event(self, event):
-
-        event_hash = event.compute_sticky_hash(self.get_ontology())
+        event_type = self.get_ontology().get_event_type(event.get_type_name())
+        event_hash = event.compute_sticky_hash(event_type)
 
         if event_hash in self.HashBuffer:
             event_type = self.get_ontology().get_event_type(event.get_type_name())
@@ -82,8 +82,8 @@ class BufferingEDXMLEventMerger(EDXMLPushFilter):
         self.__hash_buffer = {}  # type: Dict[str, List[EDXMLEvent]]
 
     def _parsed_event(self, event):
-
-        event_hash = event.compute_sticky_hash(self.get_ontology())
+        event_type = self.get_ontology().get_event_type(event.get_type_name())
+        event_hash = event.compute_sticky_hash(event_type)
 
         if event_hash in self.__hash_buffer:
             # This hash is in our buffer, which means
