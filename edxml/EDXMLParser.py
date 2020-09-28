@@ -538,11 +538,9 @@ class EDXMLParserBase(object):
                     raise EDXMLValidationError(str(schema.error_log))
 
                 except EDXMLValidationError as exception:
-                    schema = self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
                     raise EDXMLValidationError(
-                        'Event failed to validate:\n\n%s\nDetails:\n%s\n\nSchema:\n%s' % (
-                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception.args[0],
-                            etree.tostring(schema, pretty_print=True, encoding='unicode'))
+                        'Event failed to validate:\n\n%s\nDetails:\n%s' % (
+                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception.args[0])
                     )
 
         # Call all event handlers in order
