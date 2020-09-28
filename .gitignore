@@ -5,6 +5,7 @@ doc/_build/
 edxml.egg-info/
 .DS_Store
 */.DS_Store
+*/__pycache__
 .idea/
 .cache/
 .pytest_cache/
