@@ -1239,9 +1239,6 @@ class EventElement(EDXMLEvent):
     def __str__(self):
         return etree.tostring(self.__element, encoding='unicode')
 
-    def __repr__(self):
-        return repr(self.__element)
-
     def __delitem__(self, key):
         del self.get_properties()[key]
 
