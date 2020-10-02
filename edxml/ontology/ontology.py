@@ -736,13 +736,13 @@ class Ontology(OntologyElement):
                             (event_type_name, parent_property_name)
                         )
 
-            for childProperty, parent_property in event_type.get_parent().get_property_map().items():
+            for child_property, parent_property in event_type.get_parent().get_property_map().items():
 
                 # Check if child property exists
-                if childProperty not in event_type.keys():
+                if child_property not in event_type.get_properties().keys():
                     raise EDXMLValidationError(
                         'Event type %s contains a parent definition which refers to unknown child property \'%s\'.' %
-                        (event_type_name, childProperty)
+                        (event_type_name, child_property)
                     )
 
                 # Check if parent property exists and if it is a unique property
@@ -758,13 +758,12 @@ class Ontology(OntologyElement):
                     )
 
                 # Check if child property has allowed merge strategy
-                if event_type[childProperty].get_merge_strategy() not in ('match', 'drop'):
+                if event_type[child_property].get_merge_strategy() not in ('match', 'drop'):
                     raise EDXMLValidationError(
-                        ('Event type %s contains a parent definition which refers to child property \'%s\'. '
-                         'This property has merge strategy %s, which is not allowed for properties that are used in '
-                         'parent definitions.') %
-                        (event_type_name, childProperty,
-                            event_type[childProperty].get_merge_strategy())
+                        'Event type %s contains a parent definition which refers to child property \'%s\'. '
+                        'This property has merge strategy %s, which is not allowed for properties that are used in '
+                        'parent definitions.' %
+                        (event_type_name, child_property, event_type[child_property].get_merge_strategy())
                     )
 
         return self
