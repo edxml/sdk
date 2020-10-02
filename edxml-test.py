@@ -51,6 +51,7 @@ def main():
         '-f',
         '--file',
         type=str,
+        action='append',
         help='By default, input is read from standard input. This option can be used to read from a '
              'file in stead.'
     )
@@ -62,20 +63,21 @@ def main():
         # Feed the parser from standard input.
         args.file = [sys.stdin.buffer]
 
-    with EDXMLPullParser() as parser:
-        try:
-            parser.parse(args.file)
-        except KeyboardInterrupt:
-            return
-        except EDXMLValidationError as e:
-            # The string representations of exceptions do not
-            # interpret newlines. As validation exceptions
-            # may contain pretty printed XML snippets, this
-            # does not yield readable exception messages.
-            # So, we only print the message passed to the
-            # constructor of the exception.
-            print(e.args[0])
-            exit(1)
+    try:
+        with EDXMLPullParser() as parser:
+            for file in args.file:
+                parser.parse(file).close()
+    except KeyboardInterrupt:
+        return
+    except EDXMLValidationError as e:
+        # The string representations of exceptions do not
+        # interpret newlines. As validation exceptions
+        # may contain pretty printed XML snippets, this
+        # does not yield readable exception messages.
+        # So, we only print the message passed to the
+        # constructor of the exception.
+        print(e.args[0])
+        exit(1)
 
     print("Input data is valid.\n")
 
