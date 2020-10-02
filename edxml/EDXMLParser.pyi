@@ -74,7 +74,7 @@ class EDXMLParserBase(object):
 class EDXMLPullParser(EDXMLParserBase):
 
     def parse(self, input_file: Union[io.TextIOBase, file, str],
-              foreign_element_tags: List[str]=[]) -> 'EDXMLPullParser': ...
+              foreign_element_tags: List[str]=()) -> 'EDXMLPullParser': ...
 
     def _parsed_ontology(self, ontology: Ontology) -> None: ...
 
@@ -87,6 +87,7 @@ class EDXMLPushParser(EDXMLParserBase):
         super().__init__(validate)
         self.__input_parser = ... # type: etree.XMLPullParser
         self.__feed_target = ... # type: object
+        self.__foreign_element_tags = ... # type: List
 
     def feed(self, data: str) -> None: ...
 
