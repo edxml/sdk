@@ -21,7 +21,7 @@ def test_copies_are_identical():
     child = o.create_event_type('child')
     child.create_property('a', 'a').set_multi_valued(False)
 
-    child.make_child('of', parent.is_parent('of', child))
+    child.make_child('of', parent.make_parent('of', child))
 
     # Exact copies should be identical.
     assert child == copy.deepcopy(child)
@@ -40,11 +40,11 @@ def test_changing_parent_event_type_not_allowed():
     mom.create_property('a', 'a').unique()
     dad.create_property('a', 'a').unique()
 
-    child_of_mom.make_child('of', mom.is_parent('of', child_of_mom))
+    child_of_mom.make_child('of', mom.make_parent('of', child_of_mom))
 
     # Create a new version having dad as parent
     child_of_dad = copy.deepcopy(child_of_mom).set_version(2)
-    child_of_dad.make_child('of', dad.is_parent('of', child_of_dad))
+    child_of_dad.make_child('of', dad.make_parent('of', child_of_dad))
 
     # Comparing two should now fail.
     assert_invalid_ontology_upgrade(child_of_mom, child_of_dad)
@@ -60,10 +60,10 @@ def test_changing_property_map_not_allowed():
     child_a.create_property('a', 'a').set_multi_valued(False)
     child_a.create_property('b', 'a').set_multi_valued(False)
 
-    child_a.make_child('of', parent.is_parent('of', child_a)).map('a', 'a')
+    child_a.make_child('of', parent.make_parent('of', child_a)).map('a', 'a')
 
     child_b = copy.deepcopy(child_a).set_version(2)
-    child_b.make_child('of', parent.is_parent('of', child_a)).map('b', 'a')
+    child_b.make_child('of', parent.make_parent('of', child_a)).map('b', 'a')
 
     # Comparing two should now fail.
     assert_invalid_ontology_upgrade(child_a, child_b)
@@ -80,7 +80,7 @@ def test_add_parent():
     child_a.create_property('a', 'a').set_multi_valued(False)
 
     child_b = copy.deepcopy(child_a).set_version(2)
-    child_b.make_child('of', parent.is_parent('of', child_b))
+    child_b.make_child('of', parent.make_parent('of', child_b))
 
     # Now, child_b should be a valid upgrade of child_a and vice versa.
     assert_valid_upgrade(child_a, child_b)
@@ -99,7 +99,7 @@ def test_remove_parent_not_allowed():
     child_b = copy.deepcopy(child_a).set_version(2)
 
     # Make old version child of parent.
-    child_a.make_child('of', parent.is_parent('of', child_a))
+    child_a.make_child('of', parent.make_parent('of', child_a))
 
     # Comparing two should now fail.
     assert_invalid_ontology_upgrade(child_a, child_b)
@@ -115,7 +115,7 @@ def test_parent_attribute_upgrade():
     child_a.create_property('a', 'a').set_multi_valued(False)
     child_a.create_property('b', 'a').set_multi_valued(False)
 
-    child_a.make_child('of', parent.is_parent('of', child_a)).map('a', 'a')
+    child_a.make_child('of', parent.make_parent('of', child_a)).map('a', 'a')
 
     child_b = copy.deepcopy(child_a).set_version(2)
     child_b.get_parent().set_parent_description('changed')

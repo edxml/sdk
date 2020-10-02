@@ -796,7 +796,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         self._child_modified_callback()
         return self.__parent
 
-    def is_parent(self, parent_description, child):
+    def make_parent(self, parent_description, child):
         """
 
         Marks this event type as parent of the specified child event type.
