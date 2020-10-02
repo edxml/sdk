@@ -32,44 +32,35 @@
 #
 #
 #  This utility reads multiple compatible EDXML files and merges them into
-#  one new EDXML file, which is then printed on standard output. It works in
-#  two passes. First, it compiles and integrates all <ontology> elements
-#  from all EDXML files into a EDXMLParser instance. Then, in a second pass,
-#  it outputs the unified <ontology> element and outputs the eventgroups
-#  in each of the EDXML files.
-#
-#  The script demonstrates the use of EDXMLStreamFilter and merging of
-#  <ontology> elements from multiple EDXML sources.
+#  one new EDXML file, which is then printed on standard output.
+
 import argparse
 import sys
 
-from edxml import EDXMLOntologyPullParser
-from edxml.error import EDXMLError
+from edxml.error import EDXMLValidationError
 from edxml.EDXMLFilter import EDXMLPullFilter
-
-# This class is based on the EDXMLStreamFilter class,
-# and filters out <eventgroup> sections, omitting
-# all other content. It needs a dictionary which
-# translates Source URLs to a new set of unique
-# Source Identifiers. This mapping is used to translate
-# the source-id attributes in the <eventgroup> tags,
-# assuring the uniqueness of Source ID.
-from edxml.EDXMLParser import ProcessingInterrupted
+from edxml.logger import log
 
 
 class EDXMLMerger(EDXMLPullFilter):
-    def __init__(self, merged_definitions):
-        # Initialize source id / url mappings
-        super().__init__(sys.stdout)
-        self.merged_definitions = merged_definitions
+    def __init__(self):
+        super().__init__(sys.stdout.buffer)
 
-    def _parsed_ontology(self, parsed_ontology):
-        super()._parsed_ontology(self.merged_definitions)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._writer.close()
+
+    def parse(self, input_file, foreign_element_tags=()):
+        super().parse(input_file, foreign_element_tags)
+        self.close()
+
+    def _close(self):
+        # We suppress closing the output writer, allowing
+        # us to parse multiple files in succession.
+        ...
 
 
 parser = argparse.ArgumentParser(
-    description='This utility outputs sticky hashes for every event in a given '
-                'EDXML file or input stream. The hashes are printed to standard output.'
+    description='This utility merges two or more EDXML files into one.'
 )
 
 parser.add_argument(
@@ -80,50 +71,27 @@ parser.add_argument(
     help='A file name to be used as input for the merge operation.'
 )
 
-# Program starts here. Check commandline arguments.
 
-args = parser.parse_args()
+def main():
+    args = parser.parse_args()
 
-if len(args.file) < 2:
-    sys.stderr.write("Please specify at least two EDXML files for merging.\n")
-    sys.exit()
+    if args.file is None or len(args.file) < 2:
+        sys.stderr.write("Please specify at least two EDXML files for merging.\n")
+        sys.exit()
 
-parser = EDXMLOntologyPullParser()
+    with EDXMLMerger() as merger:
+        for file_name in args.file:
+            log.info("\nMerging file %s:" % file_name)
+            try:
+                merger.parse(file_name)
+            except KeyboardInterrupt:
+                pass
+            except EDXMLValidationError as exception:
+                exception.message = "EDXML file %s is incompatible with previous files: %s" % (file_name, exception)
+                raise
+            except Exception:
+                raise
 
-# First, we parse all specified EDXML files
-# using the EDXMLParser, which will compile
-# and merge all event type, object type
-# and source definitions in the EDXML files.
 
-for file_name in args.file:
-    sys.stderr.write("\nParsing file %s:" % file_name)
-
-    try:
-        parser.parse(file_name)
-    except ProcessingInterrupted:
-        pass
-    except EDXMLError as Error:
-        sys.stderr.write("\n\nEDXML file %s is inconsistent with previous files:\n\n%s" % (
-            file_name, str(Error)))
-        sys.exit(1)
-    except Exception:
-        raise
-
-# Now we process each of the specified EDXML files
-# a second time. We will feed each file into the
-# Merger, which will output the merged ontology
-# and pass through the event groups translate event source IDs.
-
-with EDXMLMerger(parser.get_ontology()) as merger:
-    for file_name in args.file:
-        sys.stderr.write("\nMerging file %s:" % file_name)
-        try:
-            merger.parse(open(file_name))
-        except ProcessingInterrupted:
-            pass
-        except EDXMLError as Error:
-            sys.stderr.write("\n\nEDXML file %s is incompatible with previous files:\n\n%s" % (
-                (file_name, str(Error))))
-            sys.exit(1)
-        except Exception:
-            raise
+if __name__ == "__main__":
+    main()
