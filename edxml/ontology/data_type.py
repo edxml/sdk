@@ -337,7 +337,18 @@ class DataType(object):
         Returns:
           edxml.ontology.DataType:
         """
-        return cls('ip')
+        return cls('ip:v4')
+
+    @classmethod
+    def ip_v6(cls):
+        """
+
+        Create an IPv6 DataType instance
+
+        Returns:
+          edxml.ontology.DataType:
+        """
+        return cls('ip:v6')
 
     def get(self):
         """
@@ -632,18 +643,27 @@ class DataType(object):
         return element
 
     def _generate_schema_ip(self):
+        split_data_type = self.type.split(':')
         e = ElementMaker()
 
-        # There is no data type in RelaxNG for IP addresses,
-        # so we use a pattern restriction. The regular expression
-        # checks for four octets containing a integer number in
-        # range [0,255].
-        return e.data(
-            e.param(
-                '((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]).){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])',
-                name='pattern'
-            ), type='string'
-        )
+        if split_data_type[1] == 'v4':
+            # There is no data type in RelaxNG for IPv4 addresses,
+            # so we use a pattern restriction. The regular expression
+            # checks for four octets containing a integer number in
+            # range [0,255].
+            return e.data(
+                e.param(
+                    '((1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]).){3}(1?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])',
+                    name='pattern'
+                ), type='string'
+            )
+        else:
+            return e.data(
+                e.param(
+                    r'[a-f\d]{4}(:[a-f\d]{4}){7}',
+                    name='pattern'
+                ), type='string'
+            )
 
     def _generate_schema_hashlink(self):
         e = ElementMaker()
@@ -789,16 +809,22 @@ class DataType(object):
         return normalized
 
     def _normalize_ip(self, values):
+        split_data_type = self.type.split(':')
         normalized = set()
         for value in values:
             if not isinstance(value, IP):
                 try:
                     value = IP(value)
+                    if split_data_type[1] == 'v4' and value.version() != 4:
+                        raise ValueError
+                    if split_data_type[1] == 'v6' and value.version() != 6:
+                        raise ValueError
                 except (ValueError, TypeError):
                     raise EDXMLValidationError(
-                        'Invalid IPv4 address in list: "%s"' % '","'.join([repr(value) for value in values])
+                        'Invalid IP%s address in list: "%s"' %
+                        (split_data_type[1], '","'.join([repr(value) for value in values]))
                     )
-            normalized.add(str(value))
+            normalized.add(value.strFullsize())
         return normalized
 
     def _normalize_geo(self, values):
@@ -1046,12 +1072,17 @@ class DataType(object):
             raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
 
     def _validate_value_ip(self, value):
+        split_data_type = self.type.split(':')
         try:
             ip = IP(value)
+            if split_data_type[1] == 'v4' and ip.version() != 4:
+                raise ValueError
+            if split_data_type[1] == 'v6' and ip.version() != 6:
+                raise ValueError
+            if ip.strFullsize() != value:
+                raise ValueError
         except ValueError:
-            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
-        if ip.version() != 4 or ip.strNormal() != value:
-            raise EDXMLValidationError("Invalid IPv4 address: '%s'" % value)
+            raise EDXMLValidationError("Invalid IP%s address: '%s'" % (split_data_type[1], value))
 
     def _validate_value_boolean(self, value):
         if value not in ['true', 'false']:
@@ -1211,7 +1242,7 @@ class DataType(object):
         """
 
         # Check simple data types first
-        if self.type in ('enum', 'datetime', 'sequence', 'ip', 'hashlink', 'boolean', 'uuid'):
+        if self.type in ('enum', 'datetime', 'sequence', 'hashlink', 'boolean', 'uuid'):
             return self
 
         split_data_type = self.type.split(':')
@@ -1222,6 +1253,10 @@ class DataType(object):
         elif split_data_type[0] == 'geo':
             if len(split_data_type) == 2:
                 if split_data_type[1] == 'point':
+                    return self
+        elif split_data_type[0] == 'ip':
+            if len(split_data_type) == 2:
+                if split_data_type[1] in ('v4', 'v6'):
                     return self
         elif split_data_type[0] == 'number':
             self._validate_number()
