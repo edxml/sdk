@@ -108,7 +108,7 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
         self._writer = EDXMLWriter(output, validate)
 
     def _parsed_event(self, event):
-        EDXMLFilter._parsed_event(self, event)
+        super()._parsed_event(event)
 
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
