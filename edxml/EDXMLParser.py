@@ -69,6 +69,7 @@ class EDXMLParserBase(object):
 
         self.__previous_event = None            # type: etree.Element
         self.__root_element = None            # type: etree.Element
+        self.__parsing = False                 # type: bool
         self.__num_parsed_events = 0           # type: int
         self.__num_parsed_event_types = {}      # type: Dict[str, int]
         self.__event_type_handlers = {}        # type: Dict[str, callable]
@@ -86,6 +87,10 @@ class EDXMLParserBase(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self.__parsing:
+            # Parser already closed.
+            return
+
         # Note that, below, we check if an exception occurred.
         # We only perform the final global document structure
         # validation when no error occurred, because the validator
@@ -108,7 +113,9 @@ class EDXMLParserBase(object):
           EDXMLParserBase: The EDXML parser
         """
         self.__parsed_initial_ontology = False
+        self.__parsing = False
         self.__root_element = None
+        self.__num_parsed_events = 0
         self._close()
         return self
 
@@ -364,6 +371,8 @@ class EDXMLParserBase(object):
         self._ontology = ontology
 
     def _parse_edxml(self):
+
+        self.__parsing = True
 
         for action, elem in self._element_iterator:
 
