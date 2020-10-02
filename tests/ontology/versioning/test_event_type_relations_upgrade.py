@@ -169,7 +169,7 @@ def test_relation_attribute_upgrade():
     a['p1'].relate_to('related to', 'p2').set_description('[[p1]] related to [[p2]]')
 
     b = copy.deepcopy(a).set_version(2)
-    for relation in b.get_property_relations().values():
+    for relation in b.relations:
         relation.set_description('[[p2]] related to [[p1]]')
 
     # Now, b should be a valid upgrade of a and vice versa.

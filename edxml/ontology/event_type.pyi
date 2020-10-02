@@ -4,7 +4,7 @@ import edxml
 from typing import List, Dict, Iterable, Tuple, Optional
 from lxml import etree
 
-from edxml.ontology import OntologyElement
+from edxml.ontology import OntologyElement, PropertyRelation
 
 
 class EventType(OntologyElement):
@@ -34,6 +34,9 @@ class EventType(OntologyElement):
     def _child_modified_callback(self) -> 'EventType': ...
 
     def _set_attr(self, key: str, value): ...
+
+    @property
+    def relations(self) -> Iterable[PropertyRelation]: ...
 
     def get_name(self) -> str: ...
 

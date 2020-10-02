@@ -219,6 +219,15 @@ class EventType(VersionedOntologyElement, MutableMapping):
             self.__attr[key] = value
             self._child_modified_callback()
 
+    @property
+    def relations(self):
+        """
+
+        Returns:
+            Iterable[PropertyRelation]
+        """
+        return self.__relations.values()
+
     def get_name(self):
         """
 

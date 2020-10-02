@@ -6,7 +6,7 @@ from graphviz import Digraph
 import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
-from edxml.ontology import Ontology, PropertyRelation
+from edxml.ontology import Ontology
 from edxml.error import EDXMLError
 from edxml.EDXMLWriter import EDXMLWriter
 
@@ -609,7 +609,7 @@ class TranscoderMediator(object):
         relations = defaultdict(lambda: defaultdict(set))
         for event_type_name in ontology.get_event_type_names():
             event_type = ontology.get_event_type(event_type_name)
-            for relation in event_type.get_property_relations().values():  # type: PropertyRelation
+            for relation in event_type.relations:
                 if relation.get_type() != 'inter':
                     continue
                 relations[relation.get_source_concept()][relation.get_target_concept()].add(event_type_name)
@@ -620,7 +620,7 @@ class TranscoderMediator(object):
         relations = defaultdict(lambda: defaultdict(set))
         for event_type_name in ontology.get_event_type_names():
             event_type = ontology.get_event_type(event_type_name)
-            for relation in event_type.get_property_relations().values():  # type: PropertyRelation
+            for relation in event_type.relations:
                 if relation.get_type() != 'intra':
                     continue
                 relations[relation.get_source_concept()][relation.get_target_concept()].update(
@@ -636,7 +636,7 @@ class TranscoderMediator(object):
         descriptions = []
         for event_type_name in ontology.get_event_type_names():
             event_type = ontology.get_event_type(event_type_name)
-            for relation in event_type.get_property_relations().values():  # type: PropertyRelation
+            for relation in event_type.relations:
                 if relation.get_type() != 'intra':
                     continue
                 source_concept = ontology.get_concept(relation.get_source_concept())
