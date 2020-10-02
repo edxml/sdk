@@ -754,7 +754,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         self._child_modified_callback()
         return self
 
-    def make_children(self, siblings_description, parent):
+    def make_child(self, siblings_description, parent):
         """
 
         Marks this event type as child of the specified parent event type. In
@@ -777,8 +777,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             self.__parent = EventTypeParent(self, parent.get_name(), '', self.__parent_description,
                                             siblings_description)
         else:
-            raise Exception(
-                'You must call is_parent() on the parent before calling make_children().')
+            raise Exception('You must call is_parent() on the parent before calling make_child().')
 
         # If all unique properties of the parent event type
         # also exist in the child event type, we can create
