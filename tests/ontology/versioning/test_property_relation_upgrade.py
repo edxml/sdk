@@ -111,8 +111,8 @@ def test_change_directedness_not_allowed():
 
     e2 = copy.deepcopy(e1).set_version(2)
 
-    a = e1['a'].relate_to('related to', 'b').undirected()
-    b = e2['a'].relate_to('related to', 'b').directed()
+    a = e1['a'].relate_to('related to', 'b').make_undirected()
+    b = e2['a'].relate_to('related to', 'b').make_directed()
 
     # An attempt to upgrade to a version having a different
     # relation directedness must fail.

@@ -216,7 +216,7 @@ class PropertyRelation(OntologyElement):
         self._set_attr('confidence', int(confidence))
         return self
 
-    def directed(self):
+    def make_directed(self):
         """
 
         Marks the property relation as directed
@@ -227,7 +227,7 @@ class PropertyRelation(OntologyElement):
         self._set_attr('directed', True)
         return self
 
-    def undirected(self):
+    def make_undirected(self):
         """
 
         Marks the property relation as undirected
