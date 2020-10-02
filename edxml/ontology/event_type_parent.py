@@ -139,7 +139,7 @@ class EventTypeParent(OntologyElement):
             ['%s:%s' % (Child, Parent) for Child, Parent in current.items()]))
         return self
 
-    def get_event_type(self):
+    def get_event_type_name(self):
         """
 
         Returns the name of the parent event type.
@@ -291,7 +291,7 @@ class EventTypeParent(OntologyElement):
 
         # Check for illegal upgrade paths:
 
-        if old.get_event_type() != new.get_event_type():
+        if old.get_event_type_name() != new.get_event_type_name():
             # The parent event types are different, no upgrade possible.
             equal = is_valid_upgrade = False
 

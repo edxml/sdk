@@ -244,7 +244,7 @@ def test_event_type_parents(transcoder):
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()
 
-    assert event_types['event-type.b'].get_parent().get_event_type() == 'event-type.a'
+    assert event_types['event-type.b'].get_parent().get_event_type_name() == 'event-type.a'
     assert event_types['event-type.b'].get_parent().get_parent_description() == 'test parent of'
     assert event_types['event-type.b'].get_parent().get_siblings_description() == 'test sibling of'
     assert event_types['event-type.b'].get_parent().get_property_map() == {'property-a': 'property-a'}

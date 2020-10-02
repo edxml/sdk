@@ -685,10 +685,10 @@ class Ontology(OntologyElement):
         # Check if all event type parents are defined
         for event_type_name, event_type in self.__event_types.items():
             if event_type.get_parent() is not None:
-                if event_type.get_parent().get_event_type() not in self.__event_types:
+                if event_type.get_parent().get_event_type_name() not in self.__event_types:
                     raise EDXMLValidationError(
                         'Event type "%s" refers to parent event type "%s", which is not defined.' %
-                        (event_type_name, event_type.get_parent().get_event_type()))
+                        (event_type_name, event_type.get_parent().get_event_type_name()))
 
         # Check if the object type of each property exists
         for event_type_name, event_type in self.__event_types.items():
@@ -726,7 +726,7 @@ class Ontology(OntologyElement):
 
             # Check if all unique parent properties are present
             # in the property map
-            parent_event_type = self.get_event_type(event_type.get_parent().get_event_type())
+            parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
             for parent_property_name, parent_property in parent_event_type.items():
                 if parent_property.is_unique():
                     if parent_property_name not in event_type.get_parent().get_property_map().values():
@@ -746,7 +746,7 @@ class Ontology(OntologyElement):
                     )
 
                 # Check if parent property exists and if it is a unique property
-                parent_event_type = self.get_event_type(event_type.get_parent().get_event_type())
+                parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
                 if parent_property not in parent_event_type.keys() or \
                    parent_event_type[parent_property].get_merge_strategy() != 'match':
                     raise EDXMLValidationError(
@@ -754,7 +754,7 @@ class Ontology(OntologyElement):
                          'to parent property "%s" of event type %s, '
                          'but this property is not unique, or it does not exist.') %
                         (event_type_name, parent_property,
-                            event_type.get_parent().get_event_type())
+                            event_type.get_parent().get_event_type_name())
                     )
 
                 # Check if child property has allowed merge strategy
@@ -963,7 +963,7 @@ class Ontology(OntologyElement):
             if event_type.get_parent() is None:
                 continue
             parent = event_type.get_parent()
-            self._gv_generate_parent_child(graph, self.__event_types[parent.get_event_type()], event_type)
+            self._gv_generate_parent_child(graph, self.__event_types[parent.get_event_type_name()], event_type)
 
     @staticmethod
     def _gv_generate_parent_child(graph, parent, child):
