@@ -124,7 +124,7 @@ class Ontology(OntologyElement):
                 self._add_concept(brick_concept)
 
     def create_object_type(self, name, display_name_singular=None, display_name_plural=None, description=None,
-                           data_type='string:0:cs:u'):
+                           data_type='string:0:mc:u'):
         """
 
         Creates and returns a new ObjectType instance. When no display

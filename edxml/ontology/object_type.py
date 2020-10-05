@@ -25,7 +25,7 @@ class ObjectType(VersionedOntologyElement):
         r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:cs:u', compress=False, fuzzy_matching='none', regexp=None):
+                 data_type='string:0:mc:u', compress=False, fuzzy_matching='none', regexp=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'

@@ -29,7 +29,7 @@ class DataType(object):
     # Expression used for matching SHA1 hashlinks
     HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
     # Expression used for matching string datatypes
-    STRING_PATTERN = re.compile("^string:[0-9]+:((cs)|(ci))(:[ru]+)?$")
+    STRING_PATTERN = re.compile("^string:[0-9]+:(mc|lc|uc)(:[ru]+)?$")
     # Expression used for matching base64 datatypes
     BASE64_PATTERN = re.compile("^base64:[0-9]+$")
     # Expression used for matching uri datatypes
@@ -216,14 +216,15 @@ class DataType(object):
         return cls('number:decimal:%d:%d%s' % (total_digits, fractional_digits, (':signed' if signed else '')))
 
     @classmethod
-    def string(cls, length=0, case_sensitive=True, require_unicode=True, reverse_storage=False):
+    def string(cls, length=0, lower_case=True, upper_case=True, require_unicode=True, reverse_storage=False):
         """
 
         Create a string DataType instance.
 
         Args:
           length (int): Max number of characters (zero = unlimited)
-          case_sensitive (bool): Treat strings as case insensitive
+          lower_case (bool): Allow lower case characters
+          upper_case (bool): Allow upper case characters
           require_unicode (bool): String may contain UTF-8 characters
           reverse_storage (bool): Hint storing the string in reverse character order
 
@@ -233,7 +234,20 @@ class DataType(object):
         flags = 'u' if require_unicode else ''
         flags += 'r' if reverse_storage else ''
 
-        return cls('string:%d:%s%s' % (length, 'cs' if case_sensitive else 'ci', ':%s' % flags if flags else ''))
+        if lower_case:
+            if upper_case:
+                case = 'mc'
+            else:
+                case = 'lc'
+        else:
+            if upper_case:
+                case = 'uc'
+            else:
+                raise ValueError(
+                    "String values cannot be prevented from containing both upper case and lower case characters."
+                )
+
+        return cls('string:%d:%s%s' % (length, case, ':%s' % flags if flags else ''))
 
     @classmethod
     def base64(cls, length=0):
@@ -579,7 +593,7 @@ class DataType(object):
 
         length = int(split_data_type[1])
         is_unicode = len(split_data_type) > 3 and 'u' in split_data_type[3]
-        is_case_sensitive = split_data_type[2] == 'cs'
+        case = split_data_type[2]
 
         element = e.data(type='string')
         etree.SubElement(element, 'param', name='minLength').text = '1'
@@ -588,15 +602,21 @@ class DataType(object):
             etree.SubElement(element, 'param', name='maxLength').text = str(length)
 
         if is_unicode:
-            if not is_case_sensitive:
+            if case == 'lc':
                 etree.SubElement(element, 'param', name='pattern').text = r'[\s\S-[\p{Lu}]]*'
+            elif case == 'uc':
+                etree.SubElement(element, 'param', name='pattern').text = r'[\s\S-[\p{Ll}]]*'
         else:
-            if is_case_sensitive:
+            if case == 'mc':
                 etree.SubElement(element, 'param', name='pattern').text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}]*'
-            else:
+            elif case == 'lc':
                 etree.SubElement(
                     element, 'param', name='pattern'
                 ).text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Lu}]]*'
+            else:
+                etree.SubElement(
+                    element, 'param', name='pattern'
+                ).text = r'[\p{IsBasicLatin}\p{IsLatin-1Supplement}-[\p{Ll}]]*'
 
         if regexp is not None:
             etree.SubElement(element, 'param', name='pattern').text = regexp
@@ -841,8 +861,10 @@ class DataType(object):
         split_data_type = self.type.split(':')
 
         try:
-            if split_data_type[2] == 'ci':
+            if split_data_type[2] == 'lc':
                 return {str(value.lower()) for value in values}
+            elif split_data_type[2] == 'uc':
+                return {str(value.upper()) for value in values}
             else:
                 return {str(value) for value in values}
         except AttributeError:
@@ -1035,9 +1057,12 @@ class DataType(object):
             if len(value) > max_string_length:
                 raise EDXMLValidationError("string too long for data type %s: '%s'" % (self.type, value))
 
-        if split_data_type[2] == 'ci':
+        if split_data_type[2] == 'lc':
             if value.lower() != value:
                 raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+        elif split_data_type[2] == 'uc':
+            if value.upper() != value:
+                raise EDXMLValidationError("string of data type %s must be all uppercase: %s" % (self.type, value))
 
         # Check character set of object value
         if len(split_data_type) < 4 or 'u' not in split_data_type[3]:
