@@ -54,8 +54,8 @@ def assert_valid_ontology_upgrade(old, new):
     assert old == new
 
 
-def assert_invalid_ontology_upgrade(old, new):
-    with pytest.raises(EDXMLValidationError):
+def assert_invalid_ontology_upgrade(old, new, match=None):
+    with pytest.raises(EDXMLValidationError, match=match):
         new > old
 
 
