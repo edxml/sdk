@@ -2,6 +2,8 @@
 import edxml
 
 from typing import List, Dict, Iterable, Tuple, Optional
+
+from edxml import EDXMLEvent
 from lxml import etree
 
 from edxml.ontology import OntologyElement, PropertyRelation
@@ -137,6 +139,10 @@ class EventType(OntologyElement):
     def set_version_property_name(self, property_name: str) -> 'EventType': ...
 
     def set_sequence_property_name(self, property_name: str) -> 'EventType': ...
+
+    def evaluate_template(
+            self, edxml_event: EDXMLEvent, which: str = 'story', capitalize: bool = True, colorize: bool = False
+    ) -> str: ...
 
     def _validate_event_versioning(self) -> None: ...
 
