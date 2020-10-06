@@ -51,6 +51,28 @@ class Concept(VersionedOntologyElement):
             self._attr[key] = value
             self._child_modified_callback()
 
+    @classmethod
+    def concept_name_is_specialization(cls, concept_name, specialization_concept_name):
+        """
+        Returns True when the one concept name a is a specialization of
+        the other. This is true when the specialization extends the
+        concept name by appending to it.
+
+        Args:
+            concept_name (str):
+            specialization_concept_name (str):
+
+        Returns:
+            bool:
+
+        """
+
+        # Make sure that b is longer than a
+        if len(specialization_concept_name) <= len(concept_name):
+            return False
+
+        return specialization_concept_name[:len(concept_name)] == concept_name
+
     def get_name(self):
         """
 
