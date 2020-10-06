@@ -379,7 +379,6 @@ def create_parsedevent(ontology, tmpdir):
     fa = f.open('ba+')
     w = SimpleEDXMLWriter(fa)
     w.set_buffer_size(0)
-    w.set_event_source("/test/")
     w.add_ontology(ontology)
     w.add_event(create_eventelement())
 

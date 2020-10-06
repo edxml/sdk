@@ -162,7 +162,6 @@ def test_confidence_upgrade():
     o = Ontology()
     o.create_object_type('a')
     o.create_concept('a')
-    o.create_concept('a')
 
     a = o.create_event_type('a')
     a.create_property('a', 'a')
@@ -179,7 +178,6 @@ def test_confidence_upgrade():
 def test_incompatible_confidence_upgrade():
     o = Ontology()
     o.create_object_type('a')
-    o.create_concept('a')
     o.create_concept('a')
 
     a = o.create_event_type('a')
@@ -199,7 +197,6 @@ def test_cnp_upgrade():
     o = Ontology()
     o.create_object_type('a')
     o.create_concept('a')
-    o.create_concept('a')
 
     a = o.create_event_type('a')
     a.create_property('a', 'a')
@@ -216,7 +213,6 @@ def test_cnp_upgrade():
 def test_incompatible_cnp_upgrade():
     o = Ontology()
     o.create_object_type('a')
-    o.create_concept('a')
     o.create_concept('a')
 
     a = o.create_event_type('a')
@@ -236,7 +232,6 @@ def test_display_name_upgrade_singular():
     o = Ontology()
     o.create_object_type('a')
     o.create_concept('a')
-    o.create_concept('a')
 
     a = o.create_event_type('a')
     a.create_property('a', 'a')
@@ -253,7 +248,6 @@ def test_display_name_upgrade_singular():
 def test_incompatible_display_name_upgrade_singular():
     o = Ontology()
     o.create_object_type('a')
-    o.create_concept('a')
     o.create_concept('a')
 
     a = o.create_event_type('a')
@@ -273,7 +267,6 @@ def test_display_name_upgrade_plural():
     o = Ontology()
     o.create_object_type('a')
     o.create_concept('a')
-    o.create_concept('a')
 
     a = o.create_event_type('a')
     a.create_property('a', 'a')
@@ -290,7 +283,6 @@ def test_display_name_upgrade_plural():
 def test_incompatible_display_name_upgrade_plural():
     o = Ontology()
     o.create_object_type('a')
-    o.create_concept('a')
     o.create_concept('a')
 
     a = o.create_event_type('a')
