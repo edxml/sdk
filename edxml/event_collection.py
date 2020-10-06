@@ -6,7 +6,7 @@ from edxml import EDXMLWriter, EDXMLPullParser, EDXMLEvent
 from edxml.ontology import Ontology
 
 
-class EventCollection(list):
+class EventCollection(List[EDXMLEvent]):
     """
     Class representing a collection of EDXML events. It is
     an extension of the list type and can be used like any
