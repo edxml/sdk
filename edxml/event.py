@@ -371,10 +371,23 @@ class EDXMLEvent(MutableMapping):
 
     @property
     def attachments(self):
+        """
+
+        Class property storing the attachments of the event.
+
+        Returns:
+            Dict[str, str]
+        """
         return self.get_attachments()
 
     @attachments.setter
     def attachments(self, new_attachments):
+        """
+        Setter for the event attachments dictionary
+
+        Args:
+            new_attachments (Dict[str, str]):
+        """
         self.set_attachments(new_attachments)
 
     def get_any(self, property_name, default=None):
@@ -496,7 +509,7 @@ class EDXMLEvent(MutableMapping):
         as keys. The values are lists of object values.
 
         Returns:
-          Dict[str, List[str]]: Event properties
+          PropertySet: Event properties
 
         """
         return self._properties
