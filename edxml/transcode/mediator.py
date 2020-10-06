@@ -521,9 +521,9 @@ class TranscoderMediator(object):
 
         relates_inter = self._describe_inter_concept_relations(ontology)
         relates_intra = self._describe_intra_concept_relations(ontology)
-        concept_refinements = self._describe_concept_refinements(
+        concept_specializations = self._describe_concept_specializations(
             ontology,
-            '\n- {concept_source} as {concept_target} (using {event_type})'
+            '- {concept_source} as {concept_target} (using {event_type})'
         )
 
         if relates_inter:
@@ -554,8 +554,8 @@ class TranscoderMediator(object):
                     object_type_dn.append(ontology.get_object_type(object_type_name).get_display_name_plural())
                 description += ', '.join(object_type_dn)
 
-        if concept_refinements:
-            description += '\n\nThe transcoder identifies\n' + '\n'.join(concept_refinements)
+        if concept_specializations:
+            description += '\n\nThe transcoder identifies\n' + '\n'.join(concept_specializations)
 
         concepts = self._describe_concepts(ontology)
         object_types = self._describe_object_types(ontology)
@@ -632,7 +632,7 @@ class TranscoderMediator(object):
         return relations
 
     @classmethod
-    def _describe_concept_refinements(cls, ontology, item_template):
+    def _describe_concept_specializations(cls, ontology, item_template):
         descriptions = []
         for event_type_name in ontology.get_event_type_names():
             event_type = ontology.get_event_type(event_type_name)

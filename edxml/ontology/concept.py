@@ -339,18 +339,18 @@ class Concept(VersionedOntologyElement):
         return etree.Element('concept', attribs)
 
     @classmethod
-    def generate_refinements(cls, concept_name, base_concept_name=None):
+    def generate_specializations(cls, concept_name, parent_concept_name=None):
         """
-        Generator yielding refinements of a given concept. For example, when
+        Generator yielding specializations of a given concept. For example, when
         given a concept name 'a.b.c' it will generate concept names 'a', 'a.b'
         and 'a.b.c'.
 
-        Optionally a base concept can be specified. In that case the refinements
-        will be generated starting at the given base.
+        Optionally a parent concept can be specified. In that case the specializations
+        will be generated starting at the parent concept.
 
         Args:
-            concept_name (str): Concept for which to generate refinements
-            base_concept_name (Optional[str]): First yielded refinement
+            concept_name (str): Concept for which to generate specializations
+            parent_concept_name (Optional[str]): First yielded concept name
 
         Yields:
             str
@@ -358,9 +358,9 @@ class Concept(VersionedOntologyElement):
         components = concept_name.split('.')
         if not components:
             return
-        base_components = base_concept_name.split('.') if base_concept_name else []
+        parent_components = parent_concept_name.split('.') if parent_concept_name else []
         current_concept_name = []
-        while components and current_concept_name != base_components:
+        while components and current_concept_name != parent_components:
             current_concept_name.append(components.pop(0))
         while len(components) > 0:
             current_concept_name.append(components.pop(0))
