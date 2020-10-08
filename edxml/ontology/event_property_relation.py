@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from copy import copy
 
 import edxml.template
 import edxml.ontology
@@ -509,3 +510,18 @@ class PropertyRelation(OntologyElement):
             del attribs['concept2']
 
         return etree.Element(self._type, attribs)
+
+    def reversed(self):
+        reversed = copy(self)
+
+        concept1 = reversed.__attr['concept1']
+        concept2 = reversed.__attr['concept2']
+        property1 = reversed.__attr['property1']
+        property2 = reversed.__attr['property2']
+
+        reversed.__attr['concept1'] = concept2
+        reversed.__attr['concept2'] = concept1
+        reversed.__attr['property1'] = property2
+        reversed.__attr['property2'] = property1
+
+        return reversed

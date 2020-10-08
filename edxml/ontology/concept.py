@@ -52,6 +52,36 @@ class Concept(VersionedOntologyElement):
             self._child_modified_callback()
 
     @classmethod
+    def concept_names_share_branch(cls, a, b):
+        """
+        Returns True when concept name a is a specialization of
+        b or the other way around. This is true when both share the same
+        branch in the concept name hierarchy. For example concept
+        names a.b and a.b.c share the same branch while a.b and a.c
+        do not.
+
+        Args:
+            a (str):
+            b (str):
+
+        Returns:
+            bool:
+
+        """
+
+        # Make sure that b is longer than a
+        if len(a) > len(b):
+            tmp = a
+            a = b
+            b = tmp
+
+        # Truncate b to the length of a
+        if len(b) > len(a):
+            b = b[0:len(a)]
+
+        return a == b
+
+    @classmethod
     def concept_name_is_specialization(cls, concept_name, specialization_concept_name):
         """
         Returns True when the one concept name a is a specialization of
