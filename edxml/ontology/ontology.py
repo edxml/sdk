@@ -728,7 +728,7 @@ class Ontology(OntologyElement):
             # in the property map
             parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
             for parent_property_name, parent_property in parent_event_type.items():
-                if parent_property.is_unique():
+                if parent_property.is_hashed():
                     if parent_property_name not in event_type.get_parent().get_property_map().values():
                         raise EDXMLValidationError(
                             'Event type %s contains a parent definition which lacks '

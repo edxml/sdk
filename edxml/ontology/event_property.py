@@ -394,6 +394,17 @@ class EventProperty(OntologyElement):
         """
         return self.__attr['unique']
 
+    def is_hashed(self):
+        """
+
+        Returns True if property has merge strategy 'match', which means
+        that it is included in event hashes
+
+        Returns:
+          bool:
+        """
+        return self.__attr['merge'] == 'match'
+
     def is_optional(self):
         """
 
