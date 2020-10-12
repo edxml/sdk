@@ -811,26 +811,15 @@ class EDXMLEvent(MutableMapping):
         # Now we compute the SHA1 hash value of the byte
         # string representation of the event, and output in hex
 
-        if event_type.is_unique():
-            return codecs.encode(hashlib.sha1(
-                (
-                    b'%s\n%s\n%s' % (
-                        self.get_source_uri().encode(),
-                        self.get_type_name().encode(),
-                        object_separator.join(sorted(object_strings))
-                    )
+        return codecs.encode(hashlib.sha1(
+            (
+                b'%s\n%s\n%s' % (
+                    self.get_source_uri().encode(),
+                    self.get_type_name().encode(),
+                    object_separator.join(sorted(object_strings))
                 )
-            ).digest(), encoding).decode()
-        else:
-            return codecs.encode(hashlib.sha1(
-                (
-                    b'%s\n%s\n%s' % (
-                        self.get_source_uri().encode(),
-                        self.get_type_name().encode(),
-                        object_separator.join(sorted(object_strings))
-                    )
-                )
-            ).digest(), encoding).decode()
+            )
+        ).digest(), encoding).decode()
 
     def is_valid(self, ontology):
         """
