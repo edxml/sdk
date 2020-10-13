@@ -133,7 +133,7 @@ def test_spurious_property_merge_strategy_exception(transcoder):
 def test_spurious_unique_property_exception(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
-    type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['spurious']}
+    type(transcoder).TYPE_HASHED_PROPERTIES = {'event-type.a': ['spurious']}
     with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
         dict(transcoder.generate_event_types())
 

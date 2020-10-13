@@ -17,7 +17,7 @@ def test_copies_are_identical():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child = o.create_event_type('child')
     child.create_property('a', 'a').set_multi_valued(False)
 
@@ -37,8 +37,8 @@ def test_changing_parent_event_type_not_allowed():
     mom = o.create_event_type('mom')
     dad = o.create_event_type('dad')
 
-    mom.create_property('a', 'a').unique()
-    dad.create_property('a', 'a').unique()
+    mom.create_property('a', 'a').make_hashed()
+    dad.create_property('a', 'a').make_hashed()
 
     child_of_mom.make_child('of', mom.make_parent('of', child_of_mom))
 
@@ -55,7 +55,7 @@ def test_changing_property_map_not_allowed():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child_a = o.create_event_type('child')
     child_a.create_property('a', 'a').set_multi_valued(False)
     child_a.create_property('b', 'a').set_multi_valued(False)
@@ -75,7 +75,7 @@ def test_add_parent():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child_a = o.create_event_type('child')
     child_a.create_property('a', 'a').set_multi_valued(False)
 
@@ -92,7 +92,7 @@ def test_remove_parent_not_allowed():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child_a = o.create_event_type('child')
     child_a.create_property('a', 'a').set_multi_valued(False)
 
@@ -110,7 +110,7 @@ def test_parent_attribute_upgrade():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child_a = o.create_event_type('child')
     child_a.create_property('a', 'a').set_multi_valued(False)
     child_a.create_property('b', 'a').set_multi_valued(False)

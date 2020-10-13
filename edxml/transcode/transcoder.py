@@ -223,7 +223,7 @@ class Transcoder(object):
     for any automatically generated properties.
 
     When no merge strategy is given, automatically generated properties will have the default strategy,
-    which is 'match' for unique properties and 'drop' for all other properties.
+    which is 'match' for hashed properties and 'drop' for all other properties.
 
     For convenience, the EventProperty class defines some class attributes representing the available
     merge strategies.
@@ -238,12 +238,12 @@ class Transcoder(object):
 
     """
 
-    TYPE_UNIQUE_PROPERTIES = {}
+    TYPE_HASHED_PROPERTIES = {}
     """
-    The TYPE_UNIQUE_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of unique properties.
-    The lists will be used to mark the listed properties as unique in automatically generated properties. Example::
+    The TYPE_HASHED_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of hashed properties.
+    The lists will be used to set the 'match' merge strategy for the listed properties. Example::
 
-      {'event_type_name': ['unique-property-a', 'unique-property-b']}
+      {'event_type_name': ['hashed-property-a', 'hashed-property-b']}
     """
 
     PARENTS_CHILDREN = []
@@ -551,8 +551,8 @@ class Transcoder(object):
             if property_name in cls.TYPE_PROPERTY_MERGE_STRATEGIES.get(event_type_name, {}):
                 event_type[property_name].set_merge_strategy(
                     cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name][property_name])
-            if property_name in cls.TYPE_UNIQUE_PROPERTIES.get(event_type_name, {}):
-                event_type[property_name].unique()
+            if property_name in cls.TYPE_HASHED_PROPERTIES.get(event_type_name, {}):
+                event_type[property_name].make_hashed()
             if property_name in cls.TYPE_PROPERTY_CONCEPTS.get(event_type_name, {}):
                 concept_associations = cls.TYPE_PROPERTY_CONCEPTS[event_type_name][property_name]
                 for concept_name, confidence in concept_associations.items():
@@ -637,7 +637,7 @@ class Transcoder(object):
         ]
 
         const_with_property_lists = [
-            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES', 'TYPE_UNIQUE_PROPERTIES',
+            'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES', 'TYPE_HASHED_PROPERTIES',
             'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP'
         ]
 
@@ -722,7 +722,7 @@ class Transcoder(object):
         const_with_event_type_keys = [
             'TYPE_DESCRIPTIONS', 'TYPE_DISPLAY_NAMES', 'TYPE_SUMMARIES', 'TYPE_STORIES', 'TYPE_PROPERTIES',
             'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
-            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_UNIQUE_PROPERTIES', 'PARENTS_CHILDREN',
+            'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_HASHED_PROPERTIES', 'PARENTS_CHILDREN',
             'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_ATTACHMENTS',
             'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
             'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',

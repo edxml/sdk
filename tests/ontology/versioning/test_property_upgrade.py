@@ -220,21 +220,6 @@ def test_change_merge_strategy_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_change_uniqueness_not_allowed():
-    o = Ontology()
-    o.create_object_type('a')
-
-    a = o.create_event_type('a')
-    a.create_property('a', 'a')
-
-    # We make a newer event type in which the property has become unique.
-    b = copy.deepcopy(a).set_version(2)
-    b['a'].unique()
-
-    # The versions are now incompatible.
-    assert_invalid_ontology_upgrade(a, b)
-
-
 # We can run pytest directly in our debugger
 if __name__ == "__main__":
     # -vv: extra verbose

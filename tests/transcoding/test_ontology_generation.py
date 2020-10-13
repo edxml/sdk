@@ -148,7 +148,7 @@ def test_properties(transcoder):
     type(transcoder).TYPE_PROPERTY_DESCRIPTIONS = {'event-type.a': {'property-a': 'test description'}}
     type(transcoder).TYPE_PROPERTY_SIMILARITY = {'event-type.a': {'property-a': 'test similarity'}}
     type(transcoder).TYPE_PROPERTY_MERGE_STRATEGIES = {'event-type.a': {'property-a': EventProperty.MERGE_MATCH}}
-    type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['property-a']}
+    type(transcoder).TYPE_HASHED_PROPERTIES = {'event-type.a': ['property-a']}
     type(transcoder).TYPE_MULTI_VALUED_PROPERTIES = {'event-type.a': ['property-a']}
     type(transcoder).TYPE_OPTIONAL_PROPERTIES = {'event-type.a': ['property-b']}
 
@@ -160,10 +160,10 @@ def test_properties(transcoder):
         assert event_type.get_properties()['property-a'].get_description() == 'test description'
         assert event_type.get_properties()['property-a'].get_similar_hint() == 'test similarity'
         assert event_type.get_properties()['property-a'].get_merge_strategy() == EventProperty.MERGE_MATCH
-        assert event_type.get_properties()['property-a'].is_unique()
+        assert event_type.get_properties()['property-a'].is_hashed()
         assert event_type.get_properties()['property-a'].is_multi_valued()
         assert event_type.get_properties()['property-a'].is_mandatory()
-        assert event_type.get_properties()['property-b'].is_unique() is False
+        assert event_type.get_properties()['property-b'].is_hashed() is False
         assert event_type.get_properties()['property-b'].is_single_valued()
         assert event_type.get_properties()['property-b'].is_optional()
 
@@ -236,7 +236,7 @@ def test_concept_associations(transcoder):
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a', 'event-type.b'))])
 def test_event_type_parents(transcoder):
-    type(transcoder).TYPE_UNIQUE_PROPERTIES = {'event-type.a': ['property-a']}
+    type(transcoder).TYPE_HASHED_PROPERTIES = {'event-type.a': ['property-a']}
     type(transcoder).PARENTS_CHILDREN = [['event-type.a', 'test parent of', 'event-type.b']]
     type(transcoder).CHILDREN_SIBLINGS = [['event-type.b', 'test sibling of', 'event-type.a']]
     type(transcoder).PARENT_MAPPINGS = {'event-type.b': {'property-a': 'property-a'}}

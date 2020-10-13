@@ -745,16 +745,15 @@ class Ontology(OntologyElement):
                         (event_type_name, child_property)
                     )
 
-                # Check if parent property exists and if it is a unique property
+                # Check if parent property exists and if it is a hashed property
                 parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
                 if parent_property not in parent_event_type.keys() or \
                    parent_event_type[parent_property].get_merge_strategy() != 'match':
                     raise EDXMLValidationError(
-                        ('Event type %s contains a parent definition which refers '
-                         'to parent property "%s" of event type %s, '
-                         'but this property is not unique, or it does not exist.') %
-                        (event_type_name, parent_property,
-                            event_type.get_parent().get_event_type_name())
+                        'Event type %s contains a parent definition which refers '
+                        'to parent property "%s" of event type %s, '
+                        'but this property is either not a hashed property or it does not exist.' %
+                        (event_type_name, parent_property, event_type.get_parent().get_event_type_name())
                     )
 
                 # Check if child property has allowed merge strategy

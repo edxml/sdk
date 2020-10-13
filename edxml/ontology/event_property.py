@@ -32,14 +32,13 @@ class EventProperty(OntologyElement):
     MERGE_MAX = 'max'
     """Merge strategy 'max'"""
 
-    def __init__(self, event_type, name, object_type, description=None, unique=False, optional=False, multivalued=False,
+    def __init__(self, event_type, name, object_type, description=None, optional=False, multivalued=False,
                  merge='drop', similar=''):
 
         self.__attr = {
             'name': name,
             'object-type': object_type.get_name(),
             'description': description or name.replace('-', ' '),
-            'unique': bool(unique),
             'optional': bool(optional),
             'multivalued': bool(multivalued),
             'merge': merge,
@@ -299,9 +298,6 @@ class EventProperty(OntologyElement):
         """
         self._set_attr('merge', merge_strategy)
 
-        if merge_strategy == 'match':
-            self._set_attr('unique', True)
-
         if merge_strategy in ('min', 'max', 'replace'):
             self._set_attr('multivalued', False)
 
@@ -370,29 +366,17 @@ class EventProperty(OntologyElement):
         self._set_attr('multivalued', True)
         return self
 
-    def unique(self):
+    def make_hashed(self):
         """
 
-        Mark property as a unique property, which also sets
-        the merge strategy to 'match' and marks it as mandatory.
+        Changes the property into a hashed property by setting
+        its merge strategy to 'match'.
 
         Returns:
-          edxml.ontology.EventProperty: The EventProperty instance
+            edxml.ontology.EventProperty: The EventProperty instance
         """
-        self._set_attr('unique', True)
-        self._set_attr('merge', 'match')
-        self._set_attr('optional', False)
+        self.set_merge_strategy('match')
         return self
-
-    def is_unique(self):
-        """
-
-        Returns True if property is unique, returns False otherwise
-
-        Returns:
-          bool:
-        """
-        return self.__attr['unique']
 
     def is_hashed(self):
         """
@@ -639,20 +623,6 @@ class EventProperty(OntologyElement):
 
         self._validate_merge_strategy()
 
-        if self.is_unique():
-            if self.get_merge_strategy() != 'match':
-                raise EDXMLValidationError(
-                    'Unique property "%s" of event type "%s" does not have its merge strategy set to "match".' %
-                    (self.get_name(), self.__event_type.get_name())
-                )
-        else:
-            if self.get_merge_strategy() == 'match':
-                raise EDXMLValidationError(
-                    'Property "%s" of event type "%s" is not unique but it does '
-                    'have its merge strategy set to "match".' %
-                    (self.get_name(), self.__event_type.get_name())
-                )
-
         for concept_association in self.__concepts.values():
             concept_association.validate()
 
@@ -676,7 +646,6 @@ class EventProperty(OntologyElement):
                 property_element.attrib['name'],
                 object_type,
                 property_element.attrib['description'],
-                property_element.get('unique', 'false') == 'true',
                 property_element.get('optional') == 'true',
                 property_element.get('multivalued') == 'true',
                 property_element.get('merge', 'drop'),
@@ -740,10 +709,6 @@ class EventProperty(OntologyElement):
 
         if old.get_merge_strategy() != new.get_merge_strategy():
             # The merge strategies differ, no upgrade possible.
-            equal = is_valid_upgrade = False
-
-        if old.is_unique() != new.is_unique():
-            # Property uniqueness differs, no upgrade possible.
             equal = is_valid_upgrade = False
 
         if old.is_multi_valued() != new.is_multi_valued():
@@ -845,7 +810,6 @@ class EventProperty(OntologyElement):
 
         attribs = dict(self.__attr)
 
-        attribs['unique'] = 'true' if self.__attr['unique'] else 'false'
         attribs['optional'] = 'true' if self.__attr['optional'] else 'false'
         attribs['multivalued'] = 'true' if self.__attr['multivalued'] else 'false'
 

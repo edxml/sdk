@@ -56,7 +56,7 @@ class EventTypeParent(OntologyElement):
         parent event type.
 
         Note:
-           All unique properties of the parent event type must appear in
+           All hashed properties of the parent event type must appear in
            the property map.
 
         Note:

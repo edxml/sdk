@@ -29,7 +29,7 @@ def ontology():
     ontology.create_object_type("a")
     ontology.create_event_source("/a/")
     event_type = ontology.create_event_type("a")
-    event_type.create_property("smiley", "a")
+    event_type.create_property("smiley", "a").make_hashed()
     event_type.create_attachment("attachment")
 
     return ontology

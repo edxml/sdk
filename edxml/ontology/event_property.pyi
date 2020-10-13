@@ -30,7 +30,7 @@ class EventProperty(OntologyElement):
 
     def __init__(self, event_type: edxml.ontology.EventType, name: str, object_type: edxml.ontology.ObjectType,
                  description: str = None, concept_name: str = None, concept_confidence: float = 0, cnp: int = 128,
-                 unique: bool = False, optional: bool = False, multivalued: bool = True, merge: str = 'drop',
+                 optional: bool = False, multivalued: bool = True, merge: str = 'drop',
                  similar: str = '') -> None:
 
         self.__attr = ...       # type: Dict[str, Any]
@@ -95,9 +95,7 @@ class EventProperty(OntologyElement):
 
     def make_multivalued(self) -> 'EventProperty': ...
 
-    def unique(self) -> 'EventProperty': ...
-
-    def is_unique(self) -> bool: ...
+    def make_hashed(self) -> 'EventProperty': ...
 
     def is_hashed(self) -> bool: ...
 

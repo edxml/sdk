@@ -148,7 +148,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         self.__parent_description = None  # type: str
 
-        self.__cached_unique_properties = None  # type: Dict[str, EventProperty]
         self.__cached_is_timeless = None
         self.__cached_hash_properties = None
 
@@ -208,7 +207,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
-        self.__cached_unique_properties = None
         self.__cached_is_timeless = None
         self.__cached_hash_properties = None
         self.__ontology._child_modified_callback()
@@ -340,18 +338,18 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
         return self.__properties
 
-    def get_unique_properties(self):
+    def get_hashed_properties(self):
         """
 
-        Returns a dictionary containing all unique properties
-        of the event type. The keys in the dictionary
-        are the property names, the values are the
-        EDXMLProperty instances.
+        Returns a dictionary containing all properties
+        of the event type that are used to compute event
+        hashes. The keys in the dictionary are the property
+        names, the values are the EDXMLProperty instances.
 
         Returns:
            Dict[str, EventProperty]: Properties
         """
-        return {n: p for n, p in self.__properties.items() if p.is_unique()}
+        return {n: p for n, p in self.__properties.items() if p.is_hashed()}
 
     def get_hash_properties(self):
         """
@@ -372,7 +370,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             for n, p in self.__properties.items():
                 data_type = p.get_data_type().get_split()
 
-                if not self.is_unique() or p.is_unique():
+                if p.is_hashed():
                     if data_type[0] != 'number' or data_type[1] not in ('float', 'double'):
                         # Floating point objects are ignored.
                         props[n] = p
@@ -445,23 +443,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
           bool:
         """
         return class_name in self.__attr['classlist'].split(',')
-
-    def is_unique(self):
-        """
-
-        Returns True if the event type is a unique
-        event type, returns False otherwise.
-
-        Returns:
-          bool:
-        """
-        if self.__cached_unique_properties is None:
-            self.__cached_unique_properties = {}
-            for property_name, event_property in self.__properties.items():
-                if event_property.is_unique():
-                    self.__cached_unique_properties[property_name] = event_property
-
-        return len(self.__cached_unique_properties) > 0
 
     def get_timespan_property_names(self):
         """
@@ -767,7 +748,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
 
         Marks this event type as child of the specified parent event type. In
-        case all unique properties of the parent also exist in the child, a
+        case all hashed properties of the parent also exist in the child, a
         default property mapping will be generated, mapping properties based
         on identical property names.
 
@@ -788,11 +769,11 @@ class EventType(VersionedOntologyElement, MutableMapping):
         else:
             raise Exception('You must call is_parent() on the parent before calling make_child().')
 
-        # If all unique properties of the parent event type
+        # If all hashed properties of the parent event type
         # also exist in the child event type, we can create
         # a default property map.
         property_map = {}
-        for property_name, event_property in parent.get_unique_properties().items():
+        for property_name, event_property in parent.get_hashed_properties().items():
             if property_name in self:
                 property_map[property_name] = property_name
             else:
@@ -1209,17 +1190,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     'The %s template of event type "%s" is invalid: "%s"\nThe validator said: %s' %
                     (attribute_name, self.__attr['name'], self.__attr['summary'], str(e))
                 )
-
-        # Verify that non-unique event type only have
-        # properties with merge strategy 'drop'.
-        if not self.is_unique():
-            for property_name, event_property in self.__properties.items():
-                if event_property.get_merge_strategy() != 'drop':
-                    raise EDXMLValidationError(
-                        'Event type "%s" is not unique, but property "%s" has merge strategy %s.' %
-                        (self.get_name(), property_name,
-                         event_property.get_merge_strategy())
-                    )
 
         for property_name, event_property in self.get_properties().items():
             event_property.validate()

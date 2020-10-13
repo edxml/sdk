@@ -16,7 +16,7 @@ def test_copies_are_identical():
     o.create_object_type('a')
 
     parent = o.create_event_type('parent')
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     child = o.create_event_type('child')
     child.create_property('a', 'a').set_multi_valued(False)
 
@@ -35,8 +35,8 @@ def test_parents_of_different_event_types_cannot_be_compared():
     dad = o.create_event_type('dad')
     child = o.create_event_type('child')
 
-    mom.create_property('a', 'a').unique()
-    dad.create_property('a', 'a').unique()
+    mom.create_property('a', 'a').make_hashed()
+    dad.create_property('a', 'a').make_hashed()
     child.create_property('a', 'a').set_multi_valued(False)
 
     mom_of_child = child.make_child('of', mom.make_parent('of', child))
@@ -55,7 +55,7 @@ def test_children_of_different_event_types_cannot_be_compared():
     brother = o.create_event_type('brother')
     sister = o.create_event_type('sister')
 
-    parent.create_property('a', 'a').unique()
+    parent.create_property('a', 'a').make_hashed()
     brother.create_property('a', 'a').set_multi_valued(False)
     sister.create_property('a', 'a').set_multi_valued(False)
 
@@ -73,7 +73,7 @@ def test_parent_description_upgrade():
     parent = o.create_event_type('parent')
     child = o.create_event_type('child')
 
-    parent.create_property("a", "a").unique()
+    parent.create_property("a", "a").make_hashed()
     child.create_property("a", "a").set_multi_valued(False)
 
     child.make_child('of', parent.make_parent('of', child))
@@ -94,7 +94,7 @@ def test_incompatible_parent_description_upgrade():
     parent = o.create_event_type('parent')
     child = o.create_event_type('child')
 
-    parent.create_property("a", "a").unique()
+    parent.create_property("a", "a").make_hashed()
     child.create_property("a", "a").set_multi_valued(False)
 
     child.make_child('of', parent.make_parent('of', child))
@@ -113,7 +113,7 @@ def test_siblings_description_upgrade():
     parent = o.create_event_type('parent')
     child = o.create_event_type('child')
 
-    parent.create_property("a", "a").unique()
+    parent.create_property("a", "a").make_hashed()
     child.create_property("a", "a").set_multi_valued(False)
 
     child.make_child('of', parent.make_parent('of', child))
@@ -134,7 +134,7 @@ def test_incompatible_siblings_description_upgrade():
     parent = o.create_event_type('parent')
     child = o.create_event_type('child')
 
-    parent.create_property("a", "a").unique()
+    parent.create_property("a", "a").make_hashed()
     child.create_property("a", "a").set_multi_valued(False)
 
     child.make_child('of', parent.make_parent('of', child))
