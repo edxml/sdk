@@ -533,6 +533,13 @@ class Transcoder(object):
             event_type.set_timespan_property_name_start(cls.TYPE_TIMESPANS[event_type_name][0])
             event_type.set_timespan_property_name_end(cls.TYPE_TIMESPANS[event_type_name][1])
 
+        if cls.TYPE_HASHED_PROPERTIES.get(event_type_name, {}) == {}:
+            log.warning(
+                'No hashed properties have been specified for event type %s. Since this means that all events of this '
+                'type that share a source URI will regarded as a single logical event, this is most likely a bug. ' %
+                event_type_name
+            )
+
         for property_name, object_type_name in cls.TYPE_PROPERTIES.get(event_type_name, {}).items():
             event_type.create_property(property_name, object_type_name)
             if property_name in cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}):
