@@ -22,10 +22,10 @@ class ObjectType(VersionedOntologyElement):
     NAME_PATTERN = re.compile('^[a-z0-9.-]{1,64}$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
     FUZZY_MATCHING_PATTERN = re.compile(
-        r"^(none)|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
+        r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:mc:u', compress=False, fuzzy_matching='none', regexp=None):
+                 data_type='string:0:mc:u', compress=False, fuzzy_matching=None, regexp=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -137,10 +137,11 @@ class ObjectType(VersionedOntologyElement):
     def get_fuzzy_matching(self):
         """
 
-        Returns the EDXML fuzzy-matching attribute for the object type.
+        Returns the EDXML fuzzy-matching attribute for the object type or
+        None in case it does not define any.
 
         Returns:
-          str:
+          Optional[str]:
         """
 
         return self.__attr['fuzzy-matching']
@@ -457,19 +458,20 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], self.__attr['description'])
             )
 
-        if not re.match(self.FUZZY_MATCHING_PATTERN, self.__attr['fuzzy-matching']):
-            raise EDXMLValidationError(
-                'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' % (
-                    self.__attr['name'], self.__attr['fuzzy-matching'])
-            )
-        if self.__attr['fuzzy-matching'][:10] == 'substring:':
-            try:
-                re.compile('%s' % self.__attr['fuzzy-matching'][10:])
-            except sre_constants.error:
+        if self.__attr['fuzzy-matching'] is not None:
+            if not re.match(self.FUZZY_MATCHING_PATTERN, self.__attr['fuzzy-matching']):
                 raise EDXMLValidationError(
-                    'Definition of object type %s has an invalid regular expression in its '
-                    'fuzzy-matching attribute: "%s"' % (
-                        (self.__attr['name'], self.__attr['fuzzy-matching'])))
+                    'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' %
+                    (self.__attr['name'], self.__attr['fuzzy-matching'])
+                )
+            if self.__attr['fuzzy-matching'][:10] == 'substring:':
+                try:
+                    re.compile('%s' % self.__attr['fuzzy-matching'][10:])
+                except sre_constants.error:
+                    raise EDXMLValidationError(
+                        'Definition of object type %s has an invalid regular expression in its '
+                        'fuzzy-matching attribute: "%s"' %
+                        (self.__attr['name'], self.__attr['fuzzy-matching']))
 
         if type(self.__attr['compress']) != bool:
             raise EDXMLValidationError(
@@ -501,7 +503,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.attrib['description'],
                 type_element.attrib['data-type'],
                 type_element.get('compress', 'false') == 'true',
-                type_element.get('fuzzy-matching', 'none'),
+                type_element.get('fuzzy-matching'),
                 type_element.get('regexp')
             ).set_version(type_element.attrib['version'])
         except KeyError as e:
@@ -610,5 +612,8 @@ class ObjectType(VersionedOntologyElement):
 
         if attribs['regexp'] is None:
             del attribs['regexp']
+
+        if attribs['fuzzy-matching'] is None:
+            del attribs['fuzzy-matching']
 
         return etree.Element('objecttype', attribs)
