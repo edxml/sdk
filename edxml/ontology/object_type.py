@@ -25,7 +25,8 @@ class ObjectType(VersionedOntologyElement):
         r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:mc:u', compress=False, fuzzy_matching=None, regexp=None):
+                 data_type='string:0:mc:u', unit_name=None, unit_symbol=None, compress=False, fuzzy_matching=None,
+                 regexp=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -36,6 +37,8 @@ class ObjectType(VersionedOntologyElement):
             'display-name-plural': display_name_plural,
             'description': description or name,
             'data-type': data_type,
+            'unit-name': unit_name,
+            'unit-symbol': unit_symbol,
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
             'regexp': regexp,
@@ -122,6 +125,30 @@ class ObjectType(VersionedOntologyElement):
 
         return DataType(self.__attr['data-type'])
 
+    def get_unit_name(self):
+        """
+
+        Returns the name of the measurement unit or None in case
+        the object type does not have any associated unit.
+
+        Returns:
+          Optional[str]: unit name
+        """
+
+        return self.__attr['unit-name']
+
+    def get_unit_symbol(self):
+        """
+
+        Returns the symbol of the measurement unit or None in case
+        the object type does not have any associated unit.
+
+        Returns:
+          Optional[str]: unit symbol
+        """
+
+        return self.__attr['unit-symbol']
+
     def is_compressible(self):
         """
 
@@ -203,6 +230,22 @@ class ObjectType(VersionedOntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
         self._set_attr('data-type', str(data_type))
+        return self
+
+    def set_unit(self, unit_name, unit_symbol):
+        """
+
+        Configure the measurement unit name and symbol.
+
+        Args:
+          unit_name (str): Unit name
+          unit_symbol (str): Unit symbol
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._set_attr('unit-name', unit_name)
+        self._set_attr('unit-symbol', unit_symbol)
         return self
 
     def set_display_name(self, singular, plural=None):
@@ -434,6 +477,18 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], self.__attr['display-name-plural'])
             )
 
+        if self.__attr['unit-name'] is not None and len(self.__attr['unit-name']) > 32:
+            raise EDXMLValidationError(
+                'The unit name of object type "%s" is too long: "%s".' % (
+                    self.__attr['name'], self.__attr['unit-name'])
+            )
+
+        if self.__attr['unit-symbol'] is not None and len(self.__attr['unit-symbol']) > 32:
+            raise EDXMLValidationError(
+                'The unit symbol of object type "%s" is too long: "%s".' % (
+                    self.__attr['name'], self.__attr['unit-symbol'])
+            )
+
         if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
             raise EDXMLValidationError(
                 'The singular display name of object type "%s" contains illegal whitespace characters: "%s"' % (
@@ -451,6 +506,20 @@ class ObjectType(VersionedOntologyElement):
                 'The description of object type "%s" contains illegal whitespace characters: "%s"' % (
                     self.__attr['name'], self.__attr['description'])
             )
+
+        if self.__attr['unit-name'] is not None:
+            if normalize_xml_token(self.__attr['unit-name']) != self.__attr['unit-name']:
+                raise EDXMLValidationError(
+                    'The unit name of object type "%s" contains illegal whitespace characters: "%s"' % (
+                        self.__attr['name'], self.__attr['unit-name'])
+                )
+
+        if self.__attr['unit-symbol'] is not None:
+            if normalize_xml_token(self.__attr['unit-symbol']) != self.__attr['unit-symbol']:
+                raise EDXMLValidationError(
+                    'The unit symbol of object type "%s" contains illegal whitespace characters: "%s"' % (
+                        self.__attr['name'], self.__attr['unit-symbol'])
+                )
 
         if not len(self.__attr['description']) <= 128:
             raise EDXMLValidationError(
@@ -488,6 +557,16 @@ class ObjectType(VersionedOntologyElement):
                     (self.__attr['name'], self.__attr['regexp'])
                 )
 
+        if self.__attr['unit-name'] is None and self.__attr['unit-symbol'] is not None:
+            raise EDXMLValidationError(
+                'Object type "%s" contains a unit symbol without a unit name.' % self.__attr['name']
+            )
+
+        if self.__attr['unit-symbol'] is None and self.__attr['unit-name'] is not None:
+            raise EDXMLValidationError(
+                'Object type "%s" contains a unit name without a unit symbol.' % self.__attr['name']
+            )
+
         DataType(self.__attr['data-type']).validate()
 
         return self
@@ -502,6 +581,8 @@ class ObjectType(VersionedOntologyElement):
                 type_element.attrib['display-name-plural'],
                 type_element.attrib['description'],
                 type_element.attrib['data-type'],
+                type_element.get('unit-name'),
+                type_element.get('unit-symbol'),
                 type_element.get('compress', 'false') == 'true',
                 type_element.get('fuzzy-matching'),
                 type_element.get('regexp')
@@ -540,7 +621,8 @@ class ObjectType(VersionedOntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching']:
+        for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching',
+                     'unit-name', 'unit-symbol']:
             equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
@@ -588,6 +670,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
+            self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
             self.set_regexp(object_type.get_regexp())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
@@ -615,5 +698,9 @@ class ObjectType(VersionedOntologyElement):
 
         if attribs['fuzzy-matching'] is None:
             del attribs['fuzzy-matching']
+
+        if attribs['unit-name'] is None or attribs['unit-symbol'] is None:
+            del attribs['unit-name']
+            del attribs['unit-symbol']
 
         return etree.Element('objecttype', attribs)
