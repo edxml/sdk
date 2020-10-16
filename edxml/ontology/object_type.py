@@ -517,36 +517,13 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], self.__attr['unit-symbol'])
             )
 
-        if normalize_xml_token(self.__attr['display-name-singular']) != self.__attr['display-name-singular']:
-            raise EDXMLValidationError(
-                'The singular display name of object type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-singular'])
-            )
+        token_attributes = ('display-name-singular', 'display-name-plural', 'description', 'unit-name', 'unit-symbol')
 
-        if normalize_xml_token(self.__attr['display-name-plural']) != self.__attr['display-name-plural']:
-            raise EDXMLValidationError(
-                'The plural display name of object type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['display-name-plural'])
-            )
-
-        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
-            raise EDXMLValidationError(
-                'The description of object type "%s" contains illegal whitespace characters: "%s"' % (
-                    self.__attr['name'], self.__attr['description'])
-            )
-
-        if self.__attr['unit-name'] is not None:
-            if normalize_xml_token(self.__attr['unit-name']) != self.__attr['unit-name']:
+        for token_attribute in token_attributes:
+            if normalize_xml_token(self.__attr[token_attribute] or '') != (self.__attr[token_attribute] or ''):
                 raise EDXMLValidationError(
-                    'The unit name of object type "%s" contains illegal whitespace characters: "%s"' % (
-                        self.__attr['name'], self.__attr['unit-name'])
-                )
-
-        if self.__attr['unit-symbol'] is not None:
-            if normalize_xml_token(self.__attr['unit-symbol']) != self.__attr['unit-symbol']:
-                raise EDXMLValidationError(
-                    'The unit symbol of object type "%s" contains illegal whitespace characters: "%s"' % (
-                        self.__attr['name'], self.__attr['unit-symbol'])
+                    'The %s attribute of object type "%s" contains illegal whitespace characters: "%s"' %
+                    (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
 
         if not len(self.__attr['description']) <= 128:
