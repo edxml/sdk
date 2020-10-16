@@ -88,6 +88,16 @@ def test_unit_upgrade():
     assert_valid_upgrade(a, b)
 
 
+def test_radix_upgrade():
+
+    o = Ontology()
+    a = o.create_object_type('a')
+    b = copy.deepcopy(a).set_prefix_radix(2).set_version(2)
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
 def test_set_regex_fails():
 
     o = Ontology()

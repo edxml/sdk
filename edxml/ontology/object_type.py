@@ -25,8 +25,8 @@ class ObjectType(VersionedOntologyElement):
         r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:mc:u', unit_name=None, unit_symbol=None, compress=False, fuzzy_matching=None,
-                 regexp=None):
+                 data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=10, compress=False,
+                 fuzzy_matching=None, regexp=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -39,6 +39,7 @@ class ObjectType(VersionedOntologyElement):
             'data-type': data_type,
             'unit-name': unit_name,
             'unit-symbol': unit_symbol,
+            'prefix-radix': int(prefix_radix),
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
             'regexp': regexp,
@@ -149,6 +150,18 @@ class ObjectType(VersionedOntologyElement):
 
         return self.__attr['unit-symbol']
 
+    def get_prefix_radix(self):
+        """
+
+        Returns the natural radix that should be used for
+        metric prefixes of numerical object types.
+
+        Returns:
+          Optional[int]: radix
+        """
+
+        return self.__attr['prefix-radix']
+
     def is_compressible(self):
         """
 
@@ -246,6 +259,21 @@ class ObjectType(VersionedOntologyElement):
         """
         self._set_attr('unit-name', unit_name)
         self._set_attr('unit-symbol', unit_symbol)
+        return self
+
+    def set_prefix_radix(self, radix):
+        """
+
+        Configure the natural radix that should be used for
+        metric prefixes of numerical object types
+
+        Args:
+          radix (int): Radix
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._set_attr('prefix-radix', int(radix))
         return self
 
     def set_display_name(self, singular, plural=None):
@@ -527,6 +555,12 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], self.__attr['description'])
             )
 
+        if self.__attr['prefix-radix'] not in (2, 10, 60):
+            raise EDXMLValidationError(
+                'The prefix radix of object type "%s" must be 2, 10 or 60, %s is not a valid value.' % (
+                    self.__attr['name'], self.__attr['prefix-radix'])
+            )
+
         if self.__attr['fuzzy-matching'] is not None:
             if not re.match(self.FUZZY_MATCHING_PATTERN, self.__attr['fuzzy-matching']):
                 raise EDXMLValidationError(
@@ -583,6 +617,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.attrib['data-type'],
                 type_element.get('unit-name'),
                 type_element.get('unit-symbol'),
+                type_element.get('prefix-radix', 10),
                 type_element.get('compress', 'false') == 'true',
                 type_element.get('fuzzy-matching'),
                 type_element.get('regexp')
@@ -622,7 +657,7 @@ class ObjectType(VersionedOntologyElement):
         # be changed freely between versions. We only need to know if they changed.
 
         for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching',
-                     'unit-name', 'unit-symbol']:
+                     'unit-name', 'unit-symbol', 'prefix-radix']:
             equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
@@ -671,6 +706,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
             self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
+            self.set_prefix_radix(object_type.get_prefix_radix())
             self.set_regexp(object_type.get_regexp())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
@@ -698,6 +734,11 @@ class ObjectType(VersionedOntologyElement):
 
         if attribs['fuzzy-matching'] is None:
             del attribs['fuzzy-matching']
+
+        if attribs['prefix-radix'] == 10:
+            del attribs['prefix-radix']
+        else:
+            attribs['prefix-radix'] = str(attribs['prefix-radix'])
 
         if attribs['unit-name'] is None or attribs['unit-symbol'] is None:
             del attribs['unit-name']
