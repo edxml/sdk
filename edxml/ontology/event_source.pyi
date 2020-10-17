@@ -4,7 +4,7 @@ import edxml
 
 from datetime import datetime
 from lxml import etree
-from typing import Any
+from typing import Any, Optional
 from typing import Dict
 
 from edxml.ontology import OntologyElement
@@ -16,7 +16,7 @@ class EventSource(OntologyElement):
     ACQUISITION_DATE_PATTERN = ...
 
     def __init__(self, ontology: edxml.ontology.Ontology, uri: str, description: str = 'no description available',
-                 acquisition_date: str = '00000000') -> None:
+                 acquisition_date: str = None) -> None:
 
         self._attr = ...     # type: Dict[str, Any]
         self._ontology = ...  # type: edxml.ontology.Ontology
@@ -27,9 +27,9 @@ class EventSource(OntologyElement):
 
     def get_uri(self) -> str: ...
 
-    def get_acquisition_date(self) -> datetime: ...
+    def get_acquisition_date(self) -> Optional[datetime]: ...
 
-    def get_acquisition_date_string(self) -> str: ...
+    def get_acquisition_date_string(self) -> Optional[str]: ...
 
     def get_description(self) -> str: ...
 

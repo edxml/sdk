@@ -20,12 +20,12 @@ class EventSource(VersionedOntologyElement):
     SOURCE_URI_PATTERN = re.compile('^(/[a-z0-9-]+)*/$')
     ACQUISITION_DATE_PATTERN = re.compile('^[0-9]{8}$')
 
-    def __init__(self, ontology, uri, description='no description available', acquisition_date='00000000'):
+    def __init__(self, ontology, uri, description='no description available', acquisition_date=None):
 
         self._attr = {
             'uri': '/' + str(uri).strip('/') + '/',
             'description': str(description),
-            'date-acquired': str(acquisition_date),
+            'date-acquired': acquisition_date,
             'version': 1
         }
 
@@ -70,21 +70,23 @@ class EventSource(VersionedOntologyElement):
     def get_acquisition_date(self):
         """
 
-        Returns the acquisition date as a datetime object
+        Returns the acquisition date as a datetime object or None
+        in case no acquisition date is set.
 
         Returns:
-          datetime.datetime: The date
+          Optional[datetime.datetime]: The date
         """
 
-        return datetime.strptime(self._attr['date-acquired'], '%Y%m%d')
+        return datetime.strptime(self._attr['date-acquired'], '%Y%m%d') if self._attr['date-acquired'] else None
 
     def get_acquisition_date_string(self):
         """
 
-        Returns the acquisition date as a string
+        Returns the acquisition date as a string of None in case
+        not acquisition date is set.
 
         Returns:
-          str: The date in yyyymmdd format
+          Optional[str]: The date in yyyymmdd format
         """
 
         return self._attr['date-acquired']
@@ -185,10 +187,11 @@ class EventSource(VersionedOntologyElement):
                 'Event source %s has a description that is too long: "%s"' %
                 (self._attr['uri'], self._attr['description']))
 
-        if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
-            raise EDXMLValidationError(
-                'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
-            )
+        if self._attr['date-acquired'] is not None:
+            if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
+                raise EDXMLValidationError(
+                    'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
+                )
 
         return self
 
@@ -199,7 +202,7 @@ class EventSource(VersionedOntologyElement):
                 ontology,
                 source_element.attrib['uri'],
                 source_element.attrib['description'],
-                source_element.attrib['date-acquired']
+                source_element.attrib.get('date-acquired')
             ).set_version(source_element.attrib['version'])
         except KeyError as e:
             raise EDXMLValidationError(
@@ -289,5 +292,8 @@ class EventSource(VersionedOntologyElement):
 
         attribs = dict(self._attr)
         attribs['version'] = str(attribs['version'])
+
+        if attribs['date-acquired'] is None:
+            del attribs['date-acquired']
 
         return etree.Element('source', attribs)
