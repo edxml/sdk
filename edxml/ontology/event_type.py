@@ -365,17 +365,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
 
         if self.__cached_hash_properties is None:
-            props = {}
-
-            for n, p in self.__properties.items():
-                data_type = p.get_data_type().get_split()
-
-                if p.is_hashed():
-                    if data_type[0] != 'number' or data_type[1] not in ('float', 'double'):
-                        # Floating point objects are ignored.
-                        props[n] = p
-
-            self.__cached_hash_properties = props
+            self.__cached_hash_properties = {name: prop for name, prop in self.__properties.items() if prop.is_hashed()}
 
         return self.__cached_hash_properties
 

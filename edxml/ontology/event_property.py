@@ -589,6 +589,16 @@ class EventProperty(OntologyElement):
                             )
                         )
 
+        if self.get_merge_strategy() == 'match':
+            if self.get_object_type().get_data_type().type in ('number:float', 'number:double'):
+                raise EDXMLValidationError(
+                    'Property "%s" of event type "%s" has data type %s, which '
+                    'cannot be used with merge strategy %s.' % (
+                        self.get_name(), self.__event_type.get_name(), self.get_data_type(),
+                        self.get_merge_strategy()
+                    )
+                )
+
     def validate(self):
         """
 
