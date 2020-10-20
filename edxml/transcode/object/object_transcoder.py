@@ -17,6 +17,10 @@ class ObjectTranscoder(Transcoder):
 
         {'event-type-name': {'fieldname.0.subfieldname': 'property-name'}}
 
+    Mapping field values to multiple event properties is also possible::
+
+        {'event-type-name': {'fieldname.0.subfieldname': ['property', 'another-property']}}
+
     Note that the event structure will not be validated until the event is yielded by
     the generate() method. This creates the possibility to add nonexistent properties
     to the attribute map and remove them in the generate() method, which may be convenient
@@ -79,7 +83,11 @@ class ObjectTranscoder(Transcoder):
 
         event_type_name = self.TYPE_MAP.get(record_type_name, None)
 
-        for selector, property_name in self.PROPERTY_MAP[event_type_name].items():
+        for selector, property_names in self.PROPERTY_MAP[event_type_name].items():
+
+            if not isinstance(property_names, list):
+                property_names = [property_names]
+
             # Below, we parse dotted notation to find sub-fields
             # in the object.
 
@@ -125,14 +133,15 @@ class ObjectTranscoder(Transcoder):
                 if value is not None:
                     empty = ['']
                     empty.extend(self.EMPTY_VALUES.get(selector, ()))
+
                     if type(value) == list:
-                        properties[property_name] = [
-                            v for v in value if v not in empty]
+                        property_values = [v for v in value if v not in empty]
                     elif type(value) == bool:
-                        properties[property_name] = [
-                            'true' if value else 'false']
+                        property_values = ['true' if value else 'false']
                     else:
-                        properties[property_name] = [
-                            value] if value not in empty else []
+                        property_values = [value] if value not in empty else []
+
+                    for property_name in property_names:
+                        properties[property_name] = property_values
 
         yield EDXMLEvent(self._post_process_properties(event_type_name, properties), event_type_name)

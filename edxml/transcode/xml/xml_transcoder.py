@@ -52,6 +52,10 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         {'event-type-name': {'*[re:test(., "^abc$", "i")]': 'property-name'}}
 
+    Mapping XPath expressions to multiple event properties is also possible::
+
+        {'event-type-name': {'some/subtag[@attribute]': ['property', 'another-property']}}
+
     Extending XPath by injecting custom Python functions is supported due to the lxml
     implementation of XPath that is being used in the transcoder implementation. Please
     refer to the lxml documentation about this subject. This transcoder implementation
@@ -241,7 +245,10 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
         properties = {}
 
-        for xpath, property_name in self.PROPERTY_MAP[event_type_name].items():
+        for xpath, property_names in self.PROPERTY_MAP[event_type_name].items():
+
+            if not isinstance(property_names, list):
+                property_names = [property_names]
 
             if xpath not in self._xpath_matchers:
                 # Create and cache a compiled function for evaluating the
@@ -254,13 +261,13 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                 except XPathSyntaxError:
                     raise ValueError(
                         'PROPERTY_MAP of %s contains invalid XPath for property %s: %s' %
-                        (type(self).__name__, property_name, xpath)
+                        (type(self).__name__, ', '.join(property_names), xpath)
                     )
 
             # Use the XPath evaluation function to find matches
             for property in self._xpath_matchers[xpath](element):
 
-                if property_name not in properties:
+                for property_name in [name for name in property_names if name not in properties]:
                     properties[property_name] = []
                 try:
                     # Here, we assume that the XPath expression selects
@@ -272,7 +279,8 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                         # Property should be regarded as empty.
                         continue
 
-                    properties[property_name].append(property.text)
+                    for property_name in property_names:
+                        properties[property_name].append(property.text)
                 except AttributeError:
                     # Oops, XPath did not select a tag, it might be
                     # an attribute then.
@@ -283,6 +291,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
                     elif property in self.EMPTY_VALUES.get(xpath, ()):
                         # Property should be regarded as empty.
                         continue
-                    properties[property_name].append(property)
+                    for property_name in property_names:
+                        properties[property_name].append(property)
 
         return EventElement(self._post_process_properties(event_type_name, properties), event_type_name)
