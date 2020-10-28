@@ -325,18 +325,6 @@ class PropertyRelation(OntologyElement):
                     'refer to a concept.' % (self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
 
-            if self.get_type() == 'intra':
-                if self.get_source_concept() != self.get_target_concept() and not \
-                        Concept.concept_name_is_specialization(self.get_source_concept(), self.get_target_concept()):
-                    raise EDXMLValidationError(
-                        'Properties %s and %s in the intra-concept relation in event type %s must '
-                        'both refer to the same primitive concept while the target concept (%s) is either identical to '
-                        'or a specialization of the source concept (%s).' % (
-                            self.get_source(), self.get_target(), self.__event_type.get_name(),
-                            self.get_target_concept(), self.get_source_concept()
-                        )
-                    )
-
         return self
 
     @classmethod
