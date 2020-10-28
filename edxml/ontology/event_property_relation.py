@@ -306,6 +306,12 @@ class PropertyRelation(OntologyElement):
                     'The %s-concept relation between properties %s and %s does not specify both related concepts.' %
                     (self.get_type(), self.__attr['property1'], self.__attr['property2'])
                 )
+        else:
+            if self.__attr.get('concept1') is not None or self.__attr.get('concept2') is not None:
+                raise EDXMLValidationError(
+                    'The "%s" relation between properties %s and %s must not specify any concepts.' %
+                    (self.get_type(), self.__attr['property1'], self.__attr['property2'])
+                )
 
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
