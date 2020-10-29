@@ -596,7 +596,7 @@ class EDXMLEvent(MutableMapping):
             raise EDXMLValidationError(
                 "Failed to instantiate an EDXML event from the following definition:\n" +
                 etree.tostring(event_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\n" + e.__name__ + ": " + str(e)
             )
 
     def set_properties(self, properties):

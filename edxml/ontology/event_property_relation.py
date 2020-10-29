@@ -382,7 +382,7 @@ class PropertyRelation(OntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate a property relation from the following definition:\n" +
                 etree.tostring(relation_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute or illegal value: " + str(e)
             )
 
     def __cmp__(self, other):

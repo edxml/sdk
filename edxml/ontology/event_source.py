@@ -208,7 +208,7 @@ class EventSource(VersionedOntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate an event source from the following definition:\n" +
                 etree.tostring(source_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
     def __cmp__(self, other):

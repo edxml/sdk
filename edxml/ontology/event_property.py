@@ -665,7 +665,7 @@ class EventProperty(OntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate an event property from the following definition:\n" +
                 etree.tostring(property_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
         concept_names = []

@@ -278,7 +278,7 @@ class PropertyConcept(OntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate a property-concept association from the following definition:\n" +
                 etree.tostring(concept_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute or illegal value: " + str(e)
             )
 
     def __cmp__(self, other):

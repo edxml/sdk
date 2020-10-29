@@ -258,7 +258,7 @@ class EventTypeParent(OntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate an event type parent from the following definition:\n" +
                 etree.tostring(parent_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
     def __cmp__(self, other):

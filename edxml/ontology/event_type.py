@@ -1213,7 +1213,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             raise EDXMLValidationError(
                 "Failed to instantiate an event type from the following definition:\n" +
                 etree.tostring(type_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
         property_names = []

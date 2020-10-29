@@ -327,7 +327,7 @@ class EventTypeAttachment(OntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate an event attachment from the following definition:\n" +
                 etree.tostring(element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
     def __cmp__(self, other):

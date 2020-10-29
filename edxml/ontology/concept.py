@@ -305,7 +305,7 @@ class Concept(VersionedOntologyElement):
             raise EDXMLValidationError(
                 "Failed to instantiate a concept from the following definition:\n" +
                 etree.tostring(type_element, pretty_print=True, encoding='unicode') +
-                "\nError message: " + str(e)
+                "\nMissing attribute: " + str(e)
             )
 
     def __cmp__(self, other):
