@@ -33,7 +33,7 @@ class EventProperty(OntologyElement):
     """Merge strategy 'max'"""
 
     def __init__(self, event_type, name, object_type, description=None, optional=False, multivalued=False,
-                 merge='drop', similar=''):
+                 merge='drop', similar='', confidence=10):
 
         self.__attr = {
             'name': name,
@@ -42,7 +42,8 @@ class EventProperty(OntologyElement):
             'optional': bool(optional),
             'multivalued': bool(multivalued),
             'merge': merge,
-            'similar': similar
+            'similar': similar,
+            'confidence': int(confidence)
         }
 
         self.__event_type = event_type  # type: edxml.ontology.EventType
@@ -147,6 +148,16 @@ class EventProperty(OntologyElement):
           str:
         """
         return self.__attr['similar']
+
+    def get_confidence(self):
+        """
+
+        Returns the property confidence.
+
+        Returns:
+          int:
+        """
+        return self.__attr['confidence']
 
     def get_object_type(self):
         """
@@ -320,6 +331,21 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventProperty: The EventProperty instance
         """
         self._set_attr('description', description)
+        return self
+
+    def set_confidence(self, confidence):
+        """
+
+        Configure the property confidence
+
+        Args:
+         confidence (int): Property confidence [1,10]
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+
+        self._set_attr('confidence', int(confidence))
         return self
 
     def make_optional(self):
@@ -616,6 +642,9 @@ class EventProperty(OntologyElement):
         """
         self._validate_attributes()
 
+        if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
+            raise EDXMLValidationError('Invalid property confidence: "%d"' % self.__attr['confidence'])
+
         if self.__attr['merge'] in ('min', 'max') and self.is_optional():
             raise EDXMLValidationError(
                 'Property "%s" cannot be optional due to its merge strategy' % self.__attr[
@@ -659,7 +688,8 @@ class EventProperty(OntologyElement):
                 property_element.get('optional') == 'true',
                 property_element.get('multivalued') == 'true',
                 property_element.get('merge', 'drop'),
-                property_element.get('similar', '')
+                property_element.get('similar', ''),
+                property_element.attrib['confidence']
             )
         except KeyError as e:
             raise EDXMLValidationError(
@@ -752,7 +782,7 @@ class EventProperty(OntologyElement):
         # Compare attributes that cannot produce illegal upgrades because they can
         # be changed freely between versions. We only need to know if they changed.
 
-        for attr in ['description', 'similar']:
+        for attr in ['description', 'similar', 'confidence']:
             equal &= old.__attr[attr] == new.__attr[attr]
 
         if equal:
@@ -792,6 +822,7 @@ class EventProperty(OntologyElement):
             self.hint_similar(event_property.get_similar_hint())
             self.set_optional(event_property.is_optional())
             self.set_multi_valued(event_property.is_multi_valued())
+            self.set_confidence(event_property.get_confidence())
 
             for concept_name, association in self.__concepts.items():
                 association.update(event_property.get_concept_associations()[concept_name])
@@ -822,6 +853,7 @@ class EventProperty(OntologyElement):
 
         attribs['optional'] = 'true' if self.__attr['optional'] else 'false'
         attribs['multivalued'] = 'true' if self.__attr['multivalued'] else 'false'
+        attribs['confidence'] = str(self.__attr['confidence'])
 
         if attribs['similar'] == '':
             del attribs['similar']

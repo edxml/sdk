@@ -29,9 +29,8 @@ class EventProperty(OntologyElement):
     """Merge strategy 'max'"""
 
     def __init__(self, event_type: edxml.ontology.EventType, name: str, object_type: edxml.ontology.ObjectType,
-                 description: str = None, concept_name: str = None, concept_confidence: float = 0, cnp: int = 128,
-                 optional: bool = False, multivalued: bool = True, merge: str = 'drop',
-                 similar: str = '') -> None:
+                 description: str = None, optional: bool = False, multivalued: bool = True, merge: str = 'drop',
+                 similar: str = '', confidence: int = 10) -> None:
 
         self.__attr = ...       # type: Dict[str, Any]
         self.__event_type = ...  # type: edxml.ontology.EventType
@@ -64,6 +63,8 @@ class EventProperty(OntologyElement):
 
     def get_similar_hint(self) -> str: ...
 
+    def get_confidence(self) -> int: ...
+
     def get_object_type(self) -> edxml.ontology.ObjectType: ...
 
     def get_data_type(self) -> edxml.ontology.DataType: ...
@@ -86,6 +87,8 @@ class EventProperty(OntologyElement):
     def set_merge_strategy(self, merge_strategy: str) -> 'EventProperty': ...
 
     def set_description(self, description: str) -> 'EventProperty': ...
+
+    def set_confidence(self, confidence: int) -> 'EventProperty': ...
 
     def make_optional(self) -> 'EventProperty': ...
 

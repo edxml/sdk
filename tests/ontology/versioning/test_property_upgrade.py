@@ -102,6 +102,33 @@ def test_incompatible_similar_upgrade():
     assert_invalid_ontology_upgrade(a, b)
 
 
+def test_confidence_upgrade():
+    o = Ontology()
+    o.create_object_type('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a').set_confidence(10)
+    b = copy.deepcopy(a).set_version(2)
+    b['a'].set_confidence(5)
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_incompatible_confidence_upgrade():
+    o = Ontology()
+    o.create_object_type('a')
+
+    a = o.create_event_type('a')
+    a.create_property('a', 'a').set_confidence(10)
+
+    # We change the similarity hint without incrementing the version.
+    b = copy.deepcopy(a)
+    b['a'].set_confidence(5)
+
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_single_valued_to_multi_valued_upgrade():
     o = Ontology()
     o.create_object_type('a')
