@@ -325,6 +325,22 @@ class PropertyRelation(OntologyElement):
                     'refer to a concept.' % (self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
 
+            if self.get_source_concept() not in source_concepts:
+                raise EDXMLValidationError(
+                    'The %s-concept relation between properties %s and %s refers to source concept %s. '
+                    'However, property %s is not associated with that concept.' %
+                    (self.get_type(), self.__attr['property1'], self.__attr['property2'],
+                     self.__attr['concept1'], self.__attr['property1'])
+                )
+
+            if self.get_target_concept() not in target_concepts:
+                raise EDXMLValidationError(
+                    'The %s-concept relation between properties %s and %s refers to target concept %s. '
+                    'However, property %s is not associated with that concept.' %
+                    (self.get_type(), self.__attr['property1'], self.__attr['property2'],
+                     self.__attr['concept2'], self.__attr['property2'])
+                )
+
         return self
 
     @classmethod
