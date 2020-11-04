@@ -690,6 +690,13 @@ class Transcoder(object):
                                 'colon (":"). You must specify full attribute names which include the object type name.'
                                 % cls.__name__
                             )
+                        if concept_name not in cls.TYPE_PROPERTY_CONCEPTS.get(event_type_name, {}).get(property_name):
+                            raise ValueError(
+                                '%s.TYPE_PROPERTY_ATTRIBUTES contains a concept attribute name for property %s of '
+                                'event type %s, associated with concept %s. According to the TYPE_PROPERTY_CONCEPTS '
+                                'constant, that concept is not associated with the property.'
+                                % (cls.__name__, property_name, event_type_name, concept_name)
+                            )
 
             if event_type_name in cls.PARENT_MAPPINGS:
                 parent_event_type_name = None
