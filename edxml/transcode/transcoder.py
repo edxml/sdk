@@ -629,14 +629,6 @@ class Transcoder(object):
 
         existing_types = set(cls.TYPE_MAP.values())
 
-        for event_type_name, properties in cls.TYPE_PROPERTIES.items():
-            for property_name in properties.keys():
-                if property_name not in cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}):
-                    log.warning(
-                        'Property %s of event type %s of %s is missing a description.' %
-                        (property_name, event_type_name, cls.__name__)
-                    )
-
         const_with_property_sub_keys = [
             'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
             'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_PROPERTY_CONCEPTS', 'TYPE_PROPERTY_CONCEPTS_CNP',
