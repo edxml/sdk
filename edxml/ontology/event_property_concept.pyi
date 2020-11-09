@@ -6,7 +6,7 @@ from edxml.ontology import EventType, EventProperty
 
 class PropertyConcept(object):
 
-    def __init__(self, event_type, property, name, confidence=10, naming_priority=128):
+    def __init__(self, event_type, event_property, concept_name, confidence=10, naming_priority=128):
 
         self.__attr = ...
 

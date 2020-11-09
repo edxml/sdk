@@ -13,10 +13,10 @@ class PropertyConcept(OntologyElement):
     Class representing an association between a property and a concept
     """
 
-    def __init__(self, event_type, property, name, confidence=10, naming_priority=128):
+    def __init__(self, event_type, event_property, concept_name, confidence=10, naming_priority=128):
 
         self.__attr = {
-            'name': name,
+            'name': concept_name,
             'confidence': confidence,
             'cnp': naming_priority,
             'attr-extension': '',
@@ -25,7 +25,7 @@ class PropertyConcept(OntologyElement):
         }
 
         self.__event_type = event_type  # type: EventType
-        self.__property = property      # type: EventProperty
+        self.__property = event_property      # type: EventProperty
 
     def __repr__(self):
         return f"{self.__property.get_name()} => {self.__attr['name']}"
