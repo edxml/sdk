@@ -297,7 +297,7 @@ class PropertyRelation(OntologyElement):
                 'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
                     self.__attr['property1'], self.__attr['property2'],
                     self.__attr['description'], str(e)
-                 )
+                )
             )
 
         if self.get_type() in ('inter', 'intra'):
