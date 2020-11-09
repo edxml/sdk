@@ -15,8 +15,8 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-        'BYTECOUNT', 'CURRENCY', 'COUNTRYCODE', 'MERGE',
-        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL', 'UPPERCASE'
+        'CURRENCY', 'COUNTRYCODE', 'MERGE',
+        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL'
     )
 
     def __init__(self, template):
@@ -37,10 +37,7 @@ class Template(object):
 
         """
 
-        zero_argument_formatters = [
-            'BYTECOUNT', 'COUNTRYCODE', 'BOOLEAN_ON_OFF',
-            'BOOLEAN_IS_ISNOT', 'UPPERCASE'
-        ]
+        zero_argument_formatters = ['COUNTRYCODE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
 
         if property_names is None:
             properties = event_type.get_properties()
@@ -320,18 +317,6 @@ class Template(object):
             return '%d.%d seconds' % \
                    (delta.seconds, delta.microseconds)
 
-    @staticmethod
-    def _format_byte_count(byte_count):
-        suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-        if byte_count == 0:
-            return '0 B'
-        i = 0
-        while byte_count >= 1024 and i < len(suffixes) - 1:
-            byte_count /= 1024.
-            i += 1
-        f = ('%.2f' % byte_count).rstrip('0').rstrip('.')
-        return '%s %s' % (f, suffixes[i])
-
     @classmethod
     def _process_simple_placeholder_string(cls, event_type, string, event_object_values, capitalize_string, colorize):
         """
@@ -465,30 +450,6 @@ class Template(object):
                         # This may happen for some time stamps before year 1900, which
                         # is not supported by strftime.
                         object_strings.append('some date, a long, long time ago')
-
-            elif formatter == 'BYTECOUNT':
-
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
-                    object_strings.append(cls._format_byte_count(int(object_value)))
-
-            elif formatter == 'UPPERCASE':
-
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
-                    object_strings.append(object_value.upper())
 
             elif formatter == 'CURRENCY':
 
