@@ -1834,7 +1834,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     (e[property_name] for e in events if e[property_name] != set()), set()
                 )
             else:
-                # Merge strategy 'drop', should not matter which
+                # Merge strategy 'any', should not matter which
                 # value to pick, we pick the first one.
                 output_properties[property_name] = event_properties[property_name][0]
 
@@ -1859,7 +1859,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             # events that share a version are mutually consistent.
             for property_name, object_sets in property_object_sets.items():
                 strategy = self.__properties[property_name].get_merge_strategy()
-                if strategy in [EventProperty.MERGE_MATCH, EventProperty.MERGE_DROP]:
+                if strategy in [EventProperty.MERGE_MATCH, EventProperty.MERGE_ANY]:
                     # No conflict possible because the object values are either identical (match)
                     # or any differences are insignificant (drop)
                     continue

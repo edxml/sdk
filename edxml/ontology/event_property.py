@@ -19,8 +19,8 @@ class EventProperty(OntologyElement):
 
     MERGE_MATCH = 'match'
     """Merge strategy 'match'"""
-    MERGE_DROP = 'drop'
-    """Merge strategy 'drop'"""
+    MERGE_ANY = 'any'
+    """Merge strategy 'any'"""
     MERGE_ADD = 'add'
     """Merge strategy 'add'"""
     MERGE_SET = 'set'
@@ -33,7 +33,7 @@ class EventProperty(OntologyElement):
     """Merge strategy 'max'"""
 
     def __init__(self, event_type, name, object_type, description=None, optional=False, multivalued=False,
-                 merge='drop', similar='', confidence=10):
+                 merge='any', similar='', confidence=10):
 
         self.__attr = {
             'name': name,
@@ -535,16 +535,16 @@ class EventProperty(OntologyElement):
         self.set_merge_strategy('set')
         return self
 
-    def merge_drop(self):
+    def merge_any(self):
         """
 
-        Set merge strategy to 'drop', which is
+        Set merge strategy to 'any', which is
         the default merge strategy.
 
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
         """
-        self.set_merge_strategy('drop')
+        self.set_merge_strategy('any')
         return self
 
     def merge_min(self):
@@ -657,7 +657,7 @@ class EventProperty(OntologyElement):
                     'name']
             )
 
-        if not self.__attr['merge'] in ('drop', 'add', 'replace', 'set', 'min', 'max', 'match'):
+        if not self.__attr['merge'] in ('any', 'add', 'replace', 'set', 'min', 'max', 'match'):
             raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
         self._validate_merge_strategy()
@@ -687,7 +687,7 @@ class EventProperty(OntologyElement):
                 property_element.attrib['description'],
                 property_element.get('optional') == 'true',
                 property_element.get('multivalued') == 'true',
-                property_element.get('merge', 'drop'),
+                property_element.get('merge', 'any'),
                 property_element.get('similar', ''),
                 property_element.attrib['confidence']
             )

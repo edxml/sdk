@@ -223,7 +223,7 @@ class Transcoder(object):
     for any automatically generated properties.
 
     When no merge strategy is given, automatically generated properties will have the default strategy,
-    which is 'match' for hashed properties and 'drop' for all other properties.
+    which is 'match' for hashed properties and 'any' for all other properties.
 
     For convenience, the EventProperty class defines some class attributes representing the available
     merge strategies.

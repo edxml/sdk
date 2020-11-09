@@ -15,8 +15,8 @@ class EventProperty(OntologyElement):
 
     MERGE_MATCH = ...
     """Merge strategy 'match'"""
-    MERGE_DROP = ...
-    """Merge strategy 'drop'"""
+    MERGE_ANY = ...
+    """Merge strategy 'any'"""
     MERGE_ADD = ...
     """Merge strategy 'add'"""
     MERGE_SET = 'set'
@@ -29,7 +29,7 @@ class EventProperty(OntologyElement):
     """Merge strategy 'max'"""
 
     def __init__(self, event_type: edxml.ontology.EventType, name: str, object_type: edxml.ontology.ObjectType,
-                 description: str = None, optional: bool = False, multivalued: bool = True, merge: str = 'drop',
+                 description: str = None, optional: bool = False, multivalued: bool = True, merge: str = 'any',
                  similar: str = '', confidence: int = 10) -> None:
 
         self.__attr = ...       # type: Dict[str, Any]
@@ -120,7 +120,7 @@ class EventProperty(OntologyElement):
 
     def merge_replace(self) -> 'EventProperty': ...
 
-    def merge_drop(self) -> 'EventProperty': ...
+    def merge_any(self) -> 'EventProperty': ...
 
     def merge_min(self) -> 'EventProperty': ...
 

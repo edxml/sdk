@@ -747,7 +747,7 @@ class Ontology(OntologyElement):
                     )
 
                 # Check if child property has allowed merge strategy
-                if event_type[child_property].get_merge_strategy() not in ('match', 'drop'):
+                if event_type[child_property].get_merge_strategy() not in ('match', 'any'):
                     raise EDXMLValidationError(
                         'Event type %s contains a parent definition which refers to child property \'%s\'. '
                         'This property has merge strategy %s, which is not allowed for properties that are used in '

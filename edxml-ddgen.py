@@ -227,17 +227,17 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # the individual objects in all input events.
 
         if self.generate_collisions:
-            drop_or_match = 'match'
-            drop_or_replace = 'replace'
-            drop_or_add = 'add'
-            drop_or_min = 'min'
-            drop_or_max = 'max'
+            any_or_match = 'match'
+            any_or_replace = 'replace'
+            any_or_add = 'add'
+            any_or_min = 'min'
+            any_or_max = 'max'
         else:
-            drop_or_match = 'drop'
-            drop_or_replace = 'drop'
-            drop_or_add = 'drop'
-            drop_or_min = 'drop'
-            drop_or_max = 'drop'
+            any_or_match = 'any'
+            any_or_replace = 'any'
+            any_or_add = 'any'
+            any_or_min = 'any'
+            any_or_max = 'any'
 
         ontology = edxml.ontology.Ontology()
 
@@ -247,15 +247,15 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         ontology.create_object_type(self.args.objecttype_name + '.c', data_type='number:decimal:12:9:signed')
 
         event_type = ontology.create_event_type(self.args.eventtype_name)
-        event_type.create_property('property-a', self.args.objecttype_name + '.a').set_merge_strategy(drop_or_match)
+        event_type.create_property('property-a', self.args.objecttype_name + '.a').set_merge_strategy(any_or_match)
 
         if not self.args.unordered:
             event_type.create_property('property-b', self.args.objecttype_name +
-                                       '.a').set_merge_strategy(drop_or_replace)
+                                       '.a').set_merge_strategy(any_or_replace)
 
-        event_type.create_property('property-c', self.args.objecttype_name + '.a').set_merge_strategy(drop_or_add)
-        event_type.create_property('property-g', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_min)
-        event_type.create_property('property-h', self.args.objecttype_name + '.c').set_merge_strategy(drop_or_max)
+        event_type.create_property('property-c', self.args.objecttype_name + '.a').set_merge_strategy(any_or_add)
+        event_type.create_property('property-g', self.args.objecttype_name + '.c').set_merge_strategy(any_or_min)
+        event_type.create_property('property-h', self.args.objecttype_name + '.c').set_merge_strategy(any_or_max)
 
         event_type.create_attachment('content')
 
