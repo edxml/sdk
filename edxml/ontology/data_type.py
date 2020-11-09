@@ -1187,6 +1187,10 @@ class DataType(object):
             raise EDXMLValidationError(
                 "Total number of digits specified in data type %s must be positive." % self.type
             )
+        if decimal_num_digits > 38:
+            raise EDXMLValidationError(
+                "Total number of digits specified in data type %s must not exceed 38." % self.type
+            )
 
         try:
             decimal_num_decimals = int(split_data_type[3])
