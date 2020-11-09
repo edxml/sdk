@@ -66,8 +66,8 @@ def edxml_extract(edxml, path):
 def test_duplicate_registration_exception(object_transcoder):
     with pytest.raises(Exception, match='Attempt to register multiple transcoders'):
         mediator = ObjectTranscoderMediator()
-        mediator.register('test_record', object_transcoder)
-        mediator.register('test_record', object_transcoder)
+        mediator.register('test_record', object_transcoder())
+        mediator.register('test_record', object_transcoder())
 
 
 def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record):
@@ -78,7 +78,7 @@ def test_process_single_transcoder_single_event_type(object_transcoder_mediator,
     output = BytesIO()
 
     with object_transcoder_mediator(output) as mediator:
-        mediator.register('test_record', object_transcoder)
+        mediator.register('test_record', object_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.process(record)
@@ -105,7 +105,7 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
     record['type'] = 'nonexistent'
 
     with object_transcoder_mediator(BytesIO()) as mediator:
-        mediator.register(None, object_transcoder)
+        mediator.register(None, object_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -133,7 +133,7 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
     output = BytesIO()
 
     with SourceGeneratingMediator(output) as mediator:
-        mediator.register('test_record', object_transcoder)
+        mediator.register('test_record', object_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -156,7 +156,7 @@ def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, 
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
-            mediator.register('test_record', object_transcoder)
+            mediator.register('test_record', object_transcoder())
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
@@ -180,7 +180,7 @@ def test_post_process(object_transcoder_mediator, object_transcoder, record):
     output = BytesIO()
 
     with object_transcoder_mediator(output) as mediator:
-        mediator.register('test_record', PostProcessingTranscoder)
+        mediator.register('test_record', PostProcessingTranscoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -205,7 +205,7 @@ def test_post_processor_invalid_event_exception(object_transcoder_mediator, obje
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
-            mediator.register('test_record', PostProcessingTranscoder)
+            mediator.register('test_record', PostProcessingTranscoder())
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()

@@ -68,7 +68,7 @@ def test_parse_single_transcoder_single_event_type(xml_transcoder, xml):
     output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
-        mediator.register('records', xml_transcoder)
+        mediator.register('records', xml_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.parse(BytesIO(xml))
@@ -91,7 +91,7 @@ def test_generate(xml_transcoder, xml):
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
 
     with XmlTranscoderMediator() as mediator:
-        mediator.register('records', xml_transcoder)
+        mediator.register('records', xml_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         output_strings = list(mediator.generate(BytesIO(xml)))
@@ -146,8 +146,8 @@ def test_parse_nested_transcoders(xml):
     output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
-        mediator.register('/root/records', OuterTranscoder)
-        mediator.register('/root/records/a', InnerTranscoder)
+        mediator.register('/root/records', OuterTranscoder())
+        mediator.register('/root/records/a', InnerTranscoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.parse(BytesIO(xml))
@@ -170,7 +170,7 @@ def test_log_skipped_element(xml_transcoder, xml, caplog):
     with XmlTranscoderMediator(BytesIO()) as mediator:
         # Below we deliberately set the tag that the parser should visit
         # to 'b' while we register a transcoder for elements having tag 'a'
-        mediator.register('/root/records/a', xml_transcoder, tag='b')
+        mediator.register('/root/records/a', xml_transcoder(), tag='b')
 
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
@@ -184,7 +184,7 @@ def test_log_skipped_element(xml_transcoder, xml, caplog):
 def test_log_fallback_transcoder(xml_transcoder, xml, caplog):
 
     with XmlTranscoderMediator(BytesIO()) as mediator:
-        mediator.register(None, xml_transcoder, tag='records')
+        mediator.register(None, xml_transcoder(), tag='records')
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -212,7 +212,7 @@ def test_ontology_update(xml_transcoder, xml):
     output = BytesIO()
 
     with SourceGeneratingMediator(output) as mediator:
-        mediator.register('/root/records/a', xml_transcoder)
+        mediator.register('/root/records/a', xml_transcoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -234,7 +234,7 @@ def test_invalid_event_exception(xml_transcoder, xml):
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with XmlTranscoderMediator(BytesIO()) as mediator:
-            mediator.register('/root/records/a', xml_transcoder)
+            mediator.register('/root/records/a', xml_transcoder())
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()
@@ -258,7 +258,7 @@ def test_post_process(xml_transcoder, xml):
     output = BytesIO()
 
     with XmlTranscoderMediator(output) as mediator:
-        mediator.register('/root/records/a', PostProcessingTranscoder)
+        mediator.register('/root/records/a', PostProcessingTranscoder())
         mediator.add_event_source('/test/uri/')
         mediator.set_event_source('/test/uri/')
         mediator.debug()
@@ -283,7 +283,7 @@ def test_post_processor_invalid_event_exception(xml_transcoder, xml):
 
     with pytest.raises(EDXMLValidationError, match='invalid event'):
         with XmlTranscoderMediator(BytesIO()) as mediator:
-            mediator.register('/root/records/a', PostProcessingTranscoder)
+            mediator.register('/root/records/a', PostProcessingTranscoder())
             mediator.add_event_source('/test/uri/')
             mediator.set_event_source('/test/uri/')
             mediator.debug()

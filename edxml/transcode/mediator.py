@@ -58,7 +58,6 @@ class TranscoderMediator(object):
         self.__allow_repair_normalize = {}
         self.__log_repaired_events = False
 
-        self.__record_transcoders = {}
         self.__transcoders = {}              # type: Dict[any, edxml.transcode.Transcoder]
 
         self.__closed = False
@@ -104,9 +103,7 @@ class TranscoderMediator(object):
         selector depends on the mediator implementation.
 
         The same transcoder can be registered for multiple
-        record selectors. The Transcoder argument must be a Transcoder
-        class or an extension of it. Do not pass in instantiated
-        class, pass the class itself.
+        record selectors.
 
         Note:
           Any transcoder that registers itself as a transcoder using None
@@ -116,26 +113,20 @@ class TranscoderMediator(object):
 
         Args:
           record_selector: Record type selector
-          record_transcoder (Callable[..., edxml.transcode.Transcoder]): Transcoder class
+          record_transcoder (edxml.transcode.Transcoder): Transcoder instance
         """
-        if record_selector in self.__record_transcoders:
+        if record_selector in self.__transcoders:
             raise Exception(
                 "Attempt to register multiple transcoders for record selector '%s'" % record_selector
             )
 
-        if record_transcoder not in self.__transcoders:
-            transcoder_instance = record_transcoder()
-            self.__transcoders[record_transcoder] = transcoder_instance
-        else:
-            transcoder_instance = self.__transcoders[record_transcoder]
+        self.__transcoders[record_selector] = record_transcoder
 
-        for event_type_name, property_names in transcoder_instance.TYPE_AUTO_REPAIR_NORMALIZE.items():
+        for event_type_name, property_names in record_transcoder.TYPE_AUTO_REPAIR_NORMALIZE.items():
             self.enable_auto_repair_normalize(event_type_name, property_names)
 
-        for event_type_name, property_names in transcoder_instance.TYPE_AUTO_REPAIR_DROP.items():
+        for event_type_name, property_names in record_transcoder.TYPE_AUTO_REPAIR_DROP.items():
             self.enable_auto_repair_drop(event_type_name, property_names)
-
-        self.__record_transcoders[record_selector] = record_transcoder
 
     def debug(self, warn_no_transcoder=True, warn_fallback=True, log_repaired_events=True):
         """
@@ -329,11 +320,10 @@ class TranscoderMediator(object):
           record_selector (str): record type selector
 
         Returns:
-          Transcoder:
+          Optional[Transcoder]:
         """
 
-        if record_selector in self.__record_transcoders:
-            return self.__transcoders[self.__record_transcoders[record_selector]]
+        return self.__transcoders.get(record_selector)
 
     def _initialize_ontology(self, ontology):
 
