@@ -64,8 +64,10 @@ class TranscoderMediator(object):
         self.__output = output
         self.__writer = None   # type: Optional[edxml.EDXMLWriter]
 
-        self._ontology = Ontology()
-        self._last_written_ontology_version = self._ontology.get_version()
+        self.__ontology = Ontology()
+
+        self._ontology_populated = False
+        self._last_written_ontology_version = 0
 
     def __enter__(self):
         return self
@@ -86,8 +88,21 @@ class TranscoderMediator(object):
         """
         if not self.__writer:
             self._create_writer()
-            self._initialize_ontology(self._ontology)
+
         return self.__writer
+
+    @property
+    def _ontology(self):
+        """
+        Property containing the EDXML ontology that
+        is used to store all ontology information from
+        the registered transcoders.
+
+        Returns:
+            Ontology
+        """
+        self._populate_ontology()
+        return self.__ontology
 
     @staticmethod
     def _transcoder_is_postprocessor(transcoder):
@@ -292,7 +307,7 @@ class TranscoderMediator(object):
         Returns:
           EventSource:
         """
-        return self._ontology.create_event_source(source_uri)
+        return self.__ontology.create_event_source(source_uri)
 
     def set_event_source(self, source_uri):
         """
@@ -325,50 +340,45 @@ class TranscoderMediator(object):
 
         return self.__transcoders.get(record_selector)
 
-    def _initialize_ontology(self, ontology):
+    def _populate_ontology(self):
+
+        if self._ontology_populated:
+            # Already populated.
+            return
 
         # First, we accumulate the object types into an
         # empty ontology.
-        object_types = Ontology()
         for transcoder in self.__transcoders.values():
+            object_types = Ontology()
             transcoder.set_ontology(object_types)
             transcoder.create_object_types()
-
-        # Add the object types to the main mediator ontology
-        ontology.update(object_types)
+            # Add the object types to the main mediator ontology
+            self.__ontology.update(object_types)
 
         # Then, we accumulate the concepts into an
         # empty ontology.
-        concepts = Ontology()
         for transcoder in self.__transcoders.values():
+            concepts = Ontology()
             transcoder.set_ontology(concepts)
             transcoder.create_concepts()
+            # Add the concepts to the main mediator ontology
+            self.__ontology.update(concepts)
 
-        # Add the concepts to the main mediator ontology
-        ontology.update(concepts)
-
-        # Now, we allow each of the transcoders to create their event
-        # types in separate ontologies. We do that to allow two transcoders
-        # to create two event types that share the same name. That is
-        # a common pattern in transcoders that inherit event type definitions
-        # from their parent, adjust the event type and finally rename it.
+        # Now, we allow each of the transcoders to create their event types.
         for transcoder in self.__transcoders.values():
-            transcoder.set_ontology(Ontology())
-            transcoder.update_ontology(object_types, validate=False)
-            transcoder.update_ontology(concepts, validate=False)
+            transcoder.set_ontology(self.__ontology)
             list(transcoder.generate_event_types())
-            ontology.update(transcoder._ontology, validate=False)
 
-        if len(self._ontology.get_event_sources()) == 0:
+        if len(self.__ontology.get_event_sources()) == 0:
             log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
-            self._ontology.create_event_source('/undefined/')
+            self.__ontology.create_event_source('/undefined/')
 
         # Note that below validation also triggers loading of
         # ontology bricks that contain definitions referred to
         # by event types.
-        ontology.validate()
+        self.__ontology.validate()
 
-        return ontology
+        self._ontology_populated = True
 
     def _write_ontology_update(self):
         # Here, we write ontology updates resulting
@@ -503,8 +513,7 @@ class TranscoderMediator(object):
             str
         """
 
-        ontology = Ontology()
-        self._initialize_ontology(ontology)
+        ontology = self._ontology
 
         description = f"\n\nThis transcoder reads {source_name} and outputs "\
                       f"`EDXML <http://edxml.org/>`_ containing {self._describe_event_types(ontology)}.\n"
@@ -676,6 +685,10 @@ class TranscoderMediator(object):
         """
         if self.__closed:
             return b''
+
+        # Make sure we output the ontology even
+        # when no events are output.
+        self._write_ontology_update()
 
         self._writer.close()
         self.__closed = True
