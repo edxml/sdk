@@ -159,9 +159,6 @@ class XmlTranscoderMediator(TranscoderMediator):
             tree = etree.ElementTree(root)
             self.process(elem, tree)
 
-        if self._writer:
-            self._writer.close()
-
     def generate(self, input_file, attribute_defaults=False, dtd_validation=False, load_dtd=False,
                  no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None,
                  html=False, recover=None, huge_tree=False, schema=None, resolve_entities=False):
