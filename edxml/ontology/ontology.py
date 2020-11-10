@@ -137,9 +137,6 @@ class Ontology(OntologyElement):
         later. If you do intend to create a valid definition from the start,
         it is recommended to validate it immediately.
 
-        If an object type with the same name already exists in the ontology,
-        the new definition is ignored and the existing one returned.
-
         Args:
           name (str): object type name
           display_name_singular (str): display name (singular form)
@@ -151,12 +148,14 @@ class Ontology(OntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
 
-        if name not in self.__object_types:
-            self._add_object_type(
-                ObjectType(
-                    self, name, display_name_singular, display_name_plural, description, data_type
-                ), validate=False
-            )
+        if name in self.__object_types:
+            raise ValueError(f"Object type {name} already exists.")
+
+        self._add_object_type(
+            ObjectType(
+                self, name, display_name_singular, display_name_plural, description, data_type
+            ), validate=False
+        )
 
         return self.__object_types[name]
 
@@ -173,9 +172,6 @@ class Ontology(OntologyElement):
         later. If you do intend to create a valid definition from the start,
         it is recommended to validate it immediately.
 
-        If a concept with the same name already exists in the ontology,
-        the new definition is ignored and the existing one returned.
-
         Args:
           name (str): concept name
           display_name_singular (str): display name (singular form)
@@ -186,11 +182,13 @@ class Ontology(OntologyElement):
           edxml.ontology.Concept: The Concept instance
         """
 
-        if name not in self.__concepts:
-            self._add_concept(
-                Concept(self, name, display_name_singular, display_name_plural, description),
-                validate=False
-            )
+        if name in self.__concepts:
+            raise ValueError(f"Concept {name} already exists.")
+
+        self._add_concept(
+            Concept(self, name, display_name_singular, display_name_plural, description),
+            validate=False
+        )
 
         return self.__concepts[name]
 
@@ -207,9 +205,6 @@ class Ontology(OntologyElement):
         later. If you do intend to create a valid definition from the start,
         it is recommended to validate it immediately.
 
-        If an event type with the same name already exists in the ontology,
-        the new definition is ignored and the existing one returned.
-
         Args:
           name (str): Event type name
           display_name_singular (str): Display name (singular form)
@@ -219,11 +214,13 @@ class Ontology(OntologyElement):
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        if name not in self.__event_types:
-            self._add_event_type(
-                EventType(self, name, display_name_singular, display_name_plural, description),
-                validate=False
-            )
+        if name in self.__event_types:
+            raise ValueError(f"Event type {name} already exists.")
+
+        self._add_event_type(
+            EventType(self, name, display_name_singular, display_name_plural, description),
+            validate=False
+        )
 
         return self.__event_types[name]
 
@@ -240,9 +237,6 @@ class Ontology(OntologyElement):
         If the URI is missing a leading and / or trailing slash, these will be
         appended automatically.
 
-        If a source with the same URI already exists in the ontology,
-        the new definition is ignored and the existing one returned.
-
         Args:
          uri (str): The source URI
          description (str): Description of the source
@@ -251,12 +245,16 @@ class Ontology(OntologyElement):
         Returns:
           edxml.ontology.EventSource:
         """
-        source = EventSource(self, uri, description, acquisition_date)
 
-        if source.get_uri() not in self.__sources:
-            self._add_event_source(source, validate=False)
+        if uri in self.__sources:
+            raise ValueError(f"Event source {uri} already exists.")
 
-        return source
+        self._add_event_source(
+            EventSource(self, uri, description, acquisition_date),
+            validate=False
+        )
+
+        return self.__sources[uri]
 
     def delete_object_type(self, object_type_name):
         """

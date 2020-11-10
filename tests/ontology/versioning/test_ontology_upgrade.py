@@ -189,13 +189,13 @@ def test_add_event_type():
 
 
 def test_mixed_upgrade_downgrade():
-    a = create_test_ontology()
+    a = Ontology()
     a.create_concept("a")
     a.create_concept("b").set_version(2).set_description("changed")
 
-    b = copy.deepcopy(a)
+    b = Ontology()
     b.create_concept("a").set_version(2).set_description("changed")
-    a.create_concept("b")
+    b.create_concept("b")
 
     # Now upgrading ontology a to b results in one concept upgrade and one
     # concept downgrade. Since ontology element downgrades are ignored, the
@@ -205,16 +205,9 @@ def test_mixed_upgrade_downgrade():
     assert b > a
 
     # Test that we can merge the ontologies both ways.
-    c = copy.deepcopy(a)
-    a.update(b)
-
-    # Now the two should be equal.
-    assert a == b
-
-    b.update(c)
-
-    # Again, the two should be equal.
-    assert a == b
+    a_copy = copy.deepcopy(a)
+    b_copy = copy.deepcopy(b)
+    assert a_copy.update(b) == b_copy.update(a)
 
 
 # We can run pytest directly in our debugger

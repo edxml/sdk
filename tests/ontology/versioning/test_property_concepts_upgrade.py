@@ -70,9 +70,7 @@ def test_associations_with_different_properties_cannot_be_compared():
 
     e1 = o.create_event_type('a')
     e1.create_property('a', 'a').identifies('a')
-
-    e2 = o.create_event_type('a')
-    e2.create_property('b', 'a').identifies('a')
+    e1.create_property('b', 'a').identifies('a')
 
     a = e1['a'].get_concept_associations()['a']
     b = e1['b'].get_concept_associations()['a']

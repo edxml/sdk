@@ -117,6 +117,11 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
 def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
 
     class SourceGeneratingMediator(object_transcoder_mediator):
+
+        def __init__(self, output):
+            super().__init__(output)
+            self.source_added = False
+
         def process(self, record):
             super().process(record)
             # After processing each element and outputting the resulting
@@ -124,7 +129,9 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
             # added to the mediator. This forces the mediator to output
             # an ontology update after the first event was written,
             # resulting in two ontology elements in the EDXML output.
-            self.add_event_source('/another/test/uri/')
+            if not self.source_added:
+                self.add_event_source('/another/test/uri/')
+                self.source_added = True
 
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}

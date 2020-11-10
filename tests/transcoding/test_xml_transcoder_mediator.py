@@ -119,9 +119,9 @@ def test_parse_nested_transcoders(xml):
 
     # Below we create a transcoder that we will register on /root/records/a. It
     # will transcode the elements that it is registered at (self, or '.')
-    InnerTranscoder.TYPE_MAP = {'.': 'test-event-type.a'}
-    InnerTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
-    InnerTranscoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
+    InnerTranscoder.TYPE_MAP = {'.': 'inner.a'}
+    InnerTranscoder.TYPE_PROPERTIES = {'inner.a': {'property-a': 'object-type.string'}}
+    InnerTranscoder.PROPERTY_MAP = {'inner.a': {'p1': 'property-a'}}
 
     # Below we create a transcoder that we will register on /root/records. It
     # will be invoked at the records end tag, after the /root/records/a records
@@ -131,16 +131,16 @@ def test_parse_nested_transcoders(xml):
     # are gone. Except for the last one, because the mediator cannot remove the
     # element that it is currently processing. It removes the previous one.
     OuterTranscoder.TYPE_MAP = {
-        'a': 'test-event-type.a',
-        'b': 'test-event-type.b'
+        'a': 'outer.a',
+        'b': 'outer.b'
     }
     OuterTranscoder.TYPE_PROPERTIES = {
-        'test-event-type.a': {'property-a': 'object-type.string'},
-        'test-event-type.b': {'property-b': 'object-type.string'}
+        'outer.a': {'property-a': 'object-type.string'},
+        'outer.b': {'property-b': 'object-type.string'}
     }
     OuterTranscoder.PROPERTY_MAP = {
-        'test-event-type.a': {'p1': 'property-a'},
-        'test-event-type.b': {'@attr': 'property-b'}
+        'outer.a': {'p1': 'property-a'},
+        'outer.b': {'@attr': 'property-b'}
     }
 
     output = BytesIO()
@@ -155,14 +155,15 @@ def test_parse_nested_transcoders(xml):
     edxml = etree.fromstring(output.getvalue())
 
     assert len(edxml_extract(edxml, '/edxml/event')) == 4 + 1
-    assert len(edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]')) == 2 + 1
-    assert len(edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.b"]')) == 2
+    assert len(edxml_extract(edxml, '/edxml/event[@event-type="inner.a"]')) == 2
+    assert len(edxml_extract(edxml, '/edxml/event[@event-type="outer.a"]')) == 1
+    assert len(edxml_extract(edxml, '/edxml/event[@event-type="outer.b"]')) == 2
     assert len(edxml_extract(edxml, '/edxml/event/properties/*')) == 4 + 1
-    assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]/properties/property-a')[0].text == 'a1'
-    assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]/properties/property-a')[1].text == 'a2'
-    assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.a"]/properties/property-a')[2].text == 'a2'
-    assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.b"]/properties/property-b')[0].text == 'b1'
-    assert edxml_extract(edxml, '/edxml/event[@event-type="test-event-type.b"]/properties/property-b')[1].text == 'b2'
+    assert edxml_extract(edxml, '/edxml/event[@event-type="inner.a"]/properties/property-a')[0].text == 'a1'
+    assert edxml_extract(edxml, '/edxml/event[@event-type="inner.a"]/properties/property-a')[1].text == 'a2'
+    assert edxml_extract(edxml, '/edxml/event[@event-type="outer.a"]/properties/property-a')[0].text == 'a2'
+    assert edxml_extract(edxml, '/edxml/event[@event-type="outer.b"]/properties/property-b')[0].text == 'b1'
+    assert edxml_extract(edxml, '/edxml/event[@event-type="outer.b"]/properties/property-b')[1].text == 'b2'
 
 
 def test_log_skipped_element(xml_transcoder, xml, caplog):
@@ -196,6 +197,10 @@ def test_log_fallback_transcoder(xml_transcoder, xml, caplog):
 def test_ontology_update(xml_transcoder, xml):
 
     class SourceGeneratingMediator(XmlTranscoderMediator):
+        def __init__(self, output):
+            super().__init__(output)
+            self.source_added = False
+
         def process(self, element, tree=None):
             super().process(element, tree)
             # After processing each element and outputting the resulting
@@ -203,7 +208,9 @@ def test_ontology_update(xml_transcoder, xml):
             # added to the mediator. This forces the mediator to output
             # an ontology update after the first event was written,
             # resulting in two ontology elements in the EDXML output.
-            self.add_event_source('/another/test/uri/')
+            if not self.source_added:
+                self.add_event_source('/another/test/uri/')
+                self.source_added = True
 
     xml_transcoder.TYPE_MAP = {'.': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
