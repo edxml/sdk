@@ -23,7 +23,7 @@ class EventSource(VersionedOntologyElement):
     def __init__(self, ontology, uri, description='no description available', acquisition_date=None):
 
         self._attr = {
-            'uri': '/' + str(uri).strip('/') + '/',
+            'uri': uri,
             'description': str(description),
             'date-acquired': acquisition_date,
             'version': 1

@@ -18,21 +18,9 @@ def validuri(request):
 
 
 @pytest.fixture(params=[
-    'test',
-    'test/',
-    'test/test/',
-    '/test/test',
-    '/test//',
-    '//test/',
-])
-def fixedvaliduri(request):
-    return request.param
-
-
-@pytest.fixture(params=[
     '',
-    '/',
     '//',
+    '/test',
     '/test//test/',
 ])
 def invaliduri(request):
@@ -42,14 +30,6 @@ def invaliduri(request):
 def test_init_validuri(ontology, validuri):
     es = EventSource(ontology, validuri)
     assert es.get_uri() == validuri
-    assert es.validate() == es
-
-
-def test_init_fixedvaliduri(ontology, fixedvaliduri):
-    # These URIs will be automatically fixed by the constructor to be valid
-    es = EventSource(ontology, fixedvaliduri)
-    assert es.get_uri().endswith('/')
-    assert es.get_uri().startswith('/')
     assert es.validate() == es
 
 
