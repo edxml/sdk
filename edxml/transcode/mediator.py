@@ -7,7 +7,7 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology, Concept
-from edxml.error import EDXMLError
+from edxml.error import EDXMLValidationError
 from edxml.EDXMLWriter import EDXMLWriter
 
 
@@ -417,18 +417,12 @@ class TranscoderMediator(object):
 
         try:
             self._writer.add_event(event)
-        except StopIteration:
-            # This is raised by the coroutine in EDXMLWriter when the
-            # coroutine receives a send() after is was closed.
-            # TODO: Can this still happen? It looks like every send() and next() is
-            #       enclosed in a try / catch that raises RuntimeException.
-            self._writer.close()
-        except EDXMLError as e:
+        except EDXMLValidationError as e:
             if not self._ignore_invalid_events:
                 raise
             if self._warn_invalid_events:
                 log.warning(
-                    'The post processor of the transcoder for record %s produced '
+                    'The transcoder for record %s produced '
                     'an invalid event: %s\n\nContinuing...' % (record_id, str(e))
                 )
 
