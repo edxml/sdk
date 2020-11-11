@@ -636,7 +636,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         return source_concept, target_concept
 
     def create_relation(self, source, target, description, relation_type, predicate, source_concept_name=None,
-                        target_concept_name=None, confidence=1.0, directed=True):
+                        target_concept_name=None, confidence=1.0):
         """
 
         Create a new property relation
@@ -650,7 +650,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
           source_concept_name (str): Name of the source concept
           target_concept_name (str): Name of the target concept
           confidence (float): Relation confidence [0.0,1.0]
-          directed (bool): Directed relation True / False
 
         Returns:
           PropertyRelation: The PropertyRelation instance
@@ -673,7 +672,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         relation = PropertyRelation(
             self, self[source], self[target],
             source_concept, target_concept,
-            description, relation_type, predicate, confidence, directed
+            description, relation_type, predicate, confidence
         )
 
         self.__relations[relation.get_persistent_id()] = relation.validate()

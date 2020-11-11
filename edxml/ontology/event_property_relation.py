@@ -18,7 +18,7 @@ class PropertyRelation(OntologyElement):
     """
 
     def __init__(self, event_type, source, target, source_concept, target_concept, description,
-                 type_class, type_predicate, confidence=10, directed=True):
+                 type_class, type_predicate, confidence=10):
 
         self._type = type_class
 
@@ -30,7 +30,6 @@ class PropertyRelation(OntologyElement):
             'description': description,
             'predicate': type_predicate,
             'confidence': int(confidence),
-            'directed': bool(directed),
         }
 
         self.__event_type = event_type  # type: edxml.ontology.EventType
@@ -143,17 +142,6 @@ class PropertyRelation(OntologyElement):
         """
         return self.__attr['confidence']
 
-    def is_directed(self):
-        """
-
-        Returns True when the relation is directed,
-        returns False otherwise.
-
-        Returns:
-          bool:
-        """
-        return self.__attr['directed']
-
     def because(self, reason):
         """
 
@@ -215,28 +203,6 @@ class PropertyRelation(OntologyElement):
         """
 
         self._set_attr('confidence', int(confidence))
-        return self
-
-    def make_directed(self):
-        """
-
-        Marks the property relation as directed
-
-        Returns:
-          edxml.ontology.PropertyRelation: The PropertyRelation instance
-        """
-        self._set_attr('directed', True)
-        return self
-
-    def make_undirected(self):
-        """
-
-        Marks the property relation as undirected
-
-        Returns:
-          edxml.ontology.PropertyRelation: The PropertyRelation instance
-        """
-        self._set_attr('directed', False)
         return self
 
     def validate(self):
@@ -391,8 +357,7 @@ class PropertyRelation(OntologyElement):
                 relation_element.attrib['description'],
                 relation_element.tag[24:],
                 relation_element.attrib['predicate'],
-                relation_element.attrib['confidence'],
-                relation_element.get('directed', 'true') == 'true'
+                relation_element.attrib['confidence']
             )
         except (ValueError, KeyError) as e:
             raise EDXMLValidationError(
@@ -443,10 +408,6 @@ class PropertyRelation(OntologyElement):
 
         if old.get_target_concept() != new.get_target_concept():
             # The concepts in the relations are different, no upgrade possible.
-            equal = is_valid_upgrade = False
-
-        if old.is_directed() != new.is_directed():
-            # The relation directedness is different, no upgrade possible.
             equal = is_valid_upgrade = False
 
         if old.get_type() != new.get_type():
@@ -513,7 +474,6 @@ class PropertyRelation(OntologyElement):
         attribs = dict(self.__attr)
 
         attribs['confidence'] = '%d' % self.__attr['confidence']
-        attribs['directed'] = 'true' if self.__attr['directed'] else 'false'
 
         if self._type not in ['inter', 'intra']:
             del attribs['concept1']

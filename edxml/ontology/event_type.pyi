@@ -99,7 +99,7 @@ class EventType(OntologyElement):
 
     def create_relation(
             self, source: str, target: str, description: str, type: str, predicate: str,
-            source_concept_name=None, target_concept_name=None, confidence: float = 1.0, directed: bool = True
+            source_concept_name=None, target_concept_name=None, confidence: float = 1.0
     ) -> edxml.ontology.PropertyRelation: ...
 
     def add_relation(self, relation: edxml.ontology.PropertyRelation) -> 'EventType': ...

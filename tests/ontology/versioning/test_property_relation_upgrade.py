@@ -101,24 +101,6 @@ def test_change_target_property_not_allowed():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_change_directedness_not_allowed():
-    o = Ontology()
-    o.create_object_type('a')
-
-    e1 = o.create_event_type('a')
-    e1.create_property('a', 'a')
-    e1.create_property('b', 'a')
-
-    e2 = copy.deepcopy(e1).set_version(2)
-
-    a = e1['a'].relate_to('related to', 'b').make_undirected()
-    b = e2['a'].relate_to('related to', 'b').make_directed()
-
-    # An attempt to upgrade to a version having a different
-    # relation directedness must fail.
-    assert_invalid_ontology_upgrade(a, b)
-
-
 def test_change_relation_type_not_allowed():
     o = Ontology()
     o.create_object_type('a')

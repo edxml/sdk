@@ -192,7 +192,7 @@ class EventProperty(OntologyElement):
         """
         return self.__concepts
 
-    def relate_to(self, type_predicate, target_property_name, reason=None, confidence=10, directed=True):
+    def relate_to(self, type_predicate, target_property_name, reason=None, confidence=10):
         """
 
         Creates and returns a relation between this property and
@@ -207,18 +207,16 @@ class EventProperty(OntologyElement):
           target_property_name (str): Name of the related property
           reason (str): Relation description, with property placeholders
           confidence (int): Relation confidence [00,10]
-          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence=confidence,
-                                                 directed=directed)
+            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence=confidence)
 
     def relate_inter(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
-                     reason=None, confidence=10, directed=True):
+                     reason=None, confidence=10):
         """
 
         Creates and returns a relation between this property and
@@ -241,7 +239,6 @@ class EventProperty(OntologyElement):
           target_concept_name (str): Name of the target concept
           reason (str): Relation description, with property placeholders
           confidence (int): Relation confidence [0,10]
-          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
@@ -249,11 +246,11 @@ class EventProperty(OntologyElement):
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
             self.get_name(), type_predicate, target_property_name), 'inter',
-            type_predicate, source_concept_name, target_concept_name, confidence, directed
+            type_predicate, source_concept_name, target_concept_name, confidence
         )
 
     def relate_intra(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
-                     reason=None, confidence=10, directed=True):
+                     reason=None, confidence=10):
         """
 
         Creates and returns a relation between this property and
@@ -267,10 +264,11 @@ class EventProperty(OntologyElement):
 
         Args:
           target_property_name (str): Name of the related property
+          source_concept_name (str): Name of the source concept
+          target_concept_name (str): Name of the target concept
           reason (str): Relation description, with property placeholders
           type_predicate (str): free form predicate
           confidence (float): Relation confidence [0,10]
-          directed (bool): Directed relation True / False
 
         Returns:
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
@@ -278,7 +276,7 @@ class EventProperty(OntologyElement):
         """
         return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
             self.get_name(), type_predicate, target_property_name), 'intra', type_predicate, source_concept_name,
-                                                 target_concept_name, confidence, directed)
+                                                 target_concept_name, confidence)
 
     def add_associated_concept(self, concept_association):
         """
