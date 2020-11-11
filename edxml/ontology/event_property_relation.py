@@ -23,10 +23,10 @@ class PropertyRelation(OntologyElement):
         self._type = type_class
 
         self.__attr = {
-            'property1': source.get_name(),
-            'property2': target.get_name(),
-            'concept1': source_concept.get_name() if source_concept else None,
-            'concept2': target_concept.get_name() if target_concept else None,
+            'source': source.get_name(),
+            'target': target.get_name(),
+            'source-concept': source_concept.get_name() if source_concept else None,
+            'target-concept': target_concept.get_name() if target_concept else None,
             'description': description,
             'predicate': type_predicate,
             'confidence': int(confidence),
@@ -35,10 +35,10 @@ class PropertyRelation(OntologyElement):
         self.__event_type = event_type  # type: edxml.ontology.EventType
 
     def __repr__(self):
-        return f"{self.__attr['property1']} {self.__attr['predicate']} {self.__attr['property2']}"
+        return f"{self.__attr['source']} {self.__attr['predicate']} {self.__attr['target']}"
 
     def __str__(self):
-        return f"{self.__attr['property1']}=>{self.__attr['property2']}"
+        return f"{self.__attr['source']}=>{self.__attr['target']}"
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
@@ -70,7 +70,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['property1']
+        return self.__attr['source']
 
     def get_target(self):
         """
@@ -80,7 +80,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['property2']
+        return self.__attr['target']
 
     def get_source_concept(self):
         """
@@ -90,7 +90,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['concept1']
+        return self.__attr['source-concept']
 
     def get_target_concept(self):
         """
@@ -100,7 +100,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['concept2']
+        return self.__attr['target-concept']
 
     def get_description(self):
         """
@@ -220,13 +220,13 @@ class PropertyRelation(OntologyElement):
           edxml.ontology.PropertyRelation: The PropertyRelation instance
 
         """
-        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property1']):
+        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['source']):
             raise EDXMLValidationError(
-                'Invalid property name in property relation: "%s"' % self.__attr['property1'])
+                'Invalid property name in property relation: "%s"' % self.__attr['source'])
 
-        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['property2']):
+        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['target']):
             raise EDXMLValidationError(
-                'Invalid property name in property relation: "%s"' % self.__attr['property2'])
+                'Invalid property name in property relation: "%s"' % self.__attr['target'])
 
         if not len(self.__attr['description']) <= 255:
             raise EDXMLValidationError(
@@ -261,22 +261,22 @@ class PropertyRelation(OntologyElement):
         except EDXMLValidationError as e:
             raise EDXMLValidationError(
                 'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
-                    self.__attr['property1'], self.__attr['property2'],
+                    self.__attr['source'], self.__attr['target'],
                     self.__attr['description'], str(e)
                 )
             )
 
         if self.get_type() in ('inter', 'intra'):
-            if self.__attr.get('concept1') is None or self.__attr.get('concept2') is None:
+            if self.__attr.get('source-concept') is None or self.__attr.get('target-concept') is None:
                 raise EDXMLValidationError(
                     'The %s-concept relation between properties %s and %s does not specify both related concepts.' %
-                    (self.get_type(), self.__attr['property1'], self.__attr['property2'])
+                    (self.get_type(), self.__attr['source'], self.__attr['target'])
                 )
         else:
-            if self.__attr.get('concept1') is not None or self.__attr.get('concept2') is not None:
+            if self.__attr.get('source-concept') is not None or self.__attr.get('target-concept') is not None:
                 raise EDXMLValidationError(
                     'The "%s" relation between properties %s and %s must not specify any concepts.' %
-                    (self.get_type(), self.__attr['property1'], self.__attr['property2'])
+                    (self.get_type(), self.__attr['source'], self.__attr['target'])
                 )
 
         # Verify that inter / intra relations are defined between
@@ -295,16 +295,16 @@ class PropertyRelation(OntologyElement):
                 raise EDXMLValidationError(
                     'The %s-concept relation between properties %s and %s refers to source concept %s. '
                     'However, property %s is not associated with that concept.' %
-                    (self.get_type(), self.__attr['property1'], self.__attr['property2'],
-                     self.__attr['concept1'], self.__attr['property1'])
+                    (self.get_type(), self.__attr['source'], self.__attr['target'],
+                     self.__attr['source-concept'], self.__attr['source'])
                 )
 
             if self.get_target_concept() not in target_concepts:
                 raise EDXMLValidationError(
                     'The %s-concept relation between properties %s and %s refers to target concept %s. '
                     'However, property %s is not associated with that concept.' %
-                    (self.get_type(), self.__attr['property1'], self.__attr['property2'],
-                     self.__attr['concept2'], self.__attr['property2'])
+                    (self.get_type(), self.__attr['source'], self.__attr['target'],
+                     self.__attr['target-concept'], self.__attr['target'])
                 )
 
         return self
@@ -312,18 +312,18 @@ class PropertyRelation(OntologyElement):
     @classmethod
     def create_from_xml(cls, relation_element, event_type, ontology):
         try:
-            source = relation_element.attrib['property1']
+            source = relation_element.attrib['source']
         except KeyError:
             raise EDXMLValidationError(
                 'Failed to parse definition of event type "%s": '
-                'It is missing the source property attribute (property1)' % event_type.get_name()
+                'It is missing the source property attribute (source)' % event_type.get_name()
             )
         try:
-            target = relation_element.attrib['property2']
+            target = relation_element.attrib['target']
         except KeyError:
             raise EDXMLValidationError(
                 'Failed to parse definition of event type "%s": '
-                'It is missing the target property attribute (property2)' % event_type.get_name()
+                'It is missing the target property attribute (target)' % event_type.get_name()
             )
 
         for propertyName in (source, target):
@@ -332,19 +332,19 @@ class PropertyRelation(OntologyElement):
                     'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
                     (event_type.get_name(), propertyName))
 
-        concept1_name = relation_element.attrib.get('concept1')
-        concept2_name = relation_element.attrib.get('concept2')
+        source_concept_name = relation_element.attrib.get('source-concept')
+        target_concept_name = relation_element.attrib.get('target-concept')
 
-        concept1 = ontology.get_concept(concept1_name)
-        concept2 = ontology.get_concept(concept2_name)
+        source_concept = ontology.get_concept(source_concept_name)
+        target_concept = ontology.get_concept(target_concept_name)
 
-        if concept1_name is not None and concept1 is None:
+        if source_concept_name is not None and source_concept is None:
             raise EDXMLValidationError(
-                'Failed to instantiate a property relation, source concept "%s" does not exist.' % concept1_name
+                'Failed to instantiate a property relation, source concept "%s" does not exist.' % source_concept_name
             )
-        if concept2_name is not None and concept2 is None:
+        if target_concept_name is not None and target_concept is None:
             raise EDXMLValidationError(
-                'Failed to instantiate a property relation, target concept "%s" does not exist.' % concept2_name
+                'Failed to instantiate a property relation, target concept "%s" does not exist.' % target_concept_name
             )
 
         try:
@@ -352,8 +352,8 @@ class PropertyRelation(OntologyElement):
                 event_type,
                 event_type[source],
                 event_type[target],
-                concept1,
-                concept2,
+                source_concept,
+                target_concept,
                 relation_element.attrib['description'],
                 relation_element.tag[24:],
                 relation_element.attrib['predicate'],
@@ -476,22 +476,22 @@ class PropertyRelation(OntologyElement):
         attribs['confidence'] = '%d' % self.__attr['confidence']
 
         if self._type not in ['inter', 'intra']:
-            del attribs['concept1']
-            del attribs['concept2']
+            del attribs['source-concept']
+            del attribs['target-concept']
 
         return etree.Element(self._type, attribs)
 
     def reversed(self):
         reversed = copy(self)
 
-        concept1 = reversed.__attr['concept1']
-        concept2 = reversed.__attr['concept2']
-        property1 = reversed.__attr['property1']
-        property2 = reversed.__attr['property2']
+        source_concept = reversed.__attr['source-concept']
+        target_concept = reversed.__attr['target-concept']
+        source = reversed.__attr['source']
+        target = reversed.__attr['target']
 
-        reversed.__attr['concept1'] = concept2
-        reversed.__attr['concept2'] = concept1
-        reversed.__attr['property1'] = property2
-        reversed.__attr['property2'] = property1
+        reversed.__attr['source-concept'] = target_concept
+        reversed.__attr['target-concept'] = source_concept
+        reversed.__attr['source'] = target
+        reversed.__attr['target'] = source
 
         return reversed
