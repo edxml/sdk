@@ -1072,12 +1072,13 @@ class DataType(object):
             raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
 
     def _validate_value_geo(self, value):
-        split_data_type = self.type.split(':')
-
-        if split_data_type[1] != 'point':
-            raise EDXMLValidationError("Unknown geo data type family member: '%s'" % split_data_type[1])
-
         split_geo_point = value.split(',')
+
+        try:
+            geo_lat = float(split_geo_point[0])
+            geo_lon = float(split_geo_point[1])
+        except (TypeError, ValueError, IndexError):
+            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
 
         if len(split_geo_point) != 2:
             raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
@@ -1089,11 +1090,6 @@ class DataType(object):
             raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
         if len(split_geo_point[1].split('.')[1]) != 6:
             raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
-        try:
-            geo_lat = float(split_geo_point[0])
-            geo_lon = float(split_geo_point[1])
-        except (TypeError, ValueError):
-            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
         if geo_lat < -90 or geo_lat > 90:
             raise EDXMLValidationError(
                 "The geo:point value '%s' contains a latitude that is not within range [-90,90]." % value)
