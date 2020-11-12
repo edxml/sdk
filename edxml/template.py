@@ -15,7 +15,7 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
-        'CURRENCY', 'COUNTRYCODE', 'MERGE',
+        'COUNTRYCODE', 'MERGE',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL'
     )
 
@@ -152,12 +152,6 @@ class Template(object):
                                     formatter, argument_string
                                 )
                             )
-
-                elif formatter == 'CURRENCY':
-                    if len(arguments) != 2:
-                        raise EDXMLValidationError(
-                            'Malformed %s formatter: %s' % (formatter, template)
-                        )
 
                 elif formatter == 'URL':
                     if len(arguments) != 2:
@@ -450,19 +444,6 @@ class Template(object):
                         # This may happen for some time stamps before year 1900, which
                         # is not supported by strftime.
                         object_strings.append('some date, a long, long time ago')
-
-            elif formatter == 'CURRENCY':
-
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                property_name, currency_symbol = arguments
-                for object_value in values:
-                    object_strings.append('%.2f%s' % (int(object_value), currency_symbol))
 
             elif formatter == 'URL':
 
