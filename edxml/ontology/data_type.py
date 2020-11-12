@@ -994,6 +994,19 @@ class DataType(object):
                 # Decimal is unsigned.
                 if Decimal(value) < 0:
                     raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
+            [integral, fractional] = str(value).split('.')
+            if len(fractional) != int(split_data_type[3]):
+                raise EDXMLValidationError(
+                    "Invalid EDXML decimal value: '%s'. Must have %s fractional digits." % (value, split_data_type[3])
+                )
+            if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
+                raise EDXMLValidationError(
+                    "Invalid EDXML decimal value: '%s'. Zero must not have any sign." % value
+                )
+            if len(integral) > 1 and integral[0] == '0':
+                raise EDXMLValidationError(
+                    "Invalid EDXML decimal value: '%s'. Zero padding of the integral part is not allowed." % value
+                )
         elif split_data_type[1] == 'currency':
             try:
                 Decimal(value)
