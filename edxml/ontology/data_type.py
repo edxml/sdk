@@ -536,12 +536,12 @@ class DataType(object):
                 # Assure that integer part is not zero padded, fractional part
                 # is padded and no plus sign is present
                 etree.SubElement(element, 'param', name='pattern').text = \
-                    r'([^+0][^+]*\..{%d})|(0\..{%d})' % (int(fractional), int(fractional))
+                    r'([1-9][0-9]*\..{%d})|(0\..{%d})' % (int(fractional), int(fractional))
             else:
                 # Assure that integer part is not zero padded, fractional part
                 # is padded, zero is unsigned and no plus sign is present
                 etree.SubElement(element, 'param', name='pattern').text = \
-                    r'(-?[^+0-][^+]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % (int(fractional), int(fractional))
+                    r'(-?[1-9][0-9]*\..{%d})|(-?0\.\d*[1-9]\d*)|(0\.0{%d})' % (int(fractional), int(fractional))
 
             return element
 
