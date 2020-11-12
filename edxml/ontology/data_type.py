@@ -216,6 +216,17 @@ class DataType(object):
         return cls('number:decimal:%d:%d%s' % (total_digits, fractional_digits, (':signed' if signed else '')))
 
     @classmethod
+    def currency(cls):
+        """
+
+        Create a currency DataType instance.
+
+        Returns:
+          edxml.ontology.DataType:
+        """
+        return cls('number:currency')
+
+    @classmethod
     def string(cls, length=0, lower_case=True, upper_case=True, require_unicode=True, reverse_storage=False):
         """
 
@@ -534,6 +545,20 @@ class DataType(object):
 
             return element
 
+        elif split_data_type[1] == 'currency':
+            element = e.data(
+                e.param('19', name='totalDigits'),
+                e.param('4', name='fractionDigits'),
+                type='decimal'
+            )
+
+            # Assure that integer part is not zero padded, fractional part
+            # is padded, zero is unsigned and no plus sign is present
+            etree.SubElement(element, 'param', name='pattern').text = \
+                r'(-?[1-9][0-9]*\..{4})|(-?0\.\d*[1-9]\d*)|(0\.0{4})'
+
+            return element
+
         else:
             raise TypeError('Unknown data type: ' + split_data_type[0])
 
@@ -767,6 +792,13 @@ class DataType(object):
                 raise EDXMLValidationError(
                     'Invalid decimal value in list: "%s"' % '","'.join([repr(value) for value in values])
                 )
+        elif split_data_type[1] == 'currency':
+            try:
+                return {'%.4f' % Decimal(value) for value in values}
+            except TypeError:
+                raise EDXMLValidationError(
+                    'Invalid currency value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
         elif split_data_type[1] in ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']:
             try:
                 return {'%d' % int(value) for value in values}
@@ -962,6 +994,24 @@ class DataType(object):
                 # Decimal is unsigned.
                 if Decimal(value) < 0:
                     raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
+        elif split_data_type[1] == 'currency':
+            try:
+                Decimal(value)
+            except decimal.InvalidOperation:
+                raise EDXMLValidationError("Invalid EDXML currency value: '%s'." % value)
+            [integral, fractional] = str(value).split('.')
+            if len(fractional) != 4:
+                raise EDXMLValidationError(
+                    "Invalid EDXML currency value: '%s'. Must have four fractional digits." % value
+                )
+            if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
+                raise EDXMLValidationError(
+                    "Invalid EDXML currency value: '%s'. Zero must not have any sign." % value
+                )
+            if len(integral) > 1 and integral[0] == '0':
+                raise EDXMLValidationError(
+                    "Invalid EDXML currency value: '%s'. Zero padding of the integral part is not allowed." % value
+                )
         elif split_data_type[1] == 'float' or split_data_type[1] == 'double':
             try:
                 float(value)
@@ -1213,16 +1263,17 @@ class DataType(object):
 
     def _validate_number(self):
         split_data_type = self.type.split(':')
-        if len(split_data_type) >= 2:
-            if split_data_type[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double'):
-                if len(split_data_type) == 3:
-                    if split_data_type[2] == 'signed':
-                        return
-                else:
+        if split_data_type[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'float', 'double'):
+            if len(split_data_type) == 3:
+                if split_data_type[2] == 'signed':
                     return
-            elif split_data_type[1] == 'decimal':
-                self._validate_decimal()
+            elif len(split_data_type) == 2:
                 return
+        elif split_data_type[1:] == ['currency']:
+            return
+        elif split_data_type[1] == 'decimal':
+            self._validate_decimal()
+            return
 
         raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
 

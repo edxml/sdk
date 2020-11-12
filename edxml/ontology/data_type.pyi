@@ -74,6 +74,9 @@ class DataType(object):
     def decimal(cls, total_digits: int, fractional_digits: int, signed: bool = True) -> 'DataType': ...
 
     @classmethod
+    def currency(cls) -> 'DataType': ...
+
+    @classmethod
     def string(cls, length: int = 0, lower_case: bool = True, upper_case: bool = True, require_unicode: bool = True,
                reverse_storage: bool = False) -> 'DataType': ...
 
