@@ -7,6 +7,7 @@ import edxml
 from edxml.logger import log
 from edxml.transcode import Transcoder
 from edxml.ontology import Ontology, Concept
+from edxml.ontology.visualization import generate_graph_property_concepts
 from edxml.error import EDXMLValidationError
 from edxml.EDXMLWriter import EDXMLWriter
 
@@ -490,7 +491,7 @@ class TranscoderMediator(object):
             strict='true'
         )
 
-        self._ontology.generate_graph_property_concepts(graph)
+        generate_graph_property_concepts(self._ontology, graph)
         return graph
 
     def describe_transcoder(self, source_name):
