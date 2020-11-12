@@ -1227,8 +1227,6 @@ class DataType(object):
             self._validate_value_boolean(value)
         elif data_type_family == 'enum':
             self._validate_value_enum(value)
-        else:
-            raise EDXMLValidationError("Invalid data type: '%s'" % self.type)
 
         return self
 
@@ -1267,8 +1265,6 @@ class DataType(object):
                     return
         else:
             return
-
-        raise EDXMLValidationError('Data type "%s" is not a valid EDXML data type.' % self.type)
 
     def _validate_number(self):
         split_data_type = self.type.split(':')
