@@ -1191,13 +1191,13 @@ class DataType(object):
         Returns:
            edxml.ontology.DataType:
         """
-        if not isinstance(value, str):
-            raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
-
-        if value == '':
+        if value in ['', None]:
             raise EDXMLValidationError(
                 "Value of %s object is empty. Empty object values are not valid and must be omitted." % self.type
             )
+
+        if not isinstance(value, str):
+            raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
 
         data_type_family = self.get_family()
 
