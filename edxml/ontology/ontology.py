@@ -101,11 +101,39 @@ class Ontology(OntologyElement):
         if not cls.__bricks['concepts']:
             cls.__bricks['concepts'] = Ontology()
 
-        for _ in brick.generate_object_types(cls.__bricks['object_types']):
-            pass
+        ontology = Ontology()
+        object_type_names = []
+        for object_type in brick.generate_object_types(ontology):
+            object_type_names.append(object_type.get_name())
 
-        for _ in brick.generate_concepts(cls.__bricks['concepts']):
-            pass
+        for object_type_name in object_type_names:
+            if object_type_name in cls.__bricks['object_types'].get_object_types():
+                existing_object_type = cls.__bricks['object_types'].get_object_type(object_type_name)
+                if ontology.get_object_type(object_type_name) != existing_object_type:
+                    raise Exception(
+                        f"Ontology brick {brick.__name__} contains an object type named '{object_type_name}'. "
+                        f"This object type has already been defined by another registered brick and that definition "
+                        f"is not identical."
+                    )
+            else:
+                cls.__bricks['object_types']._add_object_type(ontology.get_object_type(object_type_name))
+
+        ontology = Ontology()
+        concept_names = []
+        for concept in brick.generate_concepts(ontology):
+            concept_names.append(concept.get_name())
+
+        for concept_name in concept_names:
+            if concept_name in cls.__bricks['concepts'].get_concepts():
+                existing_concept = cls.__bricks['concepts'].get_concept(concept_name)
+                if ontology.get_concept(concept_name) != existing_concept:
+                    raise Exception(
+                        f"Ontology brick {brick.__name__} contains a concept named '{concept_name}'. "
+                        f"This concept has already been defined by another registered brick and that definition "
+                        f"is not identical."
+                    )
+            else:
+                cls.__bricks['concepts']._add_concept(ontology.get_concept(concept_name))
 
     def _import_object_type_from_brick(self, object_type_name):
 
