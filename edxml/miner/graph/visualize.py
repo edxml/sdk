@@ -1,5 +1,6 @@
 from edxml.miner.inference import RelationInference
 from edxml.miner.node import EventObjectHub
+from edxml.util import truncate_string
 from graphviz import Digraph
 
 
@@ -153,9 +154,9 @@ def _graphviz_add_edge(graph, source, target, seed_id):
 
 
 def _get_node_title(title, subtitle=None, title_trunc_head=False, subtitle_trunc_head=False):
-    node_title = _truncate(title, 16, title_trunc_head)
+    node_title = truncate_string(title, 16, title_trunc_head)
     if subtitle is not None:
-        node_title += f"<br/><font point-size='10'>({_truncate(subtitle, 16, subtitle_trunc_head)})</font>"
+        node_title += f"<br/><font point-size='10'>({truncate_string(subtitle, 16, subtitle_trunc_head)})</font>"
     return f"<{node_title}>"
 
 
@@ -201,14 +202,3 @@ def _get_graphviz_node_id(node, seed_id):
 
     # Remove characters with special meaning in GraphViz node names
     return source_node_id.replace(':', ';')
-
-
-def _truncate(string, max_length, trunc_head=False):
-    max_length = max(3, max_length)
-    if len(string) > max_length:
-        if trunc_head:
-            return '...' + string[3:]
-        else:
-            return string[:max_length - 3] + '...'
-    else:
-        return string

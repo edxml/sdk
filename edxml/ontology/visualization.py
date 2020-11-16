@@ -1,5 +1,5 @@
 from edxml.ontology import Concept
-from edxml.ontology.util import truncate_string
+from edxml.util import truncate_string
 
 
 def generate_graph_property_concepts(ontology, graph):
