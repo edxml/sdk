@@ -635,21 +635,21 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         return source_concept, target_concept
 
-    def create_relation(self, source, target, description, relation_type, predicate, source_concept_name=None,
-                        target_concept_name=None, confidence=1.0):
+    def create_relation(self, relation_type, source, target, description=None, predicate=None, source_concept_name=None,
+                        target_concept_name=None, confidence=None):
         """
 
         Create a new property relation
 
         Args:
+          relation_type (str): Relation relation_type ('inter', 'intra', ...)
           source (str): Name of source property
           target (str): Name of target property
-          description (str): Relation description, with property placeholders
-          relation_type (str): Relation relation_type ('inter', 'intra', ...)
-          predicate (str): free form predicate
-          source_concept_name (str): Name of the source concept
-          target_concept_name (str): Name of the target concept
-          confidence (float): Relation confidence [0.0,1.0]
+          description (Optional[str]): Relation description, with property placeholders
+          predicate (Optional[str]): free form predicate
+          source_concept_name (Optional[str]): Name of the source concept
+          target_concept_name (Optional[str]): Name of the target concept
+          confidence (Optional[float]): Relation confidence [0.0,1.0]
 
         Returns:
           PropertyRelation: The PropertyRelation instance

@@ -29,13 +29,13 @@ class PropertyRelation(OntologyElement):
             'target-concept': target_concept.get_name() if target_concept else None,
             'description': description,
             'predicate': type_predicate,
-            'confidence': int(confidence),
+            'confidence': int(confidence) if confidence is not None else None,
         }
 
         self.__event_type = event_type  # type: edxml.ontology.EventType
 
     def __repr__(self):
-        return f"{self.__attr['source']} {self.__attr['predicate']} {self.__attr['target']}"
+        return f"{self.__attr['source']} {self.get_predicate()} {self.__attr['target']}"
 
     def __str__(self):
         return f"{self.__attr['source']}=>{self.__attr['target']}"
@@ -110,7 +110,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['description']
+        return self.__attr['description'] or f"[[{self.__attr['source']}]] is described as [[{self.__attr['target']}]]"
 
     def get_type(self):
         """
@@ -130,7 +130,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           str:
         """
-        return self.__attr['predicate']
+        return self.__attr['predicate'] or 'is described as'
 
     def get_confidence(self):
         """
@@ -140,7 +140,7 @@ class PropertyRelation(OntologyElement):
         Returns:
           int:
         """
-        return self.__attr['confidence']
+        return self.__attr['confidence'] or 10
 
     def because(self, reason):
         """
@@ -150,7 +150,7 @@ class PropertyRelation(OntologyElement):
         of both related properties.
 
         Args:
-          reason (str): Relation description
+          reason (Optional[str]): Relation description
 
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
@@ -167,7 +167,7 @@ class PropertyRelation(OntologyElement):
         of both related properties.
 
         Args:
-          description (str): Relation description
+          description (Optional[str]): Relation description
 
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
@@ -181,7 +181,7 @@ class PropertyRelation(OntologyElement):
         Sets the relation predicate to specified string.
 
         Args:
-          predicate (str): Relation predicate
+          predicate (Optional[str]): Relation predicate
 
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
@@ -196,13 +196,13 @@ class PropertyRelation(OntologyElement):
         Configure the relation confidence
 
         Args:
-         confidence (int): Relation confidence [1,10]
+         confidence (Optional[int]): Relation confidence [1,10]
 
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
         """
 
-        self._set_attr('confidence', int(confidence))
+        self._set_attr('confidence', int(confidence) if confidence is not None else None)
         return self
 
     def validate(self):
@@ -228,43 +228,50 @@ class PropertyRelation(OntologyElement):
             raise EDXMLValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['target'])
 
-        if not len(self.__attr['description']) <= 255:
-            raise EDXMLValidationError(
-                'Property relation description is too long: "%s"' % self.__attr['description'])
+        if self.__attr['description'] is not None:
+            if not len(self.__attr['description']) <= 255:
+                raise EDXMLValidationError(
+                    'Property relation description is too long: "%s"' % self.__attr['description']
+                )
 
-        if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
-            raise EDXMLValidationError(
-                'Property relation description contains illegal whitespace characters: "%s"' % (
-                    self.__attr['description'])
-            )
+            if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
+                raise EDXMLValidationError(
+                    'Property relation description contains illegal whitespace characters: "%s"' %
+                    self.__attr['description']
+                )
 
-        if not len(self.__attr['predicate']) <= 32:
-            raise EDXMLValidationError(
-                'Property relation predicate is too long: "%s"' % self.__attr['predicate'])
+            try:
+                edxml.Template(self.__attr['description']).validate(self.__event_type)
+            except EDXMLValidationError as e:
+                raise EDXMLValidationError(
+                    'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
+                        self.__attr['source'], self.__attr['target'],
+                        self.__attr['description'], str(e)
+                    )
+                )
 
-        if normalize_xml_token(self.__attr['predicate']) != self.__attr['predicate']:
-            raise EDXMLValidationError(
-                'Property relation predicate contains illegal whitespace characters: "%s"' % (
-                    self.__attr['predicate'])
-            )
+        if self.__attr['predicate'] is not None:
+            if not len(self.__attr['predicate']) <= 32:
+                raise EDXMLValidationError(
+                    'Property relation predicate is too long: "%s"' % self.__attr['predicate']
+                )
 
-        if self._type not in ['inter', 'intra', 'other']:
+            if normalize_xml_token(self.__attr['predicate']) != self.__attr['predicate']:
+                raise EDXMLValidationError(
+                    'Property relation predicate contains illegal whitespace characters: "%s"' % (
+                        self.__attr['predicate']
+                    )
+                )
+
+        if self._type not in ['inter', 'intra', 'name', 'description', 'container', 'other']:
             raise EDXMLValidationError(
                 'Invalid property relation type: "%s"' % self._type)
 
-        if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
-            raise EDXMLValidationError(
-                'Invalid property relation confidence: "%d"' % self.__attr['confidence'])
-
-        try:
-            edxml.Template(self.__attr['description']).validate(self.__event_type)
-        except EDXMLValidationError as e:
-            raise EDXMLValidationError(
-                'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
-                    self.__attr['source'], self.__attr['target'],
-                    self.__attr['description'], str(e)
+        if self.__attr['confidence'] is not None:
+            if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
+                raise EDXMLValidationError(
+                    'Invalid property relation confidence: "%d"' % self.__attr['confidence']
                 )
-            )
 
         if self.get_type() in ('inter', 'intra'):
             if self.__attr.get('source-concept') is None or self.__attr.get('target-concept') is None:
@@ -277,6 +284,26 @@ class PropertyRelation(OntologyElement):
                 raise EDXMLValidationError(
                     'The "%s" relation between properties %s and %s must not specify any concepts.' %
                     (self.get_type(), self.__attr['source'], self.__attr['target'])
+                )
+
+        if self.get_type() in ['name', 'description', 'container']:
+            if self.__attr['description'] is not None:
+                raise EDXMLValidationError(
+                    'The %s relation between properties %s and %s in event type %s '
+                    'must not have a relation description.' %
+                    (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
+                )
+            if self.__attr['predicate'] is not None:
+                raise EDXMLValidationError(
+                    'The %s relation between properties %s and %s in event type %s '
+                    'must not have a relation predicate.' %
+                    (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
+                )
+            if self.__attr['confidence'] is not None:
+                raise EDXMLValidationError(
+                    'The %s relation between properties %s and %s in event type %s '
+                    'must not have a relation confidence.' %
+                    (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
 
         # Verify that inter / intra relations are defined between
@@ -354,10 +381,10 @@ class PropertyRelation(OntologyElement):
                 event_type[target],
                 source_concept,
                 target_concept,
-                relation_element.attrib['description'],
+                relation_element.attrib.get('description'),
                 relation_element.tag[24:],
-                relation_element.attrib['predicate'],
-                relation_element.attrib['confidence']
+                relation_element.attrib.get('predicate'),
+                relation_element.attrib.get('confidence')
             )
         except (ValueError, KeyError) as e:
             raise EDXMLValidationError(
@@ -453,9 +480,10 @@ class PropertyRelation(OntologyElement):
         """
         if property_relation > self:
             # The new definition is indeed newer. Update self.
-            self.set_description(property_relation.get_description())
-            self.set_predicate(property_relation.get_predicate())
-            self.set_confidence(property_relation.get_confidence())
+            if self._type not in ['name', 'description', 'container']:
+                self.set_description(property_relation.get_description())
+                self.set_predicate(property_relation.get_predicate())
+                self.set_confidence(property_relation.get_confidence())
             self.__event_type = property_relation.__event_type
 
         return self
@@ -473,11 +501,16 @@ class PropertyRelation(OntologyElement):
 
         attribs = dict(self.__attr)
 
-        attribs['confidence'] = '%d' % self.__attr['confidence']
+        attribs['confidence'] = '%d' % self.get_confidence()
 
         if self._type not in ['inter', 'intra']:
             del attribs['source-concept']
             del attribs['target-concept']
+
+        if self._type in ['name', 'description', 'container']:
+            del attribs['description']
+            del attribs['confidence']
+            del attribs['predicate']
 
         return etree.Element(self._type, attribs)
 

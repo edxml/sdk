@@ -63,6 +63,32 @@ def describe_producer_rst(ontology, producer_name, input_description):
     if concept_combinations:
         description += '\n\nThe transcoder identifies\n' + '\n'.join(set(concept_combinations))
 
+    value_names = set()
+    value_descriptions = set()
+    value_containers = set()
+    for event_type in ontology.get_event_types().values():
+        for relation in event_type.get_property_relations(rtype='name').values():
+            value_names.add(
+                event_type.get_properties()[relation.get_source()].get_object_type().get_display_name_plural()
+            )
+        for relation in event_type.get_property_relations(rtype='description').values():
+            value_descriptions.add(
+                event_type.get_properties()[relation.get_source()].get_object_type().get_display_name_plural()
+            )
+        for relation in event_type.get_property_relations(rtype='container').values():
+            value_containers.add(
+                event_type.get_properties()[relation.get_target()].get_object_type().get_display_name_plural() +
+                ' as being part of a ' +
+                event_type.get_properties()[relation.get_source()].get_object_type().get_display_name_singular()
+            )
+
+    if value_names:
+        description += f"\n\nThe {producer_name} provides names for " + _list_strings(value_names)
+    if value_descriptions:
+        description += f"\n\nThe {producer_name} provides descriptions for " + _list_strings(value_descriptions)
+    if value_containers:
+        description += f"\n\nThe {producer_name} identifies " + _list_strings(value_containers)
+
     concepts = _describe_concepts(ontology)
     object_types = _describe_object_types(ontology)
 
@@ -104,11 +130,7 @@ def _describe_event_types(ontology: Ontology):
     type_names = []
     for event_type_name in ontology.get_event_type_names():
         type_names.append(ontology.get_event_type(event_type_name).get_display_name_plural())
-    if len(type_names) > 1:
-        last = type_names.pop()
-        return ', '.join(type_names) + ' and ' + last
-    else:
-        return ' and '.join(type_names)
+    return _list_strings(type_names)
 
 
 def _describe_inter_concept_relations(ontology: Ontology):
@@ -192,3 +214,11 @@ def _describe_concept_universals(ontology: Ontology, item_template):
                 )
 
     return descriptions
+
+
+def _list_strings(strings):
+    if len(strings) > 1:
+        last = strings.pop()
+        return ', '.join(strings) + ' and ' + last
+    else:
+        return ' and '.join(strings)

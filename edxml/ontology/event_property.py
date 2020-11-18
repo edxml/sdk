@@ -212,8 +212,14 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'other', type_predicate, confidence=confidence)
+        return self.__event_type.create_relation(
+            'other',
+            self.get_name(),
+            target_property_name,
+            reason or '[[%s]] %s [[%s]]' % (self.get_name(), type_predicate, target_property_name),
+            type_predicate,
+            confidence=confidence
+        )
 
     def relate_inter(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
                      reason=None, confidence=10):
@@ -244,9 +250,15 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'inter',
-            type_predicate, source_concept_name, target_concept_name, confidence
+        return self.__event_type.create_relation(
+            'inter',
+            self.get_name(),
+            target_property_name,
+            reason or '[[%s]] %s [[%s]]' % (self.get_name(), type_predicate, target_property_name),
+            type_predicate,
+            source_concept_name,
+            target_concept_name,
+            confidence
         )
 
     def relate_intra(self, type_predicate, target_property_name, source_concept_name=None, target_concept_name=None,
@@ -274,9 +286,69 @@ class EventProperty(OntologyElement):
           edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
 
         """
-        return self.__event_type.create_relation(self.get_name(), target_property_name, reason or '[[%s]] %s [[%s]]' % (
-            self.get_name(), type_predicate, target_property_name), 'intra', type_predicate, source_concept_name,
-                                                 target_concept_name, confidence)
+        return self.__event_type.create_relation(
+            'intra',
+            self.get_name(),
+            target_property_name,
+            reason or '[[%s]] %s [[%s]]' % (self.get_name(), type_predicate, target_property_name),
+            type_predicate,
+            source_concept_name,
+            target_concept_name,
+            confidence
+        )
+
+    def relate_name(self, target_property_name):
+        """
+
+        Creates and returns a relation between this property and
+        the specified target property. The relation is a 'name'
+        relation, indicating that the property provides names for
+        the values of the target property.
+
+        Args:
+          target_property_name (str): Name of the related property
+
+        Returns:
+          edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
+
+        """
+        return self.__event_type.create_relation('name', self.get_name(), target_property_name)
+
+    def relate_description(self, target_property_name):
+        """
+
+        Creates and returns a relation between this property and
+        the specified target property. The relation is a 'description'
+        relation, indicating that the property provides descriptions for
+        the values of the target property.
+
+        Args:
+          target_property_name (str): Name of the related property
+
+        Returns:
+          edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
+
+        """
+        return self.__event_type.create_relation('description', self.get_name(), target_property_name)
+
+    def relate_container(self, target_property_name):
+        """
+
+        Creates and returns a relation between this property and
+        the specified target property. The relation is a 'container'
+        relation, indicating that the values of the property contain
+        the values of the target property. In other words, the values
+        of the target property are conceptually a part of the values of
+        this property.
+
+        Args:
+          target_property_name (str): Name of the related property
+
+        Returns:
+          edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
+
+        """
+        return self.__event_type.create_relation('container', self.get_name(), target_property_name)
 
     def add_associated_concept(self, concept_association):
         """

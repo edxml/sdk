@@ -3,7 +3,7 @@
 import edxml
 
 from lxml import etree
-from typing import Any
+from typing import Any, Optional
 from typing import Dict
 
 from edxml.ontology import OntologyElement
@@ -13,8 +13,8 @@ class PropertyRelation(OntologyElement):
 
     def __init__(self, event_type: edxml.ontology.EventType, source: edxml.ontology.EventProperty,
                  target: edxml.ontology.EventProperty, source_concept: edxml.ontology.Concept,
-                 target_concept: edxml.ontology.Concept, description: str, type_class: str, type_predicate: str,
-                 confidence: float = 10) -> None:
+                 target_concept: edxml.ontology.Concept, description: Optional[str], type_class: str,
+                 type_predicate: Optional[str], confidence: Optional[float] = 10) -> None:
 
         self._type = ...         # type: str
         self.__attr = ...      # type: Dict[str, Any]
@@ -44,11 +44,11 @@ class PropertyRelation(OntologyElement):
 
     def because(self, reason: str) -> 'PropertyRelation': ...
 
-    def set_description(self, description: str) -> 'PropertyRelation': ...
+    def set_description(self, description: Optional[str]) -> 'PropertyRelation': ...
 
-    def set_predicate(self, predicate) -> 'PropertyRelation': ...
+    def set_predicate(self, predicate: Optional[str]) -> 'PropertyRelation': ...
 
-    def set_confidence(self, confidence: int): ...
+    def set_confidence(self, confidence: Optional[int]): ...
 
     def validate(self) -> 'PropertyRelation': ...
 

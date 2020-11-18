@@ -98,8 +98,8 @@ class EventType(OntologyElement):
     ) -> Tuple[edxml.ontology.Concept, edxml.ontology.Concept]: ...
 
     def create_relation(
-            self, source: str, target: str, description: str, type: str, predicate: str,
-            source_concept_name=None, target_concept_name=None, confidence: float = 1.0
+            self, relation_type: str,source: str, target: str, description: Optional[str]=None, predicate: Optional[str]=None,
+            source_concept_name=None, target_concept_name=None, confidence: Optional[float] = None
     ) -> edxml.ontology.PropertyRelation: ...
 
     def add_relation(self, relation: edxml.ontology.PropertyRelation) -> 'EventType': ...
