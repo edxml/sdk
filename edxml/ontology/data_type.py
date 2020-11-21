@@ -2,11 +2,6 @@
 import base64
 import codecs
 import decimal
-import urllib.request
-import urllib.parse
-import urllib.error
-from urllib.parse import urlsplit, urlunsplit
-
 import re
 
 from decimal import Decimal
@@ -832,33 +827,12 @@ class DataType(object):
             )
 
     def _normalize_uri(self, values):
-        split_data_type = self.type.split(':')
-        path_separator = ':' if split_data_type[1] == '' else split_data_type[1]
-
-        normalized = set()
-        for value in values:
-            # Note that we cannot safely re-quote URIs in case there
-            # is a problem with quoting of special characters. For example,
-            # the path may contain both literal slashes and escaped ones. The
-            # server may interpret the literal slashes as path separators but not
-            # the quoted ones. When unquoting and requoting, this difference is
-            # lost. So we will not attempt to do that here. We will only apply
-            # quoting in case there are illegal characters in the URI and no percent
-            # encoding is present, which implies that the URI has not been quoted at all.
-            try:
-                scheme, netloc, path, qs, anchor = urlsplit(value)
-            except ValueError:
-                continue
-
-            # Note that a path may start with a slash irrespective of the actual path separator.
-            path = urllib.parse.quote(path, '/' + path_separator)
-            # Quote the query part.
-            qs = urllib.parse.quote_plus(qs, ':&=')
-            # Reconstruct normalized value.
-            normalized.add(urlunsplit(
-                (scheme, netloc, path, qs, anchor))
+        try:
+            return {value + '' for value in values}
+        except TypeError:
+            raise EDXMLValidationError(
+                'Invalid URI value in list: "%s"' % '","'.join([repr(value) for value in values])
             )
-        return normalized
 
     def _normalize_ip(self, values):
         split_data_type = self.type.split(':')
