@@ -874,13 +874,18 @@ class DataType(object):
             return {str(value) for value in values}
 
     def _normalize_base64(self, values):
+        normalized = set()
         try:
-            {base64.decodebytes(value.encode('utf-8')) for value in values}
+            for value in values:
+                value = value.encode('utf-8')
+                value += (b'=' * (len(value) % 4))
+                base64.decodebytes(value)
+                normalized.add(value.decode('utf-8'))
         except (AttributeError, ValueError):
             raise EDXMLValidationError(
                 'Invalid base64 value in list: "%s"' % '","'.join([repr(value) for value in values])
             )
-        return values
+        return normalized
 
     def _normalize_boolean(self, values):
         return {'true' if value in (True, 'true', 'True', 1) else 'false' for value in values}
