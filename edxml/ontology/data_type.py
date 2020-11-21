@@ -866,17 +866,12 @@ class DataType(object):
     def _normalize_string(self, values):
         split_data_type = self.type.split(':')
 
-        try:
-            if split_data_type[2] == 'lc':
-                return {str(value.lower()) for value in values}
-            elif split_data_type[2] == 'uc':
-                return {str(value.upper()) for value in values}
-            else:
-                return {str(value) for value in values}
-        except AttributeError:
-            raise EDXMLValidationError(
-                'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
-            )
+        if split_data_type[2] == 'lc':
+            return {str(value).lower() for value in values}
+        elif split_data_type[2] == 'uc':
+            return {str(value).upper() for value in values}
+        else:
+            return {str(value) for value in values}
 
     def _normalize_base64(self, values):
         try:
