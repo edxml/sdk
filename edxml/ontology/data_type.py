@@ -906,7 +906,7 @@ class DataType(object):
         encountered, an EDXMLValidationError will be raised.
 
         Args:
-          values (List[Any]): The input object values
+          values (Iterable[Any]): The input object values
 
         Raises:
           EDXMLValidationError
