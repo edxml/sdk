@@ -783,14 +783,14 @@ class DataType(object):
             decimal_precision = split_data_type[3]
             try:
                 return {('%.' + decimal_precision + 'f') % Decimal(value) for value in values}
-            except TypeError:
+            except (TypeError, decimal.InvalidOperation):
                 raise EDXMLValidationError(
                     'Invalid decimal value in list: "%s"' % '","'.join([repr(value) for value in values])
                 )
         elif split_data_type[1] == 'currency':
             try:
                 return {'%.4f' % Decimal(value) for value in values}
-            except TypeError:
+            except (TypeError, decimal.InvalidOperation):
                 raise EDXMLValidationError(
                     'Invalid currency value in list: "%s"' % '","'.join([repr(value) for value in values])
                 )
