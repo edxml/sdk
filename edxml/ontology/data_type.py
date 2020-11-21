@@ -936,13 +936,7 @@ class DataType(object):
         elif split_data_type[0] == 'boolean':
             return self._normalize_boolean(values)
         else:
-            try:
-                return {str(value) for value in values}
-            except AttributeError:
-                raise EDXMLValidationError(
-                    'Failed to convert one or more of the following values into a string: "%s"' %
-                    '","'.join([repr(value) for value in values])
-                )
+            return {str(value) for value in values}
 
     def _validate_value_datetime(self, value):
         if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
