@@ -34,6 +34,7 @@
 #  This script generates dummy EDXML data streams, which may be useful for stress
 #  testing EDXML processing systems and storage back ends.
 import argparse
+import logging
 import sys
 import time
 import random
@@ -303,6 +304,14 @@ def main():
     )
 
     parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    parser.add_argument(
         '--limit',
         default=0,
         type=int,
@@ -378,7 +387,20 @@ def main():
              'useful for testing parallel EDXML stream processing.'
     )
 
-    with EDXMLDummyDataGenerator(parser.parse_args()) as generator:
+    args = parser.parse_args()
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
+
+    with EDXMLDummyDataGenerator(args) as generator:
         generator.start()
 
 

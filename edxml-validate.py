@@ -34,6 +34,7 @@
 #  status will be zero if the provided data is valid EDXML. The utility accepts both
 #  regular files and EDXML data streams on standard input.
 import argparse
+import logging
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
@@ -56,7 +57,26 @@ def main():
              'file in stead.'
     )
 
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
     args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     if args.file is None:
 

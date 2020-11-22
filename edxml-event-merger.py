@@ -42,6 +42,7 @@
 #  this example to use an external storage backend in order to overcome this limitation
 #  is left as an exercise to the user.
 import argparse
+import logging
 import sys
 import time
 from typing import Dict, List
@@ -154,7 +155,26 @@ def main():
              'events may be significantly reduced.'
     )
 
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
     args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     if not args.file:
         args.file = sys.stdin.buffer

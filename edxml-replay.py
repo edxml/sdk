@@ -36,6 +36,7 @@
 #  for simulating live EDXML data sources using previously recorded data. Note that
 #  the script assumes that the events in the input stream are time ordered.
 import argparse
+import logging
 import sys
 import time
 from datetime import datetime
@@ -174,7 +175,26 @@ def main():
              'their input buffer.'
     )
 
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
     args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     if args.file is None:
         sys.stderr.write(

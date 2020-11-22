@@ -34,6 +34,7 @@
 #  This script outputs sticky hashes for every event in a given
 #  EDXML file or input stream. The hashes are printed to standard output.
 import argparse
+import logging
 import sys
 from edxml.EDXMLParser import EDXMLPullParser
 
@@ -59,7 +60,26 @@ def main():
              'file in stead.'
     )
 
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
     args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     event_input = args.file or sys.stdin.buffer
 

@@ -36,6 +36,7 @@
 
 
 import argparse
+import logging
 import sys
 import re
 from edxml.EDXMLFilter import EDXMLPullFilter
@@ -119,9 +120,28 @@ parser.add_argument(
     help='An event type name that will be used to filter the event types in the input events.'
 )
 
+parser.add_argument(
+    '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+)
+
+parser.add_argument(
+    '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+)
+
+logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler())
+
 # Program starts here. Check commandline arguments.
 # TODO: Introduce a main() method
 args = parser.parse_args()
+
+if args.quiet:
+    logger.setLevel(logging.ERROR)
+elif args.verbose:
+    if args.verbose > 0:
+        logger.setLevel(logging.INFO)
+    if args.verbose > 1:
+        logger.setLevel(logging.DEBUG)
 
 event_input = open(args.file) if args.file else sys.stdin.buffer
 

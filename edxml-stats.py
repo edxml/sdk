@@ -35,6 +35,7 @@
 #  It prints event counts, lists defined event types, object types, source
 #  URLs, and so on.
 import argparse
+import logging
 import operator
 import sys
 from collections import defaultdict
@@ -273,6 +274,14 @@ def parse_args():
              'values for the property, in that order. All other output is suppressed.'
     )
 
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
     return parser.parse_args()
 
 
@@ -296,8 +305,18 @@ def print_full_stats(parser):
 
 
 def main():
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
 
     args = parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     if args.file is None:
 

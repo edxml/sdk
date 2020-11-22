@@ -35,6 +35,7 @@
 #  one new EDXML file, which is then printed on standard output.
 
 import argparse
+import logging
 import sys
 
 from edxml.error import EDXMLValidationError
@@ -71,9 +72,28 @@ parser.add_argument(
     help='A file name to be used as input for the merge operation.'
 )
 
+parser.add_argument(
+    '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+)
+
+parser.add_argument(
+    '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+)
+
 
 def main():
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+
     args = parser.parse_args()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
 
     if args.file is None or len(args.file) < 2:
         sys.stderr.write("Please specify at least two EDXML files for merging.\n")
