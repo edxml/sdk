@@ -61,7 +61,7 @@ class EDXMLMerger(EDXMLPullFilter):
 
 
 parser = argparse.ArgumentParser(
-    description='This utility merges two or more EDXML files into one.'
+    description='This utility concatenates two or more EDXML files resulting in one output file.'
 )
 
 parser.add_argument(
@@ -69,7 +69,7 @@ parser.add_argument(
     '--file',
     type=str,
     action='append',
-    help='A file name to be used as input for the merge operation.'
+    help='A file name to be used as input.'
 )
 
 parser.add_argument(
