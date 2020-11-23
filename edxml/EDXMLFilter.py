@@ -36,7 +36,7 @@ it is written, using an :class:`edxml.ontology.Ontology` instance to interpret i
 
 """
 
-from .EDXMLParser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
+from .parser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
 from edxml.writer import EDXMLWriter
 
 

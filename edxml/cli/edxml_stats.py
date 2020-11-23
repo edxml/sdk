@@ -42,7 +42,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from dateutil.parser import parse
-from edxml.EDXMLParser import EDXMLPullParser
+from edxml.parser import EDXMLPullParser
 
 
 class StatsParser(EDXMLPullParser):

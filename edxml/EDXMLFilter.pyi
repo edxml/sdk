@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from edxml import EDXMLWriter, ParsedEvent
 from edxml.ontology import Ontology
-from edxml.EDXMLParser import EDXMLParserBase, EDXMLPullParser, EDXMLPushParser
+from edxml.parser import EDXMLParserBase, EDXMLPullParser, EDXMLPushParser
 
 
 class EDXMLFilter(EDXMLParserBase):

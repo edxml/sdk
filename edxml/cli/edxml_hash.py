@@ -36,7 +36,7 @@
 import argparse
 import logging
 import sys
-from edxml.EDXMLParser import EDXMLPullParser
+from edxml.parser import EDXMLPullParser
 
 
 class EDXMLEventHasher(EDXMLPullParser):
