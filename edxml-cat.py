@@ -60,32 +60,35 @@ class EDXMLMerger(EDXMLPullFilter):
         ...
 
 
-parser = argparse.ArgumentParser(
-    description='This utility concatenates two or more EDXML files resulting in one output file.'
-)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='This utility concatenates two or more EDXML files resulting in one output file.'
+    )
 
-parser.add_argument(
-    '-f',
-    '--file',
-    type=str,
-    action='append',
-    help='A file name to be used as input.'
-)
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        action='append',
+        help='A file name to be used as input.'
+    )
 
-parser.add_argument(
-    '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
-)
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
 
-parser.add_argument(
-    '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
-)
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    return parser.parse_args()
 
 
 def main():
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())
 
-    args = parser.parse_args()
+    args = parse_args()
 
     if args.quiet:
         logger.setLevel(logging.ERROR)

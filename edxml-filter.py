@@ -93,62 +93,70 @@ class EDXMLEventGroupFilter(EDXMLPullFilter):
             super()._parsed_event(event)
 
 
-parser = argparse.ArgumentParser(
-    description='This utility reads an EDXML stream from standard input and filters it according '
-                'to the user supplied parameters. The result is sent to standard output.'
-)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='This utility reads an EDXML stream from standard input and filters it according '
+                    'to the user supplied parameters. The result is sent to standard output.'
+    )
 
-parser.add_argument(
-    '-f',
-    '--file',
-    type=str,
-    help='By default, input is read from standard input. This option can be used to read from a'
-         'file in stead.'
-)
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a'
+             'file in stead.'
+    )
 
-parser.add_argument(
-    '-s',
-    '--source-uri',
-    type=str,
-    help='A regular expression that will be used to filter the event source URI in the input events.'
-)
+    parser.add_argument(
+        '-s',
+        '--source-uri',
+        type=str,
+        help='A regular expression that will be used to filter the event source URI in the input events.'
+    )
 
-parser.add_argument(
-    '-e',
-    '--event-type',
-    type=str,
-    help='An event type name that will be used to filter the event types in the input events.'
-)
+    parser.add_argument(
+        '-e',
+        '--event-type',
+        type=str,
+        help='An event type name that will be used to filter the event types in the input events.'
+    )
 
-parser.add_argument(
-    '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
-)
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
 
-parser.add_argument(
-    '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
-)
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
 
-logger = logging.getLogger()
-logger.addHandler(logging.StreamHandler())
+    return parser.parse_args()
 
-# Program starts here. Check commandline arguments.
-# TODO: Introduce a main() method
-args = parser.parse_args()
 
-if args.quiet:
-    logger.setLevel(logging.ERROR)
-elif args.verbose:
-    if args.verbose > 0:
-        logger.setLevel(logging.INFO)
-    if args.verbose > 1:
-        logger.setLevel(logging.DEBUG)
+def main():
 
-event_input = open(args.file) if args.file else sys.stdin.buffer
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
 
-source_filter = re.compile(args.source_uri or '.*')
+    args = parse_args()
 
-with EDXMLEventGroupFilter(source_filter, args.event_type) as event_filter:
-    try:
-        event_filter.parse(event_input)
-    except KeyboardInterrupt:
-        pass
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)
+
+    event_input = open(args.file) if args.file else sys.stdin.buffer
+
+    source_filter = re.compile(args.source_uri or '.*')
+
+    with EDXMLEventGroupFilter(source_filter, args.event_type) as event_filter:
+        try:
+            event_filter.parse(event_input)
+        except KeyboardInterrupt:
+            pass
+
+
+if __name__ == "__main__":
+    main()
