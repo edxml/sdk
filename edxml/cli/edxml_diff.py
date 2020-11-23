@@ -47,7 +47,7 @@ from io import BytesIO
 from difflib import unified_diff
 
 from edxml import EDXMLPullParser
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml.writer import EDXMLWriter
 from edxml.event import EventElement
 
 

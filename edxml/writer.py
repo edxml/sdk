@@ -29,7 +29,7 @@
 #
 #
 
-"""EDXMLWriter
+"""writer
 
 This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.

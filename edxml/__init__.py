@@ -5,7 +5,7 @@ from .version import __version__
 
 from .event import EDXMLEvent, EventElement, ParsedEvent
 from .template import Template
-from .EDXMLWriter import EDXMLWriter
+from .writer import EDXMLWriter
 from .EDXMLParser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
 from .EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
 from .event_collection import EventCollection

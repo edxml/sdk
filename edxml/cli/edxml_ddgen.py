@@ -41,7 +41,7 @@ import random
 
 import edxml.ontology
 from edxml import EDXMLEvent
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml.writer import EDXMLWriter
 
 
 class EDXMLDummyDataGenerator(EDXMLWriter):

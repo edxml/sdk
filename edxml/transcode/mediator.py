@@ -9,7 +9,7 @@ from edxml.ontology import Ontology
 from edxml.ontology.visualization import generate_graph_property_concepts
 from edxml.ontology.description import describe_producer_rst
 from edxml.error import EDXMLValidationError
-from edxml.EDXMLWriter import EDXMLWriter
+from edxml.writer import EDXMLWriter
 
 
 class TranscoderMediator(object):
