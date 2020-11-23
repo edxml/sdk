@@ -27,7 +27,7 @@
 #  ===========================================================================
 #
 
-"""EDXMLFilter
+"""filter
 
 This module offers classes that combine EDXMLWriter and EDXMLParser to edit
 EDXML data streams. By default, the input data is parsed and written into

@@ -39,7 +39,7 @@ import argparse
 import logging
 import sys
 import re
-from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.filter import EDXMLPullFilter
 
 
 class EDXMLEventGroupFilter(EDXMLPullFilter):

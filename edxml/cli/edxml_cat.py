@@ -39,7 +39,7 @@ import logging
 import sys
 
 from edxml.error import EDXMLValidationError
-from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.filter import EDXMLPullFilter
 from edxml.logger import log
 
 

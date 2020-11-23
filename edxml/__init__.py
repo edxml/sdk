@@ -7,7 +7,7 @@ from .event import EDXMLEvent, EventElement, ParsedEvent
 from .template import Template
 from .writer import EDXMLWriter
 from .parser import EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
-from .EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
+from .filter import EDXMLPullFilter, EDXMLPushFilter
 from .event_collection import EventCollection
 
 from . import ontology

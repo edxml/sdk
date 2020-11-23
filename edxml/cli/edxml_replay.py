@@ -44,7 +44,7 @@ from datetime import datetime
 import pytz
 from dateutil.parser import parse
 
-from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.filter import EDXMLPullFilter
 from edxml.ontology import DataType
 
 

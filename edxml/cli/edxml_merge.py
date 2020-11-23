@@ -48,7 +48,7 @@ import time
 from typing import Dict, List
 
 from edxml import EDXMLEvent
-from edxml.EDXMLFilter import EDXMLPullFilter, EDXMLPushFilter
+from edxml.filter import EDXMLPullFilter, EDXMLPushFilter
 from edxml.error import EDXMLValidationError
 
 
