@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #
 #  ===========================================================================
 #
-#                              EDXML Validator
+#                          EDXML Merging Utility
 #
 #                            EXAMPLE APPLICATION
 #
@@ -30,22 +30,39 @@
 #
 #  ===========================================================================
 #
-#  This script checks EDXML data against the specification requirements. Its exit
-#  status will be zero if the provided data is valid EDXML. The utility accepts both
-#  regular files and EDXML data streams on standard input.
+#
+#  This utility reads multiple compatible EDXML files and merges them into
+#  one new EDXML file, which is then printed on standard output.
+
 import argparse
 import logging
 import sys
 
-from edxml.EDXMLParser import EDXMLPullParser
 from edxml.error import EDXMLValidationError
+from edxml.EDXMLFilter import EDXMLPullFilter
+from edxml.logger import log
 
 
-def main():
+class EDXMLMerger(EDXMLPullFilter):
+    def __init__(self):
+        super().__init__(sys.stdout.buffer)
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._writer.close()
+
+    def parse(self, input_file, foreign_element_tags=()):
+        super().parse(input_file, foreign_element_tags)
+        self.close()
+
+    def _close(self):
+        # We suppress closing the output writer, allowing
+        # us to parse multiple files in succession.
+        ...
+
+
+def parse_args():
     parser = argparse.ArgumentParser(
-        description="This utility checks EDXML data against the specification requirements. Its exit "
-                    "status will be zero if the provided data is valid EDXML."
+        description='This utility concatenates two or more EDXML files resulting in one output file.'
     )
 
     parser.add_argument(
@@ -53,8 +70,7 @@ def main():
         '--file',
         type=str,
         action='append',
-        help='By default, input is read from standard input. This option can be used to read from a '
-             'file in stead.'
+        help='A file name to be used as input.'
     )
 
     parser.add_argument(
@@ -65,10 +81,14 @@ def main():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
+    return parser.parse_args()
+
+
+def main():
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())
 
-    args = parser.parse_args()
+    args = parse_args()
 
     if args.quiet:
         logger.setLevel(logging.ERROR)
@@ -78,28 +98,22 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    if args.file is None:
+    if args.file is None or len(args.file) < 2:
+        sys.stderr.write("Please specify at least two EDXML files for merging.\n")
+        sys.exit()
 
-        # Feed the parser from standard input.
-        args.file = [sys.stdin.buffer]
-
-    try:
-        with EDXMLPullParser() as parser:
-            for file in args.file:
-                parser.parse(file).close()
-    except KeyboardInterrupt:
-        return
-    except EDXMLValidationError as e:
-        # The string representations of exceptions do not
-        # interpret newlines. As validation exceptions
-        # may contain pretty printed XML snippets, this
-        # does not yield readable exception messages.
-        # So, we only print the message passed to the
-        # constructor of the exception.
-        print(e.args[0])
-        exit(1)
-
-    print("Input data is valid.\n")
+    with EDXMLMerger() as merger:
+        for file_name in args.file:
+            log.info("\nMerging file %s:" % file_name)
+            try:
+                merger.parse(file_name)
+            except KeyboardInterrupt:
+                pass
+            except EDXMLValidationError as exception:
+                exception.message = "EDXML file %s is incompatible with previous files: %s" % (file_name, exception)
+                raise
+            except Exception:
+                raise
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #
 #  ===========================================================================
 #
-#                           EDXML String Printer
+#                              EDXML Validator
 #
 #                            EXAMPLE APPLICATION
 #
@@ -30,56 +30,31 @@
 #
 #  ===========================================================================
 #
-#
-#  This script prints an evaluated event story or summary for each event in a given
-#  EDXML file or input stream. The strings are printed to standard output.
+#  This script checks EDXML data against the specification requirements. Its exit
+#  status will be zero if the provided data is valid EDXML. The utility accepts both
+#  regular files and EDXML data streams on standard input.
 import argparse
 import logging
 import sys
 
 from edxml.EDXMLParser import EDXMLPullParser
-
-
-class EDXMLEventPrinter(EDXMLPullParser):
-
-    def __init__(self, print_summaries=False, print_colorized=False):
-        super().__init__()
-        self.__print_summaries = print_summaries
-        self.__colorize = print_colorized
-
-    def _parsed_event(self, event):
-
-        print(self.get_ontology().get_event_type(event.get_type_name()).evaluate_template(
-            event, which='summary' if self.__print_summaries else 'story', colorize=self.__colorize
-        ))
+from edxml.error import EDXMLValidationError
 
 
 def main():
+
     parser = argparse.ArgumentParser(
-        description="This utility outputs evaluated event story or summary templates for every event "
-                    "in a given EDXML file or input stream. The strings are printed to standard output."
+        description="This utility checks EDXML data against the specification requirements. Its exit "
+                    "status will be zero if the provided data is valid EDXML."
     )
 
     parser.add_argument(
         '-f',
         '--file',
         type=str,
-        help='By default, input is read from standard input. This option can be used to read from a'
+        action='append',
+        help='By default, input is read from standard input. This option can be used to read from a '
              'file in stead.'
-    )
-
-    parser.add_argument(
-        '-c',
-        '--colored',
-        action='store_true',
-        help='Produce colored output, highlighting object values.'
-    )
-
-    parser.add_argument(
-        '-s',
-        '--short',
-        action='store_true',
-        help='By default, the event story is rendered. This option switches to shorter summary rendering.'
     )
 
     parser.add_argument(
@@ -104,16 +79,27 @@ def main():
             logger.setLevel(logging.DEBUG)
 
     if args.file is None:
-        sys.stderr.write(
-            'Waiting for EDXML data on standard input... (use --help option to get help)\n'
-        )
 
-    input = open(args.file) if args.file else sys.stdin.buffer
+        # Feed the parser from standard input.
+        args.file = [sys.stdin.buffer]
 
     try:
-        EDXMLEventPrinter(print_summaries=args.short, print_colorized=args.colored).parse(input)
+        with EDXMLPullParser() as parser:
+            for file in args.file:
+                parser.parse(file).close()
     except KeyboardInterrupt:
-        pass
+        return
+    except EDXMLValidationError as e:
+        # The string representations of exceptions do not
+        # interpret newlines. As validation exceptions
+        # may contain pretty printed XML snippets, this
+        # does not yield readable exception messages.
+        # So, we only print the message passed to the
+        # constructor of the exception.
+        print(e.args[0])
+        exit(1)
+
+    print("Input data is valid.\n")
 
 
 if __name__ == "__main__":

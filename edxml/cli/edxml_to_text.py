@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #
 #  ===========================================================================
 #
-#                        EDXML Sticky Hash Calculator
+#                           EDXML String Printer
 #
 #                            EXAMPLE APPLICATION
 #
@@ -31,33 +31,55 @@
 #  ===========================================================================
 #
 #
-#  This script outputs sticky hashes for every event in a given
-#  EDXML file or input stream. The hashes are printed to standard output.
+#  This script prints an evaluated event story or summary for each event in a given
+#  EDXML file or input stream. The strings are printed to standard output.
 import argparse
 import logging
 import sys
+
 from edxml.EDXMLParser import EDXMLPullParser
 
 
-class EDXMLEventHasher(EDXMLPullParser):
+class EDXMLEventPrinter(EDXMLPullParser):
+
+    def __init__(self, print_summaries=False, print_colorized=False):
+        super().__init__()
+        self.__print_summaries = print_summaries
+        self.__colorize = print_colorized
 
     def _parsed_event(self, event):
-        event_type = self.get_ontology().get_event_type(event.get_type_name())
-        print(event.compute_sticky_hash(event_type))
+
+        print(self.get_ontology().get_event_type(event.get_type_name()).evaluate_template(
+            event, which='summary' if self.__print_summaries else 'story', colorize=self.__colorize
+        ))
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='This utility outputs sticky hashes for every event in a given '
-                    'EDXML file or input stream. The hashes are printed to standard output.'
+        description="This utility outputs evaluated event story or summary templates for every event "
+                    "in a given EDXML file or input stream. The strings are printed to standard output."
     )
 
     parser.add_argument(
         '-f',
         '--file',
         type=str,
-        help='By default, input is read from standard input. This option can be used to read from a '
+        help='By default, input is read from standard input. This option can be used to read from a'
              'file in stead.'
+    )
+
+    parser.add_argument(
+        '-c',
+        '--colored',
+        action='store_true',
+        help='Produce colored output, highlighting object values.'
+    )
+
+    parser.add_argument(
+        '-s',
+        '--short',
+        action='store_true',
+        help='By default, the event story is rendered. This option switches to shorter summary rendering.'
     )
 
     parser.add_argument(
@@ -81,12 +103,17 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    event_input = args.file or sys.stdin.buffer
+    if args.file is None:
+        sys.stderr.write(
+            'Waiting for EDXML data on standard input... (use --help option to get help)\n'
+        )
+
+    input = open(args.file) if args.file else sys.stdin.buffer
 
     try:
-        EDXMLEventHasher().parse(event_input)
+        EDXMLEventPrinter(print_summaries=args.short, print_colorized=args.colored).parse(input)
     except KeyboardInterrupt:
-        sys.exit()
+        pass
 
 
 if __name__ == "__main__":

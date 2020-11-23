@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #
 #  ===========================================================================
 #
-#                          EDXML Merging Utility
+#                        EDXML Sticky Hash Calculator
 #
 #                            EXAMPLE APPLICATION
 #
@@ -31,46 +31,33 @@
 #  ===========================================================================
 #
 #
-#  This utility reads multiple compatible EDXML files and merges them into
-#  one new EDXML file, which is then printed on standard output.
-
+#  This script outputs sticky hashes for every event in a given
+#  EDXML file or input stream. The hashes are printed to standard output.
 import argparse
 import logging
 import sys
-
-from edxml.error import EDXMLValidationError
-from edxml.EDXMLFilter import EDXMLPullFilter
-from edxml.logger import log
+from edxml.EDXMLParser import EDXMLPullParser
 
 
-class EDXMLMerger(EDXMLPullFilter):
-    def __init__(self):
-        super().__init__(sys.stdout.buffer)
+class EDXMLEventHasher(EDXMLPullParser):
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._writer.close()
-
-    def parse(self, input_file, foreign_element_tags=()):
-        super().parse(input_file, foreign_element_tags)
-        self.close()
-
-    def _close(self):
-        # We suppress closing the output writer, allowing
-        # us to parse multiple files in succession.
-        ...
+    def _parsed_event(self, event):
+        event_type = self.get_ontology().get_event_type(event.get_type_name())
+        print(event.compute_sticky_hash(event_type))
 
 
-def parse_args():
+def main():
     parser = argparse.ArgumentParser(
-        description='This utility concatenates two or more EDXML files resulting in one output file.'
+        description='This utility outputs sticky hashes for every event in a given '
+                    'EDXML file or input stream. The hashes are printed to standard output.'
     )
 
     parser.add_argument(
         '-f',
         '--file',
         type=str,
-        action='append',
-        help='A file name to be used as input.'
+        help='By default, input is read from standard input. This option can be used to read from a '
+             'file in stead.'
     )
 
     parser.add_argument(
@@ -81,14 +68,10 @@ def parse_args():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    return parser.parse_args()
-
-
-def main():
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())
 
-    args = parse_args()
+    args = parser.parse_args()
 
     if args.quiet:
         logger.setLevel(logging.ERROR)
@@ -98,22 +81,12 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    if args.file is None or len(args.file) < 2:
-        sys.stderr.write("Please specify at least two EDXML files for merging.\n")
-        sys.exit()
+    event_input = args.file or sys.stdin.buffer
 
-    with EDXMLMerger() as merger:
-        for file_name in args.file:
-            log.info("\nMerging file %s:" % file_name)
-            try:
-                merger.parse(file_name)
-            except KeyboardInterrupt:
-                pass
-            except EDXMLValidationError as exception:
-                exception.message = "EDXML file %s is incompatible with previous files: %s" % (file_name, exception)
-                raise
-            except Exception:
-                raise
+    try:
+        EDXMLEventHasher().parse(event_input)
+    except KeyboardInterrupt:
+        sys.exit()
 
 
 if __name__ == "__main__":

@@ -64,6 +64,23 @@ setup(
         'edxml': ['schema/edxml-schema-3.0.0.rng', '**/*.pyi']
     },
 
+    # Add entry points which will be installed as CLI utilities
+    entry_points={
+        'console_scripts': [
+            'edxml-cat=edxml.cli.edxml_cat:main',
+            'edxml-ddgen=edxml.cli.edxml_ddgen:main',
+            'edxml-diff=edxml.cli.edxml_diff:main',
+            'edxml-filter=edxml.cli.edxml_filter:main',
+            'edxml-hash=edxml.cli.edxml_hash:main',
+            'edxml-merge=edxml.cli.edxml_merge:main',
+            'edxml-replay=edxml.cli.edxml_replay:main',
+            'edxml-stats=edxml.cli.edxml_stats:main',
+            'edxml-to-csv=edxml.cli.edxml_to_csv:main',
+            'edxml-to-text=edxml.cli.edxml_to_text:main',
+            'edxml-validate=edxml.cli.edxml_validate:main',
+        ],
+    },
+
     # List run-time dependencies here. These will be installed by pip when your
     # project is installed.
     # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
