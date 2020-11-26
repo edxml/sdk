@@ -12,12 +12,53 @@ from termcolor import colored
 
 class Template(object):
 
-    TEMPLATE_PATTERN = re.compile('\\[\\[([^\\]]*)\\]\\]')
+    TEMPLATE_PATTERN = re.compile(r'\[\[([^]]*)]]')
+
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
         'COUNTRYCODE', 'MERGE',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL'
     )
+
+    DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']
+
+    BOOLEAN_FORMATTERS = ['BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
+
+    FORMATTER_PROPERTY_COUNTS = {
+        'TIMESPAN': 2,
+        'DATE': 1,
+        'DATETIME': 1,
+        'FULLDATETIME': 1,
+        'WEEK': 1,
+        'MONTH': 1,
+        'YEAR': 1,
+        'DURATION': 2,
+        'COUNTRYCODE': 1,
+        'BOOLEAN_STRINGCHOICE': 1,
+        'BOOLEAN_ON_OFF': 1,
+        'BOOLEAN_IS_ISNOT': 1,
+        'EMPTY': 1,
+        'NEWPAR': 0,
+        'URL': 1
+    }
+
+    FORMATTER_ARGUMENT_COUNTS = {
+        'TIMESPAN': 2,
+        'DATE': 1,
+        'DATETIME': 1,
+        'FULLDATETIME': 1,
+        'WEEK': 1,
+        'MONTH': 1,
+        'YEAR': 1,
+        'DURATION': 2,
+        'COUNTRYCODE': 1,
+        'BOOLEAN_STRINGCHOICE': 3,
+        'BOOLEAN_ON_OFF': 1,
+        'BOOLEAN_IS_ISNOT': 1,
+        'EMPTY': 1,
+        'NEWPAR': 0,
+        'URL': 2
+    }
 
     def __init__(self, template):
         self._template = template
@@ -37,12 +78,10 @@ class Template(object):
 
         """
 
-        zero_argument_formatters = ['COUNTRYCODE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
-
         if property_names is None:
             properties = event_type.get_properties()
         else:
-            properties = {(name, prop) for name, prop in event_type.get_properties().items() if name in property_names}
+            properties = {name: prop for name, prop in event_type.get_properties().items() if name in property_names}
 
         # Test if template grammar is correct, by
         # checking that curly brackets are balanced.
@@ -57,143 +96,81 @@ class Template(object):
 
         placeholder_strings = re.findall(self.TEMPLATE_PATTERN, self._template)
 
-        for template in placeholder_strings:
-            # TODO: Write one generic check for existing properties by creating a table of
-            # formatters, mapping formatter names to the indexes into the argument list of
-            # arguments that are property names.
+        for placeholder in placeholder_strings:
             try:
-                formatter, argument_string = str(template).split(':', 1)
+                formatter, argument_string = str(placeholder).split(':', 1)
                 arguments = argument_string.split(',')
             except ValueError:
-                # Placeholder does not contain a formatter.
-                if str(template) in properties.keys():
-                    continue
+                # Placeholder does not contain a formatter. We only need to
+                # check if the placeholder is a valid property name and skip
+                # to the next placeholder.
+                if placeholder not in properties.keys():
+                    raise EDXMLValidationError(
+                        'Template refers to a property named "%s" which either do not exist or '
+                        'which cannot be used in this template.' % placeholder
+                    )
+                continue
+
+            if formatter not in self.KNOWN_FORMATTERS:
+                raise EDXMLValidationError('Unknown formatter: %s' % formatter)
+
+            property_count = self.FORMATTER_PROPERTY_COUNTS.get(formatter)
+
+            if property_count is None:
+                # Variable property count.
+                if formatter == 'MERGE':
+                    property_arguments = arguments
+                    other_arguments = []
                 else:
-                    raise EDXMLValidationError(
-                        'Template refers to one or more properties that either do not exist or '
-                        'that must not be used in this template.'
-                    )
-
-            # Some kind of string formatter was used.
-            # Figure out which one, and check if it
-            # is used correctly.
-            if formatter in ['DURATION', 'TIMESPAN']:
-
-                if len(arguments) != 2:
-                    raise EDXMLValidationError(
-                        'String formatter (%s) requires two properties, but %d properties were specified.' %
-                        (formatter, len(arguments))
-                    )
-
-                if arguments[0] in properties.keys() and arguments[1] in properties.keys():
-
-                    # Check that both properties are datetime values
-                    for property_name in arguments:
-                        if property_name == '':
-                            raise EDXMLValidationError(
-                                'Invalid property name in %s formatter: "%s"' % (property_name, formatter)
-                            )
-                        if str(properties[property_name].get_data_type()) != 'datetime':
-                            raise EDXMLValidationError(
-                                 'Time related formatter (%s) used on property (%s) which is not a datetime value.' % (
-                                    formatter, property_name
-                                 )
-                            )
-
-                    continue
+                    raise Exception('FORMATTER_PROPERTY_COUNTS is missing count for %s formatter.' % formatter)
             else:
-                if formatter not in self.KNOWN_FORMATTERS:
-                    raise EDXMLValidationError('Unknown formatter: %s' % formatter)
+                if len(arguments) < property_count:
+                    raise EDXMLValidationError(
+                        'String formatter (%s) requires %d properties, only %d properties were specified.' %
+                        (formatter, property_count, len(arguments))
+                    )
+                property_arguments = arguments[:property_count]
+                other_arguments = arguments[property_count:]
 
-                if formatter in ['DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']:
-                    # Check that only one property is specified after the formatter
-                    if len(arguments) > 1:
-                        raise EDXMLValidationError(
-                            'The %s formatter accepts just one property, multiple properties were specified: %s' % (
-                                formatter, argument_string
-                            )
-                        )
-                    # Check that property is a datetime value
-                    if argument_string == '':
-                        raise EDXMLValidationError(
-                            'Invalid property name in %s formatter: "%s"' % (argument_string, formatter)
-                        )
-                    if str(properties[argument_string].get_data_type()) != 'datetime':
-                        raise EDXMLValidationError(
-                            'The %s formatter was used on property %s which is not a datetime value' % (
-                                formatter, argument_string
-                            )
-                        )
+            for property_name in property_arguments:
+                if property_name == '':
+                    raise EDXMLValidationError(
+                        'Empty property name in %s formatter.' % formatter
+                    )
+                if property_name not in properties.keys():
+                    raise EDXMLValidationError(
+                        'Template refers to a property named "%s" which either do not exist or '
+                        'which cannot be used in this template.' % property_name
+                    )
 
-                elif formatter in zero_argument_formatters:
-                    # Check that no additional arguments are present
-                    if len(arguments) > 1:
-                        raise EDXMLValidationError(
-                            'The %s formatter accepts no arguments, but they were specified: %s' % (
-                                formatter, template
-                            )
-                        )
-                    # Check that only one property is specified after the formatter
-                    if len(arguments) > 1:
-                        raise EDXMLValidationError(
-                            'The %s formatter accepts just one property. Multiple properties were given: %s' % (
-                                formatter, argument_string
-                            )
-                        )
-                    if formatter in ['BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']:
-                        # Check that property is a boolean
-                        if argument_string == '':
-                            raise EDXMLValidationError(
-                                'Invalid property name in %s formatter: "%s"' % (argument_string, formatter)
-                            )
-                        if str(properties[argument_string].get_data_type()) != 'boolean':
-                            raise EDXMLValidationError(
-                                'The %s formatter was used on property %s which is not a boolean.' % (
-                                    formatter, argument_string
-                                )
-                            )
+            argument_count = self.FORMATTER_ARGUMENT_COUNTS.get(formatter)
 
-                elif formatter == 'URL':
-                    if len(arguments) != 2:
+            if argument_count is not None and len(property_arguments) + len(other_arguments) != argument_count:
+                raise EDXMLValidationError(
+                    'The %s formatter accepts %d arguments, but %d were specified: %s' % (
+                        formatter, argument_count, len(property_arguments) + len(other_arguments), placeholder
+                    )
+                )
+
+            if formatter in self.DATE_TIME_FORMATTERS:
+                # Check that both properties are datetime values
+                for property_name in property_arguments:
+                    if str(properties[property_name].get_data_type()) != 'datetime':
                         raise EDXMLValidationError(
-                            'Malformed %s formatter: %s' % (formatter, template)
+                             'Time related formatter (%s) used on property (%s) which is not a datetime value.' % (
+                                formatter, property_name
+                             )
                         )
 
-                elif formatter == 'EMPTY':
-                    if len(arguments) != 2:
-                        raise EDXMLValidationError(
-                            'Malformed %s formatter: %s' % (formatter, template)
-                        )
-
-                elif formatter == 'NEWPAR':
-                    if len(arguments) != 1 or arguments[0] != '':
-                        raise EDXMLValidationError(
-                            'Malformed %s formatter: %s' % (formatter, template)
-                        )
-
-                elif formatter == 'BOOLEAN_STRINGCHOICE':
-                    if len(arguments) != 3:
-                        raise EDXMLValidationError(
-                            'Malformed %s formatter: %s' % (formatter, template)
-                        )
-                    # Check that property is a boolean
-                    if argument_string == '':
-                        raise EDXMLValidationError(
-                            'Invalid property name in %s formatter: "%s"' % (argument_string, formatter)
-                        )
-                    if str(properties[arguments[0]].get_data_type()) != 'boolean':
+            if formatter in self.BOOLEAN_FORMATTERS:
+                # Check that property is a boolean
+                for property_name in property_arguments:
+                    if str(properties[property_name].get_data_type()) != 'boolean':
                         raise EDXMLValidationError(
                             'The %s formatter was used on property %s which is not a boolean.' % (
-                                formatter, argument_string
+                                formatter, property_name
                             )
                         )
-
-                elif formatter == 'MERGE':
-                    # No special requirements to check for
-                    pass
-
-                else:
-                    raise EDXMLValidationError('Unknown formatter: "%s"' % formatter)
 
         return self
 
@@ -280,9 +257,7 @@ class Template(object):
         return offset, elements
 
     @staticmethod
-    def _format_time_duration(time_min, time_max):
-        date_time_a = parse(time_min)
-        date_time_b = parse(time_max)
+    def _format_time_duration(date_time_a, date_time_b):
         delta = relativedelta.relativedelta(date_time_b, date_time_a)
 
         if delta.minutes > 0:
@@ -343,7 +318,7 @@ class Template(object):
         # Match on placeholders like "[[FULLDATETIME:datetime]]", creating
         # groups of the strings in between the placeholders and the
         # placeholders themselves, with and without brackets included.
-        placeholders = re.findall(r'(\[\[([^]]*)\]\])', string)
+        placeholders = re.findall(r'(\[\[([^]]*)]])', string)
 
         property_data_types = {}  # type: Dict[str, edxml.ontology.DataType]
 
@@ -368,63 +343,39 @@ class Template(object):
                 formatter = None
                 arguments = placeholder[1].split(',')
 
-            if not formatter:
+            if formatter == 'TIMESPAN':
+
                 try:
-                    object_strings.extend(event_object_values[arguments[0]])
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-            elif formatter == 'TIMESPAN':
-
-                date_time_strings = []
-                for property_name in arguments:
-                    try:
-                        for object_value in event_object_values[property_name]:
-                            date_time_strings.append(object_value)
-                    except KeyError:
-                        pass
-
-                if len(date_time_strings) > 0:
                     # Note that we use lexicographic sorting here.
-                    date_time_a = parse(min(date_time_strings))
-                    date_time_b = parse(max(date_time_strings))
-                    object_strings.append('between %s and %s' % (
-                        date_time_a.isoformat(' '), date_time_b.isoformat(' ')))
-                else:
-                    # No valid replacement string could be generated, which implies
-                    # that we must return an empty string.
+                    date_time_start = parse(min(event_object_values[arguments[0]]))
+                    date_time_end = parse(min(event_object_values[arguments[1]]))
+                except ValueError:
+                    # An argument was missing or a property is missing an object
+                    # value. This implies that we must return an empty string.
                     return ''
+
+                object_strings.append(
+                    'between %s and %s' % (date_time_start.isoformat(' '), date_time_end.isoformat(' '))
+                )
 
             elif formatter == 'DURATION':
 
-                date_time_strings = []
-                for property_name in arguments:
-                    try:
-                        for object_value in event_object_values[property_name]:
-                            date_time_strings.append(object_value)
-                    except KeyError:
-                        pass
-
-                if len(date_time_strings) > 0:
-                    object_strings.append(cls._format_time_duration(
-                        min(date_time_strings), max(date_time_strings)))
-                else:
-                    # No valid replacement string could be generated, which implies
-                    # that we must return an empty string.
+                try:
+                    # Note that we use lexicographic sorting here.
+                    date_time_start = parse(min(event_object_values[arguments[0]]))
+                    date_time_end = parse(min(event_object_values[arguments[1]]))
+                except ValueError:
+                    # An argument was missing or a property is missing an object
+                    # value. This implies that we must return an empty string.
                     return ''
+
+                object_strings.append(
+                    cls._format_time_duration(date_time_start, date_time_end)
+                )
 
             elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     date_time = parse(object_value)
 
                     try:
@@ -447,53 +398,28 @@ class Template(object):
 
             elif formatter == 'URL':
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
                 property_name, target_name = arguments
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     object_strings.append('%s (%s)' % (target_name, object_value))
 
             elif formatter == 'MERGE':
 
                 for property_name in arguments:
-                    try:
-                        for object_value in event_object_values[property_name]:
-                            object_strings.append(object_value)
-                    except KeyError:
-                        pass
+                    for object_value in event_object_values[property_name]:
+                        object_strings.append(object_value)
 
             elif formatter == 'COUNTRYCODE':
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     try:
-                        object_strings.append(
-                            countries.get(object_value).name)
+                        object_strings.append(countries.get(object_value).name)
                     except KeyError:
                         object_strings.append(object_value + ' (unknown country code)')
 
             elif formatter == 'BOOLEAN_STRINGCHOICE':
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
                 property_name, true, false = arguments
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
                         object_strings.append(true)
                     else:
@@ -501,14 +427,7 @@ class Template(object):
 
             elif formatter == 'BOOLEAN_ON_OFF':
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
                         # Print 'on'
                         object_strings.append('on')
@@ -518,14 +437,7 @@ class Template(object):
 
             elif formatter == 'BOOLEAN_IS_ISNOT':
 
-                try:
-                    values = event_object_values[arguments[0]]
-                except KeyError:
-                    # Property has no object, which implies that
-                    # we must produce an empty result.
-                    return ''
-
-                for object_value in values:
+                for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
                         # Print 'is'
                         object_strings.append('is')
@@ -539,12 +451,7 @@ class Template(object):
                 if property_name not in event_object_values or len(event_object_values[property_name]) == 0:
                     # Property has no object, use the second formatter argument
                     # in stead of the object value itself.
-                    object_strings.append(arguments[0])
-                else:
-                    # Property has an object, so the formatter will
-                    # yield an empty string. This in turn implies that
-                    # we must produce an empty result.
-                    return ''
+                    object_strings.append(arguments[1])
 
             elif formatter == 'NEWPAR':
 
@@ -555,29 +462,24 @@ class Template(object):
                 # String has no associated formatter but maybe the the data
                 # type implies an appropriate value format.
                 property_name = arguments[0]
-                if property_data_types[property_name].type == 'geo:point':
-                    try:
-                        values = event_object_values[property_name]
-                    except KeyError:
-                        # Property has no object, which implies that
-                        # we must produce an empty result.
-                        return ''
-
-                    for object_value in values:
+                if property_name in property_data_types and property_data_types[property_name].type == 'geo:point':
+                    for object_value in event_object_values[property_name]:
                         lat, long = object_value.split(',')
-                        degrees = int(lat)
-                        minutes = int((lat - degrees) * 60.0)
-                        seconds = int((lat - degrees - (minutes / 60.0)) * 3600.0)
+                        degrees = int(float(lat))
+                        minutes = int((float(lat) - degrees) * 60.0)
+                        seconds = int((float(lat) - degrees - (minutes / 60.0)) * 3600.0)
 
                         lat_long = '%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S')
 
-                        degrees = int(long)
-                        minutes = int((long - degrees) * 60.0)
-                        seconds = int((long - degrees - (minutes / 60.0)) * 3600.0)
+                        degrees = int(float(long))
+                        minutes = int((float(long) - degrees) * 60.0)
+                        seconds = int((float(long) - degrees - (minutes / 60.0)) * 3600.0)
 
                         lat_long += ' %d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W')
 
                         object_strings.append(lat_long)
+                else:
+                    object_strings.extend(event_object_values[property_name])
 
             if len(object_strings) > 0:
                 if len(object_strings) > 1:
@@ -622,7 +524,7 @@ class Template(object):
         for element in elements:
             if type(element) == list:
                 processed = cls._process_split_template(
-                    element, event_properties, event_type, capitalize, colorize, iteration_level + 1
+                    element, event_type, event_properties, capitalize, colorize, iteration_level + 1
                 )
                 capitalize = False
             else:
