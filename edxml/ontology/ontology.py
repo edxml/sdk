@@ -706,7 +706,7 @@ class Ontology(OntologyElement):
 
         # Check if the object type of each property exists
         for event_type_name, event_type in self.__event_types.items():
-            for property_name, event_property in event_type.items():
+            for property_name, event_property in event_type.get_properties().items():
                 object_type_name = event_property.get_object_type_name()
                 if self.get_object_type(object_type_name) is None:
                     # Object type is not defined, try to load it from
@@ -721,7 +721,7 @@ class Ontology(OntologyElement):
 
         # Check if the concepts referred to by each property exists
         for event_type_name, event_type in self.__event_types.items():
-            for property_name, event_property in event_type.items():
+            for property_name, event_property in event_type.get_properties().items():
                 for concept_name in event_property.get_concept_associations().keys():
                     if self.get_concept(concept_name) is None:
                         # Concept is not defined, try to load it from
@@ -741,7 +741,7 @@ class Ontology(OntologyElement):
             # Check if all unique parent properties are present
             # in the property map
             parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
-            for parent_property_name, parent_property in parent_event_type.items():
+            for parent_property_name, parent_property in parent_event_type.get_properties().items():
                 if parent_property.is_hashed():
                     if parent_property_name not in event_type.get_parent().get_property_map().values():
                         raise EDXMLValidationError(
@@ -761,7 +761,7 @@ class Ontology(OntologyElement):
 
                 # Check if parent property exists and if it is a hashed property
                 parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
-                if parent_property not in parent_event_type.keys() or \
+                if parent_property not in parent_event_type.get_properties() or \
                    parent_event_type[parent_property].get_merge_strategy() != 'match':
                     raise EDXMLValidationError(
                         'Event type %s contains a parent definition which refers '
