@@ -353,11 +353,11 @@ class PropertyRelation(OntologyElement):
                 'It is missing the target property attribute (target)' % event_type.get_name()
             )
 
-        for propertyName in (source, target):
-            if propertyName not in event_type:
+        for property_name in (source, target):
+            if property_name not in event_type:
                 raise EDXMLValidationError(
                     'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
-                    (event_type.get_name(), propertyName))
+                    (event_type.get_name(), property_name))
 
         source_concept_name = relation_element.attrib.get('source-concept')
         target_concept_name = relation_element.attrib.get('target-concept')
