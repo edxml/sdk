@@ -804,7 +804,7 @@ class EDXMLEvent(MutableMapping):
         object_separator = b'\xff\xff\xff\xff'
 
         objects = self.get_properties()
-        hash_properties = event_type.get_hash_properties()
+        hash_properties = event_type.get_hashed_properties()
 
         object_strings = set(('%s:%s' % (p, v)).encode() for p in objects if p in hash_properties for v in objects[p])
 

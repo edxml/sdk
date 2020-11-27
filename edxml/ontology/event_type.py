@@ -349,21 +349,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Returns:
            Dict[str, EventProperty]: Properties
         """
-        return {n: p for n, p in self.__properties.items() if p.is_hashed()}
-
-    def get_hash_properties(self):
-        """
-
-        Returns a dictionary containing all properties
-        of the event type that must be included when
-        computing its sticky hash. The keys in the dictionary
-        are the property names, the values are the
-        EDXMLProperty instances.
-
-        Returns:
-           Dict[str, EventProperty]: Properties
-        """
-
         if self.__cached_hash_properties is None:
             self.__cached_hash_properties = {name: prop for name, prop in self.__properties.items() if prop.is_hashed()}
 
