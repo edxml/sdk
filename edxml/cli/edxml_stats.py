@@ -328,7 +328,7 @@ def main():
     # We repeatedly use the same parser to process all EDXML files in succession.
 
     for file in args.file:
-        sys.stderr.write(
+        logging.info(
             "edxml-stats: processing %s..." % (file if isinstance(file, str) else 'data from standard input')
         )
 

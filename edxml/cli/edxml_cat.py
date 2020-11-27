@@ -81,7 +81,13 @@ def parse_args():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.file is None or len(args.file) < 2:
+        parser.error("Please specify at least two EDXML files for merging.")
+        sys.exit()
+
+    return args
 
 
 def main():
@@ -97,10 +103,6 @@ def main():
             logger.setLevel(logging.INFO)
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
-
-    if args.file is None or len(args.file) < 2:
-        sys.stderr.write("Please specify at least two EDXML files for merging.\n")
-        sys.exit()
 
     with EDXMLMerger() as merger:
         for file_name in args.file:

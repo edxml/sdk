@@ -196,11 +196,6 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    if args.file is None:
-        sys.stderr.write(
-            'Waiting for EDXML data on standard input... (use --help option to get help)\n'
-        )
-
     input = open(args.file) if args.file else sys.stdin
 
     with EDXMLReplay(args.speed, args.with_buffer_stuffer) as replay:

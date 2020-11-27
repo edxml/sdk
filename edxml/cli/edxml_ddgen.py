@@ -73,8 +73,9 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         self.close()
 
         time_elapsed = time.time() - self.time_start + 1e-9
-        sys.stderr.write("Wrote %d events in %d seconds, %d events per second.\n" % (
-            (self.event_counter, time_elapsed, (self.event_counter / time_elapsed))))
+        logging.info("Wrote %d events in %d seconds, %d events per second.\n" % (
+            self.event_counter, time_elapsed, (self.event_counter / time_elapsed))
+        )
 
     def write_events(self):
 

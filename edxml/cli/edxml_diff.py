@@ -145,9 +145,6 @@ def main():
         parser.error('You cannot specify more than two files.')
 
     if len(args.file) == 1:
-        sys.stderr.write(
-            'edxml-diff - waiting for EDXML data on standard input... (use -h option to get help)\n'
-        )
         args.file.append(sys.stdin.buffer)
 
     differ = EdxmlDiffer()
