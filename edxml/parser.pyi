@@ -14,6 +14,9 @@ class ProcessingInterrupted(Exception):
 
 class EDXMLParserBase(object):
 
+    _VISITED_TAGS = ...
+    _LXML_PARSER_OPTIONS = ...
+
     def __init__(self, validate: bool=True) -> None:
         super().__init__()
 

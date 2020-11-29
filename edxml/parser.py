@@ -53,6 +53,16 @@ class EDXMLParserBase(object):
     This is the base class for all EDXML parsers.
     """
 
+    _VISITED_TAGS = [
+        '{http://edxml.org/edxml}edxml',
+        '{http://edxml.org/edxml}ontology',
+        '{http://edxml.org/edxml}event'
+    ]
+
+    _LXML_PARSER_OPTIONS = {
+        'no_network': True, 'resolve_entities': False, 'remove_comments': True, 'remove_pis': True
+    }
+
     def __init__(self, validate=True):
         """
         Create a new EDXML parser. By default, the parser
@@ -630,12 +640,7 @@ class EDXMLPullParser(EDXMLParserBase):
         self._element_iterator = etree.iterparse(
             input_file,
             events=['end'],
-            tag=[
-                '{http://edxml.org/edxml}edxml',
-                '{http://edxml.org/edxml}ontology',
-                '{http://edxml.org/edxml}event'
-            ] + list(foreign_element_tags),
-            no_network=True, resolve_entities=False, remove_comments=True, remove_pis=True
+            tag=self._VISITED_TAGS + list(foreign_element_tags), **self._LXML_PARSER_OPTIONS
         )
 
         # Set a custom class that lxml should use for
@@ -699,13 +704,8 @@ class EDXMLPushParser(EDXMLParserBase):
         if self._element_iterator is None:
             self.__inputParser = etree.XMLPullParser(
                 events=['end'],
-                tag=[
-                    '{http://edxml.org/edxml}edxml',
-                    '{http://edxml.org/edxml}ontology',
-                    '{http://edxml.org/edxml}event'
-                ] + self.__foreign_element_tags,
-                target=self.__feed_target, no_network=True, resolve_entities=False,
-                remove_comments=True, remove_pis=True
+                tag=self._VISITED_TAGS + self.__foreign_element_tags,
+                target=self.__feed_target, **self._LXML_PARSER_OPTIONS
             )
 
             # Set a custom class that lxml should use for
