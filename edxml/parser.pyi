@@ -2,10 +2,9 @@
 
 from edxml.event import ParsedEvent
 from edxml.ontology import Ontology
-import io
 
 from lxml import etree
-from typing import Union, List, Type
+from typing import Union, List, Type, BinaryIO
 
 
 class ProcessingInterrupted(Exception):
@@ -79,12 +78,8 @@ class EDXMLParserBase(object):
 
 class EDXMLPullParser(EDXMLParserBase):
 
-    def parse(self, input_file: Union[io.TextIOBase, file, str],
+    def parse(self, input_file: Union[BinaryIO, str],
               foreign_element_tags: List[str]=()) -> 'EDXMLPullParser': ...
-
-    def _parsed_ontology(self, ontology: Ontology) -> None: ...
-
-    def _parsed_event(self, event: ParsedEvent) -> None: ...
 
 
 class EDXMLPushParser(EDXMLParserBase):
@@ -98,8 +93,6 @@ class EDXMLPushParser(EDXMLParserBase):
     def feed(self, data: str) -> None: ...
 
     def set_feed_target(self, target: object) -> 'EDXMLParserBase': ...
-
-    def _parsed_event(self, event: ParsedEvent) -> None: ...
 
 
 class EDXMLOntologyPullParser(EDXMLPullParser):
