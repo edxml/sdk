@@ -405,8 +405,11 @@ class EDXMLParserBase(object):
 
                 if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
                     # We expect <event> tags to be children of the root <edxml>
-                    # tag. This is not the case here.
-                    self._parse_misplaced_event(elem)
+                    # tag. This is not the case here. It might be a property that
+                    # happens to be named 'event'. Check if that is the case and
+                    # continue parsing.
+                    self._check_element_is_event_property(elem)
+                    continue
 
                 if self._ontology is None:
                     # We are about to parse an event without any preceding
@@ -426,7 +429,13 @@ class EDXMLParserBase(object):
 
             elif elem.tag == '{http://edxml.org/edxml}ontology':
                 if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
-                    raise EDXMLValidationError("Found a misplaced <ontology> element.")
+                    # We expect <event> tags to be children of the root <edxml>
+                    # tag. This is not the case here. It might be a property that
+                    # happens to be named 'event'. Check if that is the case and
+                    # continue parsing.
+                    self._check_element_is_event_property(elem)
+                    continue
+
                 # Before parsing the ontology information, we validate
                 # the generic structure of the ontology element, using
                 # the RelaxNG schema.
@@ -464,26 +473,22 @@ class EDXMLParserBase(object):
             else:
                 raise EDXMLValidationError('Parser received unexpected element with tag %s' % elem.tag)
 
-    def _parse_misplaced_event(self, elem):
-        # We expect <event> tags to be children of the root <edxml>
-        # tag. When this is not the case, there are two possibilities.
-        # either we hit an event property that just happens to be
-        # named 'event' or we have invalid EDXML. In case of an event
-        # property, we just ignore it here. Otherwise, we fail.
+    def _check_element_is_event_property(self, elem):
+        # Event properties can have names like 'event' or 'ontology', which
+        # are tags that trigger the parser to stop, expecting to find an event
+        # or an ontology element. Here we check if a tag is in the correct
+        # position in the XML tree to be an event property or raise a validation
+        # error.
         parents = []
         while elem is not None:
             parents.append(elem.tag)
             elem = elem.getparent()
-        if parents != [
-            '{http://edxml.org/edxml}event',
+        if parents[1:] != [
             '{http://edxml.org/edxml}properties',
             '{http://edxml.org/edxml}event',
             '{http://edxml.org/edxml}edxml'
         ]:
-            raise EDXMLValidationError(
-                'Unexpected <event> tag. This is neither an EDXML event '
-                'nor an event property named "event".'
-            )
+            raise EDXMLValidationError('Unexpected XML tag:' + parents[0])
 
     def _get_event_handlers(self, event_type_name, event_source_uri):
         """
