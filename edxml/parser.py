@@ -44,10 +44,6 @@ from edxml import ParsedEvent
 from edxml.ontology import Ontology
 
 
-class ProcessingInterrupted(Exception):
-    pass
-
-
 class EDXMLParserBase(object):
     """
     This is the base class for all EDXML parsers.
@@ -750,35 +746,21 @@ class EDXMLPushParser(EDXMLParserBase):
 
 class EDXMLOntologyPullParser(EDXMLPullParser):
     """
-    A variant of the incremental pull parser which interrupts
-    the parsing process when the ontology has been read. It does
-    so by raising ProcessingInterrupted.
-    It can be used to extract ontology information from EDXML
-    data streams and skip reading the event data.
+    A variant of the incremental pull parser which ignores the
+    events, parsing only the ontology information.
     """
-
-    # TODO: When we get multiple ontology sections in the input,
-    # override the parse method to skip all event tags and offer
-    # an option to scan the full data stream for ontology info.
-
-    def _parsed_ontology(self, ontology):
-        super()._parsed_ontology(ontology)
-        raise ProcessingInterrupted
+    _VISITED_TAGS = [
+        '{http://edxml.org/edxml}edxml',
+        '{http://edxml.org/edxml}ontology',
+    ]
 
 
 class EDXMLOntologyPushParser(EDXMLPushParser):
     """
-    A variant of the incremental push parser which interrupts
-    the parsing process when the ontology has been read. It does
-    so by raising ProcessingInterrupted.
-    It can be used to extract ontology information from EDXML
-    data streams and skip reading the event data.
+    A variant of the incremental push parser which ignores the
+    events, parsing only the ontology information.
     """
-
-    # TODO: When we get multiple ontology sections in the input,
-    # override the parse method to skip all event tags and offer
-    # an option to scan the full data stream for ontology info.
-
-    def _parsed_ontology(self, ontology):
-        super()._parsed_ontology(ontology)
-        raise ProcessingInterrupted
+    _VISITED_TAGS = [
+        '{http://edxml.org/edxml}edxml',
+        '{http://edxml.org/edxml}ontology',
+    ]
