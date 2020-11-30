@@ -77,8 +77,6 @@ class EDXMLWriter(object):
         def __init__(self):
             self.buffer = deque()
 
-            self.mode = 'a'
-
         def write(self, data):
             self.buffer.append(data)
 
