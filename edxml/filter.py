@@ -35,7 +35,7 @@ the output. By overriding various callbacks, the data can be modified before
 it is written, using an :class:`edxml.ontology.Ontology` instance to interpret it.
 
 """
-
+from typing import Optional
 from .parser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
 from edxml.writer import EDXMLWriter
 
@@ -50,7 +50,7 @@ class EDXMLFilterBase(EDXMLParserBase):
 
     def __init__(self):
         super().__init__()
-        self._writer = None  # type: EDXMLWriter
+        self._writer = None  # type: Optional[EDXMLWriter]
 
     def __enter__(self):
         return self
