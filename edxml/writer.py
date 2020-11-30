@@ -107,7 +107,7 @@ class EDXMLWriter(object):
         # Initialize lxml.etree based XML generator. This
         # will write the XML declaration and the opening
         # <edxml> tag.
-        self.__writer = self.__outer_xml_serializer_coroutine()
+        self.__writer = self.__write_coroutine()
         next(self.__writer)
 
         self.__current_element_type = ""
@@ -231,7 +231,7 @@ class EDXMLWriter(object):
                 )
             )
 
-    def __outer_xml_serializer_coroutine(self):
+    def __write_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
         with etree.xmlfile(self.__output, encoding='utf-8') as writer:
             if 'flush' not in dir(writer):
