@@ -118,5 +118,6 @@ class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
     """
 
     def __init__(self, output, validate=True):
-        super().__init__()
+        EDXMLPushParser.__init__(self, validate)
+        EDXMLFilterBase.__init__(self)
         self._writer = EDXMLWriter(output, validate)

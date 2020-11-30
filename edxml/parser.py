@@ -685,7 +685,7 @@ class EDXMLPushParser(EDXMLParserBase):
     """
 
     def __init__(self, validate=True, foreign_element_tags=None):
-        super().__init__(validate)
+        EDXMLParserBase.__init__(self, validate)
         self.__foreign_element_tags = foreign_element_tags or []
         self.__inputParser = None
         self.__feed_target = None
