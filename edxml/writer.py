@@ -106,9 +106,9 @@ class EDXMLWriter(object):
             # Create an output buffer to capture XML data
             self.__output = self.OutputBuffer()
 
-        # Initialize lxml.etree based XML generators. This
-        # will write the XML declaration and open the
-        # <events> tag.
+        # Initialize lxml.etree based XML generator. This
+        # will write the XML declaration and the opening
+        # <edxml> tag.
         self.__writer = self.__outer_xml_serializer_coroutine()
         next(self.__writer)
 
