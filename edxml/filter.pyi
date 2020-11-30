@@ -19,16 +19,10 @@ class EDXMLFilterBase(EDXMLParserBase):
 class EDXMLPullFilter(EDXMLPullParser, EDXMLFilterBase):
 
     def __init__(self, output, validate=True):
-
         self._writer = ...     # type: EDXMLWriter
-
-    def _parsed_event(self, event: ParsedEvent) -> None: ...
 
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
 
     def __init__(self, output, validate=True):
-
         self._writer = ...     # type: EDXMLWriter
-
-    def _parsed_event(self, event: ParsedEvent) -> None: ...
