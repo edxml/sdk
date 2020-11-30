@@ -144,7 +144,7 @@ class PropertyObjectSet(set, MutableSet):
         if isinstance(objects, set):
             self.update(objects)
         else:
-            if isinstance(objects, (str, int, bool, float, datetime, IP)):
+            if isinstance(objects, (bytes, str, int, bool, float, datetime, IP)):
                 objects = (objects,)
             self.update(set(iter(objects or [])))
         if update is not None:

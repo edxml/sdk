@@ -92,6 +92,11 @@ def test_coerce_ip_property_object(event_element):
     assert event_element.get_element().find('properties/b').text == "127.0.0.1"
 
 
+def test_coerce_bytes_property_object(event_element):
+    event_element["b"] = b'test'
+    assert event_element.get_element().find('properties/b').text == u"test"
+
+
 def test_set_invalid_attachment(event_element):
     unicode_replacement_character = chr(0xfffd)
     event_element.replace_invalid_characters()

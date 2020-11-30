@@ -253,6 +253,11 @@ def test_set_property_to_noniterable_fails(event):
         event.set_properties({"a": object()})
 
 
+def test_set_property_to_bytes(event):
+    event["a"] = b'test'
+    assert event["a"] == {b'test'}
+
+
 def test_add_property_object(event):
     event['smiley'].add("☹")
     assert event.get_properties() == {"smiley": {"😀", "☹"}}
