@@ -157,10 +157,10 @@ class EDXMLParserBase(object):
           EDXMLParserBase: The EDXML parser
 
         """
-        for eventType in event_types:
-            if eventType not in self.__event_type_handlers:
-                self.__event_type_handlers[eventType] = []
-            self.__event_type_handlers[eventType].append(handler)
+        for event_type in event_types:
+            if event_type not in self.__event_type_handlers:
+                self.__event_type_handlers[event_type] = []
+            self.__event_type_handlers[event_type].append(handler)
 
         return self
 
@@ -292,7 +292,8 @@ class EDXMLParserBase(object):
             self.__root_element = self.__root_element.getparent()
         if self.__root_element is None or self.__root_element.tag != '{http://edxml.org/edxml}edxml':
             raise EDXMLValidationError(
-                'Invalid EDXML structure detected: Could not find the edxml root tag.')
+                'Invalid EDXML structure detected: Could not find the edxml root tag.'
+            )
 
     def __validate_root_element(self):
         # Note that this method can only be called after
@@ -300,8 +301,7 @@ class EDXMLParserBase(object):
         # parsing process, the tree structure is incomplete.
         if not self.__schema:
             self.__schema = etree.RelaxNG(
-                etree.parse(os.path.dirname(os.path.realpath(
-                    __file__)) + '/schema/edxml-schema-3.0.0.rng')
+                etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
             )
 
         if self.__root_element is None:
@@ -312,9 +312,9 @@ class EDXMLParserBase(object):
 
         try:
             self.__schema.assertValid(self.__root_element)
-        except (etree.DocumentInvalid, etree.XMLSyntaxError) as ValidationError:
+        except (etree.DocumentInvalid, etree.XMLSyntaxError) as validation_error:
             # XML syntax is incorrect or the structure does not validate against the RelaxNG schema.
-            if isinstance(ValidationError, etree.DocumentInvalid):
+            if isinstance(validation_error, etree.DocumentInvalid):
                 # Document is not valid according to schema. This is most likely
                 # due to a problem with an <ontology> element. See if we have
                 # an ontology element in the tree and try to process it. That
@@ -328,8 +328,8 @@ class EDXMLParserBase(object):
                 "The RelaxNG validator generated the following error: %s\nDetails: %s" %
                 (
                     etree.tostring(self.__root_element, encoding='unicode'),
-                    str(ValidationError),
-                    str(ValidationError.error_log)
+                    str(validation_error),
+                    str(validation_error.error_log)
                 )
             )
 
@@ -347,8 +347,8 @@ class EDXMLParserBase(object):
             )
             raise
 
-        for eventTypeName in self._ontology.get_event_type_names():
-            self.__num_parsed_event_types[eventTypeName] = 0
+        for event_type_name in self._ontology.get_event_type_names():
+            self.__num_parsed_event_types[event_type_name] = 0
 
         # Invoke callback to inform about the
         # new ontology.
@@ -358,9 +358,9 @@ class EDXMLParserBase(object):
         # handler source patterns to source URIs
         self.__source_uri_pattern_map = defaultdict(list)
         for pattern in self.__event_source_handlers.keys():
-            for sourceUri, source in self._ontology.get_event_sources():
-                if re.match(pattern, sourceUri):
-                    self.__source_uri_pattern_map[pattern].append(sourceUri)
+            for source_uri, source in self._ontology.get_event_sources().items():
+                if re.match(pattern, source_uri):
+                    self.__source_uri_pattern_map[pattern].append(source_uri)
 
     def _parsed_ontology(self, ontology):
         """
@@ -389,15 +389,14 @@ class EDXMLParserBase(object):
                 if elem.getparent() is None:
                     version_string = elem.attrib.get('version')
                     if version_string is None:
-                        raise EDXMLValidationError(
-                            'Root element is missing the version attribute.')
+                        raise EDXMLValidationError('Root element is missing the version attribute.')
                     version = version_string.split('.')
                     if len(version) != 3:
                         raise EDXMLValidationError(
-                            'Root element contains invalid version attribute: "%s"' % version_string)
+                            'Root element contains invalid version attribute: "%s"' % version_string
+                        )
                     if int(version[0]) != 3 or int(version[1]) > 0:
-                        raise EDXMLValidationError(
-                            'Unsupported EDXML version: "%s"' % version_string)
+                        raise EDXMLValidationError('Unsupported EDXML version: "%s"' % version_string)
 
             elif elem.tag == '{http://edxml.org/edxml}event':
                 if type(elem) != ParsedEvent and type(elem) != self._event_class:
