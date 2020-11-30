@@ -4,7 +4,7 @@ from edxml.ontology import Ontology
 from edxml.parser import EDXMLParserBase, EDXMLPullParser, EDXMLPushParser
 
 
-class EDXMLFilter(EDXMLParserBase):
+class EDXMLFilterBase(EDXMLParserBase):
 
     def __init__(self) -> None:
 
@@ -16,7 +16,7 @@ class EDXMLFilter(EDXMLParserBase):
     def _parsed_event(self, event: ParsedEvent) -> None: ...
 
 
-class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
+class EDXMLPullFilter(EDXMLPullParser, EDXMLFilterBase):
 
     def __init__(self, output, validate=True):
 
@@ -25,7 +25,7 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
     def _parsed_event(self, event: ParsedEvent) -> None: ...
 
 
-class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
+class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
 
     def __init__(self, output, validate=True):
 

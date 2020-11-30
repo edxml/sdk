@@ -40,12 +40,12 @@ from .parser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
 from edxml.writer import EDXMLWriter
 
 
-class EDXMLFilter(EDXMLParserBase):
+class EDXMLFilterBase(EDXMLParserBase):
     """
-    Extension of the push parser that copies its input
-    to the specified output. By overriding the various
-    callbacks provided by this class, the EDXML data can
-    be manipulated before the data is output.
+    Extension of the EDXML parser that copies its input
+    to the specified output. This class should not be
+    instantiated. Instead, use one either EDXMLPullFilter
+    or EDXMLPushFilter.
     """
 
     def __init__(self):
@@ -94,12 +94,12 @@ class EDXMLFilter(EDXMLParserBase):
         self._writer.add_event(event)
 
 
-class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
+class EDXMLPullFilter(EDXMLPullParser, EDXMLFilterBase):
     """
     Extension of the pull parser that copies its input
     to the specified output. By overriding the various
     callbacks provided by this class (or rather, the
-    EDXMLFilter class), the EDXML data can be manipulated
+    EDXMLFilterBase class), the EDXML data can be manipulated
     before the data is output.
     """
 
@@ -110,13 +110,12 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilter):
     def _parsed_event(self, event):
         super()._parsed_event(event)
 
-
-class EDXMLPushFilter(EDXMLPushParser, EDXMLFilter):
+class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
     """
     Extension of the push parser that copies its input
     to the specified output. By overriding the various
     callbacks provided by this class (or rather, the
-    EDXMLFilter class), the EDXML data can be manipulated
+    EDXMLFilterBase class), the EDXML data can be manipulated
     before the data is output.
     """
 
