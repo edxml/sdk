@@ -106,13 +106,6 @@ class EDXMLWriter(object):
             # Create an output buffer to capture XML data
             self.__output = self.OutputBuffer()
 
-        # Passing a file name as output will make lxml open the file, and it will open it with mode 'w'. Since
-        # we use multiple lxml file writers to produce output, the output will be truncated mid stream. Therefore,
-        # we only accept files and file-like objects as output, allowing us to verify if we can append to the file.
-        if not hasattr(self.__output, 'write'):
-            raise IOError(
-                'The output of the EDXML writer does not look like an open file: ' + repr(self.__output))
-
         # Initialize lxml.etree based XML generators. This
         # will write the XML declaration and open the
         # <events> tag.
