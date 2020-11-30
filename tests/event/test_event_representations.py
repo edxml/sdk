@@ -248,11 +248,6 @@ def test_set_property_to_ip(event):
     assert event["a"] == {IP("127.0.0.1"), IP("192.168.0.1")}
 
 
-def test_set_property_to_noniterable_fails(event):
-    with pytest.raises(TypeError):
-        event.set_properties({"a": object()})
-
-
 def test_set_property_to_bytes(event):
     event["a"] = b'test'
     assert event["a"] == {b'test'}
