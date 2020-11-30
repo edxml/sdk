@@ -523,7 +523,6 @@ class EDXMLParserBase(object):
     def __parse_event(self, event):
         event_type_name = event.get_type_name()
         event_source_uri = event.get_source_uri()
-        schema = self.get_event_type_schema(event_type_name)
 
         # TODO: To make things more efficient, we should keep lists of event types
         #       sources and validation schemas that we update whenever we receive
@@ -537,6 +536,8 @@ class EDXMLParserBase(object):
             raise EDXMLValidationError(
                 "An input event refers to event type %s, which is not defined." % event_type_name
             )
+
+        schema = self.get_event_type_schema(event_type_name)
 
         if self.__validate and schema is not None:
             if not schema.validate(event):
