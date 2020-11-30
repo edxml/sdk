@@ -70,8 +70,9 @@ def to_edxml_object(property_name, value):
     elif isinstance(value, bytes):
         return value.decode('utf-8')
     else:
-        raise ValueError(
-            'Value of property %s is not a string: %s' % (property_name, repr(value))
+        raise TypeError(
+            'Value of property %s is not a value that can be automatically '
+            'converted into a valid EDXML object value string: %s' % (property_name, repr(value))
         )
 
 

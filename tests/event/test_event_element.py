@@ -45,7 +45,7 @@ def event_element(ontology, sha1_hash):
 
 
 def test_set_unsupported_property_value_fails(event_element):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match='not a value that can be automatically converted'):
         event_element["a"] = object()
 
 
