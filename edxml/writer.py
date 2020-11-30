@@ -234,9 +234,6 @@ class EDXMLWriter(object):
     def __write_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
         with etree.xmlfile(self.__output, encoding='utf-8') as writer:
-            if 'flush' not in dir(writer):
-                raise Exception(
-                    'The installed version of lxml is too old. Please install version >= 3.4.')
             writer.write_declaration()
             with writer.element('edxml', version='3.0.0', nsmap=NAMESPACE_MAP):
                 writer.flush()
