@@ -400,7 +400,7 @@ class EDXMLParserBase(object):
                             'Unsupported EDXML version: "%s"' % version_string)
 
             elif elem.tag == '{http://edxml.org/edxml}event':
-                if type(elem) != ParsedEvent:
+                if type(elem) != ParsedEvent and type(elem) != self._event_class:
                     raise TypeError("The parser instantiated a regular lxml Element in stead of a ParsedEvent")
 
                 if elem.getparent().tag != '{http://edxml.org/edxml}edxml':
