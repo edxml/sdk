@@ -196,7 +196,7 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    input = open(args.file) if args.file else sys.stdin
+    input = open(args.file, 'rb') if args.file else sys.stdin
 
     with EDXMLReplay(args.speed, args.with_buffer_stuffer) as replay:
         try:

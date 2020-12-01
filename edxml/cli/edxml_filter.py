@@ -147,7 +147,7 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    event_input = open(args.file) if args.file else sys.stdin.buffer
+    event_input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 
     source_filter = re.compile(args.source_uri or '.*')
 

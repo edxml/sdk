@@ -103,7 +103,7 @@ def main():
         if args.verbose > 1:
             logger.setLevel(logging.DEBUG)
 
-    input = open(args.file) if args.file else sys.stdin.buffer
+    input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 
     try:
         EDXMLEventPrinter(print_summaries=args.short, print_colorized=args.colored).parse(input)
