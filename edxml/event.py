@@ -322,7 +322,7 @@ class EDXMLEvent(MutableMapping):
 
     def __eq__(self, other):
 
-        if not isinstance(other, type(self)):
+        if not isinstance(other, EDXMLEvent):
             raise TypeError("Can only compare events to other events.")
 
         if self.get_type_name() != other.get_type_name():
