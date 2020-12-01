@@ -281,14 +281,7 @@ class EDXMLWriter(object):
         # Below update triggers an exception in case the update
         # is incompatible or otherwise invalid.
         self.__ontology.update(ontology)
-
-        try:
-            self.__writer.send(ontology.generate_xml())
-        except StopIteration:
-            # When the co-routine dropped out of its wrote loop while
-            # processing data, the next attempt to send() anything
-            # raises this exception.
-            raise IOError('Failed to write EDXML data to output.')
+        self.__writer.send(ontology.generate_xml())
 
         self.__event_type_schema_cache = {}
         self.__event_type_schema_cache_ns = {}
@@ -458,13 +451,7 @@ class EDXMLWriter(object):
                     else:
                         raise
 
-        try:
-            self.__writer.send(event_element)
-        except StopIteration:
-            # When the co-routine dropped out of its wrote loop while
-            # processing data, the next attempt to send() anything
-            # raises this exception.
-            raise IOError('Failed to write EDXML data to output.')
+        self.__writer.send(event_element)
 
         self.__num_events_produced += 1
 
@@ -481,12 +468,6 @@ class EDXMLWriter(object):
         Returns:
             edxml.writer.EDXMLWriter:
         """
-        try:
-            self.__writer.send(element)
-        except StopIteration:
-            # When the co-routine dropped out of its wrote loop while
-            # processing data, the next attempt to send() anything
-            # raises this exception.
-            raise IOError('Failed to write EDXML data to output.')
+        self.__writer.send(element)
 
         return self
