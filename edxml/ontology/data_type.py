@@ -866,6 +866,16 @@ class DataType(object):
     def _normalize_string(self, values):
         split_data_type = self.type.split(':')
 
+        max_len = int(split_data_type[1])
+
+        if max_len > 0:
+            if [value for value in values if len(value) > max_len]:
+                # At least one value is too long and we can not
+                # normalize it without loosing data.
+                raise EDXMLValidationError(
+                    'Invalid string value in list: "%s"' % '","'.join([repr(value) for value in values])
+                )
+
         if split_data_type[2] == 'lc':
             return {str(value).lower() for value in values}
         elif split_data_type[2] == 'uc':
