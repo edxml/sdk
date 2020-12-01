@@ -375,7 +375,7 @@ class EDXMLWriter(object):
             # Try to repair the event by normalizing the object values. This throws
             # an EDXMLValidationError in case any value does not make sense.
             self.__ontology.get_event_type(event.get_type_name())\
-                .normalize_event_objects(event, self.__allow_repair_normalize[event.get_type_name()])
+                .normalize_event_objects(event, self.__allow_repair_normalize.get(event.get_type_name(), []))
         except EDXMLValidationError as e:
             # Normalization failed, but it might have managed to correct one or more
             # objects before failing.
