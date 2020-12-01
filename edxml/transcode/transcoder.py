@@ -445,7 +445,7 @@ class Transcoder(object):
           **kwargs: Arbitrary keyword arguments
 
         Yields:
-          EDXMLEvent:
+          edxml.EDXMLEvent:
         """
         yield from ()
 
@@ -465,11 +465,11 @@ class Transcoder(object):
         to extract additional information and add it to the input event.
 
         Args:
-          event (EDXMLEvent): Input event
+          event (edxml.EDXMLEvent): Input event
           input_record: Input record
 
         Yields:
-          EDXMLEvent:
+          edxml.EDXMLEvent:
         """
         yield from ()
 
