@@ -44,6 +44,14 @@ from edxml import ParsedEvent
 from edxml.ontology import Ontology
 
 
+def _get_relevant_parser_events(foreign_element_tags):
+    # Note that the EDXML tags that we want to visit while parsing all have
+    # an end tag, visiting the start tag is not needed. This may not be the
+    # case for foreign elements, so we catch both both start and end events
+    # in case any foreign element tags are registered.
+    return ['start', 'end'] if foreign_element_tags else ['end']
+
+
 class EDXMLParserBase(object):
     """
     This is the base class for all EDXML parsers.
@@ -382,6 +390,20 @@ class EDXMLParserBase(object):
 
         for action, elem in self._element_iterator:
 
+            if action == 'start':
+                if not elem.tag.startswith('{http://edxml.org/edxml}'):
+                    if not elem.tag.startswith('{'):
+                        raise EDXMLValidationError(
+                            "Parser received an element without an XML namespace: '%s'" % elem.tag
+                        )
+                    # We have a foreign element.
+                    self._parsed_foreign_element(elem)
+
+                # We process start events only for foreign elements. All EDXML elements that we
+                # visit while parsing have both a start and end tag and we only process on the
+                # end tags.
+                continue
+
             if self.__root_element is None:
                 self.__find_root_element(elem)
 
@@ -464,10 +486,8 @@ class EDXMLParserBase(object):
                     self.__parsed_initial_ontology = True
 
             elif not elem.tag.startswith('{http://edxml.org/edxml}'):
-                if not elem.tag.startswith('{'):
-                    raise EDXMLValidationError("Parser received an element without an XML namespace: '%s'" % elem.tag)
-                # We have a foreign element.
-                self._parse_foreign_element(elem)
+                # We have a foreign element. We do not process those here.
+                continue
 
             else:
                 raise EDXMLValidationError('Parser received unexpected element with tag %s' % elem.tag)
@@ -581,7 +601,7 @@ class EDXMLParserBase(object):
         """
         pass
 
-    def _parse_foreign_element(self, element):
+    def _parsed_foreign_element(self, element):
         """
 
         Callback that is invoked for foreign elements that are parsed
@@ -640,7 +660,7 @@ class EDXMLPullParser(EDXMLParserBase):
 
         self._element_iterator = etree.iterparse(
             input_file,
-            events=['end'],
+            events=_get_relevant_parser_events(foreign_element_tags),
             tag=self._VISITED_TAGS + list(foreign_element_tags), **self._LXML_PARSER_OPTIONS
         )
 
@@ -703,7 +723,7 @@ class EDXMLPushParser(EDXMLParserBase):
         """
         if self._element_iterator is None:
             self.__inputParser = etree.XMLPullParser(
-                events=['end'],
+                events=_get_relevant_parser_events(self.__foreign_element_tags),
                 tag=self._VISITED_TAGS + self.__foreign_element_tags,
                 **self._LXML_PARSER_OPTIONS
             )
