@@ -24,6 +24,10 @@ class EventCollection(List[EDXMLEvent]):
         self._ontology = Ontology() if ontology is None else ontology
         super().__init__(events)
 
+    @property
+    def ontology(self):
+        return self._ontology
+
     def extend(self, iterable):
         if isinstance(iterable, EventCollection):
             self._ontology.update(iterable._ontology)
