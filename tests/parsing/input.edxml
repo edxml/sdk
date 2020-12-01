@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <objecttypes>
+      <objecttype name="oa" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:mc"/>
+    </objecttypes>
+    <concepts/>
+    <eventtypes>
+      <eventtype name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
+        <properties>
+          <property name="pa" object-type="oa" description="description" optional="true" multivalued="true" confidence="10" merge="match"/>
+          <property name="pb" object-type="oa" description="b" optional="true" multivalued="true" confidence="10" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+      <eventtype name="eb" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
+        <properties>
+          <property name="pa" object-type="oa" description="description" optional="true" multivalued="true" confidence="10" merge="match"/>
+          <property name="pb" object-type="oa" description="b" optional="true" multivalued="true" confidence="10" merge="match"/>
+        </properties>
+        <relations/>
+      </eventtype>
+    </eventtypes>
+    <sources>
+      <source uri="/a/" description="a" version="1"/>
+      <source uri="/b/" description="b" version="1"/>
+    </sources>
+  </ontology>
+  <event event-type="ea" source-uri="/a/">
+    <properties>
+      <pa>a</pa>
+      <pb>b</pb>
+    </properties>
+  </event>
+  <event event-type="eb" source-uri="/b/">
+    <properties>
+      <pa>a</pa>
+      <pb>b</pb>
+    </properties>
+  </event>
+</edxml>
