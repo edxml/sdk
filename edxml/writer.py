@@ -274,6 +274,8 @@ class EDXMLWriter(object):
         Args:
           ontology (edxml.ontology.Ontology): The ontology
 
+        Returns:
+            edxml.writer.EDXMLWriter:
         """
 
         # Below update triggers an exception in case the update
@@ -290,6 +292,8 @@ class EDXMLWriter(object):
 
         self.__event_type_schema_cache = {}
         self.__event_type_schema_cache_ns = {}
+
+        return self
 
     def close(self):
         """
@@ -395,6 +399,8 @@ class EDXMLWriter(object):
         Args:
           event (edxml.EDXMLEvent): The event
 
+        Returns:
+            edxml.writer.EDXMLWriter:
         """
         event_type_name = event.get_type_name()
         source_uri = event.get_source_uri()
@@ -448,6 +454,7 @@ class EDXMLWriter(object):
                     if self.__ignore_invalid_events:
                         if self.__log_invalid_events:
                             log.warning(str(error) + '\n\nContinuing anyways.\n')
+                        return self
                     else:
                         raise
 
@@ -461,6 +468,8 @@ class EDXMLWriter(object):
 
         self.__num_events_produced += 1
 
+        return self
+
     def add_foreign_element(self, element):
         """
 
@@ -469,6 +478,8 @@ class EDXMLWriter(object):
         Args:
           element (etree._Element): The element
 
+        Returns:
+            edxml.writer.EDXMLWriter:
         """
         try:
             self.__writer.send(element)
@@ -477,3 +488,5 @@ class EDXMLWriter(object):
             # processing data, the next attempt to send() anything
             # raises this exception.
             raise IOError('Failed to write EDXML data to output.')
+
+        return self
