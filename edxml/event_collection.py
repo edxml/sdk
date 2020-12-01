@@ -22,16 +22,24 @@ class EventCollection(List[EDXMLEvent]):
             ontology (edxml.ontology.Ontology): Corresponding ontology
         """
         self._ontology = Ontology() if ontology is None else ontology
+        self._foreign_elements = []
         super().__init__(events)
 
     @property
     def ontology(self):
         return self._ontology
 
+    @property
+    def foreign_elements(self):
+        return self._foreign_elements
+
     def extend(self, iterable):
         if isinstance(iterable, EventCollection):
             self._ontology.update(iterable._ontology)
         super().extend(iterable)
+
+    def add_foreign_element(self, element):
+        self._foreign_elements.append(element)
 
     def create_dict_by_hash(self):
         """
@@ -175,6 +183,9 @@ class EventCollection(List[EDXMLEvent]):
 
             def _parsed_event(self, event):
                 self.event_set.append(event)
+
+            def _parsed_foreign_element(self, element):
+                self.event_set.add_foreign_element(element)
 
         event_set = EventCollection()
         event_set._ontology = Ontology()
