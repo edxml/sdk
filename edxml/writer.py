@@ -436,6 +436,7 @@ class EDXMLWriter(object):
                 # Event does not validate.
                 if event_type_name not in self.__allow_repair_normalize and not self.__ignore_invalid_events:
                     self.__generate_event_validation_exception(event, event_element, schema)
+
                 # We will try to repair the event. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
