@@ -244,7 +244,7 @@ class EDXMLWriter(object):
                         writer.write((yield), pretty_print=self.__pretty_print)
                         writer.flush()
                         if not self.__pretty_print:
-                            self.__output.write('\n')
+                            self.__output.write(b'\n')
                 except GeneratorExit:
                     # Coroutine was closed
                     pass
