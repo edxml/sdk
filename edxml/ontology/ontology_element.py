@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from abc import abstractmethod, ABC
 from functools import total_ordering
 from lxml import etree
 
@@ -87,31 +88,38 @@ def event_type_element_upgrade_error(element_name, old, new, old_type, new_type)
 
 
 @total_ordering
-class OntologyElement(object):
+class OntologyElement(ABC):
     """
     Class representing an EDXML ontology element
     """
 
+    @abstractmethod
     def validate(self):
-        return self
+        raise NotImplementedError
 
+    @abstractmethod
     def update(self, element):
-        return self
+        raise NotImplementedError
 
+    @abstractmethod
     def __cmp__(self, other):
-        return 0
+        raise NotImplementedError
 
+    @abstractmethod
     def __eq__(self, other):
-        return 0
+        raise NotImplementedError
 
+    @abstractmethod
     def __ne__(self, other):
-        return 0
+        raise NotImplementedError
 
+    @abstractmethod
     def __lt__(self, other):
-        return 0
+        raise NotImplementedError
 
+    @abstractmethod
     def generate_xml(self):
-        return None
+        raise NotImplementedError
 
 
 class VersionedOntologyElement(OntologyElement):
@@ -120,6 +128,7 @@ class VersionedOntologyElement(OntologyElement):
     concept, event type or an event source.
     """
 
+    @abstractmethod
     def get_version(self):
         """
 
@@ -128,4 +137,4 @@ class VersionedOntologyElement(OntologyElement):
         Returns:
             int: Element version
         """
-        return 0
+        raise NotImplementedError
