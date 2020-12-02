@@ -61,7 +61,7 @@ def describe_producer_rst(ontology, producer_name, input_description):
         description += f"\n:{concept_dn.capitalize()}: Discovering new " + ', '.join(object_types)
 
     if concept_combinations:
-        description += '\n\nThe transcoder identifies\n' + '\n'.join(set(concept_combinations))
+        description += f"\n\nThe {producer_name} identifies\n" + '\n'.join(set(concept_combinations))
 
     value_names = set()
     value_descriptions = set()
@@ -191,7 +191,7 @@ def _describe_concept_universals(ontology: Ontology, item_template):
         # we find one that exists.
         for parent in Concept.generate_specializations(concept_name):
             # Note that we do not want to import any concepts here, as that
-            # may pull in concepts that are not used by the transcoder.
+            # may pull in concepts that are not actually used in the ontology.
             source_concept = ontology.get_concept(parent, import_brick=False)
             if source_concept is None:
                 continue
@@ -201,7 +201,7 @@ def _describe_concept_universals(ontology: Ontology, item_template):
             # So, given a parent concept of a.b we try to pair it with a.b.c.
             for specialization in Concept.generate_specializations(concept_name, parent):
                 # Note that we do not want to import any concepts here, as that
-                # may pull in concepts that are not used by the transcoder.
+                # may pull in concepts that are not actually used in the ontology.
                 target_concept = ontology.get_concept(specialization, import_brick=False)
                 if target_concept is None:
                     continue

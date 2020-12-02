@@ -4,7 +4,7 @@ from graphviz import Digraph
 
 import edxml
 from edxml.logger import log
-from edxml.transcode import Transcoder
+from edxml.transcode import RecordTranscoder
 from edxml.ontology import Ontology
 from edxml.ontology.visualization import generate_graph_property_concepts
 from edxml.ontology.description import describe_producer_rst
@@ -15,11 +15,11 @@ from edxml.writer import EDXMLWriter
 class TranscoderMediator(object):
     """
     Base class for implementing mediators between a non-EDXML input data source
-    and a set of Transcoder implementations that can transcode the input data records
+    and a set of RecordTranscoder implementations that can transcode the input data records
     into EDXML events.
 
     Sources can instantiate the mediator and feed it input data records, while
-    transcoders can register themselves with the mediator in order to
+    record transcoders can register themselves with the mediator in order to
     transcode the types of input record that they support.
 
     The class is a Python context manager which will automatically flush the
@@ -59,7 +59,7 @@ class TranscoderMediator(object):
         self.__allow_repair_normalize = {}
         self.__log_repaired_events = False
 
-        self.__transcoders = {}              # type: Dict[any, edxml.transcode.Transcoder]
+        self.__transcoders = {}              # type: Dict[any, edxml.transcode.RecordTranscoder]
 
         self.__closed = False
         self.__output = output
@@ -97,7 +97,7 @@ class TranscoderMediator(object):
         """
         Property containing the EDXML ontology that
         is used to store all ontology information from
-        the registered transcoders.
+        the registered record transcoders.
 
         Returns:
             Ontology
@@ -108,32 +108,32 @@ class TranscoderMediator(object):
     @staticmethod
     def _transcoder_is_postprocessor(transcoder):
         this_method = getattr(type(transcoder), 'post_process')
-        base_method = getattr(Transcoder, 'post_process')
+        base_method = getattr(RecordTranscoder, 'post_process')
         return this_method != base_method
 
     def register(self, record_selector, record_transcoder):
         """
 
-        Register a transcoder for processing records identified by
+        Register a record transcoder for processing records identified by
         the specified record selector. The exact nature of the record
         selector depends on the mediator implementation.
 
-        The same transcoder can be registered for multiple
+        The same record transcoder can be registered for multiple
         record selectors.
 
         Note:
-          Any transcoder that registers itself as a transcoder using None
-          as selector is used as the fallback transcoder. The fallback
-          transcoder is used to transcode any record for which no transcoder
+          Any record transcoder that registers itself as a transcoder using None
+          as selector is used as the fallback record transcoder. The fallback
+          record transcoder is used to transcode any record for which no transcoder
           has been registered.
 
         Args:
           record_selector: Record type selector
-          record_transcoder (edxml.transcode.Transcoder): Transcoder instance
+          record_transcoder (edxml.transcode.RecordTranscoder): Record transcoder instance
         """
         if record_selector in self.__transcoders:
             raise Exception(
-                "Attempt to register multiple transcoders for record selector '%s'" % record_selector
+                "Attempt to register multiple record transcoders for record selector '%s'" % record_selector
             )
 
         self.__transcoders[record_selector] = record_transcoder
@@ -152,7 +152,7 @@ class TranscoderMediator(object):
 
         Using the keyword arguments, specific debug features
         can be disabled. When warn_no_transcoder is set to False,
-        no warnings will be generated when no matching transcoder
+        no warnings will be generated when no matching record transcoder
         can be found. When warn_fallback is set to False, no
         warnings will be generated when an input record is routed
         to the fallback transcoder. When log_repaired_events is set
@@ -160,7 +160,7 @@ class TranscoderMediator(object):
         event was repaired.
 
         Args:
-          warn_no_transcoder  (bool): Warn when no transcoder found
+          warn_no_transcoder  (bool): Warn when no record transcoder found
           warn_fallback       (bool): Warn when using fallback transcoder
           log_repaired_events (bool): Log events that were repaired
 
@@ -244,7 +244,7 @@ class TranscoderMediator(object):
         """
 
         Instructs the mediator to ignore exceptions raised
-        by the _post_process() methods of transcoders.
+        by the _post_process() methods of record transcoders.
         After calling this method, any input record that
         that fails transcode due to post processing errors
         will be ignored and a warning is logged. If warn
@@ -328,15 +328,15 @@ class TranscoderMediator(object):
     def _get_transcoder(self, record_selector=None):
         """
 
-        Returns a Transcoder instance for transcoding
-        records matching specified selector, or None if no transcoder
-        has been registered for records of that selector.
+        Returns a RecordTranscoder instance for transcoding
+        records matching specified selector, or None if no record
+        transcoder has been registered for records of that selector.
 
         Args:
           record_selector (str): record type selector
 
         Returns:
-          Optional[Transcoder]:
+          Optional[RecordTranscoder]:
         """
 
         return self.__transcoders.get(record_selector)
@@ -365,7 +365,7 @@ class TranscoderMediator(object):
             # Add the concepts to the main mediator ontology
             self.__ontology.update(concepts)
 
-        # Now, we allow each of the transcoders to create their event types.
+        # Now, we allow each of the record transcoders to create their event types.
         for transcoder in self.__transcoders.values():
             transcoder.set_ontology(self.__ontology)
             list(transcoder.generate_event_types())
@@ -430,14 +430,14 @@ class TranscoderMediator(object):
     def _transcode(self, record, record_id, record_selector, transcoder):
         """
         Transcodes specified input record and writes the resulting events
-        into the configured output. When the transcoder is the fallback
+        into the configured output. When the record transcoder is the fallback
         transcoder, record_selector will be None.
 
         Args:
             record: The input record
             record_id (str): Record identifier
             record_selector (Optional[str]): Selector matching the record
-            transcoder (edxml.transcode.Transcoder): The transcoder to use
+            transcoder (edxml.transcode.RecordTranscoder): The record transcoder to use
         """
         for event in transcoder.generate(record, record_selector):
             if self._output_source_uri:
@@ -451,13 +451,13 @@ class TranscoderMediator(object):
 
     def _post_process(self, record_id, record, transcoder, event):
         """
-        Uses specified transcoder to post-process one event, yielding
+        Uses specified record transcoder to post-process one event, yielding
         zero or more output events.
 
         Args:
             record_id (str): Record identifier
             record: The input record of the output event
-            transcoder (edxml.transcode.Transcoder): The transcoder to use
+            transcoder (edxml.transcode.RecordTranscoder): The record transcoder to use
             event: The output event
 
         Yields:

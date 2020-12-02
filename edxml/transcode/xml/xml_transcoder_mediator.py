@@ -14,7 +14,7 @@ class XmlTranscoderMediator(TranscoderMediator):
     into EDXML events.
 
     Sources can instantiate the mediator and feed it XML elements, while
-    transcoders can register themselves with the mediator in order to
+    record transcoders can register themselves with the mediator in order to
     transcode the types of XML element that they support.
     """
 
@@ -29,18 +29,17 @@ class XmlTranscoderMediator(TranscoderMediator):
     def register(self, xpath_expression, transcoder, tag=None):
         """
 
-        Register a transcoder for processing XML elements matching
-        specified XPath expression. The same transcoder can be registered
+        Register a record transcoder for processing XML elements matching
+        specified XPath expression. The same record transcoder can be registered
         for multiple XPath expressions. The transcoder argument must be a XmlTranscoder
-        class or an extension of it. Do not pass in instantiated
-        class, pass the class itself.
+        class or an extension of it.
 
         The optional tag argument can be used to pass a list of tag names. Only
         the tags in the input XML data that are included in this list will be
         visited while parsing and matched against the XPath expressions
-        associated with registered transcoders. When the argument is not
+        associated with registered record transcoders. When the argument is not
         used, the tag names will be guessed from the xpath expressions that
-        the transcoders have been registered with. Namespaced tags can be
+        the record transcoders have been registered with. Namespaced tags can be
         specified using James Clark notation:
 
           {http://www.w3.org/1999/xhtml}html
@@ -51,14 +50,14 @@ class XmlTranscoderMediator(TranscoderMediator):
             *[re:test(., "^abc$", "i")]
 
         Note:
-          Any transcoder that registers itself as a transcoder using None
+          Any record transcoder that registers itself using None
           as the XPath expression is used as the fallback transcoder. The
           fallback transcoder is used to transcode any record that does not
            match any XPath expression of any registered transcoder.
 
         Args:
           xpath_expression (Optional[str]): XPath of matching XML records
-          transcoder (XmlTranscoder): XmlTranscoder class
+          transcoder (XmlTranscoder): XmlTranscoder
           tag (Optional[str]): XML tag name
         """
         super().register(xpath_expression, transcoder)
@@ -82,7 +81,7 @@ class XmlTranscoderMediator(TranscoderMediator):
             )
         except XPathSyntaxError:
             raise ValueError(
-                'Attempt to register transcoder %s using invalid XPath expression %s.' %
+                'Attempt to register record transcoder %s using invalid XPath expression %s.' %
                 (type(transcoder).__name__, xpath_expression)
             )
 
@@ -91,7 +90,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
         Returns a XmlTranscoder instance for transcoding
         XML elements matching specified XPath expression, or None
-        if no transcoder has been registered for the XPath
+        if no record transcoder has been registered for the XPath
         expression.
 
         Args:
@@ -222,7 +221,7 @@ class XmlTranscoderMediator(TranscoderMediator):
     def process(self, element, tree=None):
         """
         Processes a single XML element, invoking the correct
-        transcoder to generate an EDXML event and writing the
+        record transcoder to generate an EDXML event and writing the
         event into the output.
 
         If no output was specified while instantiating this class,
@@ -237,7 +236,7 @@ class XmlTranscoderMediator(TranscoderMediator):
         """
 
         # Get the XPath expression that matches the element. Note that this
-        # is an XPath that matches only this one element, while transcoders are
+        # is an XPath that matches only this one element, while record transcoders are
         # registered on XPath expressions that are much more generic and typically
         # match multiple elements.
         element_xpath = tree.getpath(element)
@@ -247,17 +246,17 @@ class XmlTranscoderMediator(TranscoderMediator):
         matching_element_xpath = None
 
         if self._last_used_transcoder_xpath is not None:
-            # Try whatever transcoder was used on the previously
+            # Try whatever record transcoder was used on the previously
             # transcoded element first. If it matches, we are lucky and we
             # do not need to try them all.
             transcoder_xpaths.insert(0, self._last_used_transcoder_xpath)
 
         # Below, we try to match the XPath expressions of each of the registered
-        # transcoders with the XPath expression of the current element.
+        # record transcoders with the XPath expression of the current element.
         for matching_xpath in transcoder_xpaths:
             if element in self._xpath_matchers[matching_xpath](tree):
                 # The element is among the elements that match the
-                # XPath expression of one of the transcoders.
+                # XPath expression of one of the record transcoders.
                 matching_element_xpath = matching_xpath
                 break
 
@@ -294,7 +293,7 @@ class XmlTranscoderMediator(TranscoderMediator):
 
             if index > 100:
                 log.warning(
-                    "The element at xpath %s contains many child elements that have no associated transcoder. "
+                    "The element at xpath %s contains many child elements that have no associated record transcoder. "
                     "These elements are clogging the in-memory XML tree, slowing down processing." % parent_xpath
                 )
 
@@ -341,5 +340,5 @@ class XmlTranscoderMediator(TranscoderMediator):
         # like /some/path/to/tagname.
         raise ValueError(
             'Cannot translate xpath expression %s to a single name of matching tags. '
-            'You must explicitly pass a tag name to register the associated transcoder.' % xpath
+            'You must explicitly pass a tag name to register the associated record transcoder.' % xpath
         )

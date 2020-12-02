@@ -1,5 +1,5 @@
 """
-This sub-package implements a transcoder to convert Python objects
+This sub-package implements a record transcoder to convert Python objects
 into EDXML output streams. The various classes in this package
 can be extended to implement transcoders for specific types of
 Python objects and route them records to the correct transcoder.

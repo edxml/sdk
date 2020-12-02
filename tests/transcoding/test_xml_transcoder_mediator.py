@@ -55,7 +55,7 @@ def test_invalid_mediator_xpath_exception(xml_transcoder):
 
 def test_duplicate_registration_exception(xml_transcoder):
     mediator = XmlTranscoderMediator()
-    with pytest.raises(Exception, match='Attempt to register multiple transcoders'):
+    with pytest.raises(Exception, match='Attempt to register multiple record transcoders'):
         mediator.register('/some/path', xml_transcoder, tag='test')
         mediator.register('/some/path', xml_transcoder, tag='test')
 
@@ -110,20 +110,20 @@ def test_parse_nested_transcoders(xml):
     class OuterTranscoder(InnerTranscoder):
         pass
 
-    # We will prepare two transcoders, one will process the /root/records
+    # We will prepare two record transcoders, one will process the /root/records
     # element while another will process the /root/records/a inside it.
     # We test this scenario because the mediator will remove transcoded
     # elements from the in memory XML tree while parsing it. Removing the
     # transcoded elements that are interleaved with other elements that must
     # remain untouched is tricky.
 
-    # Below we create a transcoder that we will register on /root/records/a. It
+    # Below we create a record transcoder that we will register on /root/records/a. It
     # will transcode the elements that it is registered at (self, or '.')
     InnerTranscoder.TYPE_MAP = {'.': 'inner.a'}
     InnerTranscoder.TYPE_PROPERTIES = {'inner.a': {'property-a': 'object-type.string'}}
     InnerTranscoder.PROPERTY_MAP = {'inner.a': {'p1': 'property-a'}}
 
-    # Below we create a transcoder that we will register on /root/records. It
+    # Below we create a record transcoder that we will register on /root/records. It
     # will be invoked at the records end tag, after the /root/records/a records
     # will have been transcoded using inner_transcoder. When cleaning of the
     # in memory XML tree is done properly, the outer transcoder will still have
@@ -170,7 +170,7 @@ def test_log_skipped_element(xml_transcoder, xml, caplog):
 
     with XmlTranscoderMediator(BytesIO()) as mediator:
         # Below we deliberately set the tag that the parser should visit
-        # to 'b' while we register a transcoder for elements having tag 'a'
+        # to 'b' while we register a record transcoder for elements having tag 'a'
         mediator.register('/root/records/a', xml_transcoder(), tag='b')
 
         mediator.add_event_source('/test/uri/')

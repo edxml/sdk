@@ -5,7 +5,7 @@ flake8 from complaining about unused fixtures.
 import pytest
 
 from edxml.ontology import Ontology, DataType
-from edxml.transcode import Transcoder
+from edxml.transcode import RecordTranscoder
 from edxml.transcode.object import ObjectTranscoderMediator
 from edxml.transcode.xml import XmlTranscoder
 
@@ -19,12 +19,12 @@ def record():
 
 @pytest.fixture()
 def transcoder():
-    class TestTranscoder(Transcoder):
+    class TestTranscoder(RecordTranscoder):
         """
-        This extension of Transcoder allows us to set class attributes
+        This extension of RecordTranscoder allows us to set class attributes
         on it that last for just one unit test, making sure that unit
         tests are free of side effects. Setting class attributes on the
-        Transcoder class would cause side effects because that class is
+        RecordTranscoder class would cause side effects because that class is
         shared by all tests.
         """
         pass
@@ -66,21 +66,21 @@ def object_transcoder_mediator():
 def create_transcoder(*event_type_names):
     """
 
-    Helper function to generate a transcoder for generating
+    Helper function to generate a record transcoder for generating
     events of specified event type name(s).
 
     Args:
         *event_type_names (str):
 
     Returns:
-        edxml.transcode.Transcoder:
+        edxml.transcode.RecordTranscoder:
     """
-    class TestTranscoder(Transcoder):
+    class TestTranscoder(RecordTranscoder):
         """
-        This extension of Transcoder allows us to set class attributes
+        This extension of RecordTranscoder allows us to set class attributes
         on it that last for just one unit test, making sure that unit
         tests are free of side effects. Setting class attributes on the
-        Transcoder class would cause side effects because that class is
+        RecordTranscoder class would cause side effects because that class is
         shared by all tests.
         """
         pass

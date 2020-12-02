@@ -64,7 +64,7 @@ def edxml_extract(edxml, path):
 
 
 def test_duplicate_registration_exception(object_transcoder):
-    with pytest.raises(Exception, match='Attempt to register multiple transcoders'):
+    with pytest.raises(Exception, match='Attempt to register multiple record transcoders'):
         mediator = ObjectTranscoderMediator()
         mediator.register('test_record', object_transcoder())
         mediator.register('test_record', object_transcoder())
@@ -101,7 +101,7 @@ def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, 
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
     # Below, we set the record type to some type for
-    # which no transcoder has been registered.
+    # which no record transcoder has been registered.
     record['type'] = 'nonexistent'
 
     with object_transcoder_mediator(BytesIO()) as mediator:

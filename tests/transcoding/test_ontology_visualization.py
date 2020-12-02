@@ -1,15 +1,15 @@
 from io import BytesIO
 
-from edxml.transcode import TranscoderMediator, Transcoder
+from edxml.transcode import TranscoderMediator, RecordTranscoder
 
 
 def test_ontology_concept_visualization():
-    class TestTranscoder(Transcoder):
+    class TestTranscoder(RecordTranscoder):
         """
-        This extension of Transcoder allows us to set class attributes
+        This extension of RecordTranscoder allows us to set class attributes
         on it that last for just one unit test, making sure that unit
         tests are free of side effects. Setting class attributes on the
-        Transcoder class would cause side effects because that class is
+        RecordTranscoder class would cause side effects because that class is
         shared by all tests.
         """
 

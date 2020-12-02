@@ -12,13 +12,13 @@ from lxml import etree
 from lxml.etree import XPathSyntaxError
 
 
-class XmlTranscoder(edxml.transcode.Transcoder):
+class XmlTranscoder(edxml.transcode.RecordTranscoder):
 
     TYPE_MAP = {}
     """
     The TYPE_MAP attribute is a dictionary mapping XPath expressions to EDXML
     event type names. The XPath expressions are relative to the XPath of the
-    elements that that transcoder is registered to at the transcoder mediator.
+    elements that that record transcoder is registered to at the transcoding mediator.
     The expressions in TYPE_MAP are evaluated on each XML input element to obtain
     sub-elements. For each sub-element an EDXML event of the corresponding type
     is generated. In case the events are supposed to be generated from the input
@@ -28,7 +28,7 @@ class XmlTranscoder(edxml.transcode.Transcoder):
 
     Note:
       When no EDXML event type name is specified for a particular XPath expression,
-      it is up to the transcoder to set the event type on the events that it generates.
+      it is up to the record transcoder to set the event type on the events that it generates.
 
     Note:
       The fallback transcoder must set the None key to the name of the EDXML
@@ -57,9 +57,10 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         {'event-type-name': {'some/subtag[@attribute]': ['property', 'another-property']}}
 
     Extending XPath by injecting custom Python functions is supported due to the lxml
-    implementation of XPath that is being used in the transcoder implementation. Please
-    refer to the lxml documentation about this subject. This transcoder implementation
-    provides a small set of custom XPath functions already, which shows how it is done.
+    implementation of XPath that is being used in the record transcoder implementation.
+    Please refer to the lxml documentation about this subject. This record transcoder
+    implementation provides a small set of custom XPath functions already, which shows
+    how it is done.
 
     Note that the event structure will not be validated until the event is yielded by
     the generate() method. This creates the possibility to add nonexistent properties
@@ -203,13 +204,13 @@ class XmlTranscoder(edxml.transcode.Transcoder):
         given XML element, populating it with properties
         using the PROPERTY_MAP class property.
 
-        When the transcoder is the fallback transcoder,
+        When the record transcoder is the fallback transcoder,
         xpath_selector will be None.
 
         This method can be overridden to create a generic
         event generator, populating the output events with
         generic properties that may or may not be useful to
-        the record specific transcoders. The record specific
+        the specific record transcoders. The specific record
         transcoders can refine the events that are generated
         upstream by adding, changing or removing properties,
         editing the event content, and so on.

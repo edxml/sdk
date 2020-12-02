@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from edxml.transcode import Transcoder
+from edxml.transcode import RecordTranscoder
 from edxml import EDXMLEvent
 
 
-class ObjectTranscoder(Transcoder):
+class ObjectTranscoder(RecordTranscoder):
 
     PROPERTY_MAP = {}
     """
@@ -51,7 +51,7 @@ class ObjectTranscoder(Transcoder):
         given input record, populating it with properties
         using the PROPERTY_MAP class property.
 
-        When the transcoder is the fallback transcoder,
+        When the record transcoder is the fallback transcoder,
         record_type_name will be None.
 
         The input record can be a dictionary or act like one, it can
@@ -65,10 +65,10 @@ class ObjectTranscoder(Transcoder):
         This method can be overridden to create a generic
         event generator, populating the output events with
         generic properties that may or may not be useful to
-        the record specific transcoders. The record specific
+        the specific record transcoders. The specific record
         transcoders can refine the events that are generated
         upstream by adding, changing or removing properties,
-        editing the event content, and so on.
+        editing the event attachments, and so on.
 
         Args:
           input_object (dict, object): Input object

@@ -4,7 +4,7 @@ from edxml.error import EDXMLValidationError
 from edxml.ontology import EventProperty
 from conftest import create_transcoder
 
-# Below tests check for detection of typos in the Transcoder class attributes. For example, when
+# Below tests check for detection of typos in the RecordTranscoder class attributes. For example, when
 # the TYPE_PROPERTY_DESCRIPTIONS attribute contains an entry for an event type named 'a' while
 # TYPE_PROPERTIES has no corresponding entry for that event type the class attributes are
 # mutually inconsistent, typically due to a typo in TYPE_PROPERTY_DESCRIPTIONS.

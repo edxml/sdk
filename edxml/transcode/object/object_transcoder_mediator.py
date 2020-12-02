@@ -11,10 +11,10 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     input records, and a set of ObjectTranscoder implementations that can
     transcode the objects into EDXML events.
 
-    Sources can instantiate the mediator and feed it records, while
+    Sources can instantiate the mediator and feed it records, while record
     transcoders can register themselves with the mediator in order to
     transcode the record types that they support. Note that we talk
-    about "record types" rather than "object types" because transcoders
+    about "record types" rather than "object types" because mediators
     distinguish between types of input record by inspecting the attributes
     of the object rather than inspecting the Python object as obtained by
     calling type() on the object.
@@ -24,31 +24,29 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     """
     This constant must be set to the name of the item or attribute in the object
     that contains the input record type, allowing the TranscoderMediator to route
-    objects to the correct transcoder.
+    objects to the correct record transcoder.
 
     If the constant is set to None, all objects will be routed to the fallback
     transcoder. If there is no fallback transcoder available, the record will not
     be processed.
 
     Note:
-      The fallback transcoder is a transcoder that registered itself as a transcoder
+      The fallback transcoder is a record transcoder that registered itself
       using None as record type.
     """
 
     def register(self, record_type_identifier, transcoder):
         """
 
-        Register a transcoder for processing objects of specified
-        record type. The same transcoder can be registered for multiple
-        record types. The Transcoder argument must be an ObjectTranscoder
-        class or an extension of it. Do not pass in instantiated
-        class, pass the class itself.
+        Register a record transcoder for processing objects of specified
+        record type. The same record transcoder can be registered for multiple
+        record types.
 
         Note:
-          Any transcoder that registers itself as a transcoder using None
+          Any record transcoder that registers itself using None
           as record_type_identifier is used as the fallback transcoder.
           The fallback transcoder is used to transcode any record for which
-          no transcoder has been registered.
+          no record transcoder has been registered.
 
         Args:
           record_type_identifier (Optional[str]): Name of the record type
@@ -60,7 +58,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         """
 
         Returns a ObjectTranscoder instance for transcoding
-        records of specified type, or None if no transcoder
+        records of specified type, or None if no record transcoder
         has been registered for the record type.
 
         Args:
@@ -74,16 +72,16 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
     def process(self, input_record):
         """
         Processes a single input object, invoking the correct
-        transcoder to generate an EDXML event and writing the
+        object transcoder to generate an EDXML event and writing the
         event into the output.
 
         If no output was specified while instantiating this class,
         any generated XML data will be returned as bytes.
 
         The object may optionally be a dictionary or act like one.
-        Transcoders can extract EDXML event object values from both
+        Object transcoders can extract EDXML event object values from both
         dictionary items and object attributes as listed in the
-        PROPERTY_MAP of the matching transcoder. Using dotted notation
+        PROPERTY_MAP of the matching record transcoder. Using dotted notation
         the keys in PROPERTY_MAP can refer to dictionary items or
         object attributes that are themselves dictionaries of lists.
 
@@ -108,7 +106,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
         transcoder = self._get_transcoder(record_type)
 
         if not transcoder and record_type is not None:
-            # No transcoder available for record type,
+            # No record transcoder available for record type,
             # use the fallback transcoder, if available.
             record_type = None
             transcoder = self._get_transcoder()
@@ -129,7 +127,7 @@ class ObjectTranscoderMediator(edxml.transcode.mediator.TranscoderMediator):
                     )
                 else:
                     log.warning(
-                        'No transcoder registered itself as fallback (record type None), '
+                        'No record transcoder registered itself as fallback (record type None), '
                         'no %s event generated. Record was: %s' % (record_type, input_record)
                     )
 
