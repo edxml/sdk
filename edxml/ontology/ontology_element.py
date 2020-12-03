@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from abc import abstractmethod, ABC
 from functools import total_ordering
 from lxml import etree

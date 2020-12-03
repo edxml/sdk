@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import edxml.transcode.mediator
 
 from edxml.logger import log

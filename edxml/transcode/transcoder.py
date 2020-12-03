@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import edxml
 from edxml.error import EDXMLValidationError
 from edxml.logger import log

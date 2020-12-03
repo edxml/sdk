@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from edxml.transcode import RecordTranscoder
 from edxml import EDXMLEvent
 
