@@ -1,3 +1,16 @@
+# ========================================================================================
+#                                                                                        =
+#              Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)                 =
+#                      Copyright (c) 2020 the EDXML Foundation                           =
+#                                                                                        =
+#                                   http://edxml.org                                     =
+#                                                                                        =
+#             This file is part of the EDXML Software Development Kit (SDK)              =
+#                       and is released under the MIT License:                           =
+#                         https://opensource.org/licenses/MIT                            =
+#                                                                                        =
+# ========================================================================================
+
 """
 This sub-package contains classes that represent EDXML
 ontology elements, like event types, object types, event

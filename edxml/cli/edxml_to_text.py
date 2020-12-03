@@ -1,37 +1,21 @@
 #!/usr/bin/env python3
-#
-#
-#  ===========================================================================
-#
-#                           EDXML String Printer
-#
-#                            EXAMPLE APPLICATION
-#
-#                  Copyright (c) 2010 - 2016 by D.H.J. Takken
-#                          (d.h.j.takken@xs4all.nl)
-#
-#          This file is part of the EDXML Software Development Kit (SDK).
-#
-#
-#  The EDXML SDK is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Lesser General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  The EDXML SDK is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Lesser General Public License for more details.
-#
-#  You should have received a copy of the GNU Lesser General Public License
-#  along with the EDXML SDK.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
-#  ===========================================================================
-#
-#
+
+# ========================================================================================
+#                                                                                        =
+#              Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)                 =
+#                      Copyright (c) 2020 the EDXML Foundation                           =
+#                                                                                        =
+#                                   http://edxml.org                                     =
+#                                                                                        =
+#             This file is part of the EDXML Software Development Kit (SDK)              =
+#                       and is released under the MIT License:                           =
+#                         https://opensource.org/licenses/MIT                            =
+#                                                                                        =
+# ========================================================================================
+
 #  This script prints an evaluated event story or summary for each event in a given
 #  EDXML file or input stream. The strings are printed to standard output.
+
 import argparse
 import logging
 import sys
