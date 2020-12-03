@@ -807,9 +807,9 @@ class Ontology(OntologyElement):
         ontology = cls()
 
         for element in ontology_element:
-            if element.tag == '{http://edxml.org/edxml}eventtypes':
+            if element.tag == '{http://edxml.org/edxml}event-types':
                 ontology.__parse_event_types(element)
-            elif element.tag == '{http://edxml.org/edxml}objecttypes':
+            elif element.tag == '{http://edxml.org/edxml}object-types':
                 ontology.__parse_object_types(element)
             elif element.tag == '{http://edxml.org/edxml}concepts':
                 ontology.__parse_concepts(element)
@@ -926,11 +926,11 @@ class Ontology(OntologyElement):
 
         elif isinstance(other_ontology, etree._Element):
             for element in other_ontology:
-                if element.tag == '{http://edxml.org/edxml}objecttypes':
+                if element.tag == '{http://edxml.org/edxml}object-types':
                     self.__parse_object_types(element, validate)
                 elif element.tag == '{http://edxml.org/edxml}concepts':
                     self.__parse_concepts(element, validate)
-                elif element.tag == '{http://edxml.org/edxml}eventtypes':
+                elif element.tag == '{http://edxml.org/edxml}event-types':
                     self.__parse_event_types(element, validate)
                 elif element.tag == '{http://edxml.org/edxml}sources':
                     self.__parse_sources(element, validate)
@@ -957,9 +957,9 @@ class Ontology(OntologyElement):
 
         """
         ontology_element = etree.Element('ontology')
-        object_types = etree.SubElement(ontology_element, 'objecttypes')
+        object_types = etree.SubElement(ontology_element, 'object-types')
         concepts = etree.SubElement(ontology_element, 'concepts')
-        event_types = etree.SubElement(ontology_element, 'eventtypes')
+        event_types = etree.SubElement(ontology_element, 'event-types')
         event_sources = etree.SubElement(ontology_element, 'sources')
 
         for object_type_name in sorted(self.__object_types.keys()):

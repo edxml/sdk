@@ -161,7 +161,7 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                 self.add_event(
                     EDXMLEvent(
                         property_objects,
-                        event_type_name=self.args.eventtype_name,
+                        event_type_name=self.args.event_type_name,
                         source_uri=self.event_source_uri_list[self.event_counter % 2],
                         attachments={'content': content}
                     )
@@ -226,21 +226,21 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
 
         ontology = edxml.ontology.Ontology()
 
-        ontology.create_object_type(self.args.objecttype_name + '.a',
+        ontology.create_object_type(self.args.object_type_name + '.a',
                                     data_type='string:%d:cs' % self.args.object_size)
-        ontology.create_object_type(self.args.objecttype_name + '.b', data_type='number:bigint:signed')
-        ontology.create_object_type(self.args.objecttype_name + '.c', data_type='number:decimal:12:9:signed')
+        ontology.create_object_type(self.args.object_type_name + '.b', data_type='number:bigint:signed')
+        ontology.create_object_type(self.args.object_type_name + '.c', data_type='number:decimal:12:9:signed')
 
-        event_type = ontology.create_event_type(self.args.eventtype_name)
-        event_type.create_property('property-a', self.args.objecttype_name + '.a').set_merge_strategy(any_or_match)
+        event_type = ontology.create_event_type(self.args.event_type_name)
+        event_type.create_property('property-a', self.args.object_type_name + '.a').set_merge_strategy(any_or_match)
 
         if not self.args.unordered:
-            event_type.create_property('property-b', self.args.objecttype_name +
+            event_type.create_property('property-b', self.args.object_type_name +
                                        '.a').set_merge_strategy(any_or_replace)
 
-        event_type.create_property('property-c', self.args.objecttype_name + '.a').set_merge_strategy(any_or_add)
-        event_type.create_property('property-g', self.args.objecttype_name + '.c').set_merge_strategy(any_or_min)
-        event_type.create_property('property-h', self.args.objecttype_name + '.c').set_merge_strategy(any_or_max)
+        event_type.create_property('property-c', self.args.object_type_name + '.a').set_merge_strategy(any_or_add)
+        event_type.create_property('property-g', self.args.object_type_name + '.c').set_merge_strategy(any_or_min)
+        event_type.create_property('property-h', self.args.object_type_name + '.c').set_merge_strategy(any_or_max)
 
         event_type.create_attachment('content')
 
@@ -341,7 +341,7 @@ def main():
     )
 
     parser.add_argument(
-        '--eventtype-name',
+        '--event-type-name',
         default='eventtype.a',
         type=str,
         help='By default, all generated events are of event type "eventtype.a". This '
@@ -351,7 +351,7 @@ def main():
     )
 
     parser.add_argument(
-        '--objecttype-name',
+        '--object-type-name',
         default='objecttype.a',
         type=str,
         help='By default, all generated objects are of object types that have names '

@@ -33,8 +33,8 @@ class EventTypeParent(OntologyElement):
                  siblings_description='sharing'):
 
         self._attr = {
-            'eventtype': parent_event_type_name,
-            'propertymap': property_map,
+            'event-type': parent_event_type_name,
+            'property-map': property_map,
             'parent-description': parent_description,
             'siblings-description': siblings_description
         }
@@ -42,10 +42,10 @@ class EventTypeParent(OntologyElement):
         self._child_event_type = child_event_type
 
     def __repr__(self):
-        return f"({self._child_event_type.get_name()} has parent {self._attr['eventtype']})"
+        return f"({self._child_event_type.get_name()} has parent {self._attr['event-type']})"
 
     def __str__(self):
-        return f"{self._child_event_type.get_name()}=>{self._attr['eventtype']}"
+        return f"{self._child_event_type.get_name()}=>{self._attr['event-type']}"
 
     def _child_modified_callback(self):
         """Callback for change tracking"""
@@ -141,12 +141,12 @@ class EventTypeParent(OntologyElement):
 
         try:
             current = dict(Mapping.split(':')
-                           for Mapping in self._attr['propertymap'].split(','))
+                           for Mapping in self._attr['property-map'].split(','))
         except ValueError:
             current = {}
 
         current[child_property_name] = parent_property_name
-        self._set_attr('propertymap', ','.join(
+        self._set_attr('property-map', ','.join(
             ['%s:%s' % (Child, Parent) for Child, Parent in current.items()]))
         return self
 
@@ -158,7 +158,7 @@ class EventTypeParent(OntologyElement):
         Returns:
           str:
         """
-        return self._attr['eventtype']
+        return self._attr['event-type']
 
     def get_property_map(self):
         """
@@ -170,7 +170,7 @@ class EventTypeParent(OntologyElement):
         Returns:
           Dict[str,str]:
         """
-        return dict(Mapping.split(':') for Mapping in self._attr['propertymap'].split(','))
+        return dict(Mapping.split(':') for Mapping in self._attr['property-map'].split(','))
 
     def get_parent_description(self):
         """
@@ -208,21 +208,20 @@ class EventTypeParent(OntologyElement):
           edxml.ontology.EventTypeParent: The EventTypeParent instance
 
         """
-        if not len(self._attr['eventtype']) <= 64:
+        if not len(self._attr['event-type']) <= 64:
             raise EDXMLValidationError(
                 'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
-                self._attr['eventtype']
+                self._attr['event-type']
             )
-        if not re.match(edxml.ontology.EventType.NAME_PATTERN, self._attr['eventtype']):
+        if not re.match(edxml.ontology.EventType.NAME_PATTERN, self._attr['event-type']):
             raise EDXMLValidationError(
                 'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
-                self._attr['eventtype']
+                self._attr['event-type']
             )
 
-        if not re.match(self.PROPERTY_MAP_PATTERN, self._attr['propertymap']):
+        if not re.match(self.PROPERTY_MAP_PATTERN, self._attr['property-map']):
             raise EDXMLValidationError(
-                'An implicit parent definition contains an invalid property map: "%s"' % self._attr[
-                    'propertymap']
+                'An implicit parent definition contains an invalid property map: "%s"' % self._attr['property-map']
             )
 
         if not 1 <= len(self._attr['parent-description']) <= 128:
@@ -260,8 +259,8 @@ class EventTypeParent(OntologyElement):
         try:
             return cls(
                 child_event_type,
-                parent_element.attrib['eventtype'],
-                parent_element.attrib['propertymap'],
+                parent_element.attrib['event-type'],
+                parent_element.attrib['property-map'],
                 parent_element.attrib['parent-description'],
                 parent_element.attrib['siblings-description']
             )

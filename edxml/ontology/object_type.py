@@ -706,7 +706,7 @@ class ObjectType(VersionedOntologyElement):
         """
 
         Generates an lxml etree Element representing
-        the EDXML <objecttype> tag for this object type.
+        the EDXML <object-type> tag for this object type.
 
         Returns:
           etree.Element: The element
@@ -733,4 +733,4 @@ class ObjectType(VersionedOntologyElement):
             del attribs['unit-name']
             del attribs['unit-symbol']
 
-        return etree.Element('objecttype', attribs)
+        return etree.Element('object-type', attribs)

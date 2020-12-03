@@ -141,7 +141,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             'display-name-singular': display_name_singular,
             'display-name-plural': display_name_plural,
             'description': description or name,
-            'classlist': class_list,
+            'class-list': class_list,
             'summary': summary,
             'story': story.replace('\n', '[[NEWPAR:]]'),
             'timespan-start': None,
@@ -335,7 +335,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Returns:
           List[str]:
         """
-        return [c for c in self.__attr['classlist'].split(',') if c != '']
+        return [c for c in self.__attr['class-list'].split(',') if c != '']
 
     def get_properties(self):
         """
@@ -429,7 +429,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Returns:
           bool:
         """
-        return class_name in self.__attr['classlist'].split(',')
+        return class_name in self.__attr['class-list'].split(',')
 
     def get_timespan_property_names(self):
         """
@@ -841,11 +841,11 @@ class EventType(VersionedOntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
         if class_name:
-            if self.__attr['classlist'] == '':
-                self._set_attr('classlist', class_name)
+            if self.__attr['class-list'] == '':
+                self._set_attr('class-list', class_name)
             else:
-                self._set_attr('classlist', ','.join(
-                    list(set(self.__attr['classlist'].split(',') + [class_name]))))
+                self._set_attr('class-list', ','.join(
+                    list(set(self.__attr['class-list'].split(',') + [class_name]))))
         return self
 
     def set_classes(self, class_names):
@@ -861,7 +861,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Returns:
           edxml.ontology.EventType: The EventType instance
         """
-        self._set_attr('classlist', ','.join(list(set(class_names))))
+        self._set_attr('class-list', ','.join(list(set(class_names))))
         return self
 
     def set_name(self, event_type_name):
@@ -1127,7 +1127,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
         token_attributes = (
-            'story', 'summary', 'display-name-singular', 'display-name-plural', 'description', 'classlist'
+            'story', 'summary', 'display-name-singular', 'display-name-plural', 'description', 'class-list'
         )
 
         for token_attribute in token_attributes:
@@ -1137,10 +1137,10 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
 
-        if self.__attr['classlist'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['classlist']):
+        if self.__attr['class-list'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['class-list']):
             raise EDXMLValidationError(
                 'Event type "%s" has an invalid class list: "%s"' %
-                (self.__attr['name'], self.__attr['classlist'])
+                (self.__attr['name'], self.__attr['class-list'])
             )
 
         for attribute_name in ('timespan-start', 'timespan-end'):
@@ -1197,7 +1197,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 type_element.attrib['display-name-singular'],
                 type_element.attrib['display-name-plural'],
                 type_element.attrib['description'],
-                type_element.attrib.get('classlist', ''),
+                type_element.attrib.get('class-list', ''),
                 type_element.attrib['summary'],
                 type_element.attrib['story']
             ).set_version(type_element.attrib['version'])\
@@ -1387,7 +1387,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
 
         Generates an lxml etree Element representing
-        the EDXML <eventtype> tag for this event type.
+        the EDXML <event-type> tag for this event type.
 
         Returns:
           etree.Element: The element
@@ -1396,10 +1396,10 @@ class EventType(VersionedOntologyElement, MutableMapping):
         attribs = dict(self.__attr)
         attribs['version'] = str(attribs['version'])
 
-        if attribs['classlist'] == '':
-            del attribs['classlist']
+        if attribs['class-list'] == '':
+            del attribs['class-list']
 
-        element = etree.Element('eventtype', {k: v for k, v in attribs.items() if v})
+        element = etree.Element('event-type', {k: v for k, v in attribs.items() if v})
         if self.__parent:
             element.append(self.__parent.generate_xml())
 

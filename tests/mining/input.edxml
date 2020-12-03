@@ -14,14 +14,14 @@
 
 <edxml xmlns="http://edxml.org/edxml" version="3.0.0">
   <ontology>
-    <objecttypes>
-      <objecttype name="oa" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:mc"/>
-    </objecttypes>
+    <object-types>
+      <object-type name="oa" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:mc"/>
+    </object-types>
     <concepts>
       <concept name="ca" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
     </concepts>
-    <eventtypes>
-      <eventtype name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
+    <event-types>
+      <event-type name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
         <properties>
           <property name="pa" object-type="oa" description="description" optional="true" multivalued="true" confidence="10" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
@@ -40,8 +40,8 @@
           <intra source="pa" target="pb" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pb]]" confidence="2" predicate="linked"/>
           <inter source="pa" target="pd" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pd]]" confidence="2" predicate="linked"/>
         </relations>
-      </eventtype>
-    </eventtypes>
+      </event-type>
+    </event-types>
     <sources>
       <source uri="/a/" description="a" version="1"/>
     </sources>
