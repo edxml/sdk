@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~
+  ~             Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)
+  ~                     Copyright (c) 2020 the EDXML Foundation
+  ~
+  ~                                  http://edxml.org
+  ~
+  ~            This file is part of the EDXML Software Development Kit (SDK)
+  ~                      and is released under the MIT License:
+  ~                        https://opensource.org/licenses/MIT
+  ~
+  -->
+
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+  <ontology>
+    <object-types>
+      <object-type name="oa" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:mc"/>
+    </object-types>
+    <concepts>
+      <concept name="ca" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
+    </concepts>
+    <event-types>
+      <event-type name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
+        <properties>
+          <property name="pa" object-type="oa" description="description" optional="true" multivalued="true" confidence="10" merge="match">
+            <property-concept name="ca" confidence="9" cnp="9"/>
+          </property>
+          <property name="pb" object-type="oa" description="b" optional="true" multivalued="true" confidence="10" merge="match">
+            <property-concept name="ca" confidence="9" cnp="9"/>
+          </property>
+          <property name="pc" object-type="oa" description="c" optional="true" multivalued="true" confidence="10" merge="match">
+            <property-concept name="ca" confidence="9" cnp="9"/>
+          </property>
+          <property name="pd" object-type="oa" description="d" optional="true" multivalued="true" confidence="10" merge="match">
+            <property-concept name="ca" confidence="9" cnp="9"/>
+          </property>
+        </properties>
+        <relations>
+          <intra source="pa" target="pb" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pb]]" confidence="2" predicate="linked"/>
+          <inter source="pa" target="pd" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pd]]" confidence="2" predicate="linked"/>
+        </relations>
+      </event-type>
+    </event-types>
+    <sources>
+      <source uri="/a/" description="a" version="1"/>
+    </sources>
+  </ontology>
+  <event event-type="ea" source-uri="/a/">
+    <properties>
+      <pa>a</pa>
+      <pb>b</pb>
+      <pc>c</pc>
+      <pd>d</pd>
+    </properties>
+  </event>
+</edxml>

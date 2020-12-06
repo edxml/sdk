@@ -49,6 +49,7 @@ Reference Manual
    writing
    reading
    filtering
+   mining
    ontology
    event
 
