@@ -17,9 +17,9 @@
 #  EDXML file or input stream. The strings are printed to standard output.
 
 import argparse
-import logging
 import sys
 
+from edxml.cli import configure_logger
 from edxml.parser import EDXMLPullParser
 
 
@@ -73,18 +73,9 @@ def main():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parser.parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 

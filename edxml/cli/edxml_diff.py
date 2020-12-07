@@ -23,12 +23,12 @@
 #  in automated tests, comparing a small EDXML output file with expected output.
 
 import argparse
-import logging
 import sys
 from io import BytesIO
 from difflib import unified_diff
 
 from edxml import EDXMLPullParser
+from edxml.cli import configure_logger
 from edxml.writer import EDXMLWriter
 from edxml.event import EventElement
 
@@ -107,18 +107,9 @@ def main():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parser.parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     if not args.file or len(args.file) < 1:
         parser.error('You must specify at least one file.')

@@ -18,9 +18,10 @@
 
 
 import argparse
-import logging
 import sys
 import re
+
+from edxml.cli import configure_logger
 from edxml.filter import EDXMLPullFilter
 
 
@@ -115,19 +116,9 @@ def parse_args():
 
 
 def main():
-
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     event_input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 

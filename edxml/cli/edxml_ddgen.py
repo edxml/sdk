@@ -24,6 +24,7 @@ import random
 
 import edxml.ontology
 from edxml import EDXMLEvent
+from edxml.cli import configure_logger
 from edxml.writer import EDXMLWriter
 
 
@@ -373,16 +374,7 @@ def main():
 
     args = parser.parse_args()
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     with EDXMLDummyDataGenerator(args) as generator:
         generator.start()

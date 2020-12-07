@@ -25,6 +25,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from dateutil.parser import parse
+from edxml.cli import configure_logger
 from edxml.parser import EDXMLPullParser
 
 
@@ -288,18 +289,9 @@ def print_full_stats(parser):
 
 
 def main():
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     if args.file is None:
 

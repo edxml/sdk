@@ -17,9 +17,9 @@
 #  one new EDXML file, which is then printed on standard output.
 
 import argparse
-import logging
 import sys
 
+from edxml.cli import configure_logger
 from edxml.error import EDXMLValidationError
 from edxml.filter import EDXMLPullFilter
 from edxml.logger import log
@@ -73,18 +73,9 @@ def parse_args():
 
 
 def main():
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     with EDXMLMerger() as merger:
         for file_name in args.file:

@@ -10,3 +10,16 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
+import logging
+
+
+def configure_logger(args):
+    logger = logging.getLogger()
+
+    if args.quiet:
+        logger.setLevel(logging.ERROR)
+    elif args.verbose:
+        if args.verbose > 0:
+            logger.setLevel(logging.INFO)
+        if args.verbose > 1:
+            logger.setLevel(logging.DEBUG)

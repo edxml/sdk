@@ -26,12 +26,12 @@
 #  is left as an exercise to the user.
 
 import argparse
-import logging
 import sys
 import time
 from typing import Dict, List
 
 from edxml import EDXMLEvent
+from edxml.cli import configure_logger
 from edxml.filter import EDXMLPullFilter, EDXMLPushFilter
 from edxml.error import EDXMLValidationError
 
@@ -147,18 +147,9 @@ def main():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parser.parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     if not args.file:
         args.file = sys.stdin.buffer

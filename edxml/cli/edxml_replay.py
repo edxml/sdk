@@ -19,7 +19,6 @@
 #  the script assumes that the events in the input stream are time ordered.
 
 import argparse
-import logging
 import sys
 import time
 from datetime import datetime
@@ -27,6 +26,7 @@ from datetime import datetime
 import pytz
 from dateutil.parser import parse
 
+from edxml.cli import configure_logger
 from edxml.filter import EDXMLPullFilter
 from edxml.ontology import DataType
 
@@ -166,18 +166,9 @@ def main():
         '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
     )
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
-
     args = parser.parse_args()
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        if args.verbose > 0:
-            logger.setLevel(logging.INFO)
-        if args.verbose > 1:
-            logger.setLevel(logging.DEBUG)
+    configure_logger(args)
 
     input = open(args.file, 'rb') if args.file else sys.stdin
 
