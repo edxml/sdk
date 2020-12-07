@@ -26,7 +26,7 @@ class EventProperty(OntologyElement):
     Class representing an EDXML event property
     """
 
-    EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z0-9-]{1,64}$')
+    EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z0-9-]+(.[a-z0-9-]+)*$')
 
     MERGE_MATCH = 'match'
     """Merge strategy 'match'"""
@@ -654,7 +654,12 @@ class EventProperty(OntologyElement):
 
         if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
             raise EDXMLValidationError(
-                'Invalid property name in property definition: "%s"' % self.__attr['name'])
+                'Invalid property name in property definition: "%s"' % self.__attr['name']
+            )
+
+        if len(self.__attr['name']) > 64:
+            raise EDXMLValidationError(
+                'Property name is too long: "%s"' % self.__attr['name'])
 
         if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self.__attr['object-type']):
             raise EDXMLValidationError(
