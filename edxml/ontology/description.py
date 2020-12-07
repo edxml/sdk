@@ -18,7 +18,7 @@ from edxml.ontology import Ontology, Concept
 
 def describe_producer_rst(ontology, producer_name, input_description):
     """
-    Returns a reStructuredText description for a producer on
+    Returns a reStructuredText description for a producer of an
     ontology, such as a transcoder or a processor.
 
     Args:
@@ -27,7 +27,7 @@ def describe_producer_rst(ontology, producer_name, input_description):
         input_description (str): Short description of the data used as input by producer
 
     Returns:
-        str:
+        str: reStructuredText description
     """
 
     description = f"\n\nThis is a {producer_name} that reads {input_description} and produces " \
