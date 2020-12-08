@@ -288,7 +288,7 @@ def test_validate_timespan_wrong_data_type(event_type):
 
 
 def test_validate_datetime_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='Empty property name'):
+    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
         Template('[[DATETIME:]]').validate(event_type)
 
 
@@ -303,7 +303,7 @@ def test_validate_datetime_wrong_data_type(event_type):
 
 
 def test_validate_url_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='Empty property name'):
+    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
         Template('[[URL:]]').validate(event_type)
 
 
@@ -313,12 +313,12 @@ def test_validate_url_extra_argument(event_type):
 
 
 def test_validate_merge_missing_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='Empty property name'):
+    with pytest.raises(EDXMLValidationError, match='requires at least one property argument'):
         Template('[[MERGE:]]').validate(event_type)
 
 
 def test_validate_country_code_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='Empty property name'):
+    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
         Template('[[COUNTRYCODE:]]').validate(event_type)
 
 
@@ -354,5 +354,5 @@ def test_validate_boolean_is_isnot_wrong_argument_count(event_type):
 
 
 def test_validate_empty_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='Empty property name'):
+    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
         Template('[[EMPTY:]]').validate(event_type)

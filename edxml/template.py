@@ -112,7 +112,7 @@ class Template(object):
         for placeholder in placeholder_strings:
             try:
                 formatter, argument_string = str(placeholder).split(':', 1)
-                arguments = argument_string.split(',')
+                arguments = [arg for arg in argument_string.split(',') if arg != '']
             except ValueError:
                 # Placeholder does not contain a formatter. We only need to
                 # check if the placeholder is a valid property name and skip
@@ -132,6 +132,10 @@ class Template(object):
             if property_count is None:
                 # Variable property count.
                 if formatter == 'MERGE':
+                    if not arguments:
+                        raise EDXMLValidationError(
+                            'String formatter (%s) requires at least one property argument.' % formatter
+                        )
                     property_arguments = arguments
                     other_arguments = []
                 else:
