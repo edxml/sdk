@@ -28,12 +28,12 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile(r'\[\[([^]]*)]]')
 
     KNOWN_FORMATTERS = (
-        'TIMESPAN', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR', 'DURATION',
+        'TIMESPAN', 'DATETIME', 'DURATION',
         'COUNTRYCODE', 'MERGE',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL'
     )
 
-    DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATE', 'DATETIME', 'FULLDATETIME', 'WEEK', 'MONTH', 'YEAR']
+    DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATETIME']
 
     BOOLEAN_FORMATTERS = ['BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
 
@@ -41,10 +41,6 @@ class Template(object):
         'TIMESPAN': 2,
         'DATE': 1,
         'DATETIME': 1,
-        'FULLDATETIME': 1,
-        'WEEK': 1,
-        'MONTH': 1,
-        'YEAR': 1,
         'DURATION': 2,
         'COUNTRYCODE': 1,
         'BOOLEAN_STRINGCHOICE': 1,
@@ -58,11 +54,7 @@ class Template(object):
     FORMATTER_ARGUMENT_COUNTS = {
         'TIMESPAN': 2,
         'DATE': 1,
-        'DATETIME': 1,
-        'FULLDATETIME': 1,
-        'WEEK': 1,
-        'MONTH': 1,
-        'YEAR': 1,
+        'DATETIME': 2,
         'DURATION': 2,
         'COUNTRYCODE': 1,
         'BOOLEAN_STRINGCHOICE': 3,
@@ -188,6 +180,14 @@ class Template(object):
                                 formatter, property_name
                             )
                         )
+
+            if formatter == 'DATETIME':
+                if other_arguments[0] not in [
+                    'year', 'month', 'date', 'hour', 'minute', 'second', 'millisecond', 'microsecond'
+                ]:
+                    raise EDXMLValidationError(
+                        'A DATETIME formatter uses an unknown accuracy option: "%s".' % other_arguments[0]
+                    )
 
         return self
 
@@ -332,7 +332,7 @@ class Template(object):
                     # so we can safely capitalize.
                     string = string[0].upper() + string[1:]
 
-        # Match on placeholders like "[[FULLDATETIME:datetime]]", creating
+        # Match on placeholders like "[[DATETIME:datetime,minute]]", creating
         # groups of the strings in between the placeholders and the
         # placeholders themselves, with and without brackets included.
         placeholders = re.findall(r'(\[\[([^]]*)]])', string)
@@ -390,24 +390,31 @@ class Template(object):
                     cls._format_time_duration(date_time_start, date_time_end)
                 )
 
-            elif formatter in ['YEAR', 'MONTH', 'WEEK', 'DATE', 'DATETIME', 'FULLDATETIME']:
+            elif formatter == 'DATETIME':
 
                 for object_value in event_object_values[arguments[0]]:
                     date_time = parse(object_value)
 
                     try:
-                        if formatter == 'FULLDATETIME':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%Sh UTC'))
-                        elif formatter == 'DATETIME':
-                            object_strings.append(date_time.strftime('%B %d %Y at %H:%M:%Sh UTC'))
-                        elif formatter == 'DATE':
-                            object_strings.append(date_time.strftime('%a, %B %d %Y'))
-                        elif formatter == 'YEAR':
-                            object_strings.append(date_time.strftime('%Y'))
-                        elif formatter == 'MONTH':
+                        if arguments[1] == 'microsecond':
+                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%S.%fh'))
+                        elif arguments[1] == 'millisecond':
+                            object_strings.append(
+                                date_time.strftime('%A, %B %d %Y at %H:%M:%S.') +
+                                date_time.strftime('%f')[:3] + 'h'
+                            )
+                        elif arguments[1] == 'second':
+                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%Sh'))
+                        elif arguments[1] == 'minute':
+                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%Mh'))
+                        elif arguments[1] == 'hour':
+                            object_strings.append(date_time.strftime('%A, %B %d %Y at %Hh'))
+                        elif arguments[1] == 'date':
+                            object_strings.append(date_time.strftime('%A, %B %d %Y'))
+                        elif arguments[1] == 'month':
                             object_strings.append(date_time.strftime('%B %Y'))
-                        elif formatter == 'WEEK':
-                            object_strings.append(date_time.strftime('week %W of %Y'))
+                        else:  # year
+                            object_strings.append(date_time.strftime('%Y'))
                     except ValueError:
                         # This may happen for some time stamps before year 1900, which
                         # is not supported by strftime.

@@ -86,6 +86,35 @@ def test_render_float(event_type):
     assert Template('Value is [[p-float]].').evaluate(event_type, event) == 'Value is 1.200000.'
 
 
+def test_render_datetime(event_type):
+
+    event = EDXMLEvent({'p-time-start': '2020-11-25T23:47:10.123456Z'})
+
+    assert Template('In [[DATETIME:p-time-start,year]].')\
+        .evaluate(event_type, event) == 'In 2020.'
+
+    assert Template('In [[DATETIME:p-time-start,month]].')\
+        .evaluate(event_type, event) == 'In November 2020.'
+
+    assert Template('On [[DATETIME:p-time-start,date]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020.'
+
+    assert Template('On [[DATETIME:p-time-start,hour]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23h.'
+
+    assert Template('On [[DATETIME:p-time-start,minute]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47h.'
+
+    assert Template('On [[DATETIME:p-time-start,second]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10h.'
+
+    assert Template('On [[DATETIME:p-time-start,millisecond]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123h.'
+
+    assert Template('On [[DATETIME:p-time-start,microsecond]].')\
+        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
+
+
 def test_render_time_span(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T14:23:54.000000Z'})
@@ -288,18 +317,23 @@ def test_validate_timespan_wrong_data_type(event_type):
 
 
 def test_validate_datetime_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
-        Template('[[DATETIME:]]').validate(event_type)
+    with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
+        Template('[[DATETIME:p-time-start]]').validate(event_type)
 
 
 def test_validate_datetime_extra_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
-        Template('[[DATETIME:p-time-start,p-time-end]]').validate(event_type)
+    with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
+        Template('[[DATETIME:p-time-start,date,test]]').validate(event_type)
 
 
 def test_validate_datetime_wrong_data_type(event_type):
     with pytest.raises(EDXMLValidationError, match='not a datetime'):
-        Template('[[DATETIME:p-string]]').validate(event_type)
+        Template('[[DATETIME:p-string,date]]').validate(event_type)
+
+
+def test_validate_datetime_wrong_accuracy_argument(event_type):
+    with pytest.raises(EDXMLValidationError, match='unknown accuracy option'):
+        Template('[[DATETIME:p-time-start,wrong]]').validate(event_type)
 
 
 def test_validate_url_missing_argument(event_type):
