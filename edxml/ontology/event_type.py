@@ -1177,14 +1177,18 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     (attribute_name, self.__attr['name'], self.__attr['summary'], str(e))
                 )
 
-        for property_name, event_property in self.get_properties().items():
-            event_property.validate()
+        try:
+            for property_name, event_property in self.get_properties().items():
+                event_property.validate()
 
-        for relation in self.__relations.values():
-            relation.validate()
+            for relation in self.__relations.values():
+                relation.validate()
 
-        for attachment in self.__attachments.values():
-            attachment.validate()
+            for attachment in self.__attachments.values():
+                attachment.validate()
+        except EDXMLValidationError as exception:
+            exception.args = ('Event type "%s" is invalid: %s' % (self.__attr['name'], str(exception)),)
+            raise
 
         return self
 
