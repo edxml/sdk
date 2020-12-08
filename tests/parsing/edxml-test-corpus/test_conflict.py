@@ -15,23 +15,31 @@ from edxml import EventCollection
 from edxml.error import EDXMLMergeConflictError
 from edxml_test_corpus import CORPUS_PATH
 
+# List of corpus directories corresponding to the EDXML
+# versions that we support.
+versions = ['3/3.0/3.0.0']
+
 corpus_path = CORPUS_PATH + '/conflict'
 
 
 def test_parse_conflict():
-    collection = EventCollection.from_edxml(open(corpus_path + '/conflict.edxml', 'rb').read())
-    e = None
-    try:
-        collection.resolve_collisions()
-    except EDXMLMergeConflictError as ex:
-        e = ex
+    for version_dir in versions:
+        conflict_dir = CORPUS_PATH + version_dir + '/conflict'
+        collection = EventCollection.from_edxml(open(conflict_dir + '/conflict.edxml', 'rb').read())
+        e = None
+        try:
+            collection.resolve_collisions()
+        except EDXMLMergeConflictError as ex:
+            e = ex
 
-    # Parser must have raised a conflict error.
-    assert e is not None
+        # Parser must have raised a conflict error.
+        assert e is not None
 
 
 def test_parse_non_conflict():
-    collection = EventCollection.from_edxml(open(corpus_path + '/no-conflict.edxml', 'rb').read())
+    for version_dir in versions:
+        non_conflict_dir = CORPUS_PATH + version_dir + '/conflict'
+        collection = EventCollection.from_edxml(open(non_conflict_dir + '/no-conflict.edxml', 'rb').read())
 
-    # Not a conflict, no exception raised.
-    collection.resolve_collisions()
+        # Not a conflict, no exception raised.
+        collection.resolve_collisions()

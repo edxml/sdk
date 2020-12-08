@@ -20,7 +20,9 @@ from glob import glob
 from edxml import EventCollection
 from edxml_test_corpus import CORPUS_PATH
 
-corpus_path = CORPUS_PATH + '/valid/merge-multiple-files'
+# List of corpus directories corresponding to the EDXML
+# versions that we support.
+versions = ['3/3.0/3.0.0']
 
 # This glob pattern can be used to select a subset of
 # directories that will be tested, which may be useful when
@@ -30,15 +32,17 @@ dir_glob = '*'
 
 def generate_valid_merge_sequence_fixture_params():
     params = []
-    for test_dir in os.listdir(corpus_path):
-        if corpus_path + '/' + test_dir in glob(corpus_path + '/' + dir_glob):
-            test_params = {'input_paths': []}
-            for filename in os.listdir(corpus_path + '/' + test_dir):
-                if filename.startswith('input'):
-                    test_params['input_paths'].append(corpus_path + '/' + test_dir + '/' + filename)
-                else:
-                    test_params['expected_path'] = corpus_path + '/' + test_dir + '/' + filename
-            params.append(test_params)
+    for version_dir in versions:
+        valid_dir = CORPUS_PATH + version_dir + '/valid/merge-multiple-files/'
+        for test_dir in os.listdir(valid_dir):
+            if valid_dir + test_dir in glob(valid_dir + test_dir + dir_glob):
+                test_params = {'input_paths': []}
+                for filename in os.listdir(valid_dir + test_dir):
+                    if filename.startswith('input'):
+                        test_params['input_paths'].append(valid_dir + test_dir + '/' + filename)
+                    else:
+                        test_params['expected_path'] = valid_dir + test_dir + '/' + filename
+                params.append(test_params)
 
     return params
 

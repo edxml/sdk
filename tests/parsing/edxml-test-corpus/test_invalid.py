@@ -20,8 +20,9 @@ from edxml import EDXMLPullParser
 from edxml.error import EDXMLValidationError
 from edxml_test_corpus import CORPUS_PATH
 
-
-corpus_path = CORPUS_PATH + '/invalid'
+# List of corpus directories corresponding to the EDXML
+# versions that we support.
+versions = ['3/3.0/3.0.0']
 
 # This glob pattern can be used to select a subset of
 # files that will be tested, which may be useful when
@@ -30,29 +31,32 @@ file_glob = '*.edxml'
 
 
 def generate_invalid_structure_fixture_params():
-    path = corpus_path + '/structure'
     params = []
-    for filename in os.listdir(path):
-        if path + '/' + filename in glob(path + '/' + file_glob):
-            params.append({'path': path + '/' + filename})
+    for version_dir in versions:
+        path = CORPUS_PATH + version_dir + '/invalid/structure/'
+        for filename in os.listdir(path):
+            if path + filename in glob(path + file_glob):
+                params.append({'path': path + filename})
     return params
 
 
 def generate_invalid_ontology_fixture_params():
-    path = corpus_path + '/ontology'
     params = []
-    for filename in os.listdir(path):
-        if path + '/' + filename in glob(path + '/' + file_glob):
-            params.append({'path': path + '/' + filename})
+    for version_dir in versions:
+        path = CORPUS_PATH + version_dir + '/invalid/ontology/'
+        for filename in os.listdir(path):
+            if path + filename in glob(path + file_glob):
+                params.append({'path': path + filename})
     return params
 
 
 def generate_invalid_event_fixture_params():
-    path = corpus_path + '/event'
     params = []
-    for filename in os.listdir(path):
-        if path + '/' + filename in glob(path + '/' + file_glob):
-            params.append({'path': path + '/' + filename})
+    for version_dir in versions:
+        path = CORPUS_PATH + version_dir + '/invalid/event/'
+        for filename in os.listdir(path):
+            if path + filename in glob(path + file_glob):
+                params.append({'path': path + filename})
     return params
 
 
