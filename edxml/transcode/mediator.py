@@ -382,10 +382,6 @@ class TranscoderMediator(object):
             transcoder.set_ontology(self.__ontology)
             list(transcoder.generate_event_types())
 
-        if len(self.__ontology.get_event_sources()) == 0:
-            log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
-            self.__ontology.create_event_source('/undefined/')
-
         # Note that below validation also triggers loading of
         # ontology bricks that contain definitions referred to
         # by event types.
@@ -394,6 +390,10 @@ class TranscoderMediator(object):
         self._ontology_populated = True
 
     def _write_ontology_update(self):
+        if len(self.__ontology.get_event_sources()) == 0:
+            log.warning('No EDXML source was defined before writing the first event, generating bogus source.')
+            self.__ontology.create_event_source('/undefined/')
+
         # Here, we write ontology updates resulting
         # from adding new ontology elements while
         # generating events. Currently, this is limited
