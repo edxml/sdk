@@ -32,6 +32,7 @@ class PropertyRelation(OntologyElement):
                  type_class, type_predicate, confidence=10):
 
         self._type = type_class
+        self._is_reversed = False
 
         self.__attr = {
             'source': source.get_name(),
@@ -60,6 +61,16 @@ class PropertyRelation(OntologyElement):
         if self.__attr[key] != value:
             self.__attr[key] = value
             self._child_modified_callback()
+
+    def is_reversed(self):
+        """
+        Returns True when the direction of the relation has been reversed
+        compared to how it is originally defined. Returns False otherwise.
+
+        Returns:
+            bool:
+        """
+        return self._is_reversed
 
     def get_persistent_id(self):
         """
@@ -537,5 +548,7 @@ class PropertyRelation(OntologyElement):
         reversed.__attr['target-concept'] = source_concept
         reversed.__attr['source'] = target
         reversed.__attr['target'] = source
+
+        reversed._is_reversed = not reversed._is_reversed
 
         return reversed
