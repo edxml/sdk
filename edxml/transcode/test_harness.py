@@ -71,7 +71,7 @@ class TranscoderTestHarness(TranscoderMediator):
 
         Args:
             transcoder (edxml.transcode.RecordTranscoder): The record transcoder under test
-            base_ontology (edxml.Ontology): Base ontology
+            base_ontology (edxml.ontology.Ontology): Base ontology
         """
         self._base_ontology = base_ontology
         self.events = EventCollection()
