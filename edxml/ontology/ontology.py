@@ -915,13 +915,13 @@ class Ontology(OntologyElement):
         if isinstance(other_ontology, Ontology):
             if validate:
                 other_ontology.validate()
-            for ObjectTypeName, objectType in other_ontology.get_object_types().items():
-                self._add_object_type(objectType)
-            for EventTypeName, eventType in other_ontology.get_event_types().items():
-                self._add_event_type(eventType)
-            for ConceptName, concept in other_ontology.get_concepts().items():
+            for object_type in other_ontology.get_object_types().values():
+                self._add_object_type(object_type)
+            for event_type in other_ontology.get_event_types().values():
+                self._add_event_type(event_type)
+            for concept in other_ontology.get_concepts().values():
                 self._add_concept(concept)
-            for uri, source in other_ontology.get_event_sources().items():
+            for source in other_ontology.get_event_sources().values():
                 self._add_event_source(source)
 
         elif isinstance(other_ontology, etree._Element):
