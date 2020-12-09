@@ -557,8 +557,11 @@ class Template(object):
                         event_type, element, event_properties, capitalize, colorize
                     )
                     capitalize = False
+                    if processed == '':
+                        return ''
                 else:
                     processed = ''
+
             result += processed
 
         return result
