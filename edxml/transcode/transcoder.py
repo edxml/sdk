@@ -81,7 +81,7 @@ class RecordTranscoder(object):
     """
     The TYPE_DISPLAY_NAMES attribute is a dictionary mapping EDXML event type names
     to event type display names. Each display name is a list, containing the singular
-    form, optionally followed by the plural form, like this:
+    form, optionally followed by the plural form, like this::
 
         {'event-type-name': ['event', 'events']}
 

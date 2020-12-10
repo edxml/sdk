@@ -52,9 +52,9 @@ class XmlTranscoderMediator(TranscoderMediator):
         associated with registered record transcoders. When the argument is not
         used, the tag names will be guessed from the xpath expressions that
         the record transcoders have been registered with. Namespaced tags can be
-        specified using James Clark notation:
+        specified using James Clark notation::
 
-          {http://www.w3.org/1999/xhtml}html
+            {http://www.w3.org/1999/xhtml}html
 
         The use of EXSLT regular expressions in XPath expressions is supported and
         can be specified like in this example::
@@ -65,7 +65,7 @@ class XmlTranscoderMediator(TranscoderMediator):
           Any record transcoder that registers itself using None
           as the XPath expression is used as the fallback transcoder. The
           fallback transcoder is used to transcode any record that does not
-           match any XPath expression of any registered transcoder.
+          match any XPath expression of any registered transcoder.
 
         Args:
           xpath_expression (Optional[str]): XPath of matching XML records
