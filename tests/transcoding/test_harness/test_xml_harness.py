@@ -28,12 +28,12 @@ def test_harness_basics():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=TestXmlTranscoder(),
+        transcoder_root='/root/records'
     )
 
     harness.add_event_source('/test/')
     harness.set_event_source('/test/')
-    harness.register('/root/records', TestXmlTranscoder())
-    harness.process_xml(filename='test.xml', transcoder_root='/root/records')
+    harness.process_xml(filename='test.xml')
 
     assert repr(harness.events.ontology) == '1 event types, 2 object types, 1 sources and 0 concepts'
     assert len(harness.events) == 1
@@ -47,17 +47,17 @@ def test_harness_event_validation():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=FailingTranscoder(),
+        transcoder_root='/root/records'
     )
 
     harness.add_event_source('/test/')
     harness.set_event_source('/test/')
-    harness.register('/root/records', FailingTranscoder())
 
     # The value of element 'p1' in the XML is not a number while the property
     # data type is. Here we check that the harness validates the transcoder
     # output and a validation exception is raised.
     with pytest.raises(EDXMLValidationError, match='Invalid value for property property1'):
-        harness.process_xml(filename='test.xml', transcoder_root='/root/records')
+        harness.process_xml(filename='test.xml')
 
 
 def test_harness_post_processing():
@@ -69,13 +69,13 @@ def test_harness_post_processing():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=FailingTranscoder(),
+        transcoder_root='/root/records'
     )
 
     harness.add_event_source('/test/')
     harness.set_event_source('/test/')
-    harness.register('/root/records', FailingTranscoder())
 
-    harness.process_xml(filename='test.xml', transcoder_root='/root/records')
+    harness.process_xml(filename='test.xml')
 
     assert harness.events[0]['property1'] == {'processed'}
 
@@ -87,10 +87,11 @@ def test_harness_element_root_guessing_failure():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=FailingTranscoder(),
+        transcoder_root='/root/records'
     )
 
     with pytest.raises(Exception, match='No element root was specified'):
-        harness.process_xml(filename='test.xml', transcoder_root='/root/records')
+        harness.process_xml(filename='test.xml')
 
 
 def test_harness_ontology_upgrade_failure():
@@ -105,10 +106,9 @@ def test_harness_ontology_upgrade_failure():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=TestXmlTranscoder(),
-        base_ontology=ontology
+        base_ontology=ontology,
+        transcoder_root='/root/records'
     )
-
-    harness.register('/root/records', TestXmlTranscoder())
 
     with pytest.raises(EDXMLValidationError, match='not compatible'):
         harness.close()
@@ -123,10 +123,9 @@ def test_harness_invalid_base_ontology():
     harness = XmlTranscoderTestHarness(
         fixtures_path=os.path.dirname(os.path.abspath(__file__)),
         transcoder=TestXmlTranscoder(),
+        transcoder_root='/root/records',
         base_ontology=ontology
     )
-
-    harness.register('/root/records', TestXmlTranscoder())
 
     with pytest.raises(Exception, match='test harness is not valid'):
         harness.close()
