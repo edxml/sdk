@@ -86,6 +86,8 @@ class TranscoderTestHarness(TranscoderMediator):
         # parser will populate self.events.
         super().__init__(output=parser)
         self.transcoder = transcoder
+        self.add_event_source('/test/harness/')
+        self.set_event_source('/test/harness/')
         if register:
             self.register(record_selector, transcoder)
 

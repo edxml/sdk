@@ -31,8 +31,6 @@ def test_harness_basics():
         transcoder_root='/root/records'
     )
 
-    harness.add_event_source('/test/')
-    harness.set_event_source('/test/')
     harness.process_xml(filename='test.xml')
 
     assert repr(harness.events.ontology) == '1 event types, 2 object types, 1 sources and 0 concepts'
@@ -49,9 +47,6 @@ def test_harness_event_validation():
         transcoder=FailingTranscoder(),
         transcoder_root='/root/records'
     )
-
-    harness.add_event_source('/test/')
-    harness.set_event_source('/test/')
 
     # The value of element 'p1' in the XML is not a number while the property
     # data type is. Here we check that the harness validates the transcoder
@@ -71,9 +66,6 @@ def test_harness_post_processing():
         transcoder=FailingTranscoder(),
         transcoder_root='/root/records'
     )
-
-    harness.add_event_source('/test/')
-    harness.set_event_source('/test/')
 
     harness.process_xml(filename='test.xml')
 
