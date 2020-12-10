@@ -30,7 +30,7 @@ class Template(object):
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATETIME', 'DURATION',
         'COUNTRYCODE', 'MERGE',
-        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'NEWPAR', 'URL'
+        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'NEWPAR', 'URL'
     )
 
     DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATETIME']
@@ -130,6 +130,13 @@ class Template(object):
                         )
                     property_arguments = arguments
                     other_arguments = []
+                elif formatter == 'UNLESS_EMPTY':
+                    if len(arguments) < 2:
+                        raise EDXMLValidationError(
+                            'String formatter (%s) requires at least two arguments.' % formatter
+                        )
+                    property_arguments = arguments[:-1]
+                    other_arguments = arguments[-1:]
                 else:
                     raise Exception('FORMATTER_PROPERTY_COUNTS is missing count for %s formatter.' % formatter)
             else:
@@ -476,6 +483,12 @@ class Template(object):
                     # Property has no object, use the second formatter argument
                     # in stead of the object value itself.
                     object_strings.append(arguments[1])
+
+            elif formatter == 'UNLESS_EMPTY':
+
+                not_empty_string = arguments.pop()
+                if [value for property_name in arguments for value in event_object_values[property_name]]:
+                    object_strings.append(not_empty_string)
 
             elif formatter == 'NEWPAR':
 

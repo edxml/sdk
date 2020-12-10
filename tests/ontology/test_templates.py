@@ -258,6 +258,16 @@ def test_render_empty(event_type):
         .evaluate(event_type, event) == 'nothing'
 
 
+def test_render_unless_empty():
+
+    event = EDXMLEvent({})
+
+    assert Template('{Value is {[[p-float]]}{ or [[p-string]]}}.}')\
+        .evaluate(event_type, event) == 'Value is .'
+    assert Template('{[[UNLESS_EMPTY:p-float,p-string,Value]] is {[[p-float]]}{ or [[p-string]]}.}')\
+        .evaluate(event_type, event) == ''
+
+
 def test_render_geo_point(event_type):
 
     event = EDXMLEvent({'p-geo': '43.133122,115.734600'})
@@ -278,6 +288,8 @@ def test_validate_unknown_property(event_type):
         Template('[[unknown-property]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='do not exist'):
         Template('[[MERGE:unknown-property]]').validate(event_type)
+    with pytest.raises(EDXMLValidationError, match='do not exist'):
+        Template('[[UNLESS_EMPTY:unknown-property,test]]').validate(event_type)
 
 
 def test_validate_invalid_property(event_type):
@@ -390,3 +402,8 @@ def test_validate_boolean_is_isnot_wrong_argument_count(event_type):
 def test_validate_empty_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
         Template('[[EMPTY:]]').validate(event_type)
+
+
+def test_validate_unless_empty_wrong_argument_count(event_type):
+    with pytest.raises(EDXMLValidationError, match='requires at least two arguments'):
+        Template('[[UNLESS_EMPTY:p-string]]').validate(event_type)
