@@ -7,7 +7,7 @@ The SDK contains a concept mining implementation that builds an in-memory graph 
 .. toctree::
    :maxdepth: 0
 
-   mining_construct_graph
+   mining_knowledge
    mining_graph
    mining_result
    mining_visualize

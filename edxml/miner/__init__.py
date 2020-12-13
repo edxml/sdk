@@ -11,7 +11,7 @@
 #                                                                                        =
 # ========================================================================================
 
-from .graph.construct import EventCollector, GraphConstructor
+from .graph.construct import GraphConstructor
 from .node import Node
 
-__all__ = ['EventCollector', 'GraphConstructor', 'Node']
+__all__ = ['GraphConstructor', 'Node']

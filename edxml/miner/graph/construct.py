@@ -17,13 +17,7 @@ This module offers classes for constructing graphs for concept mining.
 ..  autoclass:: GraphConstructor
     :members:
     :show-inheritance:
-
-..  autoclass:: EventCollector
-    :members:
-    :show-inheritance:
 """
-
-from edxml import EDXMLPullParser
 from edxml.miner.node import EventObjectNode
 from edxml.ontology import Ontology
 
@@ -145,24 +139,3 @@ class GraphConstructor(object):
         """
         self._ontology.update(ontology)
         self._graph.update_ontology(ontology)
-
-
-class EventCollector(EDXMLPullParser):
-    """
-    EDXML parser that uses a GraphConstructor to populate a
-    graph while parsing EDXML data.
-    """
-    def __init__(self, constructor):
-        """
-
-        Args:
-            constructor (GraphConstructor):
-        """
-        super().__init__()
-        self._constructor = constructor
-
-    def _parsed_ontology(self, ontology):
-        self._constructor.update_ontology(ontology)
-
-    def _parsed_event(self, event):
-        self._constructor.add(event)

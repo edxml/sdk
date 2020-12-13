@@ -14,20 +14,18 @@
 import os
 import re
 
-from edxml.miner import EventCollector, GraphConstructor
-from edxml.miner.graph import ConceptInstanceGraph
+from edxml.miner.knowledge import KnowledgePullParser, KnowledgeBase
 from edxml.miner.graph.visualize import graphviz_concepts, graphviz_nodes
 from edxml.miner.result import MinedConceptInstanceCollection
 
 
 def get_mining_result() -> MinedConceptInstanceCollection:
-    graph = ConceptInstanceGraph()
-    constructor = GraphConstructor(graph)
+    knowledge = KnowledgeBase()
+    parser = KnowledgePullParser(knowledge)
+    parser.parse(os.path.dirname(__file__) + '/input.edxml')
 
-    EventCollector(constructor).parse(os.path.dirname(__file__) + '/input.edxml')
-
-    graph.mine(min_confidence=0.001)
-    return graph.extract_result_set(min_confidence=0.01)
+    knowledge.mine(min_confidence=0.001)
+    return knowledge.concept_collection
 
 
 def test_concepts_graph(tmp_path):

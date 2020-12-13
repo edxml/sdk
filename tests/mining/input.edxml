@@ -16,6 +16,9 @@
   <ontology>
     <object-types>
       <object-type name="oa" description="a" display-name-singular="a" display-name-plural="a" version="1" data-type="string:10:mc"/>
+      <object-type name="ob" description="b" display-name-singular="b" display-name-plural="b" version="1" data-type="string:10:mc"/>
+      <object-type name="oc" description="c" display-name-singular="c" display-name-plural="c" version="1" data-type="string:10:mc"/>
+      <object-type name="od" description="d" display-name-singular="d" display-name-plural="d" version="1" data-type="string:10:mc"/>
     </object-types>
     <concepts>
       <concept name="ca" version="1" description="a" display-name-singular="a" display-name-plural="a"/>
@@ -23,22 +26,25 @@
     <event-types>
       <event-type name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
         <properties>
-          <property name="pa" object-type="oa" description="description" optional="true" multivalued="true" confidence="10" merge="match">
+          <property name="pa" object-type="oa" description="description" optional="true" multivalued="false" confidence="10" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
-          <property name="pb" object-type="oa" description="b" optional="true" multivalued="true" confidence="10" merge="match">
+          <property name="pb" object-type="ob" description="b" optional="true" multivalued="true" confidence="10" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
-          <property name="pc" object-type="oa" description="c" optional="true" multivalued="true" confidence="10" merge="match">
+          <property name="pc" object-type="oc" description="c" optional="true" multivalued="true" confidence="10" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
-          <property name="pd" object-type="oa" description="d" optional="true" multivalued="true" confidence="10" merge="match">
+          <property name="pd" object-type="od" description="d" optional="true" multivalued="true" confidence="10" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
         </properties>
         <relations>
           <intra source="pa" target="pb" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pb]]" confidence="2" predicate="linked"/>
           <inter source="pa" target="pd" source-concept="ca" target-concept="ca" description="[[pa]] linked to [[pd]]" confidence="2" predicate="linked"/>
+          <name source="pa" target="pb"/>
+          <description source="pa" target="pc"/>
+          <container source="pa" target="pd"/>
         </relations>
       </event-type>
     </event-types>

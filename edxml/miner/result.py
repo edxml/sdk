@@ -359,18 +359,21 @@ class ConceptInstanceCollection:
     def append(self, concept):
         self.concepts[concept.id] = concept
 
-    def to_json(self, **kwargs):
+    def to_json(self, as_string=True, **kwargs):
         """
 
-        Returns a JSON representation of the concept instance collection. Note that this
+        Returns a JSON representation of the concept instance collection. Note that this is
         a basic representation which does not include details such as the nodes associated
         with a particular concept attribute.
 
+        Optionally a dictionary can be returned in stead of a JSON string.
+
         Args:
+            as_string (bool): Returns a JSON string or not
             **kwargs: Keyword arguments for the json.dumps() method.
 
         Returns:
-            str: JSON string
+            Union[dict, str]: JSON string or dictionary
         """
         dicts = []
         for seed_id, concept in self.concepts.items():
@@ -386,13 +389,14 @@ class ConceptInstanceCollection:
 
             related_concepts = []
             for related_seed_id, confidence in concept.get_related_concepts().items():
-                related_concept = self.concepts[related_seed_id]
-                related_concepts.append(
-                    {
-                        'id': related_concept.id,
-                        'confidence': confidence,
-                    }
-                )
+                if related_seed_id in self.concepts:
+                    related_concept = self.concepts[related_seed_id]
+                    related_concepts.append(
+                        {
+                            'id': related_concept.id,
+                            'confidence': confidence,
+                        }
+                    )
 
             dicts.append(
                 {
@@ -404,7 +408,10 @@ class ConceptInstanceCollection:
                 }
             )
 
-        return json.dumps({'concepts': dicts}, **kwargs)
+        if as_string:
+            return json.dumps({'concepts': dicts}, **kwargs)
+        else:
+            return {'concepts': dicts}
 
 
 class MinedConceptInstanceCollection(ConceptInstanceCollection):

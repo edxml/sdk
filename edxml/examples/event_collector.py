@@ -1,14 +1,16 @@
 import os
 
-from edxml.miner import EventCollector, GraphConstructor
-from edxml.miner.graph import ConceptInstanceGraph
+from edxml.miner.knowledge import KnowledgeBase, KnowledgePullParser
 
 
-# Construct graph.
-graph = ConceptInstanceGraph()
-constructor = GraphConstructor(graph)
-EventCollector(constructor).parse(os.path.dirname(__file__) + '/input.edxml')
+# Parse some EDXML data into a knowledge base.
+knowledge = KnowledgeBase()
+parser = KnowledgePullParser(knowledge)
+parser.parse(os.path.dirname(__file__) + '/input.edxml')
 
-# Now mine it (automatic seed selection).
-graph.mine()
-results = graph.extract_result_set()
+# Now mine concepts using automatic seed selection.
+knowledge.mine()
+
+# In case events were parsed that provide a description for some
+# object value, we can fetch it from the knowledge base.
+names = knowledge.get_descriptions_for('some.object.type', 'some value')
