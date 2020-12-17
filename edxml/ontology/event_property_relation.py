@@ -538,6 +538,7 @@ class PropertyRelation(OntologyElement):
 
     def reversed(self):
         reversed = copy(self)
+        reversed.__attr = dict(reversed.__attr)
 
         source_concept = reversed.__attr['source-concept']
         target_concept = reversed.__attr['target-concept']
