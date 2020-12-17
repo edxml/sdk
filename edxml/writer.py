@@ -364,7 +364,7 @@ class EDXMLWriter(object):
                 offending_property_values_all = {str(v) for v in event[offending_property_name]}
                 offending_property_values_bad = [b.text for b in event.get_element().xpath(last_error.path)]
                 event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
-                log.warning(
+                log.info(
                     'Repaired invalid property %s of event type %s (%s): %s => %s\n' % (
                         offending_property_name,
                         event.get_type_name(),
@@ -452,12 +452,12 @@ class EDXMLWriter(object):
                 # event_element.
                 try:
                     event = self._repair_event(event, schema)
-                    log.warning('Event validated after repairing it.')
+                    log.info('Event validated after repairing it.')
                     event_element = event.get_element()
                 except EDXMLValidationError as error:
                     if self.__ignore_invalid_events:
                         if self.__log_invalid_events:
-                            log.warning(str(error) + '\n\nContinuing anyways.\n')
+                            log.info(str(error) + '\n\nContinuing anyways.\n')
                         return self
                     else:
                         raise
