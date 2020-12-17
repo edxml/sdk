@@ -463,6 +463,16 @@ class EventProperty(OntologyElement):
         self._set_attr('optional', is_optional)
         return self
 
+    def make_single_valued(self):
+        """
+        Make the property single-valued.
+
+        Returns:
+          edxml.ontology.EventProperty: The EventProperty instance
+        """
+        self._set_attr('multivalued', False)
+        return self
+
     def make_multivalued(self):
         """
         Make the property multi-valued.
