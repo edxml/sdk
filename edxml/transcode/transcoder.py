@@ -111,7 +111,7 @@ class RecordTranscoder(object):
 
     Example::
 
-      {'event_type_name': {'property_name': 'object_type_name'}}
+      {'event-type-name': {'property-name': 'object-type-name'}}
 
     """
 
@@ -126,7 +126,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'property-a': lambda x: yield x.lower()
           }
         }
@@ -143,7 +143,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event.type.name': {
+          'event-type-name': {
             'property-a': {'concept.name': 8},
             'property-b': {'concept.name': 8}, {'another.concept.name': 7},
           }
@@ -162,7 +162,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event.type.name': {
+          'event-type-name': {
             'property-a': {'concept.name': 192},
             'property-b': {'concept.name': 64}, {'another.concept.name': 0},
           }
@@ -184,7 +184,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event.type.name': {
+          'event-type-name': {
             'property-a': {'concept.name': ['object.type.name:attribute.name-extension']},
             'property-b': {'concept.name': ['object.type.name:attribute.name-extension', 'singular', 'plural']},
           }
@@ -204,7 +204,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'product-id': 'product-name'
           }
         }
@@ -223,7 +223,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'product-id': 'product-description'
           }
         }
@@ -242,7 +242,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'product-name': 'product-category'
           }
         }
@@ -258,7 +258,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'property-a': 'description',
             'property-b': 'description'
           }
@@ -276,7 +276,7 @@ class RecordTranscoder(object):
     Example::
 
         {
-          'event_type_name': {
+          'event-type-name': {
             'property-a': 'similar attribute',
             'property-b': 'similar attribute'
           }
@@ -300,8 +300,8 @@ class RecordTranscoder(object):
     Example::
 
       {
-        'event_type_name': {
-          'property_name': EventProperty.MERGE_ADD
+        'event-type-name': {
+          'property-name': EventProperty.MERGE_ADD
         }
       }
 
@@ -312,7 +312,7 @@ class RecordTranscoder(object):
     The TYPE_HASHED_PROPERTIES attribute is a dictionary mapping EDXML event type names to lists of hashed properties.
     The lists will be used to set the 'match' merge strategy for the listed properties. Example::
 
-      {'event_type_name': ['hashed-property-a', 'hashed-property-b']}
+      {'event-type-name': ['hashed-property-a', 'hashed-property-b']}
     """
 
     PARENTS_CHILDREN = []
@@ -377,7 +377,7 @@ class RecordTranscoder(object):
     span properties. The first value in each tuple is the name of the property that defines the
     start of the event time spans, the second defines the end. By default, both are unset. Example::
 
-      {'event_type_name': ['timespan-start', 'timespan-end']}
+      {'event-type-name': ['timespan-start', 'timespan-end']}
     """
 
     TYPE_ATTACHMENTS = {}
@@ -385,7 +385,7 @@ class RecordTranscoder(object):
     The TYPE_ATTACHMENTS attribute is a dictionary mapping EDXML event type names to attachment names.
     Example::
 
-      {'event_type_name': ['my-attachment', 'another-attachment']}
+      {'event-type-name': ['my-attachment', 'another-attachment']}
     """
 
     TYPE_MULTI_VALUED_PROPERTIES = {}
@@ -394,7 +394,7 @@ class RecordTranscoder(object):
     property names that will be multi-valued.
     Example::
 
-      {'event_type_name': ['my-property', 'another-property']}
+      {'event-type-name': ['my-property', 'another-property']}
     """
 
     TYPE_OPTIONAL_PROPERTIES = {}
@@ -403,11 +403,11 @@ class RecordTranscoder(object):
     property names that will be optional.
     Example::
 
-      {'event_type_name': ['my-property', 'another-property']}
+      {'event-type-name': ['my-property', 'another-property']}
 
     It is also possible to indicate that all event properties of a particular event type will be optional, like this::
 
-      {'event_type_name': True}
+      {'event-type-name': True}
 
     In this case TYPE_MANDATORY_PROPERTIES can be used to specify exceptions.
     """
@@ -420,7 +420,7 @@ class RecordTranscoder(object):
     to lists of property names that will be mandatory.
     Example::
 
-      {'event_type_name': ['my-property', 'another-property']}
+      {'event-type-name': ['my-property', 'another-property']}
     """
 
     TYPE_ATTACHMENT_MEDIA_TYPES = {}
@@ -429,7 +429,7 @@ class RecordTranscoder(object):
     types. The attachment media types are a dictionary mapping attachment names to its RFC 6838 media type.
     Example::
 
-      {'event_type_name': {'my-attachment': 'text/plain'}}
+      {'event-type-name': {'my-attachment': 'text/plain'}}
     """
 
     TYPE_ATTACHMENT_DISPLAY_NAMES = {}
@@ -451,7 +451,7 @@ class RecordTranscoder(object):
     descriptions. The attachment descriptions are a dictionary mapping attachment names to its description.
     Example::
 
-      {'event_type_name': {'my-attachment': 'Just some attachment'}}
+      {'event-type-name': {'my-attachment': 'Just some attachment'}}
     """
 
     TYPE_ATTACHMENT_ENCODINGS = {}
@@ -461,7 +461,7 @@ class RecordTranscoder(object):
     encodings are either 'unicode' or 'base64'
     Example::
 
-      {'event_type_name': {'my-attachment': 'unicode'}}
+      {'event-type-name': {'my-attachment': 'unicode'}}
     """
 
     TYPE_AUTO_REPAIR_NORMALIZE = {}
