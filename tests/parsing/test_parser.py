@@ -35,6 +35,15 @@ def test_basic_push_parsing():
         assert repr(parser.get_ontology()) == '2 event types, 1 object types, 2 sources and 0 concepts'
 
 
+def test_repetitive_parsing():
+    with EDXMLPullParser() as parser:
+        # Parsing two EDXML files in succession should
+        # not break the parser.
+        parser.parse(os.path.dirname(__file__) + '/input.edxml')
+        parser.parse(os.path.dirname(__file__) + '/input.edxml')
+        assert parser.get_event_counter() == 2
+
+
 def test_event_type_handler(caplog):
 
     def handler(event):

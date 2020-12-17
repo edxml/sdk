@@ -502,6 +502,12 @@ class EDXMLParserBase(object):
             else:
                 raise EDXMLValidationError('Parser received unexpected element with tag %s' % elem.tag)
 
+    def _init(self):
+        self.__num_parsed_events = 0
+        self.__root_element = None
+        self.__parsed_initial_ontology = False
+        self.__previous_event = None
+
     def _check_element_is_event_property(self, elem):
         # Event properties can have names like 'event' or 'ontology', which
         # are tags that trigger the parser to stop, expecting to find an event
@@ -674,6 +680,8 @@ class EDXMLPullParser(EDXMLParserBase):
             tag=self._VISITED_TAGS + list(foreign_element_tags), **self._LXML_PARSER_OPTIONS
         )
 
+        self._init()
+
         # Set a custom class that lxml should use for
         # representing event elements
         lookup = etree.ElementNamespaceClassLookup()
@@ -737,6 +745,8 @@ class EDXMLPushParser(EDXMLParserBase):
                 tag=self._VISITED_TAGS + self.__foreign_element_tags,
                 **self._LXML_PARSER_OPTIONS
             )
+
+            self._init()
 
             # Set a custom class that lxml should use for
             # representing event elements
