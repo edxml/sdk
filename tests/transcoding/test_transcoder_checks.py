@@ -119,6 +119,30 @@ def test_spurious_type_parent_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_type_universals_name_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_NAMES = {'spurious': {'property-a': 'property-a'}}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_type_universals_description_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_DESCRIPTIONS = {'spurious': {'property-a': 'property-a'}}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_type_universals_container_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_CONTAINERS = {'spurious': {'property-a': 'property-a'}}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
 def test_spurious_property_description_exception(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
@@ -197,6 +221,54 @@ def test_spurious_property_concept_attribute_exception(transcoder):
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
     type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
     type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'spurious': {}}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_name_source_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_NAMES = {'event-type.a': {'property-a': 'spurious'}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_name_target_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_NAMES = {'event-type.a': {'spurious': 'property-a'}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_description_source_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_DESCRIPTIONS = {'event-type.a': {'property-a': 'spurious'}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_description_target_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_DESCRIPTIONS = {'event-type.a': {'spurious': 'property-a'}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_container_source_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_CONTAINERS = {'event-type.a': {'property-a': 'spurious'}}
+    with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
+        dict(transcoder.generate_event_types())
+
+
+def test_spurious_property_universals_container_target_exception(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
+    type(transcoder).TYPE_UNIVERSALS_CONTAINERS = {'event-type.a': {'spurious': 'property-a'}}
     with pytest.raises(ValueError, match='not in TYPE_PROPERTIES'):
         dict(transcoder.generate_event_types())
 

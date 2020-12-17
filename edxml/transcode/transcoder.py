@@ -192,6 +192,63 @@ class RecordTranscoder(object):
 
     """
 
+    TYPE_UNIVERSALS_NAMES = {}
+    """
+    The TYPE_UNIVERSALS_NAMES attribute is a dictionary mapping EDXML event type names to name relations.
+    The name relations are dictionaries mapping properties containing object values (source properties) to
+    other properties containing names for those object values (target properties). Name relations are
+    discussed in detail in the EDXML specification.
+
+    Note that the source properties are automatically marked as being single-valued.
+
+    Example::
+
+        {
+          'event_type_name': {
+            'product-id': 'product-name'
+          }
+        }
+
+    """
+
+    TYPE_UNIVERSALS_DESCRIPTIONS = {}
+    """
+    The TYPE_UNIVERSALS_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to description relations.
+    The description relations are dictionaries mapping properties containing object values (source properties) to
+    other properties containing description for those object values (target properties). Description relations are
+    discussed in detail in the EDXML specification.
+
+    Note that the source properties are automatically marked as being single-valued.
+
+    Example::
+
+        {
+          'event_type_name': {
+            'product-id': 'product-description'
+          }
+        }
+
+    """
+
+    TYPE_UNIVERSALS_CONTAINERS = {}
+    """
+    The TYPE_UNIVERSALS_CONTAINERS attribute is a dictionary mapping EDXML event type names to container relations.
+    The container relations are dictionaries mapping properties containing object values (source properties) to
+    other properties providing 'containers' for those object values (target properties). Container relations are
+    discussed in detail in the EDXML specification.
+
+    Note that the source properties are automatically marked as being single-valued.
+
+    Example::
+
+        {
+          'event_type_name': {
+            'product-name': 'product-category'
+          }
+        }
+
+    """
+
     TYPE_PROPERTY_DESCRIPTIONS = {}
     """
     The TYPE_PROPERTY_DESCRIPTIONS attribute is a dictionary mapping EDXML event type names to property
@@ -594,6 +651,13 @@ class RecordTranscoder(object):
                             )
                         association.set_attribute(attr_name_extension, *attribute_details[1:])
 
+        for target_property, source_property in cls.TYPE_UNIVERSALS_NAMES.get(event_type_name, {}).items():
+            event_type.get_properties()[source_property].make_single_valued().relate_name(target_property)
+        for target_property, source_property in cls.TYPE_UNIVERSALS_DESCRIPTIONS.get(event_type_name, {}).items():
+            event_type.get_properties()[source_property].make_single_valued().relate_description(target_property)
+        for target_property, source_property in cls.TYPE_UNIVERSALS_CONTAINERS.get(event_type_name, {}).items():
+            event_type.get_properties()[source_property].make_single_valued().relate_container(target_property)
+
         for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
             attachment = event_type.create_attachment(attachment_name)
             if attachment_name in cls.TYPE_ATTACHMENT_DESCRIPTIONS.get(event_type_name, {}):
@@ -710,6 +774,46 @@ class RecordTranscoder(object):
                                 % (cls.__name__, property_name, event_type_name, concept_name)
                             )
 
+            existing_properties = set(cls.TYPE_PROPERTIES.get(event_type_name, {}).keys())
+            if event_type_name in cls.TYPE_UNIVERSALS_NAMES:
+                for target_property_name, source_property_name in cls.TYPE_UNIVERSALS_NAMES[event_type_name].items():
+                    if target_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_NAMES contains target property {target_property_name} "
+                            f"which is not in TYPE_PROPERTIES."
+                        )
+                    if source_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_NAMES contains source property {target_property_name} "
+                            f"which is not in TYPE_PROPERTIES."
+                        )
+            if event_type_name in cls.TYPE_UNIVERSALS_DESCRIPTIONS:
+                for target_property_name, source_property_name in \
+                        cls.TYPE_UNIVERSALS_DESCRIPTIONS[event_type_name].items():
+                    if target_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_DESCRIPTIONS contains target property "
+                            f"{target_property_name} which is not in TYPE_PROPERTIES."
+                        )
+                    if source_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_DESCRIPTIONS contains source property "
+                            f"{target_property_name} which is not in TYPE_PROPERTIES."
+                        )
+            if event_type_name in cls.TYPE_UNIVERSALS_CONTAINERS:
+                for target_property_name, source_property_name in \
+                        cls.TYPE_UNIVERSALS_CONTAINERS[event_type_name].items():
+                    if target_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_CONTAINERS contains target property "
+                            f"{target_property_name} which is not in TYPE_PROPERTIES."
+                        )
+                    if source_property_name not in existing_properties:
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_UNIVERSALS_CONTAINERS contains source property "
+                            f"{target_property_name} which is not in TYPE_PROPERTIES."
+                        )
+
             if event_type_name in cls.PARENT_MAPPINGS:
                 parent_event_type_name = None
                 for parent_child in cls.PARENTS_CHILDREN:
@@ -744,7 +848,8 @@ class RecordTranscoder(object):
             'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_ATTACHMENTS',
             'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
             'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',
-            'TYPE_ATTACHMENT_ENCODINGS', 'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP'
+            'TYPE_ATTACHMENT_ENCODINGS', 'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP',
+            'TYPE_UNIVERSALS_NAMES', 'TYPE_UNIVERSALS_DESCRIPTIONS', 'TYPE_UNIVERSALS_CONTAINERS'
         ]
 
         for constant_name in const_with_event_type_keys:

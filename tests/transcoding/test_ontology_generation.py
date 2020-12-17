@@ -222,6 +222,29 @@ def test_optional_mandatory_properties_b(transcoder):
         assert event_type.get_properties()['property-b'].is_mandatory()
 
 
+def test_universals_relations(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {
+            'property-a': 'object-type.string',
+            'property-b': 'object-type.string'
+        }
+    }
+    type(transcoder).TYPE_UNIVERSALS_NAMES = {'event-type.a': {'property-a': 'property-b'}}
+    type(transcoder).TYPE_UNIVERSALS_DESCRIPTIONS = {'event-type.a': {'property-a': 'property-b'}}
+    type(transcoder).TYPE_UNIVERSALS_CONTAINERS = {'event-type.a': {'property-a': 'property-b'}}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    for event_type in event_types.values():
+        assert event_type.get_properties()['property-b'].is_single_valued()
+        for relation_type in ['name', 'description', 'container']:
+            assert event_type.get_property_relations(relation_type) != {}
+            assert list(event_type.get_property_relations(relation_type).values())[0].get_type() == relation_type
+            assert list(event_type.get_property_relations(relation_type).values())[0].get_source() == 'property-b'
+            assert list(event_type.get_property_relations(relation_type).values())[0].get_target() == 'property-a'
+
+
 def test_concept_associations(transcoder):
     type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
