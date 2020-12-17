@@ -728,7 +728,7 @@ class EDXMLPushParser(EDXMLParserBase):
         content of the passed string buffer.
 
         Args:
-          data (str): String data
+          data (bytes): String data
 
         """
         if self._element_iterator is None:

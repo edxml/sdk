@@ -89,7 +89,7 @@ class EDXMLPushParser(EDXMLParserBase):
         self.__input_parser = ... # type: etree.XMLPullParser
         self.__foreign_element_tags = ... # type: List
 
-    def feed(self, data: str) -> None: ...
+    def feed(self, data: bytes) -> None: ...
 
 
 class EDXMLOntologyPullParser(EDXMLPullParser):
