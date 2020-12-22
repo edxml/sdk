@@ -86,6 +86,16 @@ def test_render_float(event_type):
     assert Template('Value is [[p-float]].').evaluate(event_type, event) == 'Value is 1.200000.'
 
 
+def test_render_float_invalid(event_type):
+
+    event = EDXMLEvent({'p-float': 'unknown'})
+
+    with pytest.raises(ValueError):
+        Template('Value is [[p-float]]').evaluate(event_type, event)
+
+    assert Template('Value is [[p-float]]').evaluate(event_type, event, ignore_value_errors=True) == 'Value is unknown'
+
+
 def test_render_datetime(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T23:47:10.123456Z'})
@@ -114,6 +124,16 @@ def test_render_datetime(event_type):
     assert Template('On [[DATETIME:p-time-start,microsecond]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
 
+def test_render_datetime_invalid(event_type):
+
+    event = EDXMLEvent({'p-time-start': 'A long, long time ago'})
+
+    with pytest.raises(ValueError):
+        Template('[[DATETIME:p-time-start,year]].').evaluate(event_type, event)
+
+    assert Template('[[DATETIME:p-time-start,year]].')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'A long, long time ago.'
+
 
 def test_render_time_span(event_type):
 
@@ -129,6 +149,17 @@ def test_render_time_span_missing_value(event_type):
 
     assert Template('Time span [[TIMESPAN:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == ''
+
+
+def test_render_time_span_invalid(event_type):
+
+    event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
+
+    with pytest.raises(ValueError):
+        Template('Time span [[TIMESPAN:p-time-start,p-time-end]].').evaluate(event_type, event)
+
+    assert Template('Time span [[TIMESPAN:p-time-start,p-time-end]].')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'Time span between start and end.'
 
 
 def test_render_duration_seconds(event_type):
@@ -177,6 +208,17 @@ def test_render_duration_years(event_type):
 
     assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 years, 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
+
+
+def test_render_duration_invalid(event_type):
+
+    event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
+
+    with pytest.raises(ValueError):
+        Template('It took [[DURATION:p-time-start,p-time-end]].').evaluate(event_type, event)
+
+    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'It took the time that passed between start and end.'
 
 
 def test_render_duration_missing_value(event_type):
@@ -229,6 +271,17 @@ def test_render_boolean_string_choice(event_type):
         .evaluate(event_type, event) in ['yes and no', 'no and yes']
 
 
+def test_render_boolean_string_choice_invalid(event_type):
+
+    event = EDXMLEvent({'p-bool': 'invalid'})
+
+    with pytest.raises(ValueError):
+        Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]').evaluate(event_type, event)
+
+    assert Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'yes or no'
+
+
 def test_render_boolean_on_off(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
@@ -237,12 +290,34 @@ def test_render_boolean_on_off(event_type):
         .evaluate(event_type, event) in ['on and off', 'off and on']
 
 
+def test_render_boolean_on_off_invalid(event_type):
+
+    event = EDXMLEvent({'p-bool': 'invalid'})
+
+    with pytest.raises(ValueError):
+        Template('[[BOOLEAN_ON_OFF:p-bool]]').evaluate(event_type, event)
+
+    assert Template('[[BOOLEAN_ON_OFF:p-bool]]')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'on or off'
+
+
 def test_render_boolean_is_is_not(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
     assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
         .evaluate(event_type, event) in ['is and is not', 'is not and is']
+
+
+def test_render_boolean_is_is_not_invalid(event_type):
+
+    event = EDXMLEvent({'p-bool': 'invalid'})
+
+    with pytest.raises(ValueError):
+        Template('[[BOOLEAN_IS_ISNOT:p-bool]]').evaluate(event_type, event)
+
+    assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
+        .evaluate(event_type, event, ignore_value_errors=True) == 'is or is not'
 
 
 def test_render_empty(event_type):
@@ -274,6 +349,16 @@ def test_render_geo_point(event_type):
 
     assert Template('[[p-geo]]')\
         .evaluate(event_type, event) == '43°7′59 N″ 115°44′4 E″'
+
+
+def test_render_geo_point_invalid(event_type):
+
+    event = EDXMLEvent({'p-geo': 'invalid'})
+
+    with pytest.raises(ValueError):
+        Template('[[p-geo]]').evaluate(event_type, event)
+
+    assert Template('[[p-geo]]').evaluate(event_type, event, ignore_value_errors=True) == 'invalid'
 
 
 def test_validate_unbalanced_brackets(event_type):

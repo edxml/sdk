@@ -198,7 +198,7 @@ class Template(object):
 
         return self
 
-    def evaluate(self, event_type, edxml_event, capitalize=True, colorize=False):
+    def evaluate(self, event_type, edxml_event, capitalize=True, colorize=False, ignore_value_errors=False):
         """
 
         Evaluates the EDXML template of an event type using
@@ -211,18 +211,23 @@ class Template(object):
         when printed on the terminal, the objects in the evaluated string will
         be displayed using bold white characters.
 
+        When rendering of object values fails because the value is not valid for
+        its object type an exception is raised unless ignore_value_errors is enabled.
+
         Args:
           event_type (edxml.ontology.EventType): the event type of the event
           edxml_event (edxml.EDXMLEvent): the EDXML event to use
           capitalize (bool): Capitalize output or not
           colorize (bool): Colorize output or not
+          ignore_value_errors (bool): Ignore object value errors yes or no
 
         Returns:
           str:
         """
 
         return self._process_split_template(
-            self._split_template(self._template)[1], event_type, edxml_event.get_properties(), capitalize, colorize
+            self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
+            capitalize, colorize, ignore_value_errors
         )
 
     @classmethod
@@ -311,7 +316,9 @@ class Template(object):
                    (delta.seconds, delta.microseconds)
 
     @classmethod
-    def _process_simple_placeholder_string(cls, event_type, string, event_object_values, capitalize_string, colorize):
+    def _process_simple_placeholder_string(
+            cls, event_type, string, event_object_values, capitalize_string, colorize, ignore_value_errors
+    ):
         """
 
         Args:
@@ -320,6 +327,7 @@ class Template(object):
             event_object_values (Dict[str, set]):
             capitalize_string (bool):
             colorize (bool):
+            ignore_value_errors (bool):
 
         Returns:
             str
@@ -354,7 +362,13 @@ class Template(object):
                 if property_data_types[property_name].get_split()[1] in ('float', 'double'):
                     # Floating point numbers are normalized in scientific notation,
                     # here we format it to whatever is the most suitable for the value.
-                    event_object_values[property_name] = {'%f' % float(value) for value in values}
+                    try:
+                        event_object_values[property_name] = {'%f' % float(value) for value in values}
+                    except ValueError:
+                        if not ignore_value_errors:
+                            raise
+                        # Object value is not valid. Just render the values as strings.
+                        event_object_values[property_name] = {str(value) for value in values}
 
         for placeholder in placeholders:
 
@@ -371,37 +385,56 @@ class Template(object):
 
                 try:
                     # Note that we use lexicographic sorting here.
-                    date_time_start = parse(min(event_object_values[arguments[0]]))
-                    date_time_end = parse(min(event_object_values[arguments[1]]))
+                    date_time_start = min(event_object_values[arguments[0]])
+                    date_time_end = min(event_object_values[arguments[1]])
                 except ValueError:
                     # An argument was missing or a property is missing an object
                     # value. This implies that we must return an empty string.
                     return ''
 
+                try:
+                    span = parse(date_time_start).isoformat(' '), parse(date_time_end).isoformat(' ')
+                except ParserError:
+                    if not ignore_value_errors:
+                        raise
+                    # Not a valid date string. Just render it as-is.
+                    span = date_time_start, date_time_end
                 object_strings.append(
-                    'between %s and %s' % (date_time_start.isoformat(' '), date_time_end.isoformat(' '))
+                    'between %s and %s' % span
                 )
 
             elif formatter == 'DURATION':
 
                 try:
                     # Note that we use lexicographic sorting here.
-                    date_time_start = parse(min(event_object_values[arguments[0]]))
-                    date_time_end = parse(min(event_object_values[arguments[1]]))
+                    date_time_start = min(event_object_values[arguments[0]])
+                    date_time_end = min(event_object_values[arguments[1]])
                 except ValueError:
                     # An argument was missing or a property is missing an object
                     # value. This implies that we must return an empty string.
                     return ''
 
-                object_strings.append(
-                    cls._format_time_duration(date_time_start, date_time_end)
-                )
+                try:
+                    duration = cls._format_time_duration(parse(date_time_start), parse(date_time_end))
+                except ParserError:
+                    if not ignore_value_errors:
+                        raise
+                    # Not a valid date string. Just render it as-is.
+                    duration = f"the time that passed between {date_time_start} and {date_time_end}"
+
+                object_strings.append(duration)
 
             elif formatter == 'DATETIME':
 
                 for object_value in event_object_values[arguments[0]]:
-                    date_time = parse(object_value)
-
+                    try:
+                        date_time = parse(object_value)
+                    except ParserError:
+                        if not ignore_value_errors:
+                            raise
+                        # Not a valid date string. Just render it as-is.
+                        object_strings.append(object_value)
+                        continue
                     try:
                         if arguments[1] == 'microsecond':
                             object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%S.%fh'))
@@ -453,28 +486,42 @@ class Template(object):
                 for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
                         object_strings.append(true)
-                    else:
+                    elif object_value == 'false':
                         object_strings.append(false)
+                    else:
+                        if not ignore_value_errors:
+                            raise ValueError(f"Invalid boolean value in property {property_name}: {object_value}")
+                        # Not a valid object value, we have no way
+                        # of picking one or the other.
+                        object_strings.append(f"{true} or {false}")
 
             elif formatter == 'BOOLEAN_ON_OFF':
 
                 for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
-                        # Print 'on'
                         object_strings.append('on')
-                    else:
-                        # Print 'off'
+                    elif object_value == 'false':
                         object_strings.append('off')
+                    else:
+                        if not ignore_value_errors:
+                            raise ValueError(f"Invalid boolean value in property {arguments[0]}: {object_value}")
+                        # Not a valid object value, we have no way
+                        # of picking one or the other.
+                        object_strings.append('on or off')
 
             elif formatter == 'BOOLEAN_IS_ISNOT':
 
                 for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
-                        # Print 'is'
                         object_strings.append('is')
-                    else:
-                        # Print 'is not'
+                    elif object_value == 'false':
                         object_strings.append('is not')
+                    else:
+                        if not ignore_value_errors:
+                            raise ValueError(f"Invalid boolean value in property {arguments[0]}: {object_value}")
+                        # Not a valid object value, we have no way
+                        # of picking one or the other.
+                        object_strings.append('is or is not')
 
             elif formatter == 'EMPTY':
 
@@ -501,18 +548,24 @@ class Template(object):
                 property_name = arguments[0]
                 if property_name in property_data_types and property_data_types[property_name].type == 'geo:point':
                     for object_value in event_object_values[property_name]:
-                        lat, long = object_value.split(',')
-                        degrees = int(float(lat))
-                        minutes = int((float(lat) - degrees) * 60.0)
-                        seconds = int((float(lat) - degrees - (minutes / 60.0)) * 3600.0)
+                        try:
+                            lat, long = object_value.split(',')
+                            degrees = int(float(lat))
+                            minutes = int((float(lat) - degrees) * 60.0)
+                            seconds = int((float(lat) - degrees - (minutes / 60.0)) * 3600.0)
 
-                        lat_long = '%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S')
+                            lat_long = '%d°%d′%d %s″' % (degrees, minutes, seconds, 'N' if degrees > 0 else 'S')
 
-                        degrees = int(float(long))
-                        minutes = int((float(long) - degrees) * 60.0)
-                        seconds = int((float(long) - degrees - (minutes / 60.0)) * 3600.0)
+                            degrees = int(float(long))
+                            minutes = int((float(long) - degrees) * 60.0)
+                            seconds = int((float(long) - degrees - (minutes / 60.0)) * 3600.0)
 
-                        lat_long += ' %d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W')
+                            lat_long += ' %d°%d′%d %s″' % (degrees, minutes, seconds, 'E' if degrees > 0 else 'W')
+                        except ValueError:
+                            if not ignore_value_errors:
+                                raise
+                            # Not a valid object value, just print it as-is.
+                            lat_long = object_value
 
                         object_strings.append(lat_long)
                 else:
@@ -555,19 +608,22 @@ class Template(object):
         return string
 
     @classmethod
-    def _process_split_template(cls, elements, event_type, event_properties, capitalize, colorize, iteration_level=0):
+    def _process_split_template(
+            cls, elements, event_type, event_properties, capitalize, colorize, ignore_value_errors, iteration_level=0
+    ):
         result = ''
 
         for element in elements:
             if type(element) == list:
                 processed = cls._process_split_template(
-                    element, event_type, event_properties, capitalize, colorize, iteration_level + 1
+                    element, event_type, event_properties, capitalize, colorize,
+                    ignore_value_errors, iteration_level + 1
                 )
                 capitalize = False
             else:
                 if element != '':
                     processed = cls._process_simple_placeholder_string(
-                        event_type, element, event_properties, capitalize, colorize
+                        event_type, element, event_properties, capitalize, colorize, ignore_value_errors
                     )
                     capitalize = False
                     if processed == '':
