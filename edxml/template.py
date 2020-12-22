@@ -617,30 +617,25 @@ class Template(object):
                         # Not a valid date string. Just render it as-is.
                         object_strings.append(object_value)
                         continue
-                    try:
-                        if arguments[1] == 'microsecond':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%S.%fh'))
-                        elif arguments[1] == 'millisecond':
-                            object_strings.append(
-                                date_time.strftime('%A, %B %d %Y at %H:%M:%S.') +
-                                date_time.strftime('%f')[:3] + 'h'
-                            )
-                        elif arguments[1] == 'second':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%Sh'))
-                        elif arguments[1] == 'minute':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%Mh'))
-                        elif arguments[1] == 'hour':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y at %Hh'))
-                        elif arguments[1] == 'date':
-                            object_strings.append(date_time.strftime('%A, %B %d %Y'))
-                        elif arguments[1] == 'month':
-                            object_strings.append(date_time.strftime('%B %Y'))
-                        else:  # year
-                            object_strings.append(date_time.strftime('%Y'))
-                    except ValueError:
-                        # This may happen for some time stamps before year 1900, which
-                        # is not supported by strftime.
-                        object_strings.append('some date, a long, long time ago')
+                    if arguments[1] == 'microsecond':
+                        object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%S.%fh'))
+                    elif arguments[1] == 'millisecond':
+                        object_strings.append(
+                            date_time.strftime('%A, %B %d %Y at %H:%M:%S.') +
+                            date_time.strftime('%f')[:3] + 'h'
+                        )
+                    elif arguments[1] == 'second':
+                        object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%M:%Sh'))
+                    elif arguments[1] == 'minute':
+                        object_strings.append(date_time.strftime('%A, %B %d %Y at %H:%Mh'))
+                    elif arguments[1] == 'hour':
+                        object_strings.append(date_time.strftime('%A, %B %d %Y at %Hh'))
+                    elif arguments[1] == 'date':
+                        object_strings.append(date_time.strftime('%A, %B %d %Y'))
+                    elif arguments[1] == 'month':
+                        object_strings.append(date_time.strftime('%B %Y'))
+                    else:  # year
+                        object_strings.append(date_time.strftime('%Y'))
 
             elif formatter == 'URL':
 

@@ -127,6 +127,14 @@ def test_render_datetime(event_type):
     assert Template('On [[DATETIME:p-time-start,microsecond]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
 
+    # Below we test for an issue in the strftime implementation in some older
+    # versions of Python where dates before the year 1900 would raise a ValueError.
+    # In recent versions this should not happen anymore.
+
+    event = EDXMLEvent({'p-time-start': '1720-11-25T23:47:10.123456Z'})
+    assert Template('In [[DATETIME:p-time-start,year]].').evaluate(event_type, event) == 'In 1720.'
+
+
 def test_render_datetime_invalid(event_type):
 
     event = EDXMLEvent({'p-time-start': 'A long, long time ago'})
