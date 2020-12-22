@@ -192,14 +192,11 @@ class Template(object):
 
         return self
 
-    def evaluate(self, event_type, edxml_event, capitalize=True, colorize=False, ignore_value_errors=False):
+    def evaluate(self, event_type, edxml_event, colorize=False, ignore_value_errors=False):
         """
 
         Evaluates the EDXML template of an event type using
         specified event, returning the result.
-
-        By default, we will try to capitalize the first letter of the resulting
-        string, unless capitalize is set to False.
 
         Optionally, the output can be colorized. At his time this means that,
         when printed on the terminal, the objects in the evaluated string will
@@ -211,7 +208,6 @@ class Template(object):
         Args:
           event_type (edxml.ontology.EventType): the event type of the event
           edxml_event (edxml.EDXMLEvent): the EDXML event to use
-          capitalize (bool): Capitalize output or not
           colorize (bool): Colorize output or not
           ignore_value_errors (bool): Ignore object value errors yes or no
 
@@ -221,7 +217,7 @@ class Template(object):
 
         return self._process_split_template(
             self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
-            capitalize, colorize, ignore_value_errors
+            colorize, ignore_value_errors
         )
 
     @classmethod
@@ -493,7 +489,7 @@ class Template(object):
 
     @classmethod
     def _process_simple_placeholder_string(
-            cls, event_type, string, event_object_values, capitalize_string, colorize, ignore_value_errors
+            cls, event_type, string, event_object_values, colorize, ignore_value_errors
     ):
         """
 
@@ -501,7 +497,6 @@ class Template(object):
             event_type (edxml.ontology.EventType):
             string (str):
             event_object_values (Dict[str, set]):
-            capitalize_string (bool):
             colorize (bool):
             ignore_value_errors (bool):
 
@@ -510,18 +505,6 @@ class Template(object):
         """
 
         replacements = {}
-
-        if capitalize_string and string != '':
-            if string[0] == '{':
-                if string[1:2] != '[[':
-                    # Sting does not start with a placeholder,
-                    # so we can safely capitalize.
-                    string = string[0] + string[1].upper() + string[2:]
-            else:
-                if string[0:1] != '[[':
-                    # Sting does not start with a placeholder,
-                    # so we can safely capitalize.
-                    string = string[0].upper() + string[1:]
 
         # Match on placeholders like "[[DATETIME:datetime,minute]]", creating
         # groups of the strings in between the placeholders and the
@@ -768,23 +751,21 @@ class Template(object):
 
     @classmethod
     def _process_split_template(
-            cls, elements, event_type, event_properties, capitalize, colorize, ignore_value_errors, iteration_level=0
+            cls, elements, event_type, event_properties, colorize, ignore_value_errors, iteration_level=0
     ):
         result = ''
 
         for element in elements:
             if type(element) == list:
                 processed = cls._process_split_template(
-                    element, event_type, event_properties, capitalize, colorize,
+                    element, event_type, event_properties, colorize,
                     ignore_value_errors, iteration_level + 1
                 )
-                capitalize = False
             else:
                 if element != '':
                     processed = cls._process_simple_placeholder_string(
-                        event_type, element, event_properties, capitalize, colorize, ignore_value_errors
+                        event_type, element, event_properties, colorize, ignore_value_errors
                     )
-                    capitalize = False
                     if processed == '':
                         return ''
                 else:
