@@ -19,7 +19,6 @@ from .ontology.event_type import EventType
 from dateutil import relativedelta
 from dateutil.parser import parse, ParserError
 from edxml.error import EDXMLValidationError
-from iso3166 import countries
 from termcolor import colored
 
 
@@ -28,8 +27,7 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile(r'\[\[([^]]*)]]')
 
     KNOWN_FORMATTERS = (
-        'TIMESPAN', 'DATETIME', 'DURATION',
-        'COUNTRYCODE', 'MERGE',
+        'TIMESPAN', 'DATETIME', 'DURATION', 'MERGE',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'URL'
     )
 
@@ -42,7 +40,6 @@ class Template(object):
         'DATE': 1,
         'DATETIME': 1,
         'DURATION': 2,
-        'COUNTRYCODE': 1,
         'BOOLEAN_STRINGCHOICE': 1,
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
@@ -55,7 +52,6 @@ class Template(object):
         'DATE': 1,
         'DATETIME': 2,
         'DURATION': 2,
-        'COUNTRYCODE': 1,
         'BOOLEAN_STRINGCHOICE': 3,
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
@@ -646,14 +642,6 @@ class Template(object):
                 for property_name in arguments:
                     for object_value in event_object_values[property_name]:
                         object_strings.append(object_value)
-
-            elif formatter == 'COUNTRYCODE':
-
-                for object_value in event_object_values[arguments[0]]:
-                    try:
-                        object_strings.append(countries.get(object_value).name)
-                    except KeyError:
-                        object_strings.append(object_value + ' (unknown country code)')
 
             elif formatter == 'BOOLEAN_STRINGCHOICE':
 

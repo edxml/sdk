@@ -266,14 +266,6 @@ def test_render_merge(event_type):
         .evaluate(event_type, event) == ''
 
 
-def test_render_country_code(event_type):
-
-    event = EDXMLEvent({'p-string': 'nl'})
-
-    assert Template('[[COUNTRYCODE:p-string]]')\
-        .evaluate(event_type, event) == 'Netherlands'
-
-
 def test_render_boolean_string_choice(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
@@ -457,16 +449,6 @@ def test_validate_url_extra_argument(event_type):
 def test_validate_merge_missing_property(event_type):
     with pytest.raises(EDXMLValidationError, match='requires at least one property argument'):
         Template('[[MERGE:]]').validate(event_type)
-
-
-def test_validate_country_code_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
-        Template('[[COUNTRYCODE:]]').validate(event_type)
-
-
-def test_validate_country_code_extra_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
-        Template('[[COUNTRYCODE:p-url,foo]]').validate(event_type)
 
 
 def test_validate_boolean_wrong_data_type(event_type):
