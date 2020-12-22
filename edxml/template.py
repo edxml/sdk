@@ -14,10 +14,10 @@
 import re
 from typing import Dict
 
-import edxml.ontology
-
+import edxml
+from .ontology.event_type import EventType
 from dateutil import relativedelta
-from dateutil.parser import parse
+from dateutil.parser import parse, ParserError
 from edxml.error import EDXMLValidationError
 from iso3166 import countries
 from termcolor import colored
@@ -229,6 +229,188 @@ class Template(object):
             self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
             capitalize, colorize, ignore_value_errors
         )
+
+    @classmethod
+    def generate_collapsed_templates(cls, event_type: EventType, template, colorize=False):
+        """
+
+        Generates a sequence of progressively degraded evaluated templates by
+        iteratively omitting object values for the event properties that are
+        mentioned in the template.
+
+        On the first iteration, a complete evaluated template is generated,
+        without omitting any properties. The last iteration yields a fully
+        collapsed template.
+
+        Yields tuples containing two items each. The first item is the set
+        of property names that have been omitted. The second item is the
+        evaluated template.
+
+        Args:
+            event_type (EventType): The associated event type
+            template (str): The EDXML template
+            colorize (bool): Produce colorized output yes or no
+
+        Yields:
+            Tuple[Set, str]:
+        """
+        properties = {}
+        for property_name, event_property in event_type.get_properties().items():
+            if event_property.is_single_valued():
+                properties[property_name] = 'some ' + event_property.get_object_type().get_display_name_singular()
+            else:
+                properties[property_name] = 'one or more ' + event_property.get_object_type().get_display_name_plural()
+
+        # Yield a complete evaluated template first.
+        event = edxml.event.EDXMLEvent(properties)
+        yield set(), Template(template).evaluate(event_type, event, colorize=colorize, ignore_value_errors=True)
+
+        while template != '':
+            start, end, empty_prop_sets = cls._get_innermost_collapsing_property_sets(event_type, template)
+            for empty_prop_set in empty_prop_sets:
+                # Create a new event with one or more omitted properties.
+                # On each iteration, the event gets less detailed.
+                partial_props = dict(properties)
+                for empty_prop in empty_prop_set:
+                    del partial_props[empty_prop]
+                event = edxml.event.EDXMLEvent(partial_props)
+                yield empty_prop_set, Template(template).evaluate(
+                    event_type, event, colorize=colorize, ignore_value_errors=True
+                )
+
+            # Collapse inner scope and repeat.
+            collapsed = template[:start] + Template(template[start:end]).evaluate(
+                    event_type, event, colorize=colorize, ignore_value_errors=True
+                ) + template[end:]
+
+            if collapsed == template:
+                # No more scopes in template. We are done.
+                return
+
+            # Iterate using collapsed template.
+            template = collapsed
+
+    @classmethod
+    def _get_innermost_collapsing_property_sets(cls, event_type, template):
+        """
+
+        Finds sets of properties that, when its object values are omitted,
+        trigger a collapse in the deepest available scope of the template.
+
+        Args:
+            event_type (EventType): The event type
+            template (str): The template
+
+        Returns:
+            Tuple:
+        """
+        _, offset, _, substring = cls._find_innermost_part(cls._split_template(template)[1])
+
+        placeholders = re.findall(r'\[\[[^]]*]]', substring)
+        return (
+            offset,
+            offset + len(substring),
+            cls._find_collapsable_property_sets(placeholders, event_type)
+        )
+
+    @classmethod
+    def _find_innermost_part(cls, split_template, initial_level=0, initial_offset=0):
+        """
+
+        Finds the part of a template that is the most deeply nested in terms of
+        scopes. The can either dig up some sub-scope or the full template in case
+        no sub-scopes are present.
+
+        Args:
+            split_template (List): The split template
+            initial_level (int): Initial depth
+            initial_offset (int): Initial offset into template string
+
+        Returns:
+            Tuple:
+        """
+        deepest_level = initial_level
+        deepest_part = None
+        deepest_offset = 0
+        offset = initial_offset
+        for part in split_template:
+            if isinstance(part, list):
+                # We found a sub-scope. Recurse to search deeper.
+                deeper_level, deeper_offset, offset, deeper_part = cls._find_innermost_part(
+                    part, initial_level + 1, offset
+                )
+                # Note that the curly brackets are stripped
+                # from split templates. Here, we compensate
+                # for that.
+                offset += 1
+                deeper_part = '{' + deeper_part + '}'
+            else:
+                deeper_level = initial_level
+                deeper_offset = offset
+                deeper_part = part
+                offset += len(part)
+
+            if deeper_level > deepest_level or deepest_part is None:
+                # We found a part that is at nested
+                # deeper. Or, if this is the first part
+                # we looked at so fat, we will accept anything.
+                deepest_level = deeper_level
+                deepest_part = deeper_part
+                deepest_offset = deeper_offset
+
+        return deepest_level, deepest_offset, offset, deepest_part
+
+    @classmethod
+    def _find_collapsable_property_sets(cls, placeholders, event_type):
+        """
+
+        Returns a list of sets of property names from specified placeholders
+        that will trigger a collapse when its values are omitted.
+
+        Args:
+            placeholders (List[str]): The placeholders
+            event_type (EventType): The event type
+
+        Returns:
+            List[Set]:
+        """
+        mandatory_properties = event_type.get_mandatory_property_names()
+
+        collapsable_property_sets = []
+        for placeholder in placeholders:
+            try:
+                formatter, arguments = placeholder[2:-2].split(':', 1)
+            except ValueError:
+                # No placeholder present.
+                formatter = None
+                arguments = placeholder[2:-2]
+            arguments = arguments.split(',')
+            if formatter == 'EMPTY':
+                # Cannot collapse
+                continue
+            if formatter == 'UNLESS_EMPTY':
+                # Collapses when all specified properties empty.
+                if any(arg for arg in arguments[:-1] if arg in mandatory_properties):
+                    # There are mandatory properties amongst the arguments,
+                    # so no collapse can occur.
+                    continue
+                collapsable_property_sets.append(set(arguments[:-1]))
+            elif formatter == 'MERGE':
+                # Can only collapse when all of its
+                # arguments are empty properties
+                if any(arg for arg in arguments if arg in mandatory_properties):
+                    # There are mandatory properties amongst the arguments,
+                    # so no collapse can occur.
+                    continue
+                collapsable_property_sets.append(set(arguments))
+            else:
+                if formatter is None:
+                    properties = arguments
+                else:
+                    properties = arguments[:cls.FORMATTER_PROPERTY_COUNTS[formatter]]
+                collapsable_property_sets.extend({prop, } for prop in properties if prop not in mandatory_properties)
+
+        return collapsable_property_sets
 
     @classmethod
     def _split_template(cls, template, offset=0):

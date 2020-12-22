@@ -26,13 +26,16 @@ def event_type():
     o.create_object_type('bool', data_type=DataType.boolean().type)
     o.create_object_type('geo', data_type=DataType.geo_point().type)
     event_type = o.create_event_type('a')
-    event_type.create_property('p-string', 'string')
-    event_type.create_property('p-float', 'float')
-    event_type.create_property('p-time-start', 'time')
-    event_type.create_property('p-time-end', 'time')
-    event_type.create_property('p-url', 'string')
-    event_type.create_property('p-bool', 'bool')
-    event_type.create_property('p-geo', 'geo')
+    event_type.create_property('p-string', 'string').make_optional()
+    event_type.create_property('p-string-multi-valued', 'string').make_optional().make_multivalued()
+    event_type.create_property('p-float', 'float').make_optional()
+    event_type.create_property('p-time-start', 'time').make_optional()
+    event_type.create_property('p-time-end', 'time').make_optional()
+    event_type.create_property('p-url', 'string').make_optional()
+    event_type.create_property('p-bool', 'bool').make_optional()
+    event_type.create_property('p-geo', 'geo').make_optional()
+    event_type.create_property('p-optional', 'string').make_optional()
+    event_type.create_property('p-mandatory', 'string').make_mandatory()
     return event_type
 
 
@@ -492,3 +495,297 @@ def test_validate_empty_wrong_argument_count(event_type):
 def test_validate_unless_empty_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='requires at least two arguments'):
         Template('[[UNLESS_EMPTY:p-string]]').validate(event_type)
+
+
+def test_generate_collapsed(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-string]]'
+        )
+    )
+    assert results == [
+        (set(), 'some string'),
+        ({'p-string'}, '')
+    ]
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-string-multi-valued]]'
+        )
+    )
+    assert results == [
+        (set(), 'one or more strings'),
+        ({'p-string-multi-valued'}, '')
+    ]
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-string]] [[p-bool]]'
+        )
+    )
+    assert results == [
+        (set(), 'some string some bool'),
+        ({'p-string'}, ''),
+        ({'p-bool'}, '')
+    ]
+
+
+def test_generate_collapsed_scopes(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-string]] {[[p-bool]]} {[[p-float]] {[[p-time-start]] [[p-time-end]]}}'
+        )
+    )
+    # Note that we expect the most deeply scoped properties to be omitted first.
+    # We put those properties at the end of the template to verify that behaviour.
+    # That allows generating as many variants as possible before the template
+    # collapses into an empty string.
+    assert results == [
+        (set(), 'some string some bool some float some time some time'),
+        ({'p-time-start'}, 'some string some bool some float '),
+        ({'p-time-end'}, 'some string some bool some float '),
+        ({'p-bool'}, 'some string  some float '),
+        ({'p-float'}, 'some string  '),
+        ({'p-string'}, '')
+    ]
+
+
+def test_generate_collapsed_mandatory_property(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-optional]] {[[p-optional]]}'
+        )
+    )
+    # Both properties can be omitted. In both cases the
+    # template collapses completely.
+    assert results == [
+        (set(), 'some string some string'),
+        ({'p-optional'}, ''),
+        ({'p-optional'}, '')
+    ]
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-optional]] {[[p-mandatory]]}'
+        )
+    )
+    # Only one property can be omitted, resulting
+    # in the template collapsing.
+    assert results == [
+        (set(), 'some string some string'),
+        ({'p-optional'}, ''),
+    ]
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-mandatory]] {[[p-optional]]}'
+        )
+    )
+    # Only the property in the scope can be omitted,
+    # resulting in a partial collapse.
+    assert results == [
+        (set(), 'some string some string'),
+        ({'p-optional'}, 'some string '),
+    ]
+
+
+def test_generate_collapsed_placeholder_empty(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[EMPTY:p-optional,empty]]'
+        )
+    )
+    # The property can be omitted but this will not
+    # trigger a collapse. So, no collapsed evaluated
+    # templates should be generated.
+    assert results == [(set(), '')]
+
+
+def test_generate_collapsed_placeholder_unless_empty(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[UNLESS_EMPTY:p-optional,p-mandatory,test]]'
+        )
+    )
+    # One property cannot be omitted so a collapse cannot occur.
+    assert results == [(set(), 'test')]
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[UNLESS_EMPTY:p-string,p-bool,test]]'
+        )
+    )
+    # Only when both properties are empty a collapse can
+    # occur.
+    assert results == [
+        (set(), 'test'),
+        ({'p-string', 'p-bool'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_merge(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[MERGE:p-time-start,p-time-end]]'
+        )
+    )
+    # Both properties can be omitted but only when both are
+    # omitted a collapse occurs.
+    assert results == [
+        (set(), 'some time and some time'),
+        ({'p-time-start', 'p-time-end'}, ''),
+    ]
+
+    # When we make one of both mandatory a collapse cannot occur.
+    event_type.get_properties()['p-time-start'].make_mandatory()
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[MERGE:p-time-start,p-time-end]]'
+        )
+    )
+
+    # Now only one of the two properties can be omitted and
+    # a collapse cannot occur.
+    assert results == [(set(), 'some time and some time')]
+
+
+def test_generate_collapsed_placeholder_boolean_string_choice(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            'Choose [[BOOLEAN_STRINGCHOICE:p-bool,one,the other]]'
+        )
+    )
+    assert results == [
+        (set(), 'Choose one or the other'),
+        ({'p-bool'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_boolean_on_off(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            'The alarm is [[BOOLEAN_ON_OFF:p-bool]].'
+        )
+    )
+    assert results == [
+        (set(), 'The alarm is on or off.'),
+        ({'p-bool'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_boolean_is_is_not(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            'The alarm [[BOOLEAN_IS_ISNOT:p-bool]] active.'
+        )
+    )
+    assert results == [
+        (set(), 'The alarm is or is not active.'),
+        ({'p-bool'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_geo_point(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            'The shipment is located at [[p-geo]].'
+        )
+    )
+    assert results == [
+        (set(), 'The shipment is located at some geo.'),
+        ({'p-geo'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_date_time(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[DATETIME:p-time-start,second]]'
+        )
+    )
+    assert results == [
+        (set(), 'some time'),
+        ({'p-time-start'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_time_span(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[TIMESPAN:p-time-start,p-time-end]]'
+        )
+    )
+    # Both properties can be omitted and in both cases
+    # the template will collapse.
+    assert results == [
+        (set(), 'between some time and some time'),
+        ({'p-time-start'}, ''),
+        ({'p-time-end'}, ''),
+    ]
+
+    # When we make one of both mandatory a collapse can only
+    # occur when the other is omitted.
+    event_type.get_properties()['p-time-start'].make_mandatory()
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[TIMESPAN:p-time-start,p-time-end]]'
+        )
+    )
+
+    assert results == [
+        (set(), 'between some time and some time'),
+        ({'p-time-end'}, ''),
+    ]
+
+
+def test_generate_collapsed_placeholder_duration(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[DURATION:p-time-start,p-time-end]]'
+        )
+    )
+    # Both properties can be omitted and in both cases
+    # the template will collapse.
+    assert results == [
+        (set(), 'the time that passed between some time and some time'),
+        ({'p-time-start'}, ''),
+        ({'p-time-end'}, ''),
+    ]
+
+    # When we make one of both mandatory a collapse can only
+    # occur when the other is omitted.
+    event_type.get_properties()['p-time-start'].make_mandatory()
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[DURATION:p-time-start,p-time-end]]'
+        )
+    )
+
+    assert results == [
+        (set(), 'the time that passed between some time and some time'),
+        ({'p-time-end'}, ''),
+    ]

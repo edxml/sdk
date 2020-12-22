@@ -16,8 +16,8 @@ This package contains the EDXML SDK.
 """
 from .version import __version__
 
-from .event import EDXMLEvent, EventElement, ParsedEvent
 from .template import Template
+from .event import EDXMLEvent, EventElement, ParsedEvent
 from .writer import EDXMLWriter
 from .parser import EDXMLParserBase, EDXMLPullParser, EDXMLPushParser, EDXMLOntologyPullParser, EDXMLOntologyPushParser
 from .filter import EDXMLFilterBase, EDXMLPullFilter, EDXMLPushFilter
