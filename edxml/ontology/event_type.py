@@ -143,7 +143,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
             'description': description or name,
             'class-list': class_list,
             'summary': summary,
-            'story': story.replace('\n', '[[NEWPAR:]]'),
+            'story': story,
             'timespan-start': None,
             'timespan-end': None,
             'event-version': None,
@@ -915,8 +915,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
     def set_story_template(self, story):
         """
 
-        Set the event story template. Newline characters are automatically
-        replaced with [[NEWPAR:]] place holders.
+        Set the event story template.
 
         Args:
           story (str): The event story template
@@ -925,7 +924,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
           edxml.ontology.EventType: The EventType instance
         """
 
-        self._set_attr('story', story.replace('\n', '[[NEWPAR:]]'))
+        self._set_attr('story', story)
         return self
 
     def set_version(self, version):
@@ -1127,7 +1126,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
         token_attributes = (
-            'story', 'summary', 'display-name-singular', 'display-name-plural', 'description', 'class-list'
+            'summary', 'display-name-singular', 'display-name-plural', 'description', 'class-list'
         )
 
         for token_attribute in token_attributes:

@@ -30,7 +30,7 @@ class Template(object):
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATETIME', 'DURATION',
         'COUNTRYCODE', 'MERGE',
-        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'NEWPAR', 'URL'
+        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'URL'
     )
 
     DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATETIME']
@@ -47,7 +47,6 @@ class Template(object):
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
         'EMPTY': 1,
-        'NEWPAR': 0,
         'URL': 1
     }
 
@@ -61,7 +60,6 @@ class Template(object):
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
         'EMPTY': 1,
-        'NEWPAR': 0,
         'URL': 2
     }
 
@@ -713,10 +711,6 @@ class Template(object):
                 not_empty_string = arguments.pop()
                 if [value for property_name in arguments for value in event_object_values[property_name]]:
                     object_strings.append(not_empty_string)
-
-            elif formatter == 'NEWPAR':
-
-                object_strings.append('\n')
 
             else:
 
