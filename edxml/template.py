@@ -27,7 +27,7 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile(r'\[\[([^]]*)]]')
 
     KNOWN_FORMATTERS = (
-        'TIMESPAN', 'DATETIME', 'DURATION', 'MERGE',
+        'TIMESPAN', 'DATETIME', 'DURATION', 'MERGE', 'ATTACHMENT',
         'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'URL'
     )
 
@@ -44,6 +44,7 @@ class Template(object):
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
         'EMPTY': 1,
+        'ATTACHMENT': 0,
         'URL': 1
     }
 
@@ -56,6 +57,7 @@ class Template(object):
         'BOOLEAN_ON_OFF': 1,
         'BOOLEAN_IS_ISNOT': 1,
         'EMPTY': 1,
+        'ATTACHMENT': 1,
         'URL': 2
     }
 
@@ -190,6 +192,13 @@ class Template(object):
                         'A DATETIME formatter uses an unknown accuracy option: "%s".' % other_arguments[0]
                     )
 
+            if formatter == 'ATTACHMENT':
+                if other_arguments[0] not in event_type.get_attachments():
+                    raise EDXMLValidationError(
+                        'A ATTACHMENT formatter refers to event attachment "%s", '
+                        'which is not defined.' % other_arguments[0]
+                    )
+
         return self
 
     def evaluate(self, event_type, edxml_event, colorize=False, ignore_value_errors=False):
@@ -217,7 +226,7 @@ class Template(object):
 
         return self._process_split_template(
             self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
-            colorize, ignore_value_errors
+            edxml_event.get_attachments(), colorize, ignore_value_errors
         )
 
     @classmethod
@@ -489,7 +498,7 @@ class Template(object):
 
     @classmethod
     def _process_simple_placeholder_string(
-            cls, event_type, string, event_object_values, colorize, ignore_value_errors
+            cls, event_type, string, event_object_values, event_attachments, colorize, ignore_value_errors
     ):
         """
 
@@ -497,6 +506,7 @@ class Template(object):
             event_type (edxml.ontology.EventType):
             string (str):
             event_object_values (Dict[str, set]):
+            event_attachments (Dict[str, str]):
             colorize (bool):
             ignore_value_errors (bool):
 
@@ -677,6 +687,9 @@ class Template(object):
                     # in stead of the object value itself.
                     object_strings.append(arguments[1])
 
+            elif formatter == 'ATTACHMENT':
+                object_strings.append('\n\n' + event_attachments.get(arguments[0], '') + '\n\n')
+
             elif formatter == 'UNLESS_EMPTY':
 
                 not_empty_string = arguments.pop()
@@ -751,20 +764,21 @@ class Template(object):
 
     @classmethod
     def _process_split_template(
-            cls, elements, event_type, event_properties, colorize, ignore_value_errors, iteration_level=0
+            cls, elements, event_type, event_properties, event_attachments, colorize,
+            ignore_value_errors, iteration_level=0
     ):
         result = ''
 
         for element in elements:
             if type(element) == list:
                 processed = cls._process_split_template(
-                    element, event_type, event_properties, colorize,
+                    element, event_type, event_properties, event_attachments, colorize,
                     ignore_value_errors, iteration_level + 1
                 )
             else:
                 if element != '':
                     processed = cls._process_simple_placeholder_string(
-                        event_type, element, event_properties, colorize, ignore_value_errors
+                        event_type, element, event_properties, event_attachments, colorize, ignore_value_errors
                     )
                     if processed == '':
                         return ''

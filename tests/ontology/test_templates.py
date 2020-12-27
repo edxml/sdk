@@ -364,6 +364,14 @@ def test_render_geo_point_invalid(event_type):
     assert Template('[[p-geo]]').evaluate(event_type, event, ignore_value_errors=True) == 'invalid'
 
 
+def test_render_attachment(event_type):
+
+    event = EDXMLEvent(properties={}, attachments={'foo': 'bar'})
+
+    assert Template('[[ATTACHMENT:foo]]')\
+        .evaluate(event_type, event) == '\n\nbar\n\n'
+
+
 def test_validate_unbalanced_brackets(event_type):
     with pytest.raises(EDXMLValidationError, match='Unbalanced curly brackets'):
         Template('{').validate(event_type)
@@ -385,6 +393,11 @@ def test_validate_invalid_property(event_type):
         Template('[[p-string]]').validate(event_type, property_names=['p-bool'])
     with pytest.raises(EDXMLValidationError, match='cannot be used'):
         Template('[[MERGE:p-string]]').validate(event_type, property_names=['p-bool'])
+
+
+def test_validate_unknown_attachment(event_type):
+    with pytest.raises(EDXMLValidationError, match='is not defined'):
+        Template('[[ATTACHMENT:unknown-attachment]]').validate(event_type)
 
 
 def test_validate_unknown_formatter(event_type):
@@ -449,6 +462,11 @@ def test_validate_url_extra_argument(event_type):
 def test_validate_merge_missing_property(event_type):
     with pytest.raises(EDXMLValidationError, match='requires at least one property argument'):
         Template('[[MERGE:]]').validate(event_type)
+
+
+def test_validate_attachment_missing_attachment_name(event_type):
+    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments, but 0 were specified'):
+        Template('[[ATTACHMENT:]]').validate(event_type)
 
 
 def test_validate_boolean_wrong_data_type(event_type):
