@@ -27,6 +27,7 @@ Python objects and route them records to the correct transcoder.
 """
 from .object_transcoder import ObjectTranscoder
 from .object_transcoder_mediator import ObjectTranscoderMediator
+from .object_test_harness import ObjectTranscoderTestHarness
 
 
-__all__ = ['ObjectTranscoder', 'ObjectTranscoderMediator']
+__all__ = ['ObjectTranscoder', 'ObjectTranscoderMediator', 'ObjectTranscoderTestHarness']
