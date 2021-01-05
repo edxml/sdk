@@ -34,7 +34,7 @@ def test_concepts_graph(tmp_path):
     os.chdir(tmp_path)
     graphviz_concepts(results).render(filename='concepts', format='png')
 
-    source = open(f"{tmp_path}/concepts", 'r').readlines()
+    source = set(open(f"{tmp_path}/concepts", 'r').readlines())
 
     # We expect to see 4 object nodes
     assert len([line for line in source if re.match(r'.*EventObjectNode[^;]+;-[abcd]" \[label.*', line)]) == 4

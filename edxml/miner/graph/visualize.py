@@ -62,7 +62,10 @@ def graphviz_nodes(concepts, graph=None):
                     else:
                         confidence_range = "%.2f" % min(confidences)
                     if isinstance(edge_node, EventObjectHub):
-                        title = "hub %s (%s)" % (edge_node.value, confidence_range)
+                        title = "hub %s (%s)\n%s" % (
+                            edge_node.value, confidence_range,
+                            truncate_string(edge_node.object_type_name, max_length=12, trunc_head=True)
+                        )
                     else:
                         title = "%s (%s)" % (edge_node.value, confidence_range)
                     graph.node(edge_node.id.replace(':', ';'), title)
@@ -117,27 +120,34 @@ def graphviz_concepts(concepts, graph=None):
         strict='true'
     )
 
+    seeds = []
+    confidences = {}
+    for seed_id, concept in concepts.concepts.items():
+        for attribute in concept.attributes:
+            if [node for node in attribute.nodes.values() if node.id == seed_id]:
+                # When any of the nodes of an attribute is a seed, we
+                # consider all of its nodes to be seeds for the sake
+                # of this visualization. We do that because we aggregate
+                # on attributes.
+                seeds.extend(attribute.nodes.keys())
+            # We build a mapping of node ID to the confidence of the
+            # attribute that it is part of.
+            confidences.update({node_id: attribute.confidence for node_id, node in attribute.nodes.items()})
+
     for seed_id, concept in concepts.concepts.items():
         for attribute in concept.attributes:
             # We want to display just one graphviz node for each concept
             # attribute value. So we can suffice to use just one of the
             # object value nodes for each attribute.
             node = next(iter(attribute.nodes.values()))
-            is_seed = [node for node in attribute.nodes.values() if node.id == seed_id] != []
-            _graphviz_add_node(graph, node, seed_id, is_seed, attribute.confidence)
+            _graphviz_add_node_with_edges(graph, seeds, confidences, node, seed_id)
 
     return graph
 
 
-def _graphviz_add_node(graph, node, seed_id, is_seed=False, confidence=None):
+def _graphviz_add_node_with_edges(graph, seeds, confidences, node, seed_id):
 
-    node_color = _get_node_color(node, seed_id, is_seed, confidence)
-
-    node_title = _get_node_title(node.value, node.concept_association.get_concept_name(), subtitle_trunc_head=True)
-
-    node_id = _get_graphviz_node_id(node, seed_id)
-
-    graph.node(node_id, node_title, color=node_color)
+    _graphviz_add_node(graph, seeds, node, seed_id, confidences[node.id])
 
     for edge in node._edges:
         if seed_id not in edge.seeds:
@@ -148,10 +158,18 @@ def _graphviz_add_node(graph, node, seed_id, is_seed=False, confidence=None):
             continue
         source = edge.source
         target = edge.target
-        _graphviz_add_edge(graph, source, target, seed_id)
+        _graphviz_add_edge(graph, seeds, confidences, source, target, seed_id)
 
 
-def _graphviz_add_edge(graph, source, target, seed_id):
+def _graphviz_add_node(graph, seeds, node, seed_id, confidence):
+    node_color = _get_node_color(node, seed_id, node.id in seeds, confidence)
+    node_title = _get_node_title(node.value, node.concept_association.get_concept_name(), subtitle_trunc_head=True)
+    node_id = _get_graphviz_node_id(node, seed_id)
+
+    graph.node(node_id, node_title, color=node_color)
+
+
+def _graphviz_add_edge(graph, seeds, confidences, source, target, seed_id):
 
     if seed_id not in source.seed_confidences:
         # source is not part of concept
@@ -162,6 +180,8 @@ def _graphviz_add_edge(graph, source, target, seed_id):
 
     source_node_id = _get_graphviz_node_id(source, seed_id)
     target_node_id = _get_graphviz_node_id(target, seed_id)
+    _graphviz_add_node(graph, seeds, source, seed_id, confidences[source.id])
+    _graphviz_add_node(graph, seeds, target, seed_id, confidences[target.id])
 
     graph.edge(source_node_id, target_node_id)
 
@@ -211,7 +231,7 @@ def _get_graphviz_node_id(node, seed_id):
     if node.concept_association.get_confidence() > 8:
         source_node_id += f"-{node.attribute_name}-{node.value}"
     else:
-        source_node_id += f"-{seed_id}-{node.concept_association.get_concept_name()}-{node.attribute_name}-{node.value}"
+        source_node_id += f"-{seed_id}-{node.attribute_name}-{node.value}"
 
     # Remove characters with special meaning in GraphViz node names
     return source_node_id.replace(':', ';')
