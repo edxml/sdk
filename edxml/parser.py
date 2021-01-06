@@ -345,7 +345,7 @@ class EDXMLParserBase(object):
                 "Invalid EDXML structure detected: %s\n"
                 "The RelaxNG validator generated the following error: %s\nDetails: %s" %
                 (
-                    etree.tostring(self.__root_element, encoding='unicode'),
+                    etree.tostring(self.__root_element, encoding='unicode', pretty_print=True),
                     str(validation_error),
                     str(validation_error.error_log)
                 )
