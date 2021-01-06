@@ -90,7 +90,7 @@ def generate_graph_property_concepts(ontology, graph):
                     type_property_concepts
                 )
 
-        for relation in ontology.get_event_type(event_type_name).get_property_relations(rtype='intra').values():
+        for relation in ontology.get_event_type(event_type_name).get_property_relations(relation_type='intra').values():
             source = f"property_{event_type_name}_{relation.get_source()}_{relation.get_source_concept()}"
             target = f"property_{event_type_name}_{relation.get_target()}_{relation.get_target_concept()}"
             label = f"label_{source}_{target}"
@@ -107,7 +107,7 @@ def generate_graph_property_concepts(ontology, graph):
                 weight=str(relation.get_confidence())
             )
 
-        for relation in ontology.get_event_type(event_type_name).get_property_relations(rtype='inter').values():
+        for relation in ontology.get_event_type(event_type_name).get_property_relations(relation_type='inter').values():
             source = f"property_{event_type_name}_{relation.get_source()}_{relation.get_source_concept()}"
             target = f"property_{event_type_name}_{relation.get_target()}_{relation.get_target_concept()}"
             label = f"label_{source}_{target}"

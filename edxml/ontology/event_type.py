@@ -366,7 +366,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         return self.__cached_hash_properties
 
-    def get_property_relations(self, rtype=None, source=None, target=None):
+    def get_property_relations(self, relation_type=None, source=None, target=None):
         """
 
         Returns a dictionary containing the property relations that
@@ -376,7 +376,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Optionally, the relations can be filtered on type, source and  target.
 
         Args:
-            rtype (str): Relation type
+            relation_type (str): Relation type
             source (str): Name of source property
             target (str): Name of target property
 
@@ -384,8 +384,8 @@ class EventType(VersionedOntologyElement, MutableMapping):
           Dict[str,PropertyRelation]:
         """
         relations = self.__relations
-        if rtype is not None:
-            relations = {k: r for k, r in relations.items() if r.get_type() == rtype}
+        if relation_type is not None:
+            relations = {k: r for k, r in relations.items() if r.get_type() == relation_type}
         if source is not None:
             relations = {k: r for k, r in relations.items() if r.get_source() == source}
         if target is not None:

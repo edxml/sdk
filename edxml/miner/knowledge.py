@@ -278,7 +278,7 @@ class KnowledgeBase:
         )
 
         for relation_type, universal in universals:
-            for relation in event_type.get_property_relations(rtype=relation_type).values():
+            for relation in event_type.get_property_relations(relation_type).values():
                 source = relation.get_source()
                 target = relation.get_target()
                 source_object_type = event_type.get_properties()[source].get_object_type_name()
