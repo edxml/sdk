@@ -86,7 +86,7 @@ def parse_args():
         '-f',
         '--file',
         type=str,
-        help='By default, input is read from standard input. This option can be used to read from a'
+        help='By default, input is read from standard input. This option can be used to read from a '
              'file in stead.'
     )
 

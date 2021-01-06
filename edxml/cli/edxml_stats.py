@@ -204,7 +204,7 @@ def parse_args():
         '--file',
         type=str,
         action='append',
-        help='By default, input is read from standard input. This option can be used to read from a'
+        help='By default, input is read from standard input. This option can be used to read from a '
              'file in stead. The argument can be used multiple times to compute aggregate statistics'
              'of multiple input files.'
     )
