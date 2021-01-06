@@ -79,6 +79,7 @@ setup(
             'edxml-to-csv=edxml.cli.edxml_to_csv:main',
             'edxml-to-text=edxml.cli.edxml_to_text:main',
             'edxml-validate=edxml.cli.edxml_validate:main',
+            'edxml-mine=edxml.cli.edxml_mine:main',
         ],
     },
 

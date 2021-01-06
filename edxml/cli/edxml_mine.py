@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+
+# ========================================================================================
+#                                                                                        =
+#              Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)                 =
+#                      Copyright (c) 2020 the EDXML Foundation                           =
+#                                                                                        =
+#                                   http://edxml.org                                     =
+#                                                                                        =
+#             This file is part of the EDXML Software Development Kit (SDK)              =
+#                       and is released under the MIT License:                           =
+#                         https://opensource.org/licenses/MIT                            =
+#                                                                                        =
+# ========================================================================================
+
+import argparse
+import logging
+import sys
+from collections import defaultdict
+
+from edxml.cli import configure_logger
+from edxml.miner.graph.visualize import graphviz_nodes, graphviz_concepts
+from edxml.miner.inference import RelationInference
+from edxml.miner.knowledge import KnowledgePullParser, KnowledgeBase
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="This utility performs concept mining on EDXML data received on standard input or from a file."
+    )
+
+    parser.add_argument(
+        '-f',
+        '--file',
+        type=str,
+        help='By default, input is read from standard input. This option can be used to read from a '
+             'file in stead.'
+    )
+
+    parser.add_argument(
+        '--min-confidence', type=float, default=0.1, help='Confidence threshold in range [0,1] for the mining process.'
+    )
+
+    parser.add_argument(
+        '--max-depth', type=int, default=10, help='Maximum number of reasoning iterations for the mining process.'
+    )
+
+    parser.add_argument(
+        '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
+    )
+
+    parser.add_argument(
+        '--quiet', '-q', action='store_true', help='Suppresses all logging messages except for errors.'
+    )
+
+    parser.add_argument(
+        '--tell', action='store_true', help='Prints descriptions of findings while mining.'
+    )
+
+    parser.add_argument(
+        '--dump-json', action='store_true', help='Prints a JSON representation of the mined knowledge.'
+    )
+
+    parser.add_argument(
+        '--dump-concept-graph', type=str, help='Dumps a PNG image of the concept graph to specified output file.'
+    )
+
+    parser.add_argument(
+        '--dump-mining-graph', type=str,
+        help='Dumps a PNG image of the full concept mining graph to specified output file.'
+    )
+
+    return parser.parse_args()
+
+
+def main():
+
+    args = parse_args()
+    configure_logger(args)
+
+    min_confidence = min(1.0, max(0.0, args.min_confidence))
+    max_depth = max(0, args.max_depth)
+
+    logging.info("Constructing graph...")
+    input = open(args.file, 'rb') if args.file else sys.stdin.buffer
+
+    knowledge_base = KnowledgeBase()
+    KnowledgePullParser(knowledge_base).parse(input)
+    logging.info("Graph complete.")
+
+    ontology = knowledge_base._ontology
+
+    found_concepts = set()
+    instance_concepts = defaultdict(set)
+
+    while True:
+        seed = knowledge_base._graph.find_optimal_seed()
+
+        if seed is None:
+            # When the best seed we can find
+            # is tainted, all nodes have been
+            # used and we are done.
+            break
+
+        seed_dn = seed.concept_association.get_attribute_display_name_singular()
+        logging.info(f"Selected seed: {seed_dn} = {seed.value}")
+
+        knowledge_base.mine(seed, min_confidence=min_confidence, max_depth=max_depth)
+        results = knowledge_base.concept_collection
+        # Find the ID of the newly created concept and report it.
+        concept_id = next(iter(set(results.concepts.keys()) - found_concepts))
+        concept = results.concepts[concept_id]
+        if args.tell:
+            instance_concepts[seed.id] = {(seed.concept_association.get_concept_name())}
+            instance_concepts = report_new_concept(ontology, seed.id, concept, instance_concepts)
+        found_concepts.add(concept_id)
+
+    if args.dump_json:
+        print(knowledge_base.to_json(indent=True))
+    if args.dump_concept_graph:
+        logging.info(f"Dumped concept graph into {args.dump_concept_graph}.png")
+        graphviz_concepts(knowledge_base.concept_collection).render(filename=args.dump_concept_graph, format='png')
+    if args.dump_mining_graph:
+        logging.info(f"Dumped mining graph into {args.dump_mining_graph}.png")
+        graphviz_nodes(knowledge_base.concept_collection).render(filename=args.dump_mining_graph, format='png')
+
+
+def report_new_concept(ontology, seed_id, concept_instance, instance_concepts):
+    concept = ontology.get_concept(concept_instance.get_best_concept_name())
+    concept_dn = concept.get_display_name_singular()
+
+    print(f"\nFound a {concept.get_display_name_singular()}: '{concept_instance.get_instance_title()}'")
+
+    for attr in concept_instance.attributes:
+        for attr_concept in attr.concept_names.keys():
+            if attr_concept not in instance_concepts[seed_id]:
+                instance_concepts[seed_id].add(attr_concept)
+                alternative_concept_dn = ontology.get_concept(attr_concept).get_display_name_singular()
+                print(f"Discovery: this {concept_dn} is a {alternative_concept_dn}.")
+        for node in attr.nodes.values():
+            if isinstance(node.reason, RelationInference):
+                relation = node.reason.relation
+                source_value = node.reason.source.value
+                target_value = node.reason.target.value
+                source_dn = node.reason.source.concept_association.get_attribute_display_name_singular()
+                target_dn = node.reason.target.concept_association.get_attribute_display_name_singular()
+                if relation.get_source() != node.reason.source.concept_association.get_property_name():
+                    # Node reason is in opposite direction with respect to the property relation. Unless
+                    # the relation itself has been reversed we need to swap the source / target data to
+                    # make sure that it fits the predicate.
+                    if not relation.reversed():
+                        source_dn, target_dn = target_dn, source_dn
+                        source_value, target_value = target_value, source_value
+                print(
+                    f"Found attribute: "
+                    f"'{source_value}' ({source_dn}) {relation.get_predicate()} '{target_value}' ({target_dn})"
+                )
+                break
+    return instance_concepts
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
