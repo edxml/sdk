@@ -62,6 +62,10 @@ def test_colorized_interpolation(event_type):
     ]
 
 
+def test_get_properties(event_type):
+    assert set(Template('Value is [[p-string]] or [[p-bool]].').get_property_names()) == {'p-string', 'p-bool'}
+
+
 def test_missing_property_collapse(event_type):
 
     event = EDXMLEvent({})

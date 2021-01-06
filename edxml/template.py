@@ -809,3 +809,19 @@ class Template(object):
             arguments = []
 
         return formatter, arguments
+
+    def get_property_names(self):
+        """
+
+        Returns a list containing all property names occurring
+        in all placeholders in the template.
+
+        Returns:
+            List[str]: List of property names
+        """
+        properties = set()
+        placeholders = re.findall(self.TEMPLATE_PATTERN, self._template)
+        for placeholder in placeholders:
+            property_arguments, _ = self._get_placeholder_arguments(placeholder)
+            properties.update(property_arguments)
+        return list(properties)
