@@ -24,7 +24,7 @@ from termcolor import colored
 
 class Template(object):
 
-    TEMPLATE_PATTERN = re.compile(r'\[\[([^]]*)]]')
+    TEMPLATE_PATTERN = re.compile(r'\[\[[^]]*]]')
 
     KNOWN_FORMATTERS = (
         'TIMESPAN', 'DATETIME', 'DURATION', 'MERGE', 'ATTACHMENT',
@@ -98,51 +98,12 @@ class Template(object):
         placeholder_strings = re.findall(self.TEMPLATE_PATTERN, self._template)
 
         for placeholder in placeholder_strings:
-            try:
-                formatter, argument_string = str(placeholder).split(':', 1)
-                arguments = [arg for arg in argument_string.split(',') if arg != '']
-            except ValueError:
-                # Placeholder does not contain a formatter. We only need to
-                # check if the placeholder is a valid property name and skip
-                # to the next placeholder.
-                if placeholder not in properties.keys():
-                    raise EDXMLValidationError(
-                        'Template refers to a property named "%s" which either do not exist or '
-                        'which cannot be used in this template.' % placeholder
-                    )
-                continue
+            formatter, _ = self._parse_placeholder(placeholder)
 
-            if formatter not in self.KNOWN_FORMATTERS:
+            if formatter is not None and formatter not in self.KNOWN_FORMATTERS:
                 raise EDXMLValidationError('Unknown formatter: %s' % formatter)
 
-            property_count = self.FORMATTER_PROPERTY_COUNTS.get(formatter)
-
-            if property_count is None:
-                # Variable property count.
-                if formatter == 'MERGE':
-                    if not arguments:
-                        raise EDXMLValidationError(
-                            'String formatter (%s) requires at least one property argument.' % formatter
-                        )
-                    property_arguments = arguments
-                    other_arguments = []
-                elif formatter == 'UNLESS_EMPTY':
-                    if len(arguments) < 2:
-                        raise EDXMLValidationError(
-                            'String formatter (%s) requires at least two arguments.' % formatter
-                        )
-                    property_arguments = arguments[:-1]
-                    other_arguments = arguments[-1:]
-                else:
-                    raise Exception('FORMATTER_PROPERTY_COUNTS is missing count for %s formatter.' % formatter)
-            else:
-                if len(arguments) < property_count:
-                    raise EDXMLValidationError(
-                        'String formatter (%s) requires %d properties, only %d properties were specified.' %
-                        (formatter, property_count, len(arguments))
-                    )
-                property_arguments = arguments[:property_count]
-                other_arguments = arguments[property_count:]
+            property_arguments, other_arguments = self._get_placeholder_arguments(placeholder)
 
             for property_name in property_arguments:
                 if property_name == '':
@@ -380,13 +341,7 @@ class Template(object):
 
         collapsable_property_sets = []
         for placeholder in placeholders:
-            try:
-                formatter, arguments = placeholder[2:-2].split(':', 1)
-            except ValueError:
-                # No placeholder present.
-                formatter = None
-                arguments = placeholder[2:-2]
-            arguments = arguments.split(',')
+            formatter, arguments = cls._parse_placeholder(placeholder)
             if formatter == 'EMPTY':
                 # Cannot collapse
                 continue
@@ -802,3 +757,55 @@ class Template(object):
             return string
         else:
             return string[0].capitalize() + string[1:]
+
+    @classmethod
+    def _get_placeholder_arguments(cls, placeholder):
+
+        formatter, arguments = cls._parse_placeholder(placeholder)
+        property_count = 1 if formatter is None else cls.FORMATTER_PROPERTY_COUNTS.get(formatter)
+
+        if property_count is None:
+            # Variable property count.
+            if formatter == 'MERGE':
+                if not arguments:
+                    raise EDXMLValidationError(
+                        'String formatter (%s) requires at least one property argument.' % formatter
+                    )
+                property_arguments = arguments
+                other_arguments = []
+            elif formatter == 'UNLESS_EMPTY':
+                if len(arguments) < 2:
+                    raise EDXMLValidationError(
+                        'String formatter (%s) requires at least two arguments.' % formatter
+                    )
+                property_arguments = arguments[:-1]
+                other_arguments = arguments[-1:]
+            else:
+                raise Exception('FORMATTER_PROPERTY_COUNTS is missing count for %s formatter.' % formatter)
+        else:
+            if len(arguments) < property_count:
+                raise EDXMLValidationError(
+                    'String formatter (%s) requires %d properties, only %d properties were specified.' %
+                    (formatter, property_count, len(arguments))
+                )
+            property_arguments = arguments[:property_count]
+            other_arguments = arguments[property_count:]
+
+        return property_arguments, other_arguments
+
+    @classmethod
+    def _parse_placeholder(cls, placeholder):
+        try:
+            formatter, arguments = placeholder[2:-2].split(':', 1)
+        except ValueError:
+            # No placeholder present.
+            formatter = None
+            arguments = placeholder[2:-2]
+        arguments = arguments.split(',')
+
+        if arguments == ['']:
+            # This is from a placeholder that looks like [[FORMATTER:]].
+            # We regard that as a formatter without any arguments.
+            arguments = []
+
+        return formatter, arguments
