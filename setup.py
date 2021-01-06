@@ -80,6 +80,7 @@ setup(
             'edxml-to-text=edxml.cli.edxml_to_text:main',
             'edxml-validate=edxml.cli.edxml_validate:main',
             'edxml-mine=edxml.cli.edxml_mine:main',
+            'edxml-template-tester=edxml.cli.edxml_template_tester:main',
         ],
     },
 
