@@ -48,14 +48,14 @@ def test_basic_interpolation(event_type):
 
 def test_colorized_interpolation(event_type):
 
-    event = EDXMLEvent({'p-string': 'foo'})
+    event = EDXMLEvent({'p-string': 'foo Bar'})
 
-    assert Template('Value is [[p-string]].')\
-        .evaluate(event_type, event, colorize=True) == 'Value is ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m.'
+    assert Template('[[p-string]].')\
+        .evaluate(event_type, event, colorize=True) == '\x1b[1m\x1b[37m' + 'Foo Bar' + '\x1b[0m.'
 
     event = EDXMLEvent({'p-string': ['foo', 'bar']})
 
-    assert Template('Value is [[p-string]].')\
+    assert Template('value is [[p-string]].')\
         .evaluate(event_type, event, colorize=True) in [
         'Value is ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m.',
         'Value is ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m.',
@@ -258,7 +258,7 @@ def test_render_merge(event_type):
     event = EDXMLEvent({'p-string': ['a', 'b'], 'p-url': 'c'})
 
     assert Template('[[MERGE:p-string,p-url]].')\
-        .evaluate(event_type, event) in ['a, b and c.', 'b, a and c.']
+        .evaluate(event_type, event) in ['A, b and c.', 'B, a and c.']
 
     event = EDXMLEvent({})
 
@@ -271,7 +271,7 @@ def test_render_boolean_string_choice(event_type):
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
     assert Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]')\
-        .evaluate(event_type, event) in ['yes and no', 'no and yes']
+        .evaluate(event_type, event) in ['Yes and no', 'No and yes']
 
 
 def test_render_boolean_string_choice_invalid(event_type):
@@ -282,7 +282,7 @@ def test_render_boolean_string_choice_invalid(event_type):
         Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]').evaluate(event_type, event)
 
     assert Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'yes or no'
+        .evaluate(event_type, event, ignore_value_errors=True) == 'Yes or no'
 
 
 def test_render_boolean_on_off(event_type):
@@ -290,7 +290,7 @@ def test_render_boolean_on_off(event_type):
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
     assert Template('[[BOOLEAN_ON_OFF:p-bool]]')\
-        .evaluate(event_type, event) in ['on and off', 'off and on']
+        .evaluate(event_type, event) in ['On and off', 'Off and on']
 
 
 def test_render_boolean_on_off_invalid(event_type):
@@ -301,7 +301,7 @@ def test_render_boolean_on_off_invalid(event_type):
         Template('[[BOOLEAN_ON_OFF:p-bool]]').evaluate(event_type, event)
 
     assert Template('[[BOOLEAN_ON_OFF:p-bool]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'on or off'
+        .evaluate(event_type, event, ignore_value_errors=True) == 'On or off'
 
 
 def test_render_boolean_is_is_not(event_type):
@@ -309,7 +309,7 @@ def test_render_boolean_is_is_not(event_type):
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
     assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
-        .evaluate(event_type, event) in ['is and is not', 'is not and is']
+        .evaluate(event_type, event) in ['Is and is not', 'Is not and is']
 
 
 def test_render_boolean_is_is_not_invalid(event_type):
@@ -320,7 +320,7 @@ def test_render_boolean_is_is_not_invalid(event_type):
         Template('[[BOOLEAN_IS_ISNOT:p-bool]]').evaluate(event_type, event)
 
     assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'is or is not'
+        .evaluate(event_type, event, ignore_value_errors=True) == 'Is or is not'
 
 
 def test_render_empty(event_type):
@@ -333,7 +333,7 @@ def test_render_empty(event_type):
     event = EDXMLEvent({})
 
     assert Template('[[EMPTY:p-string,nothing]]')\
-        .evaluate(event_type, event) == 'nothing'
+        .evaluate(event_type, event) == 'Nothing'
 
 
 def test_render_unless_empty():
@@ -361,7 +361,7 @@ def test_render_geo_point_invalid(event_type):
     with pytest.raises(ValueError):
         Template('[[p-geo]]').evaluate(event_type, event)
 
-    assert Template('[[p-geo]]').evaluate(event_type, event, ignore_value_errors=True) == 'invalid'
+    assert Template('[[p-geo]]').evaluate(event_type, event, ignore_value_errors=True) == 'Invalid'
 
 
 def test_render_attachment(event_type):
@@ -513,7 +513,7 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'some string'),
+        (set(), 'Some string'),
         ({'p-string'}, '')
     ]
 
@@ -524,7 +524,7 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'one or more strings'),
+        (set(), 'One or more strings'),
         ({'p-string-multi-valued'}, '')
     ]
 
@@ -535,7 +535,7 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'some string some bool'),
+        (set(), 'Some string some bool'),
         ({'p-string'}, ''),
         ({'p-bool'}, '')
     ]
@@ -553,11 +553,11 @@ def test_generate_collapsed_scopes(event_type):
     # That allows generating as many variants as possible before the template
     # collapses into an empty string.
     assert results == [
-        (set(), 'some string some bool some float some time some time'),
-        ({'p-time-start'}, 'some string some bool some float '),
-        ({'p-time-end'}, 'some string some bool some float '),
-        ({'p-bool'}, 'some string  some float '),
-        ({'p-float'}, 'some string  '),
+        (set(), 'Some string some bool some float some time some time'),
+        ({'p-time-start'}, 'Some string some bool some float '),
+        ({'p-time-end'}, 'Some string some bool some float '),
+        ({'p-bool'}, 'Some string  some float '),
+        ({'p-float'}, 'Some string  '),
         ({'p-string'}, '')
     ]
 
@@ -572,7 +572,7 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Both properties can be omitted. In both cases the
     # template collapses completely.
     assert results == [
-        (set(), 'some string some string'),
+        (set(), 'Some string some string'),
         ({'p-optional'}, ''),
         ({'p-optional'}, '')
     ]
@@ -586,7 +586,7 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Only one property can be omitted, resulting
     # in the template collapsing.
     assert results == [
-        (set(), 'some string some string'),
+        (set(), 'Some string some string'),
         ({'p-optional'}, ''),
     ]
 
@@ -599,8 +599,8 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Only the property in the scope can be omitted,
     # resulting in a partial collapse.
     assert results == [
-        (set(), 'some string some string'),
-        ({'p-optional'}, 'some string '),
+        (set(), 'Some string some string'),
+        ({'p-optional'}, 'Some string '),
     ]
 
 
@@ -625,7 +625,7 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
         )
     )
     # One property cannot be omitted so a collapse cannot occur.
-    assert results == [(set(), 'test')]
+    assert results == [(set(), 'Test')]
 
     results = list(
         Template.generate_collapsed_templates(
@@ -636,7 +636,7 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
     # Only when both properties are empty a collapse can
     # occur.
     assert results == [
-        (set(), 'test'),
+        (set(), 'Test'),
         ({'p-string', 'p-bool'}, '')
     ]
 
@@ -651,7 +651,7 @@ def test_generate_collapsed_placeholder_merge(event_type):
     # Both properties can be omitted but only when both are
     # omitted a collapse occurs.
     assert results == [
-        (set(), 'some time and some time'),
+        (set(), 'Some time and some time'),
         ({'p-time-start', 'p-time-end'}, ''),
     ]
 
@@ -667,7 +667,7 @@ def test_generate_collapsed_placeholder_merge(event_type):
 
     # Now only one of the two properties can be omitted and
     # a collapse cannot occur.
-    assert results == [(set(), 'some time and some time')]
+    assert results == [(set(), 'Some time and some time')]
 
 
 def test_generate_collapsed_placeholder_boolean_string_choice(event_type):
@@ -730,7 +730,7 @@ def test_generate_collapsed_placeholder_date_time(event_type):
         )
     )
     assert results == [
-        (set(), 'some time'),
+        (set(), 'Some time'),
         ({'p-time-start'}, '')
     ]
 
@@ -745,7 +745,7 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     # Both properties can be omitted and in both cases
     # the template will collapse.
     assert results == [
-        (set(), 'between some time and some time'),
+        (set(), 'Between some time and some time'),
         ({'p-time-start'}, ''),
         ({'p-time-end'}, ''),
     ]
@@ -762,7 +762,7 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     )
 
     assert results == [
-        (set(), 'between some time and some time'),
+        (set(), 'Between some time and some time'),
         ({'p-time-end'}, ''),
     ]
 
@@ -777,7 +777,7 @@ def test_generate_collapsed_placeholder_duration(event_type):
     # Both properties can be omitted and in both cases
     # the template will collapse.
     assert results == [
-        (set(), 'the time that passed between some time and some time'),
+        (set(), 'The time that passed between some time and some time'),
         ({'p-time-start'}, ''),
         ({'p-time-end'}, ''),
     ]
@@ -794,6 +794,6 @@ def test_generate_collapsed_placeholder_duration(event_type):
     )
 
     assert results == [
-        (set(), 'the time that passed between some time and some time'),
+        (set(), 'The time that passed between some time and some time'),
         ({'p-time-end'}, ''),
     ]

@@ -201,7 +201,7 @@ class Template(object):
 
         return self
 
-    def evaluate(self, event_type, edxml_event, colorize=False, ignore_value_errors=False):
+    def evaluate(self, event_type, edxml_event, capitalize=True, colorize=False, ignore_value_errors=False):
         """
 
         Evaluates the EDXML template of an event type using
@@ -217,6 +217,7 @@ class Template(object):
         Args:
           event_type (edxml.ontology.EventType): the event type of the event
           edxml_event (edxml.EDXMLEvent): the EDXML event to use
+          capitalize (bool): Capitalize evaluated template yes or no
           colorize (bool): Colorize output or not
           ignore_value_errors (bool): Ignore object value errors yes or no
 
@@ -224,10 +225,12 @@ class Template(object):
           str:
         """
 
-        return self._process_split_template(
+        evaluated = self._process_split_template(
             self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
             edxml_event.get_attachments(), colorize, ignore_value_errors
         )
+
+        return self._capitalize(evaluated) if capitalize else evaluated
 
     @classmethod
     def generate_collapsed_templates(cls, event_type: EventType, template, colorize=False):
@@ -279,7 +282,7 @@ class Template(object):
 
             # Collapse inner scope and repeat.
             collapsed = template[:start] + Template(template[start:end]).evaluate(
-                    event_type, event, colorize=colorize, ignore_value_errors=True
+                    event_type, event, colorize=colorize, capitalize=False, ignore_value_errors=True
                 ) + template[end:]
 
             if collapsed == template:
@@ -788,3 +791,14 @@ class Template(object):
             result += processed
 
         return result
+
+    @classmethod
+    def _capitalize(cls, string):
+        ansi_start = '\x1b[1m\x1b[37m'
+
+        if string.startswith(ansi_start):
+            return ansi_start + string[len(ansi_start)].capitalize() + string[len(ansi_start) + 1:]
+        elif string == '':
+            return string
+        else:
+            return string[0].capitalize() + string[1:]
