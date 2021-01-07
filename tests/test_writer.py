@@ -33,6 +33,15 @@ def ontology():
 
 
 @pytest.fixture()
+def invalid_ontology(ontology):
+    # An empty story template results in an invalid ontology
+    # which is only detected when validated against the RelaxNG
+    # schema. As such, it uses a different code path in the writer.
+    ontology.get_event_type('ea').set_story_template('')
+    return ontology
+
+
+@pytest.fixture()
 def event():
     return EDXMLEvent(
         properties={'a': 'foo', 'b': 'bar'},
@@ -155,6 +164,12 @@ def test_write_ontology(ontology):
         output = writer.flush()
 
     assert EventCollection.from_edxml(output).ontology == ontology
+
+
+def test_write_invalid_ontology(invalid_ontology):
+    with EDXMLWriter(output=None) as writer:
+        with pytest.raises(EDXMLValidationError):
+            writer.add_ontology(invalid_ontology).close()
 
 
 def test_write_event(ontology, event):

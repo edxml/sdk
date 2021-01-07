@@ -45,10 +45,11 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
+import os
 import sys
 from collections import deque
 
-from typing import Dict
+from typing import Dict, Optional
 
 from lxml import etree
 from copy import deepcopy
@@ -94,6 +95,7 @@ class EDXMLWriter(object):
 
         super().__init__()
 
+        self.__schema = None                    # type: Optional[etree.RelaxNG]
         self.__ontology = Ontology()            # type: Ontology
         self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
         self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
@@ -288,10 +290,44 @@ class EDXMLWriter(object):
             edxml.writer.EDXMLWriter:
         """
 
-        # Below update triggers an exception in case the update
-        # is incompatible or otherwise invalid.
+        # Below update triggers an exception in case the added
+        # ontology is invalid or when it is incompatible with
+        # the existing ontology.
         self.__ontology.update(ontology)
-        self.__writer.send(ontology.generate_xml())
+
+        ontology_element = ontology.generate_xml()
+
+        if self.__validate:
+            edxml = etree.Element('edxml', version='3.0.0', nsmap=NAMESPACE_MAP)
+            edxml.append(ontology_element)
+            # TODO: Below we make a serialize / deserialize round trip. We
+            #       do that because of some namespacing issue that occurs when
+            #       we append the ontology element. The resulting <edxml> element
+            #       will fail to validate saying "Expecting a namespace for element edxml".
+            #       The round trip to XML string and back works around this.
+            edxml = etree.fromstring(etree.tostring(edxml))
+            if not self.__schema:
+                self.__schema = etree.RelaxNG(
+                    etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
+                )
+            try:
+                self.__schema.assertValid(edxml)
+            except (etree.DocumentInvalid, etree.XMLSyntaxError) as validation_error:
+                # Ontology does not validate. Apparently there is something
+                # odd about it that our own validation did not detect. We have
+                # no choice but to generate the schema validation error, which
+                # may be slightly cryptic.
+                raise EDXMLValidationError(
+                    "Invalid EDXML ontology detected: %s\n"
+                    "The RelaxNG validator generated the following error: %s\nDetails: %s" %
+                    (
+                        etree.tostring(edxml, encoding='unicode', pretty_print=True),
+                        str(validation_error),
+                        str(validation_error.error_log)
+                    )
+                )
+
+        self.__writer.send(ontology_element)
 
         self.__event_type_schema_cache = {}
         self.__event_type_schema_cache_ns = {}
