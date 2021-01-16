@@ -27,38 +27,37 @@ class Template(object):
     TEMPLATE_PATTERN = re.compile(r'\[\[[^]]*]]')
 
     KNOWN_FORMATTERS = (
-        'TIMESPAN', 'DATETIME', 'DURATION', 'MERGE', 'ATTACHMENT',
-        'BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT', 'EMPTY', 'UNLESS_EMPTY', 'URL'
+        'time_span', 'date_time', 'duration', 'merge', 'attachment',
+        'boolean_string_choice', 'boolean_on_off', 'boolean_is_is_not', 'empty', 'unless_empty', 'url'
     )
 
-    DATE_TIME_FORMATTERS = ['TIMESPAN', 'DURATION', 'DATETIME']
+    DATE_TIME_FORMATTERS = ['time_span', 'duration', 'date_time']
 
-    BOOLEAN_FORMATTERS = ['BOOLEAN_STRINGCHOICE', 'BOOLEAN_ON_OFF', 'BOOLEAN_IS_ISNOT']
+    BOOLEAN_FORMATTERS = ['boolean_string_choice', 'boolean_on_off', 'boolean_is_is_not']
 
     FORMATTER_PROPERTY_COUNTS = {
-        'TIMESPAN': 2,
-        'DATE': 1,
-        'DATETIME': 1,
-        'DURATION': 2,
-        'BOOLEAN_STRINGCHOICE': 1,
-        'BOOLEAN_ON_OFF': 1,
-        'BOOLEAN_IS_ISNOT': 1,
-        'EMPTY': 1,
-        'ATTACHMENT': 0,
-        'URL': 1
+        'time_span': 2,
+        'date_time': 1,
+        'duration': 2,
+        'boolean_string_choice': 1,
+        'boolean_on_off': 1,
+        'boolean_is_is_not': 1,
+        'empty': 1,
+        'attachment': 0,
+        'url': 1
     }
 
     FORMATTER_ARGUMENT_COUNTS = {
-        'TIMESPAN': 2,
+        'time_span': 2,
         'DATE': 1,
-        'DATETIME': 2,
-        'DURATION': 2,
-        'BOOLEAN_STRINGCHOICE': 3,
-        'BOOLEAN_ON_OFF': 1,
-        'BOOLEAN_IS_ISNOT': 1,
-        'EMPTY': 1,
-        'ATTACHMENT': 1,
-        'URL': 2
+        'date_time': 2,
+        'duration': 2,
+        'boolean_string_choice': 3,
+        'boolean_on_off': 1,
+        'boolean_is_is_not': 1,
+        'empty': 1,
+        'attachment': 1,
+        'url': 2
     }
 
     def __init__(self, template):
@@ -145,18 +144,18 @@ class Template(object):
                             )
                         )
 
-            if formatter == 'DATETIME':
+            if formatter == 'date_time':
                 if other_arguments[0] not in [
                     'year', 'month', 'date', 'hour', 'minute', 'second', 'millisecond', 'microsecond'
                 ]:
                     raise EDXMLValidationError(
-                        'A DATETIME formatter uses an unknown accuracy option: "%s".' % other_arguments[0]
+                        'A date_time formatter uses an unknown accuracy option: "%s".' % other_arguments[0]
                     )
 
-            if formatter == 'ATTACHMENT':
+            if formatter == 'attachment':
                 if other_arguments[0] not in event_type.get_attachments():
                     raise EDXMLValidationError(
-                        'A ATTACHMENT formatter refers to event attachment "%s", '
+                        'A attachment formatter refers to event attachment "%s", '
                         'which is not defined.' % other_arguments[0]
                     )
 
@@ -342,17 +341,17 @@ class Template(object):
         collapsable_property_sets = []
         for placeholder in placeholders:
             formatter, arguments = cls._parse_placeholder(placeholder)
-            if formatter == 'EMPTY':
+            if formatter == 'empty':
                 # Cannot collapse
                 continue
-            if formatter == 'UNLESS_EMPTY':
+            if formatter == 'unless_empty':
                 # Collapses when all specified properties empty.
                 if any(arg for arg in arguments[:-1] if arg in mandatory_properties):
                     # There are mandatory properties amongst the arguments,
                     # so no collapse can occur.
                     continue
                 collapsable_property_sets.append(set(arguments[:-1]))
-            elif formatter == 'MERGE':
+            elif formatter == 'merge':
                 # Can only collapse when all of its
                 # arguments are empty properties
                 if any(arg for arg in arguments if arg in mandatory_properties):
@@ -508,7 +507,7 @@ class Template(object):
                 formatter = None
                 arguments = placeholder[1].split(',')
 
-            if formatter == 'TIMESPAN':
+            if formatter == 'time_span':
 
                 try:
                     # Note that we use lexicographic sorting here.
@@ -530,7 +529,7 @@ class Template(object):
                     'between %s and %s' % span
                 )
 
-            elif formatter == 'DURATION':
+            elif formatter == 'duration':
 
                 try:
                     # Note that we use lexicographic sorting here.
@@ -551,7 +550,7 @@ class Template(object):
 
                 object_strings.append(duration)
 
-            elif formatter == 'DATETIME':
+            elif formatter == 'date_time':
 
                 for object_value in event_object_values[arguments[0]]:
                     try:
@@ -582,19 +581,19 @@ class Template(object):
                     else:  # year
                         object_strings.append(date_time.strftime('%Y'))
 
-            elif formatter == 'URL':
+            elif formatter == 'url':
 
                 property_name, target_name = arguments
                 for object_value in event_object_values[arguments[0]]:
                     object_strings.append('%s (%s)' % (target_name, object_value))
 
-            elif formatter == 'MERGE':
+            elif formatter == 'merge':
 
                 for property_name in arguments:
                     for object_value in event_object_values[property_name]:
                         object_strings.append(object_value)
 
-            elif formatter == 'BOOLEAN_STRINGCHOICE':
+            elif formatter == 'boolean_string_choice':
 
                 property_name, true, false = arguments
                 for object_value in event_object_values[arguments[0]]:
@@ -609,7 +608,7 @@ class Template(object):
                         # of picking one or the other.
                         object_strings.append(f"{true} or {false}")
 
-            elif formatter == 'BOOLEAN_ON_OFF':
+            elif formatter == 'boolean_on_off':
 
                 for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
@@ -623,7 +622,7 @@ class Template(object):
                         # of picking one or the other.
                         object_strings.append('on or off')
 
-            elif formatter == 'BOOLEAN_IS_ISNOT':
+            elif formatter == 'boolean_is_is_not':
 
                 for object_value in event_object_values[arguments[0]]:
                     if object_value == 'true':
@@ -637,7 +636,7 @@ class Template(object):
                         # of picking one or the other.
                         object_strings.append('is or is not')
 
-            elif formatter == 'EMPTY':
+            elif formatter == 'empty':
 
                 property_name = arguments[0]
                 if property_name not in event_object_values or len(event_object_values[property_name]) == 0:
@@ -645,10 +644,10 @@ class Template(object):
                     # in stead of the object value itself.
                     object_strings.append(arguments[1])
 
-            elif formatter == 'ATTACHMENT':
+            elif formatter == 'attachment':
                 object_strings.append('\n\n' + event_attachments.get(arguments[0], '') + '\n\n')
 
-            elif formatter == 'UNLESS_EMPTY':
+            elif formatter == 'unless_empty':
 
                 not_empty_string = arguments.pop()
                 if [value for property_name in arguments for value in event_object_values[property_name]]:
@@ -766,14 +765,14 @@ class Template(object):
 
         if property_count is None:
             # Variable property count.
-            if formatter == 'MERGE':
+            if formatter == 'merge':
                 if not arguments:
                     raise EDXMLValidationError(
                         'String formatter (%s) requires at least one property argument.' % formatter
                     )
                 property_arguments = arguments
                 other_arguments = []
-            elif formatter == 'UNLESS_EMPTY':
+            elif formatter == 'unless_empty':
                 if len(arguments) < 2:
                     raise EDXMLValidationError(
                         'String formatter (%s) requires at least two arguments.' % formatter

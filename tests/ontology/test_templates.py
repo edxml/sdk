@@ -107,28 +107,28 @@ def test_render_datetime(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T23:47:10.123456Z'})
 
-    assert Template('In [[DATETIME:p-time-start,year]].')\
+    assert Template('In [[date_time:p-time-start,year]].')\
         .evaluate(event_type, event) == 'In 2020.'
 
-    assert Template('In [[DATETIME:p-time-start,month]].')\
+    assert Template('In [[date_time:p-time-start,month]].')\
         .evaluate(event_type, event) == 'In November 2020.'
 
-    assert Template('On [[DATETIME:p-time-start,date]].')\
+    assert Template('On [[date_time:p-time-start,date]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020.'
 
-    assert Template('On [[DATETIME:p-time-start,hour]].')\
+    assert Template('On [[date_time:p-time-start,hour]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23h.'
 
-    assert Template('On [[DATETIME:p-time-start,minute]].')\
+    assert Template('On [[date_time:p-time-start,minute]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47h.'
 
-    assert Template('On [[DATETIME:p-time-start,second]].')\
+    assert Template('On [[date_time:p-time-start,second]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10h.'
 
-    assert Template('On [[DATETIME:p-time-start,millisecond]].')\
+    assert Template('On [[date_time:p-time-start,millisecond]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123h.'
 
-    assert Template('On [[DATETIME:p-time-start,microsecond]].')\
+    assert Template('On [[date_time:p-time-start,microsecond]].')\
         .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
 
     # Below we test for an issue in the strftime implementation in some older
@@ -136,7 +136,7 @@ def test_render_datetime(event_type):
     # In recent versions this should not happen anymore.
 
     event = EDXMLEvent({'p-time-start': '1720-11-25T23:47:10.123456Z'})
-    assert Template('In [[DATETIME:p-time-start,year]].').evaluate(event_type, event) == 'In 1720.'
+    assert Template('In [[date_time:p-time-start,year]].').evaluate(event_type, event) == 'In 1720.'
 
 
 def test_render_datetime_invalid(event_type):
@@ -144,9 +144,9 @@ def test_render_datetime_invalid(event_type):
     event = EDXMLEvent({'p-time-start': 'A long, long time ago'})
 
     with pytest.raises(ValueError):
-        Template('[[DATETIME:p-time-start,year]].').evaluate(event_type, event)
+        Template('[[date_time:p-time-start,year]].').evaluate(event_type, event)
 
-    assert Template('[[DATETIME:p-time-start,year]].')\
+    assert Template('[[date_time:p-time-start,year]].')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'A long, long time ago.'
 
 
@@ -154,7 +154,7 @@ def test_render_time_span(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T14:23:54.000000Z'})
 
-    assert Template('Time span [[TIMESPAN:p-time-start,p-time-end]].')\
+    assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'Time span between 2020-11-25 11:47:10+00:00 and 2020-11-25 14:23:54+00:00.'
 
 
@@ -162,7 +162,7 @@ def test_render_time_span_missing_value(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z'})
 
-    assert Template('Time span [[TIMESPAN:p-time-start,p-time-end]].')\
+    assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == ''
 
 
@@ -171,9 +171,9 @@ def test_render_time_span_invalid(event_type):
     event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
 
     with pytest.raises(ValueError):
-        Template('Time span [[TIMESPAN:p-time-start,p-time-end]].').evaluate(event_type, event)
+        Template('Time span [[time_span:p-time-start,p-time-end]].').evaluate(event_type, event)
 
-    assert Template('Time span [[TIMESPAN:p-time-start,p-time-end]].')\
+    assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'Time span between start and end.'
 
 
@@ -181,7 +181,7 @@ def test_render_duration_seconds(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T11:47:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 2.0 seconds.'
 
 
@@ -189,7 +189,7 @@ def test_render_duration_minutes(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T11:48:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 minutes and 2 seconds.'
 
 
@@ -197,7 +197,7 @@ def test_render_duration_hours(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T12:48:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 hours, 1 minutes and 2 seconds.'
 
 
@@ -205,7 +205,7 @@ def test_render_duration_days(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-26T12:48:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
@@ -213,7 +213,7 @@ def test_render_duration_months(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-12-26T12:48:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
@@ -221,7 +221,7 @@ def test_render_duration_years(event_type):
 
     event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2021-12-26T12:48:12.000000Z'})
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == 'It took 1 years, 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
@@ -230,9 +230,9 @@ def test_render_duration_invalid(event_type):
     event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
 
     with pytest.raises(ValueError):
-        Template('It took [[DURATION:p-time-start,p-time-end]].').evaluate(event_type, event)
+        Template('It took [[duration:p-time-start,p-time-end]].').evaluate(event_type, event)
 
-    assert Template('It took [[DURATION:p-time-start,p-time-end]].')\
+    assert Template('It took [[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'It took the time that passed between start and end.'
 
 
@@ -240,7 +240,7 @@ def test_render_duration_missing_value(event_type):
 
     event = EDXMLEvent({})
 
-    assert Template('[[DURATION:p-time-start,p-time-end]].')\
+    assert Template('[[duration:p-time-start,p-time-end]].')\
         .evaluate(event_type, event) == ''
 
 
@@ -248,12 +248,12 @@ def test_render_url(event_type):
 
     event = EDXMLEvent({'p-url': 'http://site.com'})
 
-    assert Template('It can be found [[URL:p-url,here]].')\
+    assert Template('It can be found [[url:p-url,here]].')\
         .evaluate(event_type, event) == 'It can be found here (http://site.com).'
 
     event = EDXMLEvent({})
 
-    assert Template('[[URL:p-url,here]].')\
+    assert Template('[[url:p-url,here]].')\
         .evaluate(event_type, event) == ''
 
 
@@ -261,12 +261,12 @@ def test_render_merge(event_type):
 
     event = EDXMLEvent({'p-string': ['a', 'b'], 'p-url': 'c'})
 
-    assert Template('[[MERGE:p-string,p-url]].')\
+    assert Template('[[merge:p-string,p-url]].')\
         .evaluate(event_type, event) in ['A, b and c.', 'B, a and c.']
 
     event = EDXMLEvent({})
 
-    assert Template('[[MERGE:p-string,p-url]].')\
+    assert Template('[[merge:p-string,p-url]].')\
         .evaluate(event_type, event) == ''
 
 
@@ -274,7 +274,7 @@ def test_render_boolean_string_choice(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
-    assert Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]')\
+    assert Template('[[boolean_string_choice:p-bool,yes,no]]')\
         .evaluate(event_type, event) in ['Yes and no', 'No and yes']
 
 
@@ -283,9 +283,9 @@ def test_render_boolean_string_choice_invalid(event_type):
     event = EDXMLEvent({'p-bool': 'invalid'})
 
     with pytest.raises(ValueError):
-        Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]').evaluate(event_type, event)
+        Template('[[boolean_string_choice:p-bool,yes,no]]').evaluate(event_type, event)
 
-    assert Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no]]')\
+    assert Template('[[boolean_string_choice:p-bool,yes,no]]')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'Yes or no'
 
 
@@ -293,7 +293,7 @@ def test_render_boolean_on_off(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
-    assert Template('[[BOOLEAN_ON_OFF:p-bool]]')\
+    assert Template('[[boolean_on_off:p-bool]]')\
         .evaluate(event_type, event) in ['On and off', 'Off and on']
 
 
@@ -302,9 +302,9 @@ def test_render_boolean_on_off_invalid(event_type):
     event = EDXMLEvent({'p-bool': 'invalid'})
 
     with pytest.raises(ValueError):
-        Template('[[BOOLEAN_ON_OFF:p-bool]]').evaluate(event_type, event)
+        Template('[[boolean_on_off:p-bool]]').evaluate(event_type, event)
 
-    assert Template('[[BOOLEAN_ON_OFF:p-bool]]')\
+    assert Template('[[boolean_on_off:p-bool]]')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'On or off'
 
 
@@ -312,7 +312,7 @@ def test_render_boolean_is_is_not(event_type):
 
     event = EDXMLEvent({'p-bool': ['true', 'false']})
 
-    assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
+    assert Template('[[boolean_is_is_not:p-bool]]')\
         .evaluate(event_type, event) in ['Is and is not', 'Is not and is']
 
 
@@ -321,9 +321,9 @@ def test_render_boolean_is_is_not_invalid(event_type):
     event = EDXMLEvent({'p-bool': 'invalid'})
 
     with pytest.raises(ValueError):
-        Template('[[BOOLEAN_IS_ISNOT:p-bool]]').evaluate(event_type, event)
+        Template('[[boolean_is_is_not:p-bool]]').evaluate(event_type, event)
 
-    assert Template('[[BOOLEAN_IS_ISNOT:p-bool]]')\
+    assert Template('[[boolean_is_is_not:p-bool]]')\
         .evaluate(event_type, event, ignore_value_errors=True) == 'Is or is not'
 
 
@@ -331,12 +331,12 @@ def test_render_empty(event_type):
 
     event = EDXMLEvent({'p-string': 'foo'})
 
-    assert Template('[[EMPTY:p-string,nothing]]')\
+    assert Template('[[empty:p-string,nothing]]')\
         .evaluate(event_type, event) == ''
 
     event = EDXMLEvent({})
 
-    assert Template('[[EMPTY:p-string,nothing]]')\
+    assert Template('[[empty:p-string,nothing]]')\
         .evaluate(event_type, event) == 'Nothing'
 
 
@@ -346,7 +346,7 @@ def test_render_unless_empty():
 
     assert Template('{Value is {[[p-float]]}{ or [[p-string]]}}.}')\
         .evaluate(event_type, event) == 'Value is .'
-    assert Template('{[[UNLESS_EMPTY:p-float,p-string,Value]] is {[[p-float]]}{ or [[p-string]]}.}')\
+    assert Template('{[[unless_empty:p-float,p-string,Value]] is {[[p-float]]}{ or [[p-string]]}.}')\
         .evaluate(event_type, event) == ''
 
 
@@ -372,7 +372,7 @@ def test_render_attachment(event_type):
 
     event = EDXMLEvent(properties={}, attachments={'foo': 'bar'})
 
-    assert Template('[[ATTACHMENT:foo]]')\
+    assert Template('[[attachment:foo]]')\
         .evaluate(event_type, event) == '\n\nbar\n\n'
 
 
@@ -387,21 +387,21 @@ def test_validate_unknown_property(event_type):
     with pytest.raises(EDXMLValidationError, match='do not exist'):
         Template('[[unknown-property]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='do not exist'):
-        Template('[[MERGE:unknown-property]]').validate(event_type)
+        Template('[[merge:unknown-property]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='do not exist'):
-        Template('[[UNLESS_EMPTY:unknown-property,test]]').validate(event_type)
+        Template('[[unless_empty:unknown-property,test]]').validate(event_type)
 
 
 def test_validate_invalid_property(event_type):
     with pytest.raises(EDXMLValidationError, match='cannot be used'):
         Template('[[p-string]]').validate(event_type, property_names=['p-bool'])
     with pytest.raises(EDXMLValidationError, match='cannot be used'):
-        Template('[[MERGE:p-string]]').validate(event_type, property_names=['p-bool'])
+        Template('[[merge:p-string]]').validate(event_type, property_names=['p-bool'])
 
 
 def test_validate_unknown_attachment(event_type):
     with pytest.raises(EDXMLValidationError, match='is not defined'):
-        Template('[[ATTACHMENT:unknown-attachment]]').validate(event_type)
+        Template('[[attachment:unknown-attachment]]').validate(event_type)
 
 
 def test_validate_unknown_formatter(event_type):
@@ -411,102 +411,102 @@ def test_validate_unknown_formatter(event_type):
 
 def test_validate_duration_missing_property(event_type):
     with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
-        Template('[[DURATION:p-time-start]]').validate(event_type)
+        Template('[[duration:p-time-start]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
-        Template('[[DURATION:]]').validate(event_type)
+        Template('[[duration:]]').validate(event_type)
 
 
 def test_validate_duration_wrong_data_type(event_type):
     with pytest.raises(EDXMLValidationError, match='not a datetime'):
-        Template('[[DURATION:p-time-start,p-string]]').validate(event_type)
+        Template('[[duration:p-time-start,p-string]]').validate(event_type)
 
 
 def test_validate_timespan_missing_property(event_type):
     with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
-        Template('[[TIMESPAN:p-time-start]]').validate(event_type)
+        Template('[[time_span:p-time-start]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
-        Template('[[TIMESPAN:]]').validate(event_type)
+        Template('[[time_span:]]').validate(event_type)
 
 
 def test_validate_timespan_wrong_data_type(event_type):
     with pytest.raises(EDXMLValidationError, match='not a datetime'):
-        Template('[[TIMESPAN:p-time-start,p-string]]').validate(event_type)
+        Template('[[time_span:p-time-start,p-string]]').validate(event_type)
 
 
 def test_validate_datetime_missing_argument(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
-        Template('[[DATETIME:p-time-start]]').validate(event_type)
+        Template('[[date_time:p-time-start]]').validate(event_type)
 
 
 def test_validate_datetime_extra_argument(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
-        Template('[[DATETIME:p-time-start,date,test]]').validate(event_type)
+        Template('[[date_time:p-time-start,date,test]]').validate(event_type)
 
 
 def test_validate_datetime_wrong_data_type(event_type):
     with pytest.raises(EDXMLValidationError, match='not a datetime'):
-        Template('[[DATETIME:p-string,date]]').validate(event_type)
+        Template('[[date_time:p-string,date]]').validate(event_type)
 
 
 def test_validate_datetime_wrong_accuracy_argument(event_type):
     with pytest.raises(EDXMLValidationError, match='unknown accuracy option'):
-        Template('[[DATETIME:p-time-start,wrong]]').validate(event_type)
+        Template('[[date_time:p-time-start,wrong]]').validate(event_type)
 
 
 def test_validate_url_missing_argument(event_type):
     with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
-        Template('[[URL:]]').validate(event_type)
+        Template('[[url:]]').validate(event_type)
 
 
 def test_validate_url_extra_argument(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
-        Template('[[URL:p-url,foo,bar]]').validate(event_type)
+        Template('[[url:p-url,foo,bar]]').validate(event_type)
 
 
 def test_validate_merge_missing_property(event_type):
     with pytest.raises(EDXMLValidationError, match='requires at least one property argument'):
-        Template('[[MERGE:]]').validate(event_type)
+        Template('[[merge:]]').validate(event_type)
 
 
 def test_validate_attachment_missing_attachment_name(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 1 arguments, but 0 were specified'):
-        Template('[[ATTACHMENT:]]').validate(event_type)
+        Template('[[attachment:]]').validate(event_type)
 
 
 def test_validate_boolean_wrong_data_type(event_type):
     with pytest.raises(EDXMLValidationError, match='not a boolean'):
-        Template('[[BOOLEAN_STRINGCHOICE:p-string,yes,no]]').validate(event_type)
+        Template('[[boolean_string_choice:p-string,yes,no]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='not a boolean'):
-        Template('[[BOOLEAN_ON_OFF:p-string]]').validate(event_type)
+        Template('[[boolean_on_off:p-string]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='not a boolean'):
-        Template('[[BOOLEAN_IS_ISNOT:p-string]]').validate(event_type)
+        Template('[[boolean_is_is_not:p-string]]').validate(event_type)
 
 
 def test_validate_boolean_string_choice_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 3 arguments'):
-        Template('[[BOOLEAN_STRINGCHOICE:p-bool]]').validate(event_type)
+        Template('[[boolean_string_choice:p-bool]]').validate(event_type)
     with pytest.raises(EDXMLValidationError, match='accepts 3 arguments'):
-        Template('[[BOOLEAN_STRINGCHOICE:p-bool,yes,no,maybe]]').validate(event_type)
+        Template('[[boolean_string_choice:p-bool,yes,no,maybe]]').validate(event_type)
 
 
 def test_validate_boolean_on_off_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
-        Template('[[BOOLEAN_ON_OFF:p-bool,yes,no]]').validate(event_type)
+        Template('[[boolean_on_off:p-bool,yes,no]]').validate(event_type)
 
 
 def test_validate_boolean_is_isnot_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
-        Template('[[BOOLEAN_IS_ISNOT:p-bool,yes,no]]').validate(event_type)
+        Template('[[boolean_is_is_not:p-bool,yes,no]]').validate(event_type)
 
 
 def test_validate_empty_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
-        Template('[[EMPTY:]]').validate(event_type)
+        Template('[[empty:]]').validate(event_type)
 
 
 def test_validate_unless_empty_wrong_argument_count(event_type):
     with pytest.raises(EDXMLValidationError, match='requires at least two arguments'):
-        Template('[[UNLESS_EMPTY:p-string]]').validate(event_type)
+        Template('[[unless_empty:p-string]]').validate(event_type)
 
 
 def test_generate_collapsed(event_type):
@@ -612,7 +612,7 @@ def test_generate_collapsed_placeholder_empty(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[EMPTY:p-optional,empty]]'
+            '[[empty:p-optional,empty]]'
         )
     )
     # The property can be omitted but this will not
@@ -625,7 +625,7 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[UNLESS_EMPTY:p-optional,p-mandatory,test]]'
+            '[[unless_empty:p-optional,p-mandatory,test]]'
         )
     )
     # One property cannot be omitted so a collapse cannot occur.
@@ -634,7 +634,7 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[UNLESS_EMPTY:p-string,p-bool,test]]'
+            '[[unless_empty:p-string,p-bool,test]]'
         )
     )
     # Only when both properties are empty a collapse can
@@ -649,7 +649,7 @@ def test_generate_collapsed_placeholder_merge(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[MERGE:p-time-start,p-time-end]]'
+            '[[merge:p-time-start,p-time-end]]'
         )
     )
     # Both properties can be omitted but only when both are
@@ -665,7 +665,7 @@ def test_generate_collapsed_placeholder_merge(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[MERGE:p-time-start,p-time-end]]'
+            '[[merge:p-time-start,p-time-end]]'
         )
     )
 
@@ -678,7 +678,7 @@ def test_generate_collapsed_placeholder_boolean_string_choice(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            'Choose [[BOOLEAN_STRINGCHOICE:p-bool,one,the other]]'
+            'Choose [[boolean_string_choice:p-bool,one,the other]]'
         )
     )
     assert results == [
@@ -691,7 +691,7 @@ def test_generate_collapsed_placeholder_boolean_on_off(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            'The alarm is [[BOOLEAN_ON_OFF:p-bool]].'
+            'The alarm is [[boolean_on_off:p-bool]].'
         )
     )
     assert results == [
@@ -704,7 +704,7 @@ def test_generate_collapsed_placeholder_boolean_is_is_not(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            'The alarm [[BOOLEAN_IS_ISNOT:p-bool]] active.'
+            'The alarm [[boolean_is_is_not:p-bool]] active.'
         )
     )
     assert results == [
@@ -730,7 +730,7 @@ def test_generate_collapsed_placeholder_date_time(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[DATETIME:p-time-start,second]]'
+            '[[date_time:p-time-start,second]]'
         )
     )
     assert results == [
@@ -743,7 +743,7 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[TIMESPAN:p-time-start,p-time-end]]'
+            '[[time_span:p-time-start,p-time-end]]'
         )
     )
     # Both properties can be omitted and in both cases
@@ -761,7 +761,7 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[TIMESPAN:p-time-start,p-time-end]]'
+            '[[time_span:p-time-start,p-time-end]]'
         )
     )
 
@@ -775,7 +775,7 @@ def test_generate_collapsed_placeholder_duration(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[DURATION:p-time-start,p-time-end]]'
+            '[[duration:p-time-start,p-time-end]]'
         )
     )
     # Both properties can be omitted and in both cases
@@ -793,7 +793,7 @@ def test_generate_collapsed_placeholder_duration(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[DURATION:p-time-start,p-time-end]]'
+            '[[duration:p-time-start,p-time-end]]'
         )
     )
 
