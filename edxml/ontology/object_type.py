@@ -38,7 +38,7 @@ class ObjectType(VersionedOntologyElement):
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
                  data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=10, compress=False,
-                 fuzzy_matching=None, regexp=None, regex_soft=None):
+                 fuzzy_matching=None, regex_hard=None, regex_soft=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -54,7 +54,7 @@ class ObjectType(VersionedOntologyElement):
             'prefix-radix': int(prefix_radix),
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
-            'regexp': regexp,
+            'regex-hard': regex_hard,
             'regex-soft': regex_soft,
             'version': 1
         }
@@ -199,12 +199,12 @@ class ObjectType(VersionedOntologyElement):
 
         return self.__attr['fuzzy-matching']
 
-    def get_regexp(self):
+    def get_regex_hard(self):
         """
 
         Returns the regular expression that object values must match.
-        Returns None in case no regular expression is associated with
-        the object type.
+        Returns None in case no hard regular expression is associated
+        with the object type.
 
         Note that the regular expression is not anchored to the start
         and end of the object value string even though object values
@@ -216,7 +216,7 @@ class ObjectType(VersionedOntologyElement):
           Optional[str]:
         """
 
-        return self.__attr['regexp']
+        return self.__attr['regex-hard']
 
     def get_regex_soft(self):
         """
@@ -327,7 +327,7 @@ class ObjectType(VersionedOntologyElement):
         self._set_attr('display-name-plural', plural or (singular + 's'))
         return self
 
-    def set_regexp(self, pattern):
+    def set_regex_hard(self, pattern):
         """
 
         Configure a regular expression that object
@@ -339,7 +339,7 @@ class ObjectType(VersionedOntologyElement):
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        self._set_attr('regexp', pattern)
+        self._set_attr('regex-hard', pattern)
         return self
 
     def set_regex_soft(self, pattern):
@@ -483,7 +483,7 @@ class ObjectType(VersionedOntologyElement):
 
     def generate_relaxng(self):
 
-        return DataType(self.__attr['data-type']).generate_relaxng(self.__attr['regexp'])
+        return DataType(self.__attr['data-type']).generate_relaxng(self.__attr['regex-hard'])
 
     def validate_object_value(self, value):
         """
@@ -511,10 +511,10 @@ class ObjectType(VersionedOntologyElement):
         split_data_type = self.__attr['data-type'].split(':')
 
         if split_data_type[0] == 'string':
-            if self.__attr['regexp'] is not None and not re.match('^%s$' % self.__attr['regexp'], value):
+            if self.__attr['regex-hard'] is not None and not re.match('^%s$' % self.__attr['regex-hard'], value):
                 raise EDXMLValidationError(
-                    "Object value '%s' of object type %s does not match regexp '%s' of the object type."
-                    % (value, self.__attr['name'], self.__attr['regexp'])
+                    "Object value '%s' of object type %s does not match hard regex '%s' of the object type."
+                    % (value, self.__attr['name'], self.__attr['regex-hard'])
                 )
 
     def validate(self):
@@ -606,13 +606,13 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], repr(self.__attr['compress']))
             )
 
-        if self.__attr['regexp'] is not None:
+        if self.__attr['regex-hard'] is not None:
             try:
-                re.compile(self.__attr['regexp'])
+                re.compile(self.__attr['regex-hard'])
             except sre_constants.error:
                 raise EDXMLValidationError(
-                    'Object type "%s" contains invalid regular expression: "%s"' %
-                    (self.__attr['name'], self.__attr['regexp'])
+                    'Object type "%s" contains invalid hard regular expression: "%s"' %
+                    (self.__attr['name'], self.__attr['regex-hard'])
                 )
 
         if self.__attr['regex-soft'] is not None:
@@ -653,7 +653,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.get('prefix-radix', 10),
                 type_element.get('compress', 'false') == 'true',
                 type_element.get('fuzzy-matching'),
-                type_element.get('regexp'),
+                type_element.get('regex-hard'),
                 type_element.get('regex-soft')
             ).set_version(type_element.attrib['version'])
         except KeyError as e:
@@ -696,10 +696,10 @@ class ObjectType(VersionedOntologyElement):
 
         # Check for illegal upgrade paths:
 
-        if old.get_regexp() != new.get_regexp():
+        if old.get_regex_hard() != new.get_regex_hard():
             equal = False
-            if old.get_regexp() is None or \
-                    (new.get_regexp() is not None and new.get_regexp().find(old.get_regexp() + "|") != 0):
+            if old.get_regex_hard() is None or \
+                    (new.get_regex_hard() is not None and new.get_regex_hard().find(old.get_regex_hard() + "|") != 0):
                 # The new expression is not a valid extension of the old one.
                 is_valid_upgrade = False
 
@@ -741,7 +741,7 @@ class ObjectType(VersionedOntologyElement):
             self.compress(object_type.is_compressible())
             self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
             self.set_prefix_radix(object_type.get_prefix_radix())
-            self.set_regexp(object_type.get_regexp())
+            self.set_regex_hard(object_type.get_regex_hard())
             self.set_regex_soft(object_type.get_regex_soft())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
@@ -764,8 +764,8 @@ class ObjectType(VersionedOntologyElement):
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
         attribs['version'] = str(attribs['version'])
 
-        if attribs['regexp'] is None:
-            del attribs['regexp']
+        if attribs['regex-hard'] is None:
+            del attribs['regex-hard']
 
         if attribs['regex-soft'] is None:
             del attribs['regex-soft']

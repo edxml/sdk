@@ -133,32 +133,32 @@ def test_incompatible_regex_soft_upgrade():
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_set_regex_fails():
+def test_set_hard_regex_fails():
 
     o = Ontology()
     a = o.create_object_type('a')
-    b = copy.deepcopy(a).set_regexp(r'[\s\S]*|[a-z]').set_version(2)
+    b = copy.deepcopy(a).set_regex_hard(r'[\s\S]*|[a-z]').set_version(2)
 
     # Setting a previously unset regular expression is not allowed
     # and makes both versions incompatible.
     assert_invalid_ontology_upgrade(a, b)
 
 
-def test_extend_regex():
+def test_extend_hard_regex():
 
     o = Ontology()
-    a = o.create_object_type('a').set_regexp(r'[a-z]')
-    b = copy.deepcopy(a).set_regexp(r'[a-z]|[A-Z]').set_version(2)
+    a = o.create_object_type('a').set_regex_hard(r'[a-z]')
+    b = copy.deepcopy(a).set_regex_hard(r'[a-z]|[A-Z]').set_version(2)
 
     # Now, b should be a valid upgrade of a and vice versa.
     assert_valid_upgrade(a, b)
 
 
-def test_invalid_regex_upgrade_fails():
+def test_invalid_hard_regex_upgrade_fails():
 
     o = Ontology()
-    a = o.create_object_type('a').set_regexp(r'[a-z]')
-    b = copy.deepcopy(a).set_regexp(r'[a-z][A-Z]').set_version(2)
+    a = o.create_object_type('a').set_regex_hard(r'[a-z]')
+    b = copy.deepcopy(a).set_regex_hard(r'[a-z][A-Z]').set_version(2)
 
     # Changing the regular expression in this way is not allowed
     # and makes both versions incompatible.

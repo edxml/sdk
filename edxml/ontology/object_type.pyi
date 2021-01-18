@@ -17,7 +17,7 @@ class ObjectType(OntologyElement):
                  display_name_plural: str = None, description: str = None,
                  data_type: str = 'string:0:mc:u', unit_name: str = None, unit_symbol: str = None,
                  prefix_radix: int = 10, compress: bool = False, fuzzy_matching: str = 'none',
-                 regexp: str = None, regex_soft=None) -> None:
+                 regex_hard: str = None, regex_soft=None) -> None:
 
         self.__versions = ... # type: Dict[int, 'ObjectType']
         self.__attr = ...  # type: Dict[str, Any]
@@ -47,7 +47,7 @@ class ObjectType(OntologyElement):
 
     def get_fuzzy_matching(self) -> Optional[str]: ...
 
-    def get_regexp(self) -> Optional[str]: ...
+    def get_regex_hard(self) -> Optional[str]: ...
 
     def get_regex_soft(self) -> Optional[str]: ...
 
@@ -63,7 +63,7 @@ class ObjectType(OntologyElement):
 
     def set_unit(self, unit_name: str, unit_symbol: str) -> 'ObjectType': ...
 
-    def set_regexp(self, pattern: str) -> 'ObjectType': ...
+    def set_regex_hard(self, pattern: str) -> 'ObjectType': ...
 
     def set_regex_soft(self, pattern: str) -> 'ObjectType': ...
 
