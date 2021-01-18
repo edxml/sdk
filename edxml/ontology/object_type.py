@@ -38,7 +38,7 @@ class ObjectType(VersionedOntologyElement):
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
                  data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=10, compress=False,
-                 fuzzy_matching=None, regexp=None):
+                 fuzzy_matching=None, regexp=None, regex_soft=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -55,6 +55,7 @@ class ObjectType(VersionedOntologyElement):
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
             'regexp': regexp,
+            'regex-soft': regex_soft,
             'version': 1
         }
 
@@ -217,6 +218,25 @@ class ObjectType(VersionedOntologyElement):
 
         return self.__attr['regexp']
 
+    def get_regex_soft(self):
+        """
+
+        Returns the regular expression that can be used to identify
+        valid object values or generate synthetic values. Returns None
+        in case no soft regular expression is associated with the
+        object type.
+
+        Note that the regular expression is not anchored to the start
+        and end of the object value string even though the expression
+        should match full object values from start to end. Be sure
+        to wrap the expression in anchors before use.
+
+        Returns:
+          Optional[str]:
+        """
+
+        return self.__attr['regex-soft']
+
     def get_version(self):
         """
 
@@ -320,6 +340,21 @@ class ObjectType(VersionedOntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
         self._set_attr('regexp', pattern)
+        return self
+
+    def set_regex_soft(self, pattern):
+        """
+
+        Configure a regular expression that should match
+        values that are valid for the object type.
+
+        Args:
+          pattern (str): Regular expression
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._set_attr('regex-soft', pattern)
         return self
 
     def set_fuzzy_matching_attribute(self, attribute):
@@ -580,6 +615,15 @@ class ObjectType(VersionedOntologyElement):
                     (self.__attr['name'], self.__attr['regexp'])
                 )
 
+        if self.__attr['regex-soft'] is not None:
+            try:
+                re.compile(self.__attr['regex-soft'])
+            except sre_constants.error:
+                raise EDXMLValidationError(
+                    'Object type "%s" contains invalid soft regular expression: "%s"' %
+                    (self.__attr['name'], self.__attr['regex-soft'])
+                )
+
         if self.__attr['unit-name'] is None and self.__attr['unit-symbol'] is not None:
             raise EDXMLValidationError(
                 'Object type "%s" contains a unit symbol without a unit name.' % self.__attr['name']
@@ -609,7 +653,8 @@ class ObjectType(VersionedOntologyElement):
                 type_element.get('prefix-radix', 10),
                 type_element.get('compress', 'false') == 'true',
                 type_element.get('fuzzy-matching'),
-                type_element.get('regexp')
+                type_element.get('regexp'),
+                type_element.get('regex-soft')
             ).set_version(type_element.attrib['version'])
         except KeyError as e:
             raise EDXMLValidationError(
@@ -646,7 +691,7 @@ class ObjectType(VersionedOntologyElement):
         # be changed freely between versions. We only need to know if they changed.
 
         for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching',
-                     'unit-name', 'unit-symbol', 'prefix-radix']:
+                     'unit-name', 'unit-symbol', 'prefix-radix', 'regex-soft']:
             equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
@@ -697,6 +742,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
             self.set_prefix_radix(object_type.get_prefix_radix())
             self.set_regexp(object_type.get_regexp())
+            self.set_regex_soft(object_type.get_regex_soft())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
 
@@ -720,6 +766,9 @@ class ObjectType(VersionedOntologyElement):
 
         if attribs['regexp'] is None:
             del attribs['regexp']
+
+        if attribs['regex-soft'] is None:
+            del attribs['regex-soft']
 
         if attribs['fuzzy-matching'] is None:
             del attribs['fuzzy-matching']

@@ -111,6 +111,28 @@ def test_radix_upgrade():
     assert_valid_upgrade(a, b)
 
 
+def test_regex_soft_upgrade():
+
+    o = Ontology()
+    a = o.create_object_type('a')
+    b = copy.deepcopy(a).set_regex_soft(r'[\s\S]*|[a-z]').set_version(2)
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_incompatible_regex_soft_upgrade():
+
+    o = Ontology()
+    a = o.create_object_type('a')
+
+    # We change the soft regex without incrementing the version.
+    b = copy.deepcopy(a).set_regex_soft(r'[\s\S]*|[a-z]')
+
+    # The versions are now incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
 def test_set_regex_fails():
 
     o = Ontology()
