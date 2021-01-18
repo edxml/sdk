@@ -17,7 +17,7 @@ class ObjectType(OntologyElement):
                  display_name_plural: str = None, description: str = None,
                  data_type: str = 'string:0:mc:u', unit_name: str = None, unit_symbol: str = None,
                  prefix_radix: int = 10, compress: bool = False, fuzzy_matching: str = 'none',
-                 regexp: str = '[\s\S]*') -> None:
+                 regexp: str = None) -> None:
 
         self.__versions = ... # type: Dict[int, 'ObjectType']
         self.__attr = ...  # type: Dict[str, Any]
