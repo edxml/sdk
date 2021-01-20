@@ -327,6 +327,12 @@ class PropertyRelation(OntologyElement):
                     'must not have a relation confidence.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
+            if self.__event_type.get_properties()[self.get_source()].is_multi_valued():
+                raise EDXMLValidationError(
+                    'The %s relation between properties %s and %s in event type %s '
+                    'must not have a multi-valued source property.' %
+                    (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
+                )
 
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
