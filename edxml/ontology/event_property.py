@@ -361,6 +361,23 @@ class EventProperty(OntologyElement):
         """
         return self.__event_type.create_relation('container', self.get_name(), target_property_name)
 
+    def relate_original(self, target_property_name):
+        """
+
+        Creates and returns a relation between this property and
+        the specified target property. The relation is an 'original'
+        relation, indicating that the value of the property contains
+        the original version of the value of the target property.
+
+        Args:
+          target_property_name (str): Name of the related property
+
+        Returns:
+          edxml.ontology.EventPropertyRelation: The EventPropertyRelation instance
+
+        """
+        return self.__event_type.create_relation('original', self.get_name(), target_property_name)
+
     def add_associated_concept(self, concept_association):
         """
         Add the specified concept association.

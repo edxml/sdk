@@ -285,9 +285,8 @@ class PropertyRelation(OntologyElement):
                     )
                 )
 
-        if self._type not in ['inter', 'intra', 'name', 'description', 'container', 'other']:
-            raise EDXMLValidationError(
-                'Invalid property relation type: "%s"' % self._type)
+        if self._type not in ['inter', 'intra', 'name', 'description', 'container', 'original', 'other']:
+            raise EDXMLValidationError('Invalid property relation type: "%s"' % self._type)
 
         if self.__attr['confidence'] is not None:
             if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
@@ -308,7 +307,7 @@ class PropertyRelation(OntologyElement):
                     (self.get_type(), self.__attr['source'], self.__attr['target'])
                 )
 
-        if self.get_type() in ['name', 'description', 'container']:
+        if self.get_type() in ['name', 'description', 'container', 'original']:
             if self.__attr['description'] is not None:
                 raise EDXMLValidationError(
                     'The %s relation between properties %s and %s in event type %s '
@@ -333,6 +332,13 @@ class PropertyRelation(OntologyElement):
                     'must not have a multi-valued source property.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
+            if self.get_type() in ['original']:
+                if self.__event_type.get_properties()[self.get_target()].is_multi_valued():
+                    raise EDXMLValidationError(
+                        'The %s relation between properties %s and %s in event type %s '
+                        'must not have a multi-valued target property.' %
+                        (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
+                    )
 
         # Verify that inter / intra relations are defined between
         # properties that refer to concepts, in the right way
@@ -508,7 +514,7 @@ class PropertyRelation(OntologyElement):
         """
         if property_relation > self:
             # The new definition is indeed newer. Update self.
-            if self._type not in ['name', 'description', 'container']:
+            if self._type not in ['name', 'description', 'container', 'original']:
                 self.set_description(property_relation.get_description())
                 self.set_predicate(property_relation.get_predicate())
                 self.set_confidence(property_relation.get_confidence())
@@ -535,7 +541,7 @@ class PropertyRelation(OntologyElement):
             del attribs['source-concept']
             del attribs['target-concept']
 
-        if self._type in ['name', 'description', 'container']:
+        if self._type in ['name', 'description', 'container', 'original']:
             del attribs['description']
             del attribs['confidence']
             del attribs['predicate']
