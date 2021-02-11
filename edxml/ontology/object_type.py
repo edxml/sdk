@@ -37,7 +37,7 @@ class ObjectType(VersionedOntologyElement):
         r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=10, compress=False,
+                 data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=None, compress=False,
                  fuzzy_matching=None, regex_hard=None, regex_soft=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
@@ -51,7 +51,7 @@ class ObjectType(VersionedOntologyElement):
             'data-type': data_type,
             'unit-name': unit_name,
             'unit-symbol': unit_symbol,
-            'prefix-radix': int(prefix_radix),
+            'prefix-radix': prefix_radix,
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
             'regex-hard': regex_hard,
@@ -173,7 +173,7 @@ class ObjectType(VersionedOntologyElement):
           Optional[int]: radix
         """
 
-        return self.__attr['prefix-radix']
+        return self.__attr['prefix-radix'] or 10
 
     def is_compressible(self):
         """
@@ -305,7 +305,7 @@ class ObjectType(VersionedOntologyElement):
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
         """
-        self._set_attr('prefix-radix', int(radix))
+        self._set_attr('prefix-radix', radix)
         return self
 
     def set_display_name(self, singular, plural=None):
@@ -579,7 +579,7 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], self.__attr['description'])
             )
 
-        if self.__attr['prefix-radix'] not in (2, 10, 60):
+        if self.__attr['prefix-radix'] not in (None, 2, 10, 60):
             raise EDXMLValidationError(
                 'The prefix radix of object type "%s" must be 2, 10 or 60, %s is not a valid value.' % (
                     self.__attr['name'], self.__attr['prefix-radix'])
@@ -631,6 +631,11 @@ class ObjectType(VersionedOntologyElement):
                 'Object type "%s" contains a unit name without a unit symbol.' % self.__attr['name']
             )
 
+        if self.__attr['prefix-radix'] is not None and self.__attr['unit-name'] is None:
+            raise EDXMLValidationError(
+                'Object type "%s" specifies a prefix radix while not specifying a unit.' % self.__attr['name']
+            )
+
         DataType(self.__attr['data-type']).validate()
 
         return self
@@ -647,7 +652,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.attrib['data-type'],
                 type_element.get('unit-name'),
                 type_element.get('unit-symbol'),
-                type_element.get('prefix-radix', 10),
+                type_element.get('prefix-radix'),
                 type_element.get('compress', 'false') == 'true',
                 type_element.get('fuzzy-matching'),
                 type_element.get('regex-hard'),
@@ -737,7 +742,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
             self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
-            self.set_prefix_radix(object_type.get_prefix_radix())
+            self.set_prefix_radix(object_type.__attr['prefix-radix'])
             self.set_regex_hard(object_type.get_regex_hard())
             self.set_regex_soft(object_type.get_regex_soft())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
@@ -770,7 +775,7 @@ class ObjectType(VersionedOntologyElement):
         if attribs['fuzzy-matching'] is None:
             del attribs['fuzzy-matching']
 
-        if attribs['prefix-radix'] == 10:
+        if attribs['prefix-radix'] in (None, 10):
             del attribs['prefix-radix']
         else:
             attribs['prefix-radix'] = str(attribs['prefix-radix'])

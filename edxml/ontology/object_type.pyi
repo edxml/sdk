@@ -16,7 +16,7 @@ class ObjectType(OntologyElement):
     def __init__(self, ontology: edxml.ontology.Ontology, name: str, display_name_singular: str = None,
                  display_name_plural: str = None, description: str = None,
                  data_type: str = 'string:0:mc:u', unit_name: str = None, unit_symbol: str = None,
-                 prefix_radix: int = 10, compress: bool = False, fuzzy_matching: str = 'none',
+                 prefix_radix: int = None, compress: bool = False, fuzzy_matching: str = 'none',
                  regex_hard: str = None, regex_soft=None) -> None:
 
         self.__versions = ... # type: Dict[int, 'ObjectType']

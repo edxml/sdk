@@ -104,7 +104,7 @@ def test_unit_upgrade():
 def test_radix_upgrade():
 
     o = Ontology()
-    a = o.create_object_type('a')
+    a = o.create_object_type('a').set_unit('meters', 'm')
     b = copy.deepcopy(a).set_prefix_radix(2).set_version(2)
 
     # Now, b should be a valid upgrade of a and vice versa.
