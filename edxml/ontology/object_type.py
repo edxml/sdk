@@ -586,6 +586,11 @@ class ObjectType(VersionedOntologyElement):
             )
 
         if self.__attr['fuzzy-matching'] is not None:
+            if self.get_data_type().get_family() != 'string':
+                raise EDXMLValidationError(
+                    'Object type "%s" specifies a fuzzy matching method while it does not have a string data type.' %
+                    self.__attr['name']
+                )
             if not re.match(self.FUZZY_MATCHING_PATTERN, self.__attr['fuzzy-matching']):
                 raise EDXMLValidationError(
                     'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' %
