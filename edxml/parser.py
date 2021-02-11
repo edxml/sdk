@@ -338,8 +338,8 @@ class EDXMLParserBase(object):
                 # an ontology element in the tree and try to process it. That
                 # will yield a better exception message than the errors
                 # produced by the RelaxNG validator.
-                if self.__root_element.find('{http://edxml.org/edxml}ontology') is not None:
-                    self.__process_ontology(self.__root_element.find('{http://edxml.org/edxml}ontology'))
+                for ontology_element in self.__root_element.iterfind('{http://edxml.org/edxml}ontology'):
+                    self.__process_ontology(ontology_element)
 
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\n"
