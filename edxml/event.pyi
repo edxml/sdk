@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from edxml.ontology import Ontology, EventType
+from edxml.ontology import EventType
 
 from collections import MutableMapping, OrderedDict, MutableSet
 from lxml import etree
@@ -165,8 +165,6 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'ParsedEvent': ...
 
-    def merge_with(self, colliding_events: List['ParsedEvent'], ontology: Ontology) -> bool: ...
-
 
 class EventElement(EDXMLEvent):
 
@@ -213,5 +211,3 @@ class EventElement(EDXMLEvent):
     def set_parents(self, parent_hashes: List[str]) -> 'EventElement': ...
 
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'EventElement': ...
-
-    def merge_with(self, colliding_events: List['EventElement'], ontology: Ontology) -> bool: ...
