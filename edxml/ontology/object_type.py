@@ -631,6 +631,11 @@ class ObjectType(VersionedOntologyElement):
                 'Object type "%s" contains a unit name without a unit symbol.' % self.__attr['name']
             )
 
+        if self.__attr['unit-name'] is not None and self.get_data_type().get_family() != 'number':
+            raise EDXMLValidationError(
+                'Object type "%s" specifies a unit name while it is not numeric.' % self.__attr['name']
+            )
+
         if self.__attr['prefix-radix'] is not None and self.__attr['unit-name'] is None:
             raise EDXMLValidationError(
                 'Object type "%s" specifies a prefix radix while not specifying a unit.' % self.__attr['name']
