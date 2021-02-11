@@ -606,23 +606,20 @@ class ObjectType(VersionedOntologyElement):
                     self.__attr['name'], repr(self.__attr['compress']))
             )
 
-        if self.__attr['regex-hard'] is not None:
-            try:
-                re.compile(self.__attr['regex-hard'])
-            except sre_constants.error:
-                raise EDXMLValidationError(
-                    'Object type "%s" contains invalid hard regular expression: "%s"' %
-                    (self.__attr['name'], self.__attr['regex-hard'])
-                )
-
-        if self.__attr['regex-soft'] is not None:
-            try:
-                re.compile(self.__attr['regex-soft'])
-            except sre_constants.error:
-                raise EDXMLValidationError(
-                    'Object type "%s" contains invalid soft regular expression: "%s"' %
-                    (self.__attr['name'], self.__attr['regex-soft'])
-                )
+        for soft_hard in ['soft', 'hard']:
+            if self.__attr['regex-' + soft_hard] is not None:
+                if self.get_data_type().get_family() != 'string':
+                    raise EDXMLValidationError(
+                        'Object type "%s" has a %s regular expression while its data type is not a string.' %
+                        (self.__attr['name'], soft_hard)
+                    )
+                try:
+                    re.compile(self.__attr['regex-' + soft_hard])
+                except sre_constants.error:
+                    raise EDXMLValidationError(
+                        'Object type "%s" contains invalid %s regular expression: "%s"' %
+                        (self.__attr['name'], soft_hard, self.__attr['regex-hard'])
+                    )
 
         if self.__attr['unit-name'] is None and self.__attr['unit-symbol'] is not None:
             raise EDXMLValidationError(
