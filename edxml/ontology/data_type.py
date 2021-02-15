@@ -570,9 +570,8 @@ class DataType(object):
             raise TypeError('Unknown data type: ' + split_data_type[0])
 
     def _generate_schema_uri(self):
-        # Note that anyURI XML data type allows virtually anything,
-        # we need to use a regular expression to restrict it to the
-        # set of characters allowed in an URI.
+        # Note that anyURI XML data type allows anything, we could
+        # also have used a string data type here.
         return ElementMaker().data(type='anyURI')
 
     def _generate_schema_hex(self):
