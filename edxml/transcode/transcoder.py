@@ -48,8 +48,8 @@ class RecordTranscoder(object):
 
     TYPE_MAP = {}
     """
-    The TYPE_MAP attribute is a dictionary mapping EDXML event type names
-    to the corresponding input record type selectors. This mapping is used
+    The TYPE_MAP attribute is a dictionary mapping input record type selectors
+    to the corresponding EDXML event type names. This mapping is used
     by the transcoding mediator to find the correct record transcoder for
     each input data record.
 
