@@ -638,7 +638,7 @@ class EDXMLEvent(MutableMapping):
         """
 
         Copies properties from another event, mapping property names
-        according to specified mapping. The PropertyMap argument is
+        according to specified mapping. The property_map argument is
         a dictionary mapping property names from the source event
         to property names in the target event, which is the event that
         is used to call this method.
@@ -674,7 +674,7 @@ class EDXMLEvent(MutableMapping):
         """
 
         Moves properties from another event, mapping property names
-        according to specified mapping. The PropertyMap argument is
+        according to specified mapping. The property_map argument is
         a dictionary mapping property names from the source event
         to property names in the target event, which is the event that
         is used to call this method.
