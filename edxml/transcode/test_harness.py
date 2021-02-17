@@ -113,9 +113,9 @@ class TranscoderTestHarness(TranscoderMediator):
 
             if self._transcoder_is_postprocessor(self.transcoder):
                 for post_processed_event in self._post_process(selector, record, self.transcoder, event):
-                    self._write_event(selector, post_processed_event)
+                    self._write_event(selector, record, post_processed_event)
             else:
-                self._write_event(selector, event)
+                self._write_event(selector, record, event)
 
     def close(self):
         super().close()

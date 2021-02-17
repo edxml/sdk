@@ -325,7 +325,7 @@ class TranscoderMediator(object):
     def set_event_source(self, source_uri):
         """
 
-        Set the event source for the output events. This source will
+        Set a fixed event source for the output events. This source will
         automatically be set on every output event.
 
         Args:
@@ -418,7 +418,7 @@ class TranscoderMediator(object):
         for event_type_name, property_names in self.__allow_repair_drop.items():
             self._writer.enable_auto_repair_drop(event_type_name, property_names)
 
-    def _write_event(self, record_id, event):
+    def _write_event(self, record_id, record, event):
         """
         Writes a single event using the EDXML writer.
 
@@ -427,6 +427,16 @@ class TranscoderMediator(object):
             event (edxml.EDXMLEvent): The EDXML event
         """
         self._write_ontology_update()
+
+        source_uri = event.get_source_uri()
+        if source_uri is None:
+            source_uri = self._get_source_uri(record, event)
+            if source_uri is None:
+                raise Exception(
+                    'Failed to assign source URI to output event. Either configure the transcoder mediator to use '
+                    'a fixed source URI or override its _get_source_uri() method.'
+                )
+            event.set_source(source_uri)
 
         try:
             self._writer.add_event(event)
@@ -438,6 +448,25 @@ class TranscoderMediator(object):
                     'The transcoder for record %s produced '
                     'an invalid event: %s\n\nContinuing...' % (record_id, str(e))
                 )
+
+    def _get_source_uri(self, record, event):
+        """
+
+        Generates an EDXML source URI for the specified record and the
+        EDXML event that was generated from it. This method is invoked by
+        the transcoder when no fixed source URI has been configured. It can be
+        overridden to implement custom source URI schemas.
+
+        Args:
+            record: Input data record
+            event (edxml.EDXMLEvent): Generated EDXML event
+
+        Returns:
+            str: EDXML source URI
+        """
+        if self._output_source_uri:
+            # We have a fixed source URI
+            return self._output_source_uri
 
     def _transcode(self, record, record_id, record_selector, transcoder):
         """
@@ -452,14 +481,11 @@ class TranscoderMediator(object):
             transcoder (edxml.transcode.RecordTranscoder): The record transcoder to use
         """
         for event in transcoder.generate(record, record_selector):
-            if self._output_source_uri:
-                event.set_source(self._output_source_uri)
-
             if self._transcoder_is_postprocessor(transcoder):
                 for post_processed_event in self._post_process(record_id, record, transcoder, event):
-                    self._write_event(record_id, post_processed_event)
+                    self._write_event(record_id, record, post_processed_event)
             else:
-                self._write_event(record_id, event)
+                self._write_event(record_id, record, event)
 
     def _post_process(self, record_id, record, transcoder, event):
         """
