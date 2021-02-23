@@ -116,9 +116,23 @@ def test_event_type_attachment_description(transcoder):
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
-def test_event_type_attachment_display_name(transcoder):
+def test_event_type_attachment_display_name_list(transcoder):
     type(transcoder).TYPE_ATTACHMENTS = {'event-type.a': ['test-attachment']}
     type(transcoder).TYPE_ATTACHMENT_DISPLAY_NAMES = {'event-type.a': {'test-attachment': ['test-display-name']}}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    assert event_types['event-type.a'].get_attachment('test-attachment')\
+        .get_display_name_singular() == 'test-display-name'
+    assert event_types['event-type.a'].get_attachment('test-attachment')\
+        .get_display_name_plural() == 'test-display-names'
+
+
+@pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
+def test_event_type_attachment_display_name_string(transcoder):
+    type(transcoder).TYPE_ATTACHMENTS = {'event-type.a': ['test-attachment']}
+    type(transcoder).TYPE_ATTACHMENT_DISPLAY_NAMES = {'event-type.a': {'test-attachment': 'test-display-name'}}
 
     event_types = dict(transcoder.generate_event_types())
     transcoder._ontology.validate()

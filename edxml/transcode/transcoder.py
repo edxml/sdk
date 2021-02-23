@@ -441,8 +441,9 @@ class RecordTranscoder(object):
 
         {'event-type-name': {'my-attachment': ['attachment', 'attachments']}}
 
-    The plural form may be omitted. In that case, the plural form will be assumed
-    to be the singular form with an additional 's' appended.
+    The plural form may be omitted. This can be done by omitting the second item in the list or by
+    using a string in stead of a list. In that case, the plural form will be assumed to be the singular
+    form with an additional 's' appended.
     """
 
     TYPE_ATTACHMENT_DESCRIPTIONS = {}
@@ -660,14 +661,19 @@ class RecordTranscoder(object):
 
         for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
             attachment = event_type.create_attachment(attachment_name)
+            attachment_dn = None
+            if attachment_name in cls.TYPE_ATTACHMENT_DISPLAY_NAMES.get(event_type_name, {}):
+                attachment_dn = cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name]
+                if isinstance(attachment_dn, str):
+                    attachment_dn = [attachment_dn]
+                attachment.set_display_name(
+                    attachment_dn[0],
+                    attachment_dn[1] if len(attachment_dn) > 1 else None
+                )
             if attachment_name in cls.TYPE_ATTACHMENT_DESCRIPTIONS.get(event_type_name, {}):
                 attachment.set_description(cls.TYPE_ATTACHMENT_DESCRIPTIONS[event_type_name][attachment_name])
-            if attachment_name in cls.TYPE_ATTACHMENT_DISPLAY_NAMES.get(event_type_name, {}):
-                attachment.set_display_name(
-                    cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name][0],
-                    cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name][1]
-                    if len(cls.TYPE_ATTACHMENT_DISPLAY_NAMES[event_type_name][attachment_name]) > 1 else None
-                )
+            elif attachment_dn:
+                attachment.set_description(attachment_dn[0])
             if attachment_name in cls.TYPE_ATTACHMENT_MEDIA_TYPES.get(event_type_name, {}):
                 attachment.set_media_type(cls.TYPE_ATTACHMENT_MEDIA_TYPES[event_type_name][attachment_name])
             if attachment_name in cls.TYPE_ATTACHMENT_ENCODINGS.get(event_type_name, {}):
