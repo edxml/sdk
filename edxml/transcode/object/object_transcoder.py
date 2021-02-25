@@ -92,7 +92,13 @@ class ObjectTranscoder(RecordTranscoder):
 
         properties = {}
 
-        event_type_name = self.TYPE_MAP.get(record_type_name, None)
+        if record_type_name not in self.TYPE_MAP:
+            raise Exception(
+                f"{type(self).__name__} is registered as a transcoder for records of type '{record_type_name}' "
+                f"while its TYPE_MAP constant has no corresponding key for that record type."
+            )
+
+        event_type_name = self.TYPE_MAP[record_type_name]
 
         for selector, property_names in self.PROPERTY_MAP[event_type_name].items():
 

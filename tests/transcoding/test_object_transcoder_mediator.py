@@ -83,6 +83,17 @@ def test_duplicate_registration_exception(object_transcoder):
         mediator.register('test_record', object_transcoder())
 
 
+def test_register_wrong_record_type_exception(object_transcoder_mediator, object_transcoder, record):
+    object_transcoder.TYPE_MAP = {'wrong_record_type': 'test-event-type.a'}
+
+    output = BytesIO()
+
+    with pytest.raises(Exception, match='TYPE_MAP constant has no corresponding key'):
+        mediator = object_transcoder_mediator(output)
+        mediator.register('test_record', object_transcoder())
+        mediator.process(record)
+
+
 def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record):
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
