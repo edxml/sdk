@@ -17,6 +17,8 @@ flake8 from complaining about unused fixtures.
 
 import pytest
 
+from lxml import objectify
+
 from edxml.ontology import Ontology, DataType
 from edxml.transcode import RecordTranscoder
 from edxml.transcode.object import ObjectTranscoderMediator
@@ -105,3 +107,19 @@ def create_transcoder(*event_type_names):
     ontology.create_object_type('object-type.string')
     t.set_ontology(ontology)
     return t
+
+
+def edxml_extract(edxml, path):
+    # Below, we remove the EDXML namespace from all
+    # tags, allowing us to use simple XPath expressions
+    # without namespaces. We can safely do this because
+    # our tests do not generate foreign elements.
+    for elem in edxml.getiterator():
+        if not hasattr(elem.tag, 'find'):
+            continue
+        i = elem.tag.find('}')
+        if i >= 0:
+            elem.tag = elem.tag[i+1:]
+    objectify.deannotate(edxml, cleanup_namespaces=True)
+
+    return edxml.xpath(path)

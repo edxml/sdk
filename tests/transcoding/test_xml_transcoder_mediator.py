@@ -14,8 +14,9 @@
 from io import BytesIO
 
 import pytest
-from lxml import etree, objectify
+from lxml import etree
 
+from conftest import edxml_extract
 from edxml.error import EDXMLValidationError
 from edxml.transcode.xml import XmlTranscoderMediator, XmlTranscoder
 
@@ -36,22 +37,6 @@ def xml():
         '  </records>'
         '</root>', encoding='utf-8'
     )
-
-
-def edxml_extract(edxml, path):
-    # Below, we remove the EDXML namespace from all
-    # tags, allowing us to use simple XPath expressions
-    # without namespaces. We can safely do this because
-    # our tests do not generate foreign elements.
-    for elem in edxml.getiterator():
-        if not hasattr(elem.tag, 'find'):
-            continue
-        i = elem.tag.find('}')
-        if i >= 0:
-            elem.tag = elem.tag[i+1:]
-    objectify.deannotate(edxml, cleanup_namespaces=True)
-
-    return edxml.xpath(path)
 
 
 def test_complex_mediator_xpath_exception(xml_transcoder):
