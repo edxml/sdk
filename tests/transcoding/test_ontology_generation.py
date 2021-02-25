@@ -51,6 +51,17 @@ def test_event_type_display_names(transcoder):
 
 
 @pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
+def test_event_type_display_name_string(transcoder):
+    type(transcoder).TYPE_DISPLAY_NAMES = {'event-type.a': 'display name'}
+
+    event_types = dict(transcoder.generate_event_types())
+    transcoder._ontology.validate()
+
+    assert event_types['event-type.a'].get_display_name_singular() == 'display name'
+    assert event_types['event-type.a'].get_display_name_plural() == 'display names'
+
+
+@pytest.mark.parametrize("transcoder", [(create_transcoder('event-type.a'))])
 def test_event_type_story_template(transcoder):
     type(transcoder).TYPE_STORIES = {'event-type.a': 'test story'}
 

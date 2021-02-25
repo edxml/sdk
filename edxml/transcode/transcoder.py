@@ -85,8 +85,9 @@ class RecordTranscoder(object):
 
         {'event-type-name': ['event', 'events']}
 
-    The plural form may be omitted. In that case, the plural form will be assumed
-    to be the singular form with an additional 's' appended.
+    The plural form may be omitted. This can be done by omitting the second item in the list or by
+    using a string in stead of a list. In that case, the plural form will be assumed to be the singular
+    form with an additional 's' appended.
     """
 
     TYPE_SUMMARIES = {}
@@ -594,7 +595,10 @@ class RecordTranscoder(object):
         if cls.TYPE_DESCRIPTIONS.get(event_type_name):
             event_type.set_description(cls.TYPE_DESCRIPTIONS[event_type_name])
         if cls.TYPE_DISPLAY_NAMES.get(event_type_name):
-            event_type.set_display_name(*cls.TYPE_DISPLAY_NAMES[event_type_name])
+            event_type_dn = cls.TYPE_DISPLAY_NAMES[event_type_name]
+            if isinstance(event_type_dn, str):
+                event_type_dn = [event_type_dn]
+            event_type.set_display_name(*event_type_dn)
         if cls.TYPE_SUMMARIES.get(event_type_name):
             event_type.set_summary_template(cls.TYPE_SUMMARIES[event_type_name])
         if cls.TYPE_STORIES.get(event_type_name):
