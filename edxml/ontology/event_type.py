@@ -1686,7 +1686,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                         e.element(
                             e.data(
                                 e.param('4', name='minLength'),
-                                e.param('[a-zA-Z0-9+/=]*', name='pattern'),
+                                e.param(r'[\sa-zA-Z0-9+/=]*', name='pattern'),
                                 type='base64Binary'
                             ),
                             name=attachment_name
