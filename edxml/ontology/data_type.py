@@ -670,17 +670,9 @@ class DataType(object):
     def _generate_schema_boolean(self):
         e = ElementMaker()
 
-        # Because we do not allow the value strings '0' and '1'
-        # while the RelaxNG data type does, we need to add
-        # these two values as exceptions.
-        return e.data(
-            e(
-                'except',
-                e.choice(
-                    e.value('0', type='string'),
-                    e.value('1', type='string'),
-                )
-            ), type='boolean'
+        return e.choice(
+            e.value('true', type='string'),
+            e.value('false', type='string'),
         )
 
     def _generate_schema_enum(self):
