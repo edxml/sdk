@@ -359,6 +359,8 @@ class TranscoderMediator(object):
             # Already populated.
             return
 
+        self._ontology_populated = True
+
         # First, we accumulate the object types into an
         # empty ontology.
         for transcoder in self.__transcoders.values():
@@ -386,8 +388,6 @@ class TranscoderMediator(object):
         # ontology bricks that contain definitions referred to
         # by event types.
         self.__ontology.validate()
-
-        self._ontology_populated = True
 
     def _write_ontology_update(self):
         if len(self.__ontology.get_event_sources()) == 0:
