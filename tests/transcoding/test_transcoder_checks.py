@@ -83,6 +83,12 @@ def test_spurious_type_timespan_exception(transcoder):
         dict(transcoder.generate_event_types())
 
 
+def test_spurious_type_version_property_exception(transcoder):
+    type(transcoder).TYPE_VERSIONS = {'spurious': None}
+    with pytest.raises(ValueError, match='not in TYPE_MAP'):
+        dict(transcoder.generate_event_types())
+
+
 def test_spurious_type_attachment_exception(transcoder):
     type(transcoder).TYPE_ATTACHMENTS = {'spurious': []}
     with pytest.raises(ValueError, match='not in TYPE_MAP'):
@@ -382,4 +388,12 @@ def test_wrong_concept_attribute_name_exception(transcoder):
     type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
     type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': ['foo:attr']}}}
     with pytest.raises(EDXMLValidationError, match="must begin with 'object-type.string:'"):
+        dict(transcoder.generate_event_types())
+
+
+def test_event_type_version_property_is_not_string(transcoder):
+    type(transcoder).TYPE_MAP = {'selector': 'event-type.a'}
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'version': 'object-type.sequence'}}
+    type(transcoder).TYPE_VERSIONS = {'event-type.a': ['version']}
+    with pytest.raises(ValueError, match="not a string"):
         dict(transcoder.generate_event_types())

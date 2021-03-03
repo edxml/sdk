@@ -381,6 +381,17 @@ class RecordTranscoder(object):
       {'event-type-name': ['timespan-start', 'timespan-end']}
     """
 
+    TYPE_VERSIONS = {}
+    """
+    The TYPE_VERSIONS attribute contains the names of the properties that define the versions of
+    the events.
+
+    The attribute is a dictionary mapping EDXML event type names to the names of the event properties
+    that contain the version. Example::
+
+      {'event-type-name': 'version'}
+    """
+
     TYPE_ATTACHMENTS = {}
     """
     The TYPE_ATTACHMENTS attribute is a dictionary mapping EDXML event type names to attachment names.
@@ -606,6 +617,8 @@ class RecordTranscoder(object):
         if cls.TYPE_TIMESPANS.get(event_type_name):
             event_type.set_timespan_property_name_start(cls.TYPE_TIMESPANS[event_type_name][0])
             event_type.set_timespan_property_name_end(cls.TYPE_TIMESPANS[event_type_name][1])
+        if cls.TYPE_VERSIONS.get(event_type_name):
+            event_type.set_version_property_name(cls.TYPE_VERSIONS.get(event_type_name))
 
         if cls.TYPE_HASHED_PROPERTIES.get(event_type_name, {}) == {}:
             log.warning(
@@ -824,6 +837,13 @@ class RecordTranscoder(object):
                             f"{target_property_name} which is not in TYPE_PROPERTIES."
                         )
 
+            if event_type_name in cls.TYPE_VERSIONS:
+                if not isinstance(cls.TYPE_VERSIONS[event_type_name], str):
+                    raise ValueError(
+                        f"{cls.__name__}.TYPE_VERSIONS contains a version property for event type {event_type_name} "
+                        f"which is not a string."
+                    )
+
             if event_type_name in cls.PARENT_MAPPINGS:
                 parent_event_type_name = None
                 for parent_child in cls.PARENTS_CHILDREN:
@@ -855,7 +875,7 @@ class RecordTranscoder(object):
             'TYPE_DESCRIPTIONS', 'TYPE_DISPLAY_NAMES', 'TYPE_SUMMARIES', 'TYPE_STORIES', 'TYPE_PROPERTIES',
             'TYPE_PROPERTY_POST_PROCESSORS', 'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
             'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_HASHED_PROPERTIES', 'PARENTS_CHILDREN',
-            'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_ATTACHMENTS',
+            'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_VERSIONS', 'TYPE_ATTACHMENTS',
             'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
             'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',
             'TYPE_ATTACHMENT_ENCODINGS', 'TYPE_AUTO_REPAIR_NORMALIZE', 'TYPE_AUTO_REPAIR_DROP',
