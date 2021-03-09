@@ -632,6 +632,8 @@ class RecordTranscoder(object):
             if property_name in cls.TYPE_PROPERTY_DESCRIPTIONS.get(event_type_name, {}):
                 event_type[property_name].set_description(
                     cls.TYPE_PROPERTY_DESCRIPTIONS[event_type_name][property_name])
+            else:
+                event_type[property_name].set_description(property_name.replace('.', ' '))
             if property_name in cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}):
                 event_type[property_name].hint_similar(
                     cls.TYPE_PROPERTY_SIMILARITY[event_type_name][property_name])
