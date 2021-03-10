@@ -49,13 +49,22 @@ def ontology():
 
 @pytest.fixture
 def event_element(ontology, sha1_hash):
+    return EventElement(
+        properties={"a": "🖤"},
+        event_type_name="a",
+        source_uri="/a/",
+    )
+
+
+def test_create_from_event():
     event = EDXMLEvent(
         properties={"a": "🖤"},
         event_type_name="a",
         source_uri="/a/",
     )
 
-    return EventElement.create_from_event(event)
+    event_element = EventElement.create_from_event(event)
+    assert event_element == event
 
 
 def test_set_unsupported_property_value_fails(event_element):
