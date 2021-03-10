@@ -82,11 +82,11 @@ def describe_producer_rst(ontology, producer_name, input_description):
     for event_type in ontology.get_event_types().values():
         for relation in event_type.get_property_relations(relation_type='name').values():
             value_names.add(
-                event_type.get_properties()[relation.get_source()].get_object_type().get_display_name_plural()
+                event_type.get_properties()[relation.get_target()].get_object_type().get_display_name_plural()
             )
         for relation in event_type.get_property_relations(relation_type='description').values():
             value_descriptions.add(
-                event_type.get_properties()[relation.get_source()].get_object_type().get_display_name_plural()
+                event_type.get_properties()[relation.get_target()].get_object_type().get_display_name_plural()
             )
         for relation in event_type.get_property_relations(relation_type='container').values():
             value_containers.add(

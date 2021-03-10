@@ -97,6 +97,6 @@ def test_describe_names_descriptions_containers():
 
     rst = describe_producer_rst(o, 'test producer', 'test data')
 
-    assert 'The test producer provides names for values' in rst
-    assert 'The test producer provides descriptions for values' in rst
+    assert 'The test producer provides names for others' in rst
+    assert 'The test producer provides descriptions for others' in rst
     assert 'The test producer identifies others as being part of a value' in rst
