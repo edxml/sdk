@@ -16,7 +16,6 @@
 # the line above is required for inline unicode
 import codecs
 import hashlib
-from collections import OrderedDict
 
 from lxml import etree
 
@@ -83,7 +82,7 @@ def test_set_unsupported_property_value_fails(parsed_event):
 
 def test_set_non_string_attachment_fails(parsed_event):
     with pytest.raises(TypeError):
-        parsed_event.set_attachments({'attachment': True})
+        parsed_event.set_attachment('attachment', True)
 
 
 def test_object_character_replacement(parsed_event):
@@ -104,10 +103,10 @@ def test_object_character_replacement(parsed_event):
 def test_set_invalid_attachment(parsed_event):
     unicode_replacement_character = chr(0xfffd)
     parsed_event.replace_invalid_characters()
-    parsed_event.set_attachments({'attachment': chr(0)})
+    parsed_event.set_attachment('attachment', {'id': chr(0)})
     assert parsed_event.get_element()\
         .find('e:attachments/e:attachment', namespaces).text == unicode_replacement_character
-    assert parsed_event.get_attachments() == {'attachment': chr(0)}
+    assert parsed_event.get_attachments() == {'attachment': {'id': chr(0)}}
 
 
 def test_direct_xml_element_manipulation(parsed_event):
@@ -134,10 +133,8 @@ def test_sort_event(parsed_event):
     parsed_event['b'] = ['3', '2']
     parsed_event['a'] = ['1']
 
-    attachments = OrderedDict()
-    attachments['b'] = 'b'
-    attachments['a'] = 'a'
-    parsed_event.set_attachments(attachments)
+    parsed_event.set_attachment('b', 'b')
+    parsed_event.set_attachment('a', 'a')
 
     # NOTE: The objects in a property are stored as sets. The ordering of the objects is
     # therefore undefined. Below assertions may fail on future Python versions.
@@ -190,16 +187,17 @@ def test_delete_multi_valued_property(parsed_event):
 
 
 def test_set_attachment(parsed_event):
-    parsed_event.set_attachments({"a": "a"})
+    parsed_event.set_attachment('a', 'a')
     assert len(parsed_event.findall('e:attachments/e:a', namespaces)) == 1
     assert parsed_event.find('e:attachments/e:a', namespaces).text == "a"
 
 
 def test_delete_attachment(parsed_event):
-    parsed_event.set_attachments({"a": "a", "b": "b"})
+    parsed_event.set_attachment('a', 'a')
+    parsed_event.set_attachment('b', 'b')
     assert len(parsed_event.findall('e:attachments/*', namespaces)) == 2
 
-    parsed_event.set_attachments({"a": "a"})
+    parsed_event.set_attachment('b', None)
     assert len(parsed_event.findall('e:attachments/*', namespaces)) == 1
     assert parsed_event.find('e:attachments/e:a', namespaces).text == "a"
 

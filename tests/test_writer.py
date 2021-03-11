@@ -74,7 +74,7 @@ def event_unknown_attachment():
         properties={'a': 'foo', 'b': 'bar'},
         event_type_name='ea',
         source_uri='/test/'
-    ).set_attachments({'unknown': 'test'})
+    ).set_attachment('unknown', 'test')
 
 
 @pytest.fixture()
@@ -202,7 +202,7 @@ def test_write_pretty_print(ontology, event):
         writer.add_ontology(ontology).add_event(event).close()
         output = writer.flush()
 
-    assert len(output.splitlines()) == 29
+    assert len(output.splitlines()) == 28
 
 
 def test_write_no_pretty_print(ontology, event):

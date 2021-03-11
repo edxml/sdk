@@ -17,7 +17,7 @@ import hashlib
 import sys
 
 from collections.abc import MutableMapping, MutableSet
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from IPy import IP
 from lxml import etree
@@ -197,6 +197,40 @@ class PropertyObjectSet(set, MutableSet):
         super().pop()
         self._update(self.__property_name, self)
 
+
+class AttachmentValueDict(OrderedDict):
+    def __init__(self, attachment_name, value={}, update=None):
+        if not isinstance(value, dict):
+            if not isinstance(value, list):
+                value = [value]
+            value = {hashlib.sha1((v + '').encode()).hexdigest(): v for v in value if v is not None}
+        super().__init__(value)
+        if update is not None:
+            for attachment_id, attachment_value in value.items():
+                update(attachment_id, attachment_value)
+        if attachment_name is None:
+            raise ValueError()
+        self.__attachment_name = attachment_name
+        if update is not None:
+            self._update = update
+
+    def __eq__(self, other):
+        return self.keys() == other.keys()
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self._update(key, value)
+
+    def __delitem__(self, key):
+        try:
+            super().__delitem__(key)
+            self._update(key, None)
+        except KeyError:
+            pass
+
+    def __deepcopy__(self, memodict=None):
+        return AttachmentValueDict(self.__attachment_name, self, update=self._update)
+
     def _update(self, property_name, values):
         pass
 
@@ -204,17 +238,17 @@ class PropertyObjectSet(set, MutableSet):
 class AttachmentSet(OrderedDict):
     def __init__(self, attachments=None, update_attachment=None):
         super().__init__()
-        if attachments is not None:
-            for attachment_name, value in attachments.items() or {}:
-                try:
-                    self[attachment_name] = '' + value
-                except TypeError as e:
-                    raise TypeError(f"Failed to set event attachment {attachment_name}: {e}")
 
         if update_attachment is not None:
             self._update_attachment = update_attachment
 
-    def _update_attachment(self, attachment_name, value):
+        if attachments is not None:
+            for attachment_name, values in attachments.items() or {}:
+                self[attachment_name] = AttachmentValueDict(
+                    attachment_name, values, update=lambda k, v: update_attachment(attachment_name, k, v)
+                )
+
+    def _update_attachment(self, attachment_name, attachment_id, value):
         pass
 
     def __iter__(self):
@@ -226,20 +260,25 @@ class AttachmentSet(OrderedDict):
         return other == {a: v for a, v in super().items() if len(v) > 0}
 
     def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        self._update_attachment(key, value)
+        if value is None:
+            del self[key]
+            return
+        super().__setitem__(
+            key,
+            AttachmentValueDict(key, value, update=lambda k, v: self._update_attachment(key, k, v))
+        )
 
     def __getitem__(self, item):
         try:
             return super().__getitem__(item)
         except KeyError:
-            self[item] = ''
+            self[item] = {}
             return self[item]
 
     def __delitem__(self, key):
         try:
             super().__delitem__(key)
-            self._update_attachment(key, None)
+            self._update_attachment(key, None, None)
         except KeyError:
             pass
 
@@ -265,17 +304,17 @@ class EDXMLEvent(MutableMapping):
         Creates a new EDXML event. The Properties argument must be a
         dictionary mapping property names to object values. Object values
         must be lists of one or multiple object values. Explicit parent
-        hashes must be specified as hex encoded strings.
-
-        Attachments are specified by means of a dictionary mapping attachment
-        names to strings.
+        hashes must be specified as hex encoded strings. Attachments must be
+        specified as a dictionary mapping attachment names to attachment values.
+        The attachment values are dictionaries mapping attachment identifiers to
+        the actual attachment strings.
 
         Args:
           properties (Dict[str,Set[str]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          attachments (Optional[Dict[str, str]]): Event attachments dictionary
+          attachments (Optional[Dict[str, Dict[str]]]): Event attachments dictionary
           foreign_attribs (Optional[Dict[str, str]]) Foreign attributes dictionary
 
         Returns:
@@ -289,13 +328,14 @@ class EDXMLEvent(MutableMapping):
         self._foreign_attribs = foreign_attribs if foreign_attribs is not None else {}
 
         self.set_properties(properties)
-        self.set_attachments(attachments or {})
+        for attachment_name, attachment_values in attachments.items() if attachments else {}:
+            self.set_attachment(attachment_name, attachment_values)
 
         self._replace_invalid_characters = False
 
     def __update_property(self, key, value): ...
 
-    def __update_attachment(self, attachment_name, value): ...
+    def __update_attachment(self, attachment_name, attachment_id, value): ...
 
     def __repr__(self):
         return f"Event of type {self.get_type_name()} from {self.get_source_uri()}"
@@ -403,9 +443,10 @@ class EDXMLEvent(MutableMapping):
         Setter for the event attachments dictionary
 
         Args:
-            new_attachments (Dict[str, str]):
+            new_attachments (Dict[str, Dict[str, str]]):
         """
-        self.set_attachments(new_attachments)
+        for attachment_name, attachment_values in new_attachments.items():
+            self.set_attachment(attachment_name, attachment_values)
 
     def get_any(self, property_name, default=None):
         """
@@ -446,7 +487,7 @@ class EDXMLEvent(MutableMapping):
             self._event_type_name,
             self._source_uri,
             list(self._parents),
-            self._attachments.copy(),
+            self.get_attachments().copy(),
             self._foreign_attribs
         )
 
@@ -487,14 +528,19 @@ class EDXMLEvent(MutableMapping):
     def sort(self):
         """
 
-        Sorts the event properties and attachments on their names. This can be helpful when
+        Sorts the event properties and attachments. This can be helpful when
         comparing differences between events.
 
         Returns:
             EDXMLEvent:
         """
         self._properties = PropertySet(OrderedDict(sorted(self._properties.items(), key=lambda t: t[0])))
-        self._attachments = AttachmentSet(OrderedDict(sorted(self._attachments.items(), key=lambda t: t[0])))
+
+        attachments = OrderedDict()
+        for attachment_name, values in sorted(self._attachments.items(), key=lambda t: t[0]):
+            attachments[attachment_name] = OrderedDict(sorted(values.items(), key=lambda t: t[0]))
+
+        self._attachments = attachments
         return self
 
     def get_type_name(self):
@@ -553,6 +599,8 @@ class EDXMLEvent(MutableMapping):
           Dict[str, str]: Event attachments
 
         """
+        if self._attachments is None:
+            self._attachments = AttachmentSet()
         return self._attachments
 
     def get_foreign_attributes(self):
@@ -585,7 +633,7 @@ class EDXMLEvent(MutableMapping):
             event_type_name = event_element.attrib["event-type"]
             source_uri = event_element.attrib["source-uri"]
 
-            attachments = {}
+            attachments = defaultdict(dict)
             property_objects = {}
             for element in event_element:
                 if element.tag == 'properties':
@@ -602,10 +650,10 @@ class EDXMLEvent(MutableMapping):
                         property_objects[property_name].add(property_element.text)
                 elif element.tag == 'attachments':
                     for attachment in element:
-                        attachments[attachment.tag] = attachment.text
+                        attachments[attachment.tag][attachment.attr['id']] = attachment.text
                 elif element.tag == '{http://edxml.org/edxml}attachments':
                     for attachment in element:
-                        attachments[attachment.tag[24:]] = attachment.text
+                        attachments[attachment.tag[24:]][attachment.attr['id']] = attachment.text
 
             return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), attachments)
 
@@ -722,19 +770,31 @@ class EDXMLEvent(MutableMapping):
         self._event_type_name = event_type_name
         return self
 
-    def set_attachments(self, attachments):
+    def set_attachment(self, name, attachment):
         """
 
-        Set the event attachments. Attachments are specified
-        as a dictionary mapping attachment names to strings.
+        Set the event attachment associated with the specified name in
+        the event type definition. The attachment argument accepts a string
+        value. Alternatively a list can be given, allowing for multi-valued
+        attachments. In that case, each attachment will have its SHA1 hash
+        as unique identifier. Lastly, the attachment can be specified as
+        a dictionary containing attachment identifiers as keys and the
+        attachment strings as values. This allows control over choosing
+        attachment identifiers.
+
+        Specifying None as attachment value removes the attachment from
+        the event.
 
         Args:
-          attachments (Dict[str, str]): Attachment dictionary
+            name (str): Associated name in event type definition
+            attachment (Union[Optional[str], List[Optional[str]], Dict[str, Optional[str]]]): Attachment dictionary
 
         Returns:
           EDXMLEvent:
         """
-        self._attachments = AttachmentSet(attachments)
+        if self._attachments is None:
+            self._attachments = AttachmentSet(update_attachment=self.__update_attachment)
+        self._attachments[name] = attachment
         return self
 
     def set_source(self, source_uri):
@@ -923,29 +983,38 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
                 else:
                     props[-1].text = to_edxml_object(key, v)
 
-    def __update_attachment(self, attachment_name, value):
+    def __update_attachment(self, attachment_name, attachment_id, value):
         attachments_element = self.find('{http://edxml.org/edxml}attachments')
         if attachments_element is None:
             attachments_element = etree.SubElement(self, '{http://edxml.org/edxml}attachments')
 
-        existing_attachment = attachments_element.find('{http://edxml.org/edxml}' + attachment_name)
-        if existing_attachment is not None:
+        if attachment_id is None:
+            existing_attachments = attachments_element.findall(
+                '{http://edxml.org/edxml}' + attachment_name
+            )
+        else:
+            existing_attachments = attachments_element.findall(
+                '{http://edxml.org/edxml}' + attachment_name + f"[@id='{attachment_id}']"
+            )
+        for existing_attachment in existing_attachments:
             attachments_element.remove(existing_attachment)
 
         if value is None:
             return
 
+        attachment = etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + attachment_name)
         try:
-            etree.SubElement(attachments_element, '{http://edxml.org/edxml}' + attachment_name).text = value
+            attachment.text = value
         except (TypeError, ValueError):
             if isinstance(value, str):
                 # Value contains illegal characters.
                 if not getattr(self, '_replace_invalid_characters', False):
                     raise
                 # Replace illegal characters with unicode replacement characters.
-                attachments_element[-1].text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), value)
+                attachment.text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), value)
             else:
-                attachments_element[-1].text = value
+                attachment.text = value
+        attachment.attrib['id'] = attachment_id
 
     def __len__(self):
         return len(self.get_properties())
@@ -1039,7 +1108,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
         attachments = self.find('{http://edxml.org/edxml}attachments')
         if attachments is not None:
-            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.attrib['id']))
             try:
                 del self._attachments
             except AttributeError:
@@ -1073,9 +1142,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             attachments = OrderedDict()
             for attachment in attachments_element if attachments_element is not None else []:
                 attachment_name = attachment.tag[24:]
-                if attachment_name in attachments:
-                    raise EDXMLValidationError(f"Event contains multiple values for attachment '{attachment_name}'.")
-                attachments[attachment_name] = attachment.text if attachment.text is not None else ''
+                if attachment_name not in attachments:
+                    attachments[attachment_name] = OrderedDict()
+                attachments[attachment_name][attachment.attrib['id']] = \
+                    attachment.text if attachment.text is not None else ''
 
             self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
 
@@ -1132,29 +1202,32 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
         return self
 
-    def set_attachments(self, attachments):
+    def set_attachment(self, name, attachment):
         """
 
-        Set the event attachments. Attachments are specified
-        as a dictionary mapping attachment names to strings.
+        Set the event attachment associated with the specified name in
+        the event type definition. The attachment argument accepts a string
+        value. Alternatively a list can be given, allowing for multi-valued
+        attachments. In that case, each attachment will have its SHA1 hash
+        as unique identifier. Lastly, the attachment can be specified as
+        a dictionary containing attachment identifiers as keys and the
+        attachment strings as values. This allows control over choosing
+        attachment identifiers.
+
+        Specifying None as attachment value removes the attachment from
+        the event.
 
         Args:
-          attachments (Dict[str, str]): Attachment dictionary
+            name (str): Associated name in event type definition
+            attachment (Union[Optional[str], List[Optional[str]], Dict[str, Optional[str]]]): Attachment dictionary
 
         Returns:
           ParsedEvent:
         """
-        attachments_element = self.find('{http://edxml.org/edxml}attachments')
-
-        if attachments_element is None:
-            attachments_element = etree.SubElement(self, '{http://edxml.org/edxml}attachments')
-
-        attachments_element.clear()
-
-        self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
-
-        for name, attachment in attachments.items():
-            self.__update_attachment(name, attachment)
+        try:
+            self._attachments[name] = attachment
+        except AttributeError:
+            self._attachments = AttachmentSet({name: attachment}, update_attachment=self.__update_attachment)
 
         return self
 
@@ -1227,14 +1300,17 @@ class EventElement(EDXMLEvent):
         Creates a new EDXML event. The Properties argument must be a
         dictionary mapping property names to object values. Object values
         must be lists of one or multiple strings. Explicit parent
-        hashes must be specified as hex encoded strings.
+        hashes must be specified as hex encoded strings. Attachments must be
+        specified as a dictionary mapping attachment names to attachment values.
+        The attachment values are dictionaries mapping attachment identifiers to
+        the actual attachment strings.
 
         Args:
           properties (Dict(str, List[str])): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[optional]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          attachments (Optional[Dict[str, str]]): Event attachments dictionary
+          attachments (Optional[Dict[str, Dict[str, str]]]): Event attachments dictionary
           foreign_attribs (Optional[Dict[str, str]]) Foreign attributes dictionary
 
         Returns:
@@ -1301,7 +1377,7 @@ class EventElement(EDXMLEvent):
                 else:
                     props[-1].text = to_edxml_object(key, v)
 
-    def __update_attachment(self, attachment_name, value):
+    def __update_attachment(self, attachment_name, attachment_id, value):
         try:
             attachments_element = self.__element.find('attachments')
         except AttributeError:
@@ -1315,24 +1391,29 @@ class EventElement(EDXMLEvent):
         if attachments_element is None:
             attachments_element = etree.SubElement(self.__element, 'attachments')
 
-        existing_attachment = attachments_element.find(attachment_name)
-        if existing_attachment is not None:
+        if attachment_id is None:
+            existing_attachments = attachments_element.findall(attachment_name)
+        else:
+            existing_attachments = attachments_element.findall(f"{attachment_name}[@id='{attachment_id}']")
+        for existing_attachment in existing_attachments:
             attachments_element.remove(existing_attachment)
 
         if value is None:
             return
 
+        attachment = etree.SubElement(attachments_element, attachment_name, attrib={'id': attachment_id})
+
         try:
-            etree.SubElement(attachments_element, attachment_name).text = value
+            attachment.text = value
         except (TypeError, ValueError):
             if isinstance(value, str):
                 # Value contains illegal characters.
                 if not getattr(self, '_replace_invalid_characters', False):
                     raise
                 # replace illegal characters with unicode replacement characters.
-                attachments_element[-1].text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), value)
+                attachment.text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), value)
             else:
-                attachments_element[-1].text = value
+                attachment.text = value
 
     def __getitem__(self, key):
         return self.get_properties()[key]
@@ -1376,7 +1457,7 @@ class EventElement(EDXMLEvent):
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
-          attachments (Optional[Dict[str, str]]): Event attachments dictionary
+          attachments (Optional[Dict[str, Dict[str, str]]]): Event attachments dictionary
 
         Returns:
           EventElement:
@@ -1434,7 +1515,7 @@ class EventElement(EDXMLEvent):
     def sort(self):
         """
 
-        Sorts the event properties and attachments on their names. This can be helpful when
+        Sorts the event properties and attachments. This can be helpful when
         comparing differences between events.
 
         Returns:
@@ -1447,7 +1528,7 @@ class EventElement(EDXMLEvent):
 
         attachments = self.__element.find('attachments')
         if attachments is not None:
-            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.text))
+            attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.attrib['id']))
             self._attachments = None
 
         return self
@@ -1474,9 +1555,9 @@ class EventElement(EDXMLEvent):
             attachments = OrderedDict()
             for attachment in attachments_element if attachments_element is not None else []:
                 attachment_name = attachment.tag
-                if attachment_name in attachments:
-                    raise EDXMLValidationError(f"Event contains multiple values for attachment '{attachment_name}'.")
-                attachments[attachment_name] = attachment.text
+                if attachment_name not in attachments:
+                    attachments[attachment_name] = OrderedDict()
+                attachments[attachment_name][attachment.attrib['id']] = attachment.text
 
             self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
 
@@ -1533,30 +1614,33 @@ class EventElement(EDXMLEvent):
 
         return self
 
-    def set_attachments(self, attachments):
+    def set_attachment(self, name, attachment):
         """
 
-        Set the event attachments. Attachments are specified
-        as a dictionary mapping attachment names to strings.
+        Set the event attachment associated with the specified name in
+        the event type definition. The attachment argument accepts a string
+        value. Alternatively a list can be given, allowing for multi-valued
+        attachments. In that case, each attachment will have its SHA1 hash
+        as unique identifier. Lastly, the attachment can be specified as
+        a dictionary containing attachment identifiers as keys and the
+        attachment strings as values. This allows control over choosing
+        attachment identifiers.
+
+        Specifying None as attachment value removes the attachment from
+        the event.
 
         Args:
-          attachments (Dict[str, str]): Attachment dictionary
+            name (str): Associated name in event type definition
+            attachment (Union[Optional[str], List[Optional[str]], Dict[str, Optional[str]]]): Attachment dictionary
 
         Returns:
           EventElement:
         """
-        attachments_element = self.__element.find('attachments')
 
-        if attachments_element is None:
-            attachments_element = etree.SubElement(self.__element, 'attachments')
-
-        attachments_element.clear()
-
-        self._attachments = AttachmentSet(attachments, update_attachment=self.__update_attachment)
-
-        for name, attachment in attachments.items():
-            self.__update_attachment(name, attachment)
-
+        if self._attachments is None:
+            self._attachments = AttachmentSet({name: attachment}, update_attachment=self.__update_attachment)
+        else:
+            self._attachments[name] = attachment
         return self
 
     def add_parents(self, parent_hashes):

@@ -87,5 +87,5 @@ with EDXMLWriter(sys.stdout) as writer:
                 properties,
                 event_type_name='org.myorganization.logs.ftp',
                 source_uri='/myorganization/logs/ftp/'
-            ).set_attachments({'log-line': line})
+            ).set_attachment('log-line', line)
         )

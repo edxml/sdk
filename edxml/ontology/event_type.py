@@ -1538,28 +1538,29 @@ class EventType(VersionedOntologyElement, MutableMapping):
         return self
 
     def validate_event_attachments(self, event):
-        for attachment_name, attachment_value in event.get_attachments().items():
+        for attachment_name, attachment_values in event.get_attachments().items():
             if attachment_name not in self.__attachments.keys():
                 raise EDXMLValidationError(
                     f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
                     f"while this event type has no such attachment."
                 )
-            if attachment_value == '':
-                raise EDXMLValidationError(
-                    f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
-                    f"which is empty."
-                )
-
-            attachment = self.__attachments[attachment_name]
-            if attachment.is_base64_string():
-                try:
-                    base64.decodebytes(attachment_value.encode())
-                except binascii.Error as e:
+            for attachment_id, attachment_value in attachment_values.items():
+                if attachment_value == '':
                     raise EDXMLValidationError(
-                        f"An event of type {self.__attr['name']} has a base64 encoded attachment "
-                        f"named '{attachment_name}' which is not a valid base64 string: '{e}'.\n\n"
-                        f"Attachment value is:\n\n{attachment_value}"
+                        f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
+                        f"which is empty."
                     )
+
+                attachment = self.__attachments[attachment_name]
+                if attachment.is_base64_string():
+                    try:
+                        base64.decodebytes(attachment_value.encode())
+                    except binascii.Error as e:
+                        raise EDXMLValidationError(
+                            f"An event of type {self.__attr['name']} has a base64 encoded attachment "
+                            f"named '{attachment_name}' which is not a valid base64 string: '{e}'.\n\n"
+                            f"Attachment value is:\n\n{attachment_value}"
+                        )
 
     def normalize_event_objects(self, event, property_names):
         """
@@ -1682,8 +1683,16 @@ class EventType(VersionedOntologyElement, MutableMapping):
         for attachment_name, attachment in self.get_attachments().items():
             if attachment.is_base64_string():
                 attachments.append(
-                    e.optional(
+                    e.zeroOrMore(
                         e.element(
+                            e.attribute(
+                                e.data(
+                                    e.param('1', name='minLength'),
+                                    e.param('40', name='maxLength'),
+                                    type='string'
+                                ),
+                                name='id'
+                            ),
                             e.data(
                                 e.param('4', name='minLength'),
                                 e.param(r'[\sa-zA-Z0-9+/=]*', name='pattern'),
@@ -1695,8 +1704,16 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 )
             else:
                 attachments.append(
-                    e.optional(
+                    e.zeroOrMore(
                         e.element(
+                            e.attribute(
+                                e.data(
+                                    e.param('1', name='minLength'),
+                                    e.param('40', name='maxLength'),
+                                    type='string'
+                                ),
+                                name='id'
+                            ),
                             e.data(
                                 e.param('1', name='minLength'),
                                 type='string'

@@ -463,7 +463,7 @@ class Template(object):
             event_type (edxml.ontology.EventType):
             string (str):
             event_object_values (Dict[str, set]):
-            event_attachments (Dict[str, str]):
+            event_attachments (Dict[str, Dict[str, str]]):
             colorize (bool):
             ignore_value_errors (bool):
 
@@ -645,7 +645,8 @@ class Template(object):
                     object_strings.append(arguments[1])
 
             elif formatter == 'attachment':
-                object_strings.append('\n\n' + event_attachments.get(arguments[0], '') + '\n\n')
+                for attachment_value in event_attachments.get(arguments[0], {}).values():
+                    object_strings.append('\n\n' + attachment_value + '\n\n')
 
             elif formatter == 'unless_empty':
 

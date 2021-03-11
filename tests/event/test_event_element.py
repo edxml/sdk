@@ -16,7 +16,6 @@
 # the line above is required for inline unicode
 import codecs
 import hashlib
-from collections import OrderedDict
 from datetime import datetime
 from IPy import IP
 from lxml import etree
@@ -74,7 +73,7 @@ def test_set_unsupported_property_value_fails(event_element):
 
 def test_set_non_string_attachment_fails(event_element):
     with pytest.raises(TypeError):
-        event_element.set_attachments({'attachment': True})
+        event_element.set_attachment('attachment', True)
 
 
 def test_object_character_replacement(event_element):
@@ -120,12 +119,24 @@ def test_coerce_bytes_property_object(event_element):
     assert event_element.get_element().find('properties/b').text == u"test"
 
 
+def test_set_attachment(event_element):
+    event_element.set_attachment('attachment', {'id': 'value'})
+    assert event_element.get_element().find('attachments/attachment').text == 'value'
+    assert event_element.get_attachments() == {'attachment': {'id': 'value'}}
+
+
+def test_set_attachment_property(event_element):
+    event_element.attachments['attachment']['id'] = 'value'
+    assert event_element.get_element().find('attachments/attachment').text == 'value'
+    assert event_element.get_attachments() == {'attachment': {'id': 'value'}}
+
+
 def test_set_invalid_attachment(event_element):
     unicode_replacement_character = chr(0xfffd)
     event_element.replace_invalid_characters()
-    event_element.set_attachments({'attachment': chr(0)})
+    event_element.set_attachment('attachment', {'id': chr(0)})
     assert event_element.get_element().find('attachments/attachment').text == unicode_replacement_character
-    assert event_element.get_attachments() == {'attachment': chr(0)}
+    assert event_element.get_attachments() == {'attachment': {'id': chr(0)}}
 
 
 def test_cast_to_string(event_element):
@@ -145,10 +156,8 @@ def test_sort_event(event_element):
     event_element['b'] = ['3', '2']
     event_element['a'] = ['1']
 
-    attachments = OrderedDict()
-    attachments['b'] = 'b'
-    attachments['a'] = 'a'
-    event_element.set_attachments(attachments)
+    event_element.set_attachment('b', {'id': 'b'})
+    event_element.set_attachment('a', {'id': 'a'})
 
     # NOTE: The objects in a property are stored as sets. The ordering of the objects is
     # therefore undefined. Below assertions may fail on future Python versions.
@@ -201,16 +210,17 @@ def test_delete_multi_valued_property(event_element):
 
 
 def test_set_attachment(event_element):
-    event_element.set_attachments({"a": "a"})
+    event_element.set_attachment('a', {'id': 'a'})
     assert len(event_element.get_element().findall('attachments/a')) == 1
     assert event_element.get_element().find('attachments/a').text == "a"
 
 
 def test_delete_attachment(event_element):
-    event_element.set_attachments({"a": "a", "b": "b"})
+    event_element.set_attachment('a', 'a')
+    event_element.set_attachment('b', 'b')
     assert len(event_element.get_element().findall('attachments/*')) == 2
 
-    event_element.set_attachments({"a": "a"})
+    event_element.set_attachment('b', None)
     assert len(event_element.get_element().findall('attachments/*')) == 1
     assert event_element.get_element().find('attachments/a').text == "a"
 

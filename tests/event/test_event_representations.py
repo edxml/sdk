@@ -87,7 +87,7 @@ def event_with_attachment(request, ontology, sha1_hash):
         properties={"smiley": "😀"},
         event_type_name="a",
         source_uri="/a/",
-        attachments={'attachment': 'test'}
+        attachments={'attachment': {'id': 'test'}}
     )
 
     if request.param == 'EdxmlEvent':
@@ -392,41 +392,44 @@ def test_move_property_values(event):
 
 def test_get_attachments(event, event_with_attachment):
     assert event.get_attachments() == {}
-    assert event_with_attachment.get_attachments() == {'attachment': 'test'}
+    assert event_with_attachment.get_attachments() == {'attachment': {'id': 'test'}}
 
 
 def test_set_attachments(event):
     assert event.get_attachments() == {}
-    event.set_attachments({'attachment': 'test'})
-    assert event.get_attachments() == {'attachment': 'test'}
+    event.set_attachment('attachment', {'id': 'test'})
+    assert event.get_attachments() == {'attachment': {'id': 'test'}}
 
 
 def test_change_attachments(event):
-    event.set_attachments({'attachment': "changed"})
-    assert event.get_attachments() == {'attachment': "changed"}
+    event.set_attachment('attachment', {'id': 'changed'})
+    assert event.get_attachments() == {'attachment': {'id': 'changed'}}
 
 
 def test_get_attachments_property(event, event_with_attachment):
     assert event.attachments == {}
-    assert event_with_attachment.attachments == {'attachment': 'test'}
+    assert event_with_attachment.attachments == {'attachment': {'id': 'test'}}
 
 
 def test_set_attachments_property(event):
     assert event.attachments == {}
-    event.attachments = {'attachment': 'test'}
-    assert event.attachments == {'attachment': 'test'}
+    event.attachments = {'attachment': {'id': 'test'}}
+    assert event.attachments == {'attachment': {'id': 'test'}}
 
 
 def test_extend_attachments_property(event):
     assert event.attachments == {}
-    event.attachments['attachment'] = 'test'
-    assert event.attachments == {'attachment': 'test'}
+    event.attachments['attachment'] = {'id': 'test'}
+    event.attachments['attachment']['id2'] = 'test2'
+    assert event.attachments == {'attachment': {'id': 'test', 'id2': 'test2'}}
 
 
 def test_delete_attachment_from_property(event):
-    event.attachments = {'a': 'x', 'b': 'y'}
+    event.attachments = {'a': {'1': 'x'}, 'b': {'1': 'y', '2': 'z'}}
     del event.attachments['a']
-    assert event.attachments == {'b': 'y'}
+    assert event.attachments == {'b': {'1': 'y', '2': 'z'}}
+    del event.attachments['b']['1']
+    assert event.attachments == {'b': {'2': 'z'}}
 
 
 def test_read_parents(event_with_explicit_parent, sha1_hash):
@@ -480,22 +483,38 @@ def test_compute_sticky_hash(event, ontology):
 
 
 def test_sort_event(event):
+
+    properties = OrderedDict()
+    properties['b'] = {'test2b', 'test1b'}
+    properties['a'] = {'test2a', 'test1a'}
+
+    ordered_properties = OrderedDict()
+    ordered_properties['a'] = {'test1a', 'test2a'}
+    ordered_properties['b'] = {'test1b', 'test2b'}
+
     event.set_properties({})
-    event['b'] = 'test'
-    event['a'] = 'test'
+    event.set_properties(properties)
 
     attachments = OrderedDict()
-    attachments['b'] = 'test'
-    attachments['a'] = 'test'
-    event.set_attachments(attachments)
+    attachments['b'] = OrderedDict((('2', 'test2b'), ('1', 'test1b')))
+    attachments['a'] = OrderedDict((('2', 'test2a'), ('1', 'test1a')))
 
-    assert list(event.get_properties().keys()) == ['b', 'a']
-    assert list(event.get_attachments().keys()) == ['b', 'a']
+    ordered_attachments = OrderedDict()
+    ordered_attachments['a'] = OrderedDict((('1', 'test1a'), ('2', 'test2a')))
+    ordered_attachments['b'] = OrderedDict((('1', 'test1b'), ('2', 'test2b')))
+
+    event.set_attachment('b', attachments['b'])
+    event.set_attachment('a', attachments['a'])
+
+    assert event.get_properties() == properties
+    assert event.get_properties() != ordered_properties
+    assert event.get_attachments() == attachments
+    assert event.get_attachments() != ordered_attachments
 
     event.sort()
 
-    assert list(event.get_properties().keys()) == ['a', 'b']
-    assert list(event.get_attachments().keys()) == ['a', 'b']
+    assert event.get_properties() == ordered_properties
+    assert event.get_attachments() == ordered_attachments
 
 
 def test_event_without_type(event_without_type):
