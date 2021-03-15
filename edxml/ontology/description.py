@@ -35,19 +35,18 @@ def describe_producer_rst(ontology, producer_name, input_description):
 
     relates_inter = _describe_inter_concept_relations(ontology)
     relates_intra = _describe_intra_concept_relations(ontology)
-    concept_combinations = _describe_concept_specializations(
+    concept_combinations = _describe_concept_universals(
         ontology,
-        '- {concept_source} as {concept_target} (using {event_type})'
+        '- {concept_source} as {concept_target}'
     )
-    concept_combinations.extend(
-        _describe_concept_universals(
+    concept_combinations.update(_describe_concept_specializations(
             ontology,
-            '- {concept_source} as {concept_target}'
+            '- {concept_source} as {concept_target} (using {event_type})'
         )
     )
 
     if relates_inter:
-        description += f"\nThe {producer_name} enables automatic correlation of\n"
+        description += f"\nThe {producer_name} enables automatic correlation of:\n"
         for source_concept_name, target_concept_names in relates_inter.items():
             for target_concept_name, event_type_names in target_concept_names.items():
                 source_concept_dn = ontology.get_concept(source_concept_name).get_display_name_plural()
@@ -59,11 +58,11 @@ def describe_producer_rst(ontology, producer_name, input_description):
                 event_type_dn = []
                 for event_type_name in event_type_names:
                     event_type_dn.append(ontology.get_event_type(event_type_name).get_display_name_plural())
-                description += ', '.join(event_type_dn) + ')'
+                description += _list_strings(event_type_dn) + ')'
 
     if relates_intra:
         description += f"\n\nThe {producer_name} enhances `concept mining <http://edxml.org/concept-mining>`_ " \
-                       "by expanding knowledge about\n"
+                       "by expanding knowledge about:\n"
 
     expansions = defaultdict(set)
     for concept_name, attribute_names in relates_intra.items():
@@ -71,10 +70,10 @@ def describe_producer_rst(ontology, producer_name, input_description):
         expansions[concept_dn].update(attribute_names)
 
     for concept_dn, object_types in expansions.items():
-        description += f"\n:{concept_dn.capitalize()}: Discovering new " + ', '.join(object_types)
+        description += f"\n:{concept_dn.capitalize()}: Discovering new " + _list_strings(object_types)
 
     if concept_combinations:
-        description += f"\n\nThe {producer_name} identifies\n" + '\n'.join(set(concept_combinations))
+        description += f"\n\nThe {producer_name} identifies:\n" + '\n'.join(set(concept_combinations.values()))
 
     value_names = set()
     value_descriptions = set()
@@ -96,11 +95,11 @@ def describe_producer_rst(ontology, producer_name, input_description):
             )
 
     if value_names:
-        description += f"\n\nThe {producer_name} provides names for " + _list_strings(value_names)
+        description += f"\n\nThe {producer_name} provides names for " + _list_strings(value_names) + '.'
     if value_descriptions:
-        description += f"\n\nThe {producer_name} provides descriptions for " + _list_strings(value_descriptions)
+        description += f"\n\nThe {producer_name} provides descriptions for " + _list_strings(value_descriptions) + '.'
     if value_containers:
-        description += f"\n\nThe {producer_name} identifies " + _list_strings(value_containers)
+        description += f"\n\nThe {producer_name} identifies " + _list_strings(value_containers) + '.'
 
     concepts = _describe_concepts(ontology)
     object_types = _describe_object_types(ontology)
@@ -176,7 +175,7 @@ def _describe_intra_concept_relations(ontology: Ontology):
 
 
 def _describe_concept_specializations(ontology: Ontology, item_template):
-    descriptions = []
+    descriptions = {}
     for event_type_name in ontology.get_event_type_names():
         event_type = ontology.get_event_type(event_type_name)
         for relation in event_type.relations:
@@ -186,19 +185,17 @@ def _describe_concept_specializations(ontology: Ontology, item_template):
             target_concept = ontology.get_concept(relation.get_target_concept())
             if source_concept.get_name() == target_concept.get_name():
                 continue
-            descriptions.append(
-                item_template.format(**{
-                    'concept_source': source_concept.get_display_name_plural(),
-                    'concept_target': target_concept.get_display_name_plural(),
-                    'event_type': event_type.get_display_name_plural()
-                })
-            )
+            descriptions[(source_concept.get_name(), target_concept.get_name())] = item_template.format(**{
+                'concept_source': source_concept.get_display_name_plural(),
+                'concept_target': target_concept.get_display_name_plural(),
+                'event_type': event_type.get_display_name_plural()
+            })
 
     return descriptions
 
 
 def _describe_concept_universals(ontology: Ontology, item_template):
-    descriptions = []
+    descriptions = {}
     for concept_name in ontology.get_concept_names():
         # Search for a base concept by traversing all specializations until
         # we find one that exists.
@@ -219,12 +216,10 @@ def _describe_concept_universals(ontology: Ontology, item_template):
                 if target_concept is None:
                     continue
 
-                descriptions.append(
-                    item_template.format(**{
-                        'concept_source': source_concept.get_display_name_plural(),
-                        'concept_target': target_concept.get_display_name_plural()
-                    })
-                )
+                descriptions[(source_concept.get_name(), target_concept.get_name())] = item_template.format(**{
+                    'concept_source': source_concept.get_display_name_plural(),
+                    'concept_target': target_concept.get_display_name_plural()
+                })
 
     return descriptions
 
