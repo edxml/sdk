@@ -82,10 +82,10 @@ def test_normalize_currency():
 
 
 def test_normalize_hex():
-    assert DataType.hex(2).normalize_objects({'AA'}) == {'aa'}
+    assert DataType.hex(1).normalize_objects({'AA'}) == {'aa'}
 
     with pytest.raises(EDXMLValidationError):
-        DataType.hex(2).normalize_objects({2})
+        DataType.hex(1).normalize_objects({2})
 
 
 def test_normalize_uri():

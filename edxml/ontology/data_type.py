@@ -578,13 +578,13 @@ class DataType(object):
         e = ElementMaker()
         split_data_type = self.type.split(':')
 
-        digits = int(split_data_type[1])
+        digits = int(split_data_type[1]) * 2
         if len(split_data_type) <= 2:
             # Simple hexadecimal value. Note that we restrict
             # the character space to lowercase characters only.
             return e.data(e.param(r'[a-f\d]{%d}' % digits, name='pattern'), type='hexBinary')
 
-        group_length = int(split_data_type[2])
+        group_length = int(split_data_type[2]) * 2
         group_separator = split_data_type[3]
         num_groups = digits / group_length
 
