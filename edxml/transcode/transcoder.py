@@ -637,8 +637,6 @@ class RecordTranscoder(object):
             if property_name in cls.TYPE_PROPERTY_SIMILARITY.get(event_type_name, {}):
                 event_type[property_name].hint_similar(
                     cls.TYPE_PROPERTY_SIMILARITY[event_type_name][property_name])
-            if property_name in cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []):
-                event_type[property_name].make_multivalued()
             if cls.TYPE_OPTIONAL_PROPERTIES.get(event_type_name) is True:
                 if property_name not in cls.TYPE_MANDATORY_PROPERTIES.get(event_type_name, []):
                     event_type[property_name].make_optional()
@@ -677,6 +675,10 @@ class RecordTranscoder(object):
             event_type.get_properties()[source_property].make_single_valued().relate_description(target_property)
         for target_property, source_property in cls.TYPE_UNIVERSALS_CONTAINERS.get(event_type_name, {}).items():
             event_type.get_properties()[source_property].make_single_valued().relate_container(target_property)
+
+        for property_name, object_type_name in cls.TYPE_PROPERTIES.get(event_type_name, {}).items():
+            if property_name in cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []):
+                event_type[property_name].make_multivalued()
 
         for attachment_name in cls.TYPE_ATTACHMENTS.get(event_type_name, []):
             attachment = event_type.create_attachment(attachment_name)
