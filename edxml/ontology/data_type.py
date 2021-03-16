@@ -33,8 +33,6 @@ class DataType(object):
     can be cast to strings, which yields the EDXML data-type attribute.
     """
 
-    # Expression used for matching SHA1 hashlinks
-    HASHLINK_PATTERN = re.compile("^[0-9a-zA-Z]{40}$")
     # Expression used for matching string datatypes
     STRING_PATTERN = re.compile("^string:[0-9]+:(mc|lc|uc)(:[ru]+)?$")
     # Expression used for matching base64 datatypes
@@ -63,7 +61,7 @@ class DataType(object):
     FAMILY_ENUM = 'enum'
     FAMILY_GEO = 'geo'
     FAMILY_IP = 'ip'
-    FAMILY_HASHLINK = 'hashlink'
+    FAMILY_FILE = 'file'
 
     def __init__(self, data_type):
 
@@ -350,15 +348,15 @@ class DataType(object):
         return cls('geo:point')
 
     @classmethod
-    def hashlink(cls):
+    def file(cls):
         """
 
-        Create a hashlink DataType instance.
+        Create a file DataType instance.
 
         Returns:
           edxml.ontology.DataType:
         """
-        return cls('hashlink')
+        return cls('file')
 
     @classmethod
     def ip_v4(cls):
@@ -708,11 +706,10 @@ class DataType(object):
                 ), type='string'
             )
 
-    def _generate_schema_hashlink(self):
-        e = ElementMaker()
-
-        # Hashlink is a hex encoded 20-byte SHA1
-        return e.data(e.param('20', name='length'), type='hexBinary')
+    def _generate_schema_file(self):
+        # Note that anyURI XML data type allows anything, we could
+        # also have used a string data type here.
+        return ElementMaker().data(type='anyURI')
 
     def _generate_schema_geo(self):
         split_data_type = self.type.split(':')
@@ -760,8 +757,8 @@ class DataType(object):
             return self._generate_schema_enum()
         elif data_type_family == 'ip':
             return self._generate_schema_ip()
-        elif data_type_family == 'hashlink':
-            return self._generate_schema_hashlink()
+        elif data_type_family == 'file':
+            return self._generate_schema_file()
         elif data_type_family == 'geo':
             return self._generate_schema_geo()
         else:
@@ -1130,9 +1127,9 @@ class DataType(object):
             if len(decoded) > max_string_length:
                 raise EDXMLValidationError("base64 encoded string too long for data type %s: '%s'" % (self.type, value))
 
-    def _validate_value_hashlink(self, value):
-        if not re.match(self.HASHLINK_PATTERN, value):
-            raise EDXMLValidationError("Invalid hashlink: '%s'" % value)
+    def _validate_value_file(self, value):
+        # file values can be any string, nothing to validate.
+        ...
 
     def _validate_value_ip(self, value):
         split_data_type = self.type.split(':')
@@ -1198,8 +1195,8 @@ class DataType(object):
             self._validate_value_uri(value)
         elif data_type_family == 'base64':
             self._validate_value_base64(value)
-        elif data_type_family == 'hashlink':
-            self._validate_value_hashlink(value)
+        elif data_type_family == 'file':
+            self._validate_value_file(value)
         elif data_type_family == 'ip':
             self._validate_value_ip(value)
         elif data_type_family == 'boolean':
@@ -1305,8 +1302,9 @@ class DataType(object):
            edxml.ontology.DataType:
         """
 
-        # Check simple data types first
-        if self.type in ('enum', 'datetime', 'sequence', 'hashlink', 'boolean', 'uuid'):
+        # Some data type families have just one member and
+        # do not require any further validation.
+        if self.type in ('datetime', 'sequence', 'file', 'boolean', 'uuid'):
             return self
 
         split_data_type = self.type.split(':')
