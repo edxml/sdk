@@ -131,7 +131,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
     CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
-                 class_list='', summary='no description available', story='no description available', parent=None):
+                 summary='no description available', story='no description available', parent=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -141,7 +141,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
             'display-name-singular': display_name_singular,
             'display-name-plural': display_name_plural,
             'description': description or name,
-            'class-list': class_list,
             'summary': summary,
             'story': story,
             'timespan-start': None,
@@ -326,17 +325,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
         return self.__attr['sequence']
 
-    def get_classes(self):
-        """
-
-        Returns the list of classes that this event type
-        belongs to.
-
-        Returns:
-          List[str]:
-        """
-        return [c for c in self.__attr['class-list'].split(',') if c != '']
-
     def get_properties(self):
         """
 
@@ -415,21 +403,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
           Dict[str,EventTypeAttachment]:
         """
         return self.__attachments
-
-    def has_class(self, class_name):
-        """
-
-        Returns True if specified class is in the list of
-        classes that this event type belongs to, return False
-        otherwise.
-
-        Args:
-          class_name (str): The class name
-
-        Returns:
-          bool:
-        """
-        return class_name in self.__attr['class-list'].split(',')
 
     def get_timespan_property_names(self):
         """
@@ -829,41 +802,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
         self._child_modified_callback()
         return self
 
-    def add_class(self, class_name):
-        """
-
-        Adds the specified event type class
-
-        Args:
-          class_name (str):
-
-        Returns:
-          edxml.ontology.EventType: The EventType instance
-        """
-        if class_name:
-            if self.__attr['class-list'] == '':
-                self._set_attr('class-list', class_name)
-            else:
-                self._set_attr('class-list', ','.join(
-                    list(set(self.__attr['class-list'].split(',') + [class_name]))))
-        return self
-
-    def set_classes(self, class_names):
-        """
-
-        Replaces the list of classes that the event type
-        belongs to with the specified list. Any duplicates
-        are automatically removed from the list.
-
-        Args:
-          class_names (Iterable[str]):
-
-        Returns:
-          edxml.ontology.EventType: The EventType instance
-        """
-        self._set_attr('class-list', ','.join(list(set(class_names))))
-        return self
-
     def set_name(self, event_type_name):
         """
 
@@ -1126,7 +1064,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
         token_attributes = (
-            'summary', 'display-name-singular', 'display-name-plural', 'description', 'class-list'
+            'summary', 'display-name-singular', 'display-name-plural', 'description'
         )
 
         for token_attribute in token_attributes:
@@ -1135,12 +1073,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     'The %s attribute of event type "%s" contains illegal whitespace characters: "%s"' %
                     (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
-
-        if self.__attr['class-list'] and not re.match(self.CLASS_LIST_PATTERN, self.__attr['class-list']):
-            raise EDXMLValidationError(
-                'Event type "%s" has an invalid class list: "%s"' %
-                (self.__attr['name'], self.__attr['class-list'])
-            )
 
         for attribute_name in ('timespan-start', 'timespan-end'):
             if self.__attr[attribute_name] is not None:
@@ -1200,7 +1132,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 type_element.attrib['display-name-singular'],
                 type_element.attrib['display-name-plural'],
                 type_element.attrib['description'],
-                type_element.attrib.get('class-list', ''),
                 type_element.attrib['summary'],
                 type_element.attrib['story']
             ).set_version(type_element.attrib['version'])\
@@ -1298,11 +1229,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
             # The sequence properties differ, no upgrade possible.
             equal = is_valid_upgrade = False
 
-        if set(old.get_classes()) != set(new.get_classes()):
-            # Adding an event type class is possible, removing one is not.
-            equal = False
-            is_valid_upgrade &= versions_differ and len(set(old.get_classes()) - set(new.get_classes())) == 0
-
         if old.get_timespan_property_name_start() != new.get_timespan_property_name_start():
             # Versions do not agree on their timespan definitions. No upgrade possible.
             equal = is_valid_upgrade = False
@@ -1381,7 +1307,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
             self.set_display_name(event_type.get_display_name_singular(), event_type.get_display_name_plural())
             self.set_summary_template(event_type.get_summary_template())
             self.set_story_template(event_type.get_story_template())
-            self.set_classes(set(self.get_classes()).union(event_type.get_classes()))
             self.set_version(event_type.get_version())
 
         return self
@@ -1398,9 +1323,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
         """
         attribs = dict(self.__attr)
         attribs['version'] = str(attribs['version'])
-
-        if attribs['class-list'] == '':
-            del attribs['class-list']
 
         element = etree.Element('event-type', {k: v for k, v in attribs.items() if v})
         if self.__parent:
