@@ -118,6 +118,7 @@ def test_coerce_bytes_property_object(event_element):
 
 def test_set_attachment(event_element):
     event_element.set_attachment('attachment', {'id': 'value'})
+    assert len(event_element.get_element().findall('attachments/attachment')) == 1
     assert event_element.get_element().find('attachments/attachment').text == 'value'
     assert event_element.get_attachments() == {'attachment': {'id': 'value'}}
 
@@ -204,12 +205,6 @@ def test_delete_multi_valued_property(event_element):
     del event_element["b"]
     assert len(event_element.get_element().findall('properties/a')) == 1
     assert len(event_element.get_element().findall('properties/b')) == 0
-
-
-def test_set_attachment(event_element):
-    event_element.set_attachment('a', {'id': 'a'})
-    assert len(event_element.get_element().findall('attachments/a')) == 1
-    assert event_element.get_element().find('attachments/a').text == "a"
 
 
 def test_delete_attachment(event_element):
