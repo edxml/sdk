@@ -1,5 +1,3 @@
-# coding=utf-8
-
 # ========================================================================================
 #                                                                                        =
 #              Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)                 =
@@ -13,7 +11,6 @@
 #                                                                                        =
 # ========================================================================================
 
-# the line above is required for inline unicode
 import codecs
 import hashlib
 from datetime import datetime
