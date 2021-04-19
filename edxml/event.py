@@ -356,17 +356,10 @@ class EDXMLEvent(MutableMapping):
         return len(self._properties)
 
     def __getitem__(self, key):
-        try:
-            return self._properties[key]
-        except KeyError:
-            self._properties[key] = PropertyObjectSet(key)
-            return self._properties[key]
+        return self._properties[key]
 
     def __contains__(self, key):
-        try:
-            return len(self._properties[key]) > 0
-        except (KeyError, IndexError):
-            return False
+        return len(self._properties[key]) > 0
 
     def __iter__(self):
         for property_name in self._properties:
