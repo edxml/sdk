@@ -68,8 +68,6 @@ def test_direct_instantiation_not_possible():
         ParsedEvent({})
     with pytest.raises(NotImplementedError):
         ParsedEvent.create({})
-    with pytest.raises(NotImplementedError):
-        ParsedEvent.create_from_xml(etree.Element('tag'))
 
 
 def test_set_unsupported_property_value_fails(parsed_event):

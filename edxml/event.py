@@ -17,7 +17,7 @@ import hashlib
 import sys
 
 from collections.abc import MutableMapping, MutableSet
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from datetime import datetime
 from IPy import IP
 from lxml import etree
@@ -609,54 +609,6 @@ class EDXMLEvent(MutableMapping):
         """
         return self._foreign_attribs
 
-    @classmethod
-    def create_from_xml(cls, event_element):
-        """
-
-        Creates and returns a new EDXMLEvent instance by reading it from
-        specified lxml Element instance.
-
-        Args:
-          event_element (etree.Element): The XML element containing the event
-
-        Returns:
-          EDXMLEvent:
-        """
-        try:
-            event_type_name = event_element.attrib["event-type"]
-            source_uri = event_element.attrib["source-uri"]
-
-            attachments = defaultdict(dict)
-            property_objects = {}
-            for element in event_element:
-                if element.tag == 'properties':
-                    for property_element in element:
-                        property_name = property_element.tag
-                        if property_name not in property_objects:
-                            property_objects[property_name] = set()
-                        property_objects[property_name].add(property_element.text)
-                elif element.tag == '{http://edxml.org/edxml}properties':
-                    for property_element in element:
-                        property_name = property_element.tag[24:]
-                        if property_name not in property_objects:
-                            property_objects[property_name] = set()
-                        property_objects[property_name].add(property_element.text)
-                elif element.tag == 'attachments':
-                    for attachment in element:
-                        attachments[attachment.tag][attachment.attr['id']] = attachment.text
-                elif element.tag == '{http://edxml.org/edxml}attachments':
-                    for attachment in element:
-                        attachments[attachment.tag[24:]][attachment.attr['id']] = attachment.text
-
-            return cls(property_objects, event_type_name, source_uri, event_element.attrib.get('parents'), attachments)
-
-        except (ValueError, KeyError) as e:
-            raise EDXMLValidationError(
-                "Failed to instantiate an EDXML event from the following definition:\n" +
-                etree.tostring(event_element, pretty_print=True, encoding='unicode') +
-                "\n" + e.__name__ + ": " + str(e)
-            )
-
     def set_properties(self, properties):
         """
 
@@ -1066,22 +1018,6 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         raise NotImplementedError(
             'ParsedEvent objects can only be created by parsers')
 
-    @classmethod
-    def create_from_xml(cls, event_element):
-        """
-
-        Creates and returns a new EDXMLEvent instance by reading it from
-        specified lxml Element instance.
-
-        Args:
-          event_element (etree.Element): The XML element containing the event
-
-        Returns:
-          EDXMLEvent:
-        """
-        # Below is a limitation of the lxml library.
-        raise NotImplementedError('ParsedEvent can only be instantiated by EDXML parsers.')
-
     def sort(self):
         """
 
@@ -1485,25 +1421,6 @@ class EventElement(EDXMLEvent):
             parents=event.get_explicit_parents()
         ).set_foreign_attributes(event.get_foreign_attributes())\
             .replace_invalid_characters(event._replace_invalid_characters)
-
-    @classmethod
-    def create_from_xml(cls, event_element):
-        """
-
-        Creates and returns a new EventElement instance by reading it from
-        specified lxml Element instance.
-
-        Args:
-          event_element (etree.Element): The XML element containing the event
-
-        Returns:
-          EventElement:
-        """
-
-        new = cls({})
-        new.__element = event_element
-
-        return new
 
     def sort(self):
         """
