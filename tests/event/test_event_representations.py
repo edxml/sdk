@@ -269,9 +269,30 @@ def test_add_property_object(event):
     assert event.get_properties() == {"smiley": {"😀", "☹"}}
 
 
+def test_remove_property_object(event):
+    event['smiley'].remove("😀")
+    assert event.get_properties() == {}
+
+
+def test_discard_property_object(event):
+    event['smiley'].discard("😀")
+    assert event.get_properties() == {}
+
+
+def test_clear_property_objects(event):
+    event['smiley'].clear()
+    assert event.get_properties() == {}
+
+
 def test_update_property_object(event):
     event['smiley'].update(["☹"])
     assert event.get_properties() == {"smiley": {"😀", "☹"}}
+
+
+def test_pop_property_object(event):
+    popped = event['smiley'].pop()
+    assert popped == "😀"
+    assert event.get_properties() == {}
 
 
 def test_add_nonexistent_property_object(event):
@@ -390,6 +411,10 @@ def test_move_property_values(event):
 def test_get_attachments(event, event_with_attachment):
     assert event.get_attachments() == {}
     assert event_with_attachment.get_attachments() == {'attachment': {'id': 'test'}}
+
+
+def test_iterate_attachments(event_with_attachment):
+    assert list(iter(event_with_attachment.get_attachments())) == ['attachment']
 
 
 def test_set_attachments(event):
@@ -520,3 +545,52 @@ def test_event_without_type(event_without_type):
 
 def test_event_without_source(event_without_source):
     assert event_without_source.get_source_uri() is None
+
+
+def test_compare_event_scalar_fails(event):
+    with pytest.raises(TypeError):
+        assert event == 1
+
+
+def test_compare_events_differing_types(event):
+    other = event.copy()
+    assert other == event
+
+    other.set_type('different')
+    assert other != event
+
+
+def test_compare_events_differing_sources(event):
+    other = event.copy()
+    assert other == event
+
+    other.set_source('/different/')
+    assert other != event
+
+
+def test_compare_events_differing_properties(event):
+    other = event.copy()
+    assert other == event
+
+    other['smiley'].add("☹")
+    assert other != event
+
+    other = event.copy()
+    other['foo'] = 'bar'
+    assert other != event
+
+
+def test_compare_events_differing_attachments(event):
+    other = event.copy()
+    assert other == event
+
+    other.attachments['foo'] = 'bar'
+    assert other != event
+
+
+def test_compare_events_differing_parents(event):
+    other = event.copy()
+    assert other == event
+
+    other.set_parents(['e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98'])
+    assert other != event

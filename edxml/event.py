@@ -194,8 +194,12 @@ class PropertyObjectSet(set, MutableSet):
         self._update(self.__property_name, self)
 
     def pop(self):
-        super().pop()
+        value = super().pop()
         self._update(self.__property_name, self)
+        return value
+
+    def _update(self, property_name, values):
+        pass
 
 
 class AttachmentValueDict(OrderedDict):
