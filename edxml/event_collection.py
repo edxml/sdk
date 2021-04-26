@@ -209,10 +209,13 @@ class EventCollection(List[EDXMLEvent]):
 
         return event_set
 
-    def to_edxml(self):
+    def to_edxml(self, pretty_print=True):
         """
         Returns a string containing the EDXML representation of
         the events in the collection.
+
+        Args:
+            pretty_print (bool): Pretty print output yes or no
 
         Returns:
             bytes:
@@ -221,7 +224,7 @@ class EventCollection(List[EDXMLEvent]):
         if self._ontology is None:
             raise RuntimeError("Event collection contains no ontology, generating EDXML output is not possible.")
 
-        writer = EDXMLWriter(output=None)
+        writer = EDXMLWriter(output=None, pretty_print=pretty_print)
         writer.add_ontology(self._ontology)
 
         for event in self:
