@@ -572,6 +572,10 @@ def test_compare_events_differing_properties(event):
     other = event.copy()
     assert other == event
 
+    other['empty'] = []
+    assert other == event
+
+    other = event.copy()
     other['smiley'].add("☹")
     assert other != event
 
@@ -584,8 +588,17 @@ def test_compare_events_differing_attachments(event):
     other = event.copy()
     assert other == event
 
+    other.attachments['empty'] = []
+    assert other == event
+
+    other = event.copy()
     other.attachments['foo'] = 'bar'
     assert other != event
+
+    other = event.copy()
+    event.attachments['foo']['bar'] = 'a'
+    other.attachments['foo']['bar'] = 'b'
+    assert other == event
 
 
 def test_compare_events_differing_parents(event):

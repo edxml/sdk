@@ -121,6 +121,9 @@ class PropertySet(OrderedDict):
     def __eq__(self, other):
         return dict(other) == {p: v for p, v in super().items() if len(v) > 0}
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __contains__(self, item):
         return item in super().keys() and len(super().__getitem__(item)) > 0
 
@@ -171,7 +174,10 @@ class PropertyObjectSet(set, MutableSet):
         return PropertyObjectSet(self.__property_name, [deepcopy(v) for v in self], self._update)
 
     def __eq__(self, other):
-        return set(self) == other
+        return set(self) == set(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def add(self, value):
         super().add(value)
@@ -221,6 +227,9 @@ class AttachmentValueDict(OrderedDict):
     def __eq__(self, other):
         return self.keys() == other.keys()
 
+    def __ne__(self, other):
+        return self.__eq__(other)
+
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         self._update(key, value)
@@ -262,6 +271,9 @@ class AttachmentSet(OrderedDict):
 
     def __eq__(self, other):
         return other == {a: v for a, v in super().items() if len(v) > 0}
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __setitem__(self, key, value):
         if value is None:
@@ -380,7 +392,7 @@ class EDXMLEvent(MutableMapping):
         if self.get_source_uri() != other.get_source_uri():
             return False
 
-        if not self.properties.__eq__(other.properties):
+        if self.properties != other.properties:
             return False
 
         if self.attachments != other.attachments:
