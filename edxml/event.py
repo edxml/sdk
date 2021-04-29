@@ -1043,18 +1043,10 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         props = self.find('{http://edxml.org/edxml}properties')
         if props is not None:
             props[:] = sorted(props, key=lambda element: (element.tag, element.text))
-            try:
-                del self._properties
-            except AttributeError:
-                pass
 
         attachments = self.find('{http://edxml.org/edxml}attachments')
         if attachments is not None:
             attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.attrib['id']))
-            try:
-                del self._attachments
-            except AttributeError:
-                pass
 
         if 'parents' in self.attrib:
             self.attrib['parents'] = ','.join(sorted(self.attrib['parents'].split(',')))
