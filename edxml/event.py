@@ -163,10 +163,10 @@ class PropertyObjectSet(set, MutableSet):
             if isinstance(objects, (bytes, str, int, bool, float, datetime, IP)):
                 objects = (objects,)
             try:
-                self.update(set(iter(objects or [])))
+                self.update(iter(objects or []))
             except TypeError:
                 # Not iterable.
-                self.update(set((objects,) or []))
+                self.update((objects,) or [])
         if update is not None:
             self._update = update
 
