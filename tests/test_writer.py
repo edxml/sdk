@@ -123,7 +123,7 @@ def event_dropped_object():
 @pytest.fixture()
 def event_obscure_error():
     class WeirdEvent(EDXMLEvent):
-        def get_element(self):
+        def get_element(self, sort=False):
             return etree.Element('weird')
 
     return WeirdEvent(

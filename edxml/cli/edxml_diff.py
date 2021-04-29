@@ -58,7 +58,7 @@ class SortingParser(EDXMLPullParser):
             for hash, event in sorted(self._events_by_hash.items()):
                 # NOTE: Below we use EventElement.create_from_event() to get rid of the
                 #       XML namespaces that all ParsedEvent instances have.
-                writer.add_event(EventElement.create_from_event(event).sort())
+                writer.add_event(EventElement.create_from_event(event), sort=True)
 
         return edxml.getvalue()
 

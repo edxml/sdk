@@ -123,25 +123,6 @@ def test_cast_to_string(parsed_event):
     assert parsed.find('e:properties/e:a', namespaces=namespaces).text == "🖤"
 
 
-def test_sort_event(parsed_event):
-    parsed_event.set_properties({})
-    parsed_event['b'] = ['3', '2']
-    parsed_event['a'] = ['1']
-
-    parsed_event.set_attachment('b', 'b')
-    parsed_event.set_attachment('a', 'a')
-
-    # NOTE: The objects in a property are stored as sets. The ordering of the objects is
-    # therefore undefined. Below assertions may fail on future Python versions.
-    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) != ['1', '2', '3']
-    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) != ['a', 'b']
-
-    parsed_event.sort()
-
-    assert parsed_event.xpath('e:properties/*/text()', namespaces=namespaces) == ['1', '2', '3']
-    assert parsed_event.xpath('e:attachments/*/text()', namespaces=namespaces) == ['a', 'b']
-
-
 def test_set_property(parsed_event):
     parsed_event["b"] = ["x"]
     assert parsed_event.properties == {"a": {"🖤"}, "b": {"x"}}

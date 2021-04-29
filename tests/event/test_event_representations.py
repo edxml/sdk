@@ -504,39 +504,62 @@ def test_compute_sticky_hash(event, ontology):
     assert event.compute_sticky_hash(event_type) == hash_hex
 
 
-def test_sort_event(event):
+def test_order_sensitivity_properties(event):
 
+    o = Ontology()
+    o.create_object_type('a')
+    e = o.create_event_type('a')
+    e.create_property(name='a', object_type_name='a').make_hashed()
+    e.create_property(name='b', object_type_name='a').make_hashed()
+
+    # Create event with lexicographically ordered property keys and values
+    # and compute its hash
     properties = OrderedDict()
-    properties['b'] = {'test2b', 'test1b'}
-    properties['a'] = {'test2a', 'test1a'}
+    properties['a'] = ['test1a', 'test2a']
+    properties['b'] = ['test1b', 'test2b']
+    event.set_properties(properties)
+    event_ordered = event.copy()
+    hash_ordered = event.compute_sticky_hash(event_type=e)
 
-    ordered_properties = OrderedDict()
-    ordered_properties['a'] = {'test1a', 'test2a'}
-    ordered_properties['b'] = {'test1b', 'test2b'}
-
-    event.set_properties({})
+    # Set shuffled property keys
+    properties = OrderedDict()
+    properties['b'] = ['test1b', 'test2b']
+    properties['a'] = ['test1a', 'test2a']
     event.set_properties(properties)
 
-    attachments = OrderedDict()
-    attachments['b'] = OrderedDict((('2', 'test2b'), ('1', 'test1b')))
-    attachments['a'] = OrderedDict((('2', 'test2a'), ('1', 'test1a')))
+    # Event should not be regarded as different or have a different hash
+    assert event == event_ordered
+    assert event.compute_sticky_hash(event_type=e) == hash_ordered
 
-    ordered_attachments = OrderedDict()
-    ordered_attachments['a'] = OrderedDict((('1', 'test1a'), ('2', 'test2a')))
-    ordered_attachments['b'] = OrderedDict((('1', 'test1b'), ('2', 'test2b')))
+    # Set shuffled property keys (direct manipulation)
+    event.set_properties({})
+    event.properties['b'] = ['test1b', 'test2b']
+    event.properties['a'] = ['test1a', 'test2a']
 
-    event.set_attachment('b', attachments['b'])
-    event.set_attachment('a', attachments['a'])
+    # Event should not be regarded as different or have a different hash
+    assert event == event_ordered
+    assert event.compute_sticky_hash(event_type=e) == hash_ordered
 
-    assert event.get_properties() == properties
-    assert event.get_properties() != ordered_properties
-    assert event.get_attachments() == attachments
-    assert event.get_attachments() != ordered_attachments
+    # Set shuffled object values
+    properties = OrderedDict()
+    properties['a'] = ['test2a', 'test1a']
+    properties['b'] = ['test2b', 'test1b']
+    event.set_properties(properties)
 
-    event.sort()
+    # Event should not be regarded as different or have a different hash
+    assert event == event_ordered
+    assert event.compute_sticky_hash(event_type=e) == hash_ordered
 
-    assert event.get_properties() == ordered_properties
-    assert event.get_attachments() == ordered_attachments
+    # Set shuffled object values (direct manipulation)
+    event.set_properties({})
+    event['a'].add('test2a')
+    event['a'].add('test1a')
+    event['b'].add('test2b')
+    event['b'].add('test1b')
+
+    # Event should not be regarded as different or have a different hash
+    assert event == event_ordered
+    assert event.compute_sticky_hash(event_type=e) == hash_ordered
 
 
 def test_event_without_type(event_without_type):
@@ -607,3 +630,92 @@ def test_compare_events_differing_parents(event):
 
     other.set_parents(['e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98'])
     assert other != event
+
+
+def test_sorted_xml_serialization_properties(event):
+
+    # Create an EDXML event with properties and
+    # object values in inverse lexicographical order.
+    event.properties = {}
+    event.properties['b'] = ['b2', 'b1']
+    event.properties['a'] = ['a2', 'a1']
+
+    # Serialize and split into lines
+    xml_lines = etree.tostring(event.get_element(), pretty_print=True).splitlines()
+
+    if xml_lines[-1] == b'':
+        # ParsedEvent instances have a trailing new line due
+        # to the fact that the EDXML writer outputs one EDXML
+        # event per line of output.
+        xml_lines.pop()
+
+    # Unwrap <event> element
+    assert b'<event ' in xml_lines[0]
+    assert b'</event>' in xml_lines[-1]
+
+    xml_lines.pop(0)
+    xml_lines.pop(-1)
+
+    # Unwrap <properties> element
+    assert b'<properties>' in xml_lines[0]
+    assert b'</properties>' in xml_lines[-1]
+
+    xml_lines.pop(0)
+    xml_lines.pop(-1)
+
+    # Properties and object values in XML serialization
+    # should not be sorted.
+    assert xml_lines != sorted(xml_lines)
+
+    # Serialize with sorting.
+    xml_lines = etree.tostring(event.get_element(sort=True), pretty_print=True).splitlines()[2:-2]
+
+    # Check that serialization is indeed sorted.
+    assert xml_lines == sorted(xml_lines)
+
+
+def test_sorted_xml_serialization_attachments(event):
+
+    # Create an EDXML event with attachments in inverse lexicographical order.
+    event.properties = {}
+    event.attachments = {}
+    event.attachments['b']['2'] = 'b2'
+    event.attachments['b']['1'] = 'b1'
+    event.attachments['a']['2'] = 'a2'
+    event.attachments['a']['1'] = 'a1'
+
+    # Serialize and split into lines
+    xml_lines = etree.tostring(event.get_element(), pretty_print=True).splitlines()
+
+    if xml_lines[-1] == b'':
+        # ParsedEvent instances have a trailing new line due
+        # to the fact that the EDXML writer outputs one EDXML
+        # event per line of output.
+        xml_lines.pop()
+
+    # Unwrap <event> element
+    assert b'<event ' in xml_lines[0]
+    assert b'</event>' in xml_lines[-1]
+
+    xml_lines.pop(0)
+    xml_lines.pop(-1)
+
+    # Remove <properties/> element
+    assert b'<properties/>' in xml_lines[0]
+    xml_lines.pop(0)
+
+    # Unwrap <attachments> element
+    assert b'<attachments>' in xml_lines[0]
+    assert b'</attachments>' in xml_lines[-1]
+
+    xml_lines.pop(0)
+    xml_lines.pop(-1)
+
+    # Attachments in XML serialization should not be sorted.
+    assert xml_lines != sorted(xml_lines)
+
+    # Serialize with sorting.
+    xml_lines = etree.tostring(event.get_element(sort=True), pretty_print=True).splitlines()[3:-2]
+
+    # Check that serialization is indeed sorted.
+    assert xml_lines == sorted(xml_lines)

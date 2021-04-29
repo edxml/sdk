@@ -149,25 +149,6 @@ def test_cast_to_string(event_element):
     assert parsed.find('properties/a').text == "🖤"
 
 
-def test_sort_event(event_element):
-    event_element.set_properties({})
-    event_element['b'] = ['3', '2']
-    event_element['a'] = ['1']
-
-    event_element.set_attachment('b', {'id': 'b'})
-    event_element.set_attachment('a', {'id': 'a'})
-
-    # NOTE: The objects in a property are stored as sets. The ordering of the objects is
-    # therefore undefined. Below assertions may fail on future Python versions.
-    assert event_element.get_element().xpath('properties/*/text()') != ['1', '2', '3']
-    assert event_element.get_element().xpath('attachments/*/text()') != ['a', 'b']
-
-    event_element.sort()
-
-    assert event_element.get_element().xpath('properties/*/text()') == ['1', '2', '3']
-    assert event_element.get_element().xpath('attachments/*/text()') == ['a', 'b']
-
-
 def test_set_property(event_element):
     event_element["b"] = ["x"]
     assert event_element.properties == {"a": {"🖤"}, "b": {"x"}}

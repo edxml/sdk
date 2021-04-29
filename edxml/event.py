@@ -88,7 +88,7 @@ def to_edxml_object(property_name, value):
         )
 
 
-class PropertySet(OrderedDict):
+class PropertySet(dict):
     def __init__(self, properties=None, update_property=None):
         super().__init__()
         if properties is not None:
@@ -208,7 +208,7 @@ class PropertyObjectSet(set, MutableSet):
         pass
 
 
-class AttachmentValueDict(OrderedDict):
+class AttachmentValueDict(dict):
     def __init__(self, attachment_name, value={}, update=None):
         if not isinstance(value, dict):
             if not isinstance(value, list):
@@ -248,7 +248,7 @@ class AttachmentValueDict(OrderedDict):
         pass
 
 
-class AttachmentSet(OrderedDict):
+class AttachmentSet(dict):
     def __init__(self, attachments=None, update_attachment=None):
         super().__init__()
 
@@ -478,10 +478,24 @@ class EDXMLEvent(MutableMapping):
         except IndexError:
             return default
 
-    def get_element(self):
+    def get_element(self, sort=False):
+        """
+
+        Returns the event as XML element. When the sort
+        parameter is set to True, the properties, attachments
+        and event parents are sorted as required for obtaining
+        the event in its normal form as defined in the EDXML
+        specification.
+
+        Args:
+            sort (bool): Sort element components
+
+        Returns:
+            etree.Element:
+        """
         return EventElement.create_from_event(self)\
             .replace_invalid_characters(self._replace_invalid_characters)\
-            .get_element()
+            .get_element(sort)
 
     def copy(self):
         """
@@ -533,24 +547,6 @@ class EDXMLEvent(MutableMapping):
             parents,
             attachments
         )
-
-    def sort(self):
-        """
-
-        Sorts the event properties and attachments. This can be helpful when
-        comparing differences between events.
-
-        Returns:
-            EDXMLEvent:
-        """
-        self._properties = PropertySet(OrderedDict(sorted(self._properties.items(), key=lambda t: t[0])))
-
-        attachments = OrderedDict()
-        for attachment_name, values in sorted(self._attachments.items(), key=lambda t: t[0]):
-            attachments[attachment_name] = OrderedDict(sorted(values.items(), key=lambda t: t[0]))
-
-        self._attachments = attachments
-        return self
 
     def get_type_name(self):
         """
@@ -1034,11 +1030,12 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         raise NotImplementedError(
             'ParsedEvent objects can only be created by parsers')
 
-    def sort(self):
+    def _sort(self):
         """
 
-        Sorts the event properties and attachments on their names. This can be helpful when
-        comparing differences between events.
+        Sorts the event properties, attachments and explicit parents as required to
+        obtain the XML serialized event in its normal form, as specified in the
+        EDXML specification.
 
         Returns:
             EDXMLEvent:
@@ -1117,7 +1114,23 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         # an empty list, but [''] instead.
         return [] if parent_string == '' else parent_string.split(',')
 
-    def get_element(self):
+    def get_element(self, sort=False):
+        """
+
+        Returns the event as XML element. When the sort
+        parameter is set to True, the properties, attachments
+        and event parents are sorted as required for obtaining
+        the event in its normal form as defined in the EDXML
+        specification.
+
+        Args:
+            sort (bool): Sort element components
+
+        Returns:
+            etree.Element:
+        """
+        if sort:
+            self._sort()
         return self
 
     def set_properties(self, properties):
@@ -1371,7 +1384,23 @@ class EventElement(EDXMLEvent):
             if len(v) > 0:
                 yield p
 
-    def get_element(self):
+    def get_element(self, sort=False):
+        """
+
+        Returns the event as XML element. When the sort
+        parameter is set to True, the properties, attachments
+        and event parents are sorted as required for obtaining
+        the event in its normal form as defined in the EDXML
+        specification.
+
+        Args:
+            sort (bool): Sort element components
+
+        Returns:
+            etree.Element:
+        """
+        if sort:
+            self._sort()
         return self.__element
 
     def copy(self):
@@ -1438,11 +1467,12 @@ class EventElement(EDXMLEvent):
         ).set_foreign_attributes(event.get_foreign_attributes())\
             .replace_invalid_characters(event._replace_invalid_characters)
 
-    def sort(self):
+    def _sort(self):
         """
 
-        Sorts the event properties and attachments. This can be helpful when
-        comparing differences between events.
+        Sorts the event properties, attachments and explicit parents as required to
+        obtain the XML serialized event in its normal form, as specified in the
+        EDXML specification.
 
         Returns:
             EDXMLEvent:
@@ -1450,12 +1480,10 @@ class EventElement(EDXMLEvent):
         props = self.__element.find('properties')
         if props is not None:
             props[:] = sorted(props, key=lambda element: (element.tag, element.text))
-            self._properties = None
 
         attachments = self.__element.find('attachments')
         if attachments is not None:
             attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.attrib['id']))
-            self._attachments = None
 
         return self
 

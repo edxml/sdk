@@ -430,13 +430,21 @@ class EDXMLWriter(object):
             # Properties did not change, normalization had no effect,
             raise normalize_exception or EDXMLValidationError("Attempt to normalize invalid event objects failed.")
 
-    def add_event(self, event):
+    def add_event(self, event, sort=False):
         """
 
         Adds specified event to the output data stream.
 
+        When the sort parameter is set to True, the properties,
+        attachments and event parents are sorted as required for
+        obtaining the event in its normal form as defined in the
+        EDXML specification. While this does not actually output
+        the events in their normal form, the sorting does make it
+        easier to spot relevant differences between events.
+
         Args:
           event (edxml.EDXMLEvent): The event
+          sort (bool): Sort event components yes or no
 
         Returns:
             edxml.writer.EDXMLWriter:
@@ -466,7 +474,7 @@ class EDXMLWriter(object):
             raise EDXMLValidationError(
                 'Attempt to add an event using unknown source URI: "%s"' % source_uri)
 
-        event_element = event.get_element()
+        event_element = event.get_element(sort)
 
         if self.__validate:
             # Parsed events inherit the global namespace from the
