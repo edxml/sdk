@@ -1056,6 +1056,9 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             except AttributeError:
                 pass
 
+        if 'parents' in self.attrib:
+            self.attrib['parents'] = ','.join(sorted(self.attrib['parents'].split(',')))
+
         return self
 
     def get_properties(self):
@@ -1484,6 +1487,9 @@ class EventElement(EDXMLEvent):
         attachments = self.__element.find('attachments')
         if attachments is not None:
             attachments[:] = sorted(attachments, key=lambda element: (element.tag, element.attrib['id']))
+
+        if 'parents' in self.__element.attrib:
+            self.__element.attrib['parents'] = ','.join(sorted(self.__element.attrib['parents'].split(',')))
 
         return self
 

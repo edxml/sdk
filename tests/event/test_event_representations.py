@@ -17,6 +17,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from IPy import IP
+from lxml import etree
 
 from edxml import EventCollection
 from edxml.event import EDXMLEvent, ParsedEvent, EventElement
@@ -47,7 +48,7 @@ def ontology():
 
 
 def create_parsed_event(ontology, event):
-    edxml_data = EventCollection([event]).set_ontology(ontology).to_edxml()
+    edxml_data = EventCollection([event]).set_ontology(ontology).to_edxml(pretty_print=False)
     events = EventCollection.from_edxml(edxml_data)
     return events[0]  # type: ParsedEvent
 
@@ -719,3 +720,22 @@ def test_sorted_xml_serialization_attachments(event):
 
     # Check that serialization is indeed sorted.
     assert xml_lines == sorted(xml_lines)
+
+
+def test_sorted_xml_serialization_parents(event):
+
+    # Create an EDXML event with parent hashes in inverse lexicographical order.
+    event.properties = {}
+    event.set_parents(['b', 'a', 'c'])
+
+    # Serialize and split into lines
+    xml_lines = etree.tostring(event.get_element(), pretty_print=True).splitlines()
+
+    # Parents in XML serialization should not be sorted.
+    assert b'parents="a,b,c"' not in xml_lines[0]
+
+    # Serialize with sorting.
+    xml_lines = etree.tostring(event.get_element(sort=True), pretty_print=True).splitlines()
+
+    # Check that serialization is indeed sorted.
+    assert b'parents="a,b,c"' in xml_lines[0]
