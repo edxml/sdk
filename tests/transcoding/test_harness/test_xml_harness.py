@@ -14,6 +14,8 @@ class TestXmlTranscoder(XmlTranscoder):
     XmlTranscoder class would cause side effects because that class is
     shared by all tests.
     """
+    __test__ = False
+
     VERSION = 2
     TYPE_MAP = {'a': 'test-event-type'}
     TYPE_PROPERTIES = {'test-event-type': {'property1': 'object-type.string'}}
