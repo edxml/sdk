@@ -12,6 +12,8 @@
 # ========================================================================================
 
 import pytest
+
+from edxml import EventCollection
 from edxml.ontology import Brick, Ontology
 
 
@@ -77,3 +79,21 @@ def test_register_duplicate_concept():
         # Registering multiple versions of the same ontology element
         # should fail.
         TestOntology.register_brick(TestBrickUpgradedConcept)
+
+
+def test_empty_brick():
+    assert list(Brick.generate_object_types(Ontology())) == []
+    assert list(Brick.generate_concepts(Ontology())) == []
+
+
+def test_test():
+    TestBrick.test()
+
+
+def test_dump_edxml():
+    edxml = TestBrick.as_xml()
+
+    collection = EventCollection.from_edxml(edxml)
+
+    assert 'o' in collection.ontology.get_object_types()
+    assert 'c' in collection.ontology.get_concepts()
