@@ -19,7 +19,8 @@ from typing import Dict
 import re
 
 from io import BytesIO
-from collections import MutableMapping, defaultdict
+from collections import defaultdict
+from collections.abc import MutableMapping
 from lxml import etree
 from lxml.builder import ElementMaker
 
