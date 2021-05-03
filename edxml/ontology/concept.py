@@ -224,7 +224,7 @@ class Concept(VersionedOntologyElement):
     def upgrade(self):
         """
         Verifies if the current instance is a valid upgrade of the instance as it
-        was when the version was last set. When successful the version number is
+        was when the version was last changed. When successful the version number is
         incremented.
 
         This method is used for fluent upgrading of ontology bricks, allowing
