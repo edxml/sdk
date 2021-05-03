@@ -394,7 +394,7 @@ class ObjectType(VersionedOntologyElement):
     def upgrade(self):
         """
         Verifies if the current instance is a valid upgrade of the instance as it
-        was when the version was last set. When successful the version number is
+        was when the version was last changed. When successful the version number is
         incremented.
 
         This method is used for fluent upgrading of ontology bricks, allowing
@@ -409,7 +409,10 @@ class ObjectType(VersionedOntologyElement):
         if new_version > self.__versions[self.__attr['version']]:
             self.set_version(self.__attr['version'] + 1)
         else:
-            raise Exception('Cannot upgrade when current version is not greater than previous version.')
+            raise Exception(
+                'Cannot upgrade object type. '
+                'Apparently no changes were made since the last time the version number changed.'
+            )
 
         return self
 
