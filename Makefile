@@ -21,7 +21,7 @@ doc:
 
 check:
 	@echo "Checking your code..."
-	@python3 -m flake8 --max-line-length=120 && echo "Well done. Your code is in shiny style!"
+	@python3 -m flake8 --max-line-length=120 edxml/ tests/ && echo "Well done. Your code is in shiny style!"
 
 test: dependencies
 	@echo "Running tests:"
