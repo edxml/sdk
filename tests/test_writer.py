@@ -202,7 +202,7 @@ def test_write_pretty_print(ontology, event):
         writer.add_ontology(ontology).add_event(event).close()
         output = writer.flush()
 
-    assert len(output.splitlines()) == 28
+    assert len(output.splitlines()) == 30
 
 
 def test_write_no_pretty_print(ontology, event):
