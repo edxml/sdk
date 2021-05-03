@@ -225,6 +225,8 @@ class AttachmentValueDict(dict):
             self._update = update
 
     def __eq__(self, other):
+        # The attachment values themselves are not relevant for event
+        # equivalence, only their attachment identifiers are.
         return self.keys() == other.keys()
 
     def __ne__(self, other):
