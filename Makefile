@@ -1,6 +1,4 @@
-# Make file for creating the PyPI package and generating sphinx docs
-
-.PHONY: all dependencies dist pypi doc check test coverage clean
+.PHONY: all dependencies dist pypi doc check test coverage coverage-report clean
 
 all: dependencies dist doc check test clean
 
@@ -31,7 +29,10 @@ test: dependencies
 
 coverage: dependencies
 	@echo "Gathering coverage data:"
-	@python3 -m coverage run -m pytest tests -W ignore::DeprecationWarning
+	@python3 -m coverage run --omit '*/venv/*' -m pytest tests -W ignore::DeprecationWarning
+
+coverage-report:
+	coverage html
 
 clean:
 	find . -name '*.py[co]' -delete
