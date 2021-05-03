@@ -45,8 +45,7 @@ class Brick(object):
           List[edxml.ontology.ObjectType]:
 
         """
-        return
-        yield
+        yield from ()
 
     @classmethod
     def generate_concepts(cls, target_ontology):
@@ -63,8 +62,7 @@ class Brick(object):
           List[edxml.ontology.Concept]:
 
         """
-        return
-        yield
+        yield from ()
 
     @classmethod
     def test(cls):
