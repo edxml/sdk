@@ -14,3 +14,6 @@ class Brick(object):
 
     @classmethod
     def test(cls): ...
+
+    @classmethod
+    def as_xml(cls) -> bytes: ...

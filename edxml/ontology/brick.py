@@ -11,6 +11,7 @@
 #                                                                                        =
 # ========================================================================================
 
+import edxml
 from edxml.ontology import Ontology
 
 
@@ -88,3 +89,12 @@ class Brick(object):
         # Validate concepts
         for concept in concepts:
             concept.validate()
+
+    @classmethod
+    def as_xml(cls):
+        ontology = Ontology()
+
+        list(cls.generate_object_types(ontology))
+        list(cls.generate_concepts(ontology))
+
+        return edxml.EDXMLWriter(output=None).add_ontology(ontology).close().flush()
