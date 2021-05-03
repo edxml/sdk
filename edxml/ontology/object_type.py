@@ -776,6 +776,9 @@ class ObjectType(VersionedOntologyElement):
         attribs['compress'] = 'true' if self.__attr['compress'] else 'false'
         attribs['version'] = str(attribs['version'])
 
+        if attribs['compress'] == 'false':
+            del attribs['compress']
+
         if attribs['regex-hard'] is None:
             del attribs['regex-hard']
 
