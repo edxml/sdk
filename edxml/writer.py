@@ -473,11 +473,13 @@ class EDXMLWriter(object):
 
         if self.__ontology.get_event_type(event_type_name) is None:
             raise EDXMLValidationError(
-                'Attempt to add an event using unknown event type: "%s"' % event_type_name)
+                'Attempt to add an event using unknown event type: "%s"' % event_type_name
+            )
 
         if self.__ontology.get_event_source(source_uri) is None:
             raise EDXMLValidationError(
-                'Attempt to add an event using unknown source URI: "%s"' % source_uri)
+                'Attempt to add an event using unknown source URI: "%s"' % source_uri
+            )
 
         event_element = event.get_element(sort)
 
