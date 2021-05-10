@@ -114,7 +114,7 @@ def test_normalize_geo():
     assert DataType.geo_point().normalize_objects({'-08.2,+25.30'}) == {'-8.200000,25.300000'}
 
     with pytest.raises(EDXMLValidationError):
-        DataType.geo_point().normalize_objects({'-8.2,null'})
+        DataType.geo_point().normalize_objects({'-8.200000,null'})
 
     with pytest.raises(EDXMLValidationError):
         DataType.geo_point().normalize_objects({'0'})
