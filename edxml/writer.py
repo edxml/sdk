@@ -339,6 +339,9 @@ class EDXMLWriter(object):
 
         Finalizes the output data stream.
 
+        Returns:
+            edxml.writer.EDXMLWriter:
+
         """
         if self.__writer is None:
             # Already closed
@@ -354,6 +357,8 @@ class EDXMLWriter(object):
             )
 
         self.__writer = None
+
+        return self
 
     def _repair_event(self, event, schema):
         """
