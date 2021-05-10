@@ -23,10 +23,12 @@ from lxml import etree
 @pytest.fixture()
 def ontology():
     edxml_ontology = Ontology()
-    edxml_ontology.create_object_type('o', data_type=DataType.string(length=3, upper_case=False).type)
+    edxml_ontology.create_object_type('string', data_type=DataType.string(length=3, upper_case=False).type)
+    edxml_ontology.create_object_type('int', data_type=DataType.int().type)
     event_type = edxml_ontology.create_event_type('ea')
-    event_type.create_property('a', object_type_name='o')
-    event_type.create_property('b', object_type_name='o').make_optional()
+    event_type.create_property('a', object_type_name='string')
+    event_type.create_property('b', object_type_name='string').make_optional()
+    event_type.create_property('c', object_type_name='int').make_optional()
     event_type.create_attachment('a')
     edxml_ontology.create_event_source('/test/')
     return edxml_ontology
@@ -228,7 +230,7 @@ def test_write_invalid_event_ignore(ontology, event_invalid_object):
     assert len(EventCollection.from_edxml(writer.flush())) == 0
 
 
-def test_write_invalid_event_repair_normalize(ontology, event_invalid_object):
+def test_write_invalid_event_repair_normalize_fail(ontology, event_invalid_object):
     with EDXMLWriter(output=None) as writer:
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['a'])
@@ -236,7 +238,7 @@ def test_write_invalid_event_repair_normalize(ontology, event_invalid_object):
             writer.add_ontology(ontology).add_event(event_invalid_object).close()
 
 
-def test_write_invalid_event_repair_normalize_b(ontology, event, event_invalid_object, caplog):
+def test_write_invalid_event_repair_normalize_string(ontology, event, event_invalid_object, caplog):
     with EDXMLWriter(output=None) as writer:
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['b'])
@@ -250,7 +252,22 @@ def test_write_invalid_event_repair_normalize_b(ontology, event, event_invalid_o
     assert '1 out of 1 events were automatically repaired' in ''.join(caplog.messages)
 
 
-def test_write_invalid_event_repair_drop_normalize(ontology, event_invalid_object):
+def test_write_invalid_event_repair_normalize_integer(ontology, event, caplog):
+    # Note: Property 'c' has data type 'int'
+    event.properties['c'] = {1.2}
+    with EDXMLWriter(output=None) as writer:
+        writer.enable_auto_repair_normalize('ea', ['c'])
+        writer.add_ontology(ontology).add_event(event)
+
+    events = EventCollection.from_edxml(writer.flush())
+
+    # Writer should have normalized the invalid event object.
+    assert next(iter(events))['c'] == ['1']
+
+    assert '1 out of 1 events were automatically repaired' in ''.join(caplog.messages)
+
+
+def test_write_invalid_event_repair_drop_fail(ontology, event_invalid_object):
     with EDXMLWriter(output=None) as writer:
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['a'])
@@ -259,7 +276,7 @@ def test_write_invalid_event_repair_drop_normalize(ontology, event_invalid_objec
             writer.add_ontology(ontology).add_event(event_invalid_object).close()
 
 
-def test_write_invalid_event_repair_drop_b(ontology, event_invalid_object_beyond_repair, event_dropped_object, caplog):
+def test_write_invalid_event_repair_drop(ontology, event_invalid_object_beyond_repair, event_dropped_object, caplog):
     with EDXMLWriter(output=None) as writer:
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['b'])
