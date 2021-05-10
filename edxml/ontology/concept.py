@@ -28,7 +28,7 @@ class Concept(VersionedOntologyElement):
     Class representing an EDXML concept
     """
 
-    NAME_PATTERN = re.compile('^[a-z0-9.-]{1,64}$')
+    NAME_PATTERN = re.compile('^[a-z0-9.-]{1,255}$')
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None):
 
@@ -258,7 +258,7 @@ class Concept(VersionedOntologyElement):
           edxml.ontology.Concept: The Concept instance
 
         """
-        if not len(self._attr['name']) <= 64:
+        if not len(self._attr['name']) <= 255:
             raise EDXMLValidationError(
                 'The name of concept "%s" is too long.' % self._attr['name'])
         if not re.match(self.NAME_PATTERN, self._attr['name']):
