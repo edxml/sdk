@@ -949,78 +949,151 @@ class DataType(object):
             return {str(value) for value in values}
 
     def _validate_value_datetime(self, value):
-        if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
-            raise EDXMLValidationError("Invalid value for data type %s: '%s'." % (self.type, value))
+        if isinstance(value, str):
+            if not re.match(r'^' + self.DATETIME_PATTERN + '$', value):
+                raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
+        elif not isinstance(value, datetime):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
 
     def _validate_value_sequence(self, value):
-        try:
-            int(value)
-        except (TypeError, ValueError):
-            raise EDXMLValidationError("Invalid sequence value '%s'." % value)
-        if int(value) < 0:
-            raise EDXMLValidationError("Negative sequence value: %s" % value)
+        if isinstance(value, str):
+            try:
+                int(value)
+            except (TypeError, ValueError):
+                raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
+            value = int(value)
+
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+
+        if value < 0:
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Sequence values cannot be negative" % (self.type, value)
+            )
 
     def _validate_value_number(self, value):
         split_data_type = self.type.split(':')
 
         if split_data_type[1] == 'decimal':
-            try:
-                Decimal(value)
-            except decimal.InvalidOperation:
-                raise EDXMLValidationError("Invalid EDXML decimal value: '%s'." % value)
+            if isinstance(value, str):
+                try:
+                    Decimal(value)
+                except decimal.InvalidOperation:
+                    raise EDXMLValidationError("Invalid value string for data type %s: '%s'. " % (self.type, value))
+                try:
+                    [integral, fractional] = value.split('.')
+                except ValueError:
+                    # No decimal dot found.
+                    [integral, fractional] = value, ''
+
+                if len(fractional) != int(split_data_type[3]):
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Must have %s fractional digits." %
+                        (self.type, value, split_data_type[3])
+                    )
+                if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Zero must not have any sign." %
+                        (self.type, value)
+                    )
+                if len(integral) > 1 and integral[0] == '0':
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Zero padding of the integral part is not allowed." %
+                        (self.type, value)
+                    )
+                value = Decimal(value)
+
+            if isinstance(value, bool) or not (
+                    isinstance(value, int) or isinstance(value, float) or isinstance(value, Decimal)
+            ):
+                raise EDXMLValidationError(
+                    "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+                )
+
             if len(split_data_type) < 5:
                 # Decimal is unsigned.
-                if Decimal(value) < 0:
-                    raise EDXMLValidationError("Unsigned decimal value '%s' is negative." % value)
-            [integral, fractional] = str(value).split('.')
-            if len(fractional) != int(split_data_type[3]):
-                raise EDXMLValidationError(
-                    "Invalid EDXML decimal value: '%s'. Must have %s fractional digits." % (value, split_data_type[3])
-                )
-            if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
-                raise EDXMLValidationError(
-                    "Invalid EDXML decimal value: '%s'. Zero must not have any sign." % value
-                )
-            if len(integral) > 1 and integral[0] == '0':
-                raise EDXMLValidationError(
-                    "Invalid EDXML decimal value: '%s'. Zero padding of the integral part is not allowed." % value
-                )
+                if value < 0:
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. Value is negative." % (self.type, value)
+                    )
         elif split_data_type[1] == 'currency':
-            try:
-                Decimal(value)
-            except decimal.InvalidOperation:
-                raise EDXMLValidationError("Invalid EDXML currency value: '%s'." % value)
-            [integral, fractional] = str(value).split('.')
-            if len(fractional) != 4:
+            if isinstance(value, str):
+                try:
+                    Decimal(value)
+                except decimal.InvalidOperation:
+                    raise EDXMLValidationError("Invalid value string for data type %s: '%s'. " % (self.type, value))
+                try:
+                    [integral, fractional] = value.split('.')
+                except ValueError:
+                    # No decimal dot found.
+                    [integral, fractional] = value, ''
+
+                if len(fractional) != 4:
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Must have four fractional digits." %
+                        (self.type, value)
+                    )
+                if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Zero must not have any sign." %
+                        (self.type, value)
+                    )
+                if len(integral) > 1 and integral[0] == '0':
+                    raise EDXMLValidationError(
+                        "Invalid value string for data type %s: '%s'. "
+                        "Zero padding of the integral part is not allowed." %
+                        (self.type, value)
+                    )
+                value = Decimal(value)
+
+            if isinstance(value, bool) or not (
+                    isinstance(value, int) or isinstance(value, float) or isinstance(value, Decimal)
+            ):
                 raise EDXMLValidationError(
-                    "Invalid EDXML currency value: '%s'. Must have four fractional digits." % value
+                    "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
                 )
-            if int(integral) == 0 and int(fractional) == 0 and integral[:1] in ('+', '-'):
+        elif split_data_type[1] in ['float', 'double']:
+            if isinstance(value, str):
+                try:
+                    float(value)
+                except ValueError:
+                    raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
+                pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
+                if not re.match(r'^' + pattern + r'$', value):
+                    raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
+                value = float(value)
+
+            if isinstance(value, bool) or not (isinstance(value, int) or isinstance(value, float)):
                 raise EDXMLValidationError(
-                    "Invalid EDXML currency value: '%s'. Zero must not have any sign." % value
+                    "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
                 )
-            if len(integral) > 1 and integral[0] == '0':
-                raise EDXMLValidationError(
-                    "Invalid EDXML currency value: '%s'. Zero padding of the integral part is not allowed." % value
-                )
-        elif split_data_type[1] == 'float' or split_data_type[1] == 'double':
-            try:
-                float(value)
-            except ValueError:
-                raise EDXMLValidationError("Invalid floating point number '%s'." % value)
+
             if len(split_data_type) < 3:
                 # number is unsigned.
-                if float(value) < 0:
-                    raise EDXMLValidationError("Unsigned floating point value is negative: '%s'." % value)
-            pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
-            if not re.match(r'^' + pattern + r'$', value):
-                raise EDXMLValidationError("Invalid EDXML floating point value: '%s'." % value)
+                if value < 0:
+                    raise EDXMLValidationError("Unsigned %s value is negative: '%s'." % (self.type, value))
 
-        else:
-            try:
+        else:  # int, bigint, tinyint, ...
+            if isinstance(value, str):
+                try:
+                    int(value)
+                except (TypeError, ValueError):
+                    raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
                 value = int(value)
-            except (TypeError, ValueError):
-                raise EDXMLValidationError("Invalid number '%s'." % value)
+
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise EDXMLValidationError(
+                    "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+                )
 
             if len(split_data_type) < 3:
                 # number is unsigned.
@@ -1028,10 +1101,17 @@ class DataType(object):
                     raise EDXMLValidationError("Unsigned integer value is negative: '%s'." % value)
 
     def _validate_value_hex(self, value):
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+
         split_data_type = self.type.split(':')
 
         if value.lower() != value:
-            raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Must be all lowercase." % (self.type, value)
+            )
 
         if len(split_data_type) > 2:
             # TODO: Also check for empty groups, or more generically: group size.
@@ -1040,64 +1120,104 @@ class DataType(object):
                 hex_separator = ':'
             value = ''.join(c for c in str(value) if c != hex_separator)
 
+        if len(value) / 2 != int(split_data_type[1]):
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Incorrect length." % (self.type, value)
+            )
+
         try:
             codecs.decode(value.encode(), 'hex')
         except (TypeError, ValueError):
-            raise EDXMLValidationError("Invalid hexadecimal value '%s'." % value)
+            raise EDXMLValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
 
     def _validate_value_uuid(self, value):
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
         if not re.match(self.UUID_PATTERN, value):
-            raise EDXMLValidationError("Invalid uuid value: '%s'" % value)
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Must be all lowercase." % (self.type, value)
+            )
 
     def _validate_value_geo(self, value):
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+
         split_geo_point = value.split(',')
 
         try:
             geo_lat = float(split_geo_point[0])
             geo_lon = float(split_geo_point[1])
         except (TypeError, ValueError, IndexError):
-            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'." % (self.type, value)
+            )
 
-        if len(split_geo_point) != 2:
-            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
-        if len(split_geo_point[0].split('.')) != 2:
-            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
-        if len(split_geo_point[1].split('.')) != 2:
-            raise EDXMLValidationError("The geo:point value '%s' is not formatted correctly." % value)
+        try:
+            if len(split_geo_point[0].split('.')) != 2:
+                raise ValueError
+            if len(split_geo_point[1].split('.')) != 2:
+                raise ValueError
+        except ValueError:
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Missing decimal dot." % (self.type, value)
+            )
         if len(split_geo_point[0].split('.')[1]) != 6:
-            raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Missing latitude decimals." % (self.type, value)
+            )
         if len(split_geo_point[1].split('.')[1]) != 6:
-            raise EDXMLValidationError("The geo:point value '%s' is missing latitude decimals." % value)
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'. Missing longitude decimals." % (self.type, value)
+            )
         if geo_lat < -90 or geo_lat > 90:
             raise EDXMLValidationError(
-                "The geo:point value '%s' contains a latitude that is not within range [-90,90]." % value)
+                "Invalid value string for data type %s: '%s'. Latitude not within range [-90,90]." % (self.type, value)
+            )
         if geo_lon < -180 or geo_lon > 180:
             raise EDXMLValidationError(
-                "The geo:point value '%s' contains a longitude that is not within range [-180,180]." % value)
+                "Invalid value string for data type %s: '%s'. Longitude not within range [-180,180]." %
+                (self.type, value)
+            )
         if split_geo_point[0].startswith('+'):
             raise EDXMLValidationError(
-                "The geo:point value '%s' contains a latitude that has a leading '+' sign. " % value
+                "Invalid value string for data type %s: '%s'. Latitude has a leading '+' sign." % (self.type, value)
             )
         if split_geo_point[1].startswith('+'):
             raise EDXMLValidationError(
-                "The geo:point value '%s' contains a longitude that has a leading '+' sign. " % value
+                "Invalid value string for data type %s: '%s'. Longitude has a leading '+' sign." % (self.type, value)
             )
 
     def _validate_value_string(self, value):
+
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+
         split_data_type = self.type.split(':')
 
         # Check length of object value
         max_string_length = int(split_data_type[1])
         if max_string_length > 0:
             if len(value) > max_string_length:
-                raise EDXMLValidationError("string too long for data type %s: '%s'" % (self.type, value))
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'. String is too long." % (self.type, value)
+                )
 
         if split_data_type[2] == 'lc':
             if value.lower() != value:
-                raise EDXMLValidationError("string of data type %s must be all lowercase: %s" % (self.type, value))
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'. String must be all lowercase." % (self.type, value)
+                )
         elif split_data_type[2] == 'uc':
             if value.upper() != value:
-                raise EDXMLValidationError("string of data type %s must be all uppercase: %s" % (self.type, value))
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'. String must be all uppercase." % (self.type, value)
+                )
 
         # Check character set of object value
         if len(split_data_type) < 4 or 'u' not in split_data_type[3]:
@@ -1106,12 +1226,16 @@ class DataType(object):
                 str(value).encode('latin1')
             except (LookupError, ValueError):
                 raise EDXMLValidationError(
-                    "string of data type %s contains unicode characters: %s" % (self.type, value)
+                    "Invalid value string for data type %s: '%s'. String contains non-latin1 characters." %
+                    (self.type, value)
                 )
 
     def _validate_value_uri(self, value):
-        # URI values can be any string, nothing to validate.
-        ...
+        # URI values can be any string, we do not validate the strings.
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
 
     def _validate_value_base64(self, value):
         split_data_type = self.type.split(':')
@@ -1119,39 +1243,80 @@ class DataType(object):
         try:
             decoded = base64.decodebytes(value.encode())
         except (AttributeError, ValueError):
-            raise EDXMLValidationError("Invalid base64 encoded string: '%s'" % value)
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'." % (self.type, value)
+            )
 
         max_string_length = int(split_data_type[1])
 
         if max_string_length > 0:
             if len(decoded) > max_string_length:
-                raise EDXMLValidationError("base64 encoded string too long for data type %s: '%s'" % (self.type, value))
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'. String is too long." % (self.type, value)
+                )
 
     def _validate_value_file(self, value):
-        # file values can be any string, nothing to validate.
-        ...
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+        # file values can be any string, nothing else to validate.
 
     def _validate_value_ip(self, value):
         split_data_type = self.type.split(':')
+        if isinstance(value, str):
+            try:
+                ip = IP(value)
+            except ValueError:
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'." % (self.type, value)
+                )
+            if ip.strFullsize() != value:
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'. IP addresses must not be shortened or zero padded." %
+                    (self.type, value)
+                )
+        elif isinstance(value, IP):
+            ip = value
+        else:
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
+
         try:
-            ip = IP(value)
             if split_data_type[1] == 'v4' and ip.version() != 4:
                 raise ValueError
             if split_data_type[1] == 'v6' and ip.version() != 6:
                 raise ValueError
-            if ip.strFullsize() != value:
-                raise ValueError
         except ValueError:
-            raise EDXMLValidationError("Invalid IP%s address: '%s'" % (split_data_type[1], value))
+            raise EDXMLValidationError(
+                "Invalid value string for data type %s: '%s'." % (self.type, value)
+            )
 
     def _validate_value_boolean(self, value):
-        if value not in ['true', 'false']:
-            raise EDXMLValidationError("Invalid boolean: '%s'" % value)
+        if isinstance(value, str):
+            if value not in ['true', 'false']:
+                raise EDXMLValidationError(
+                    "Invalid value string for data type %s: '%s'." % (self.type, value)
+                )
+        elif isinstance(value, bool) or isinstance(value, int):
+            if value not in [True, False, 0, 1]:
+                raise EDXMLValidationError(
+                    "Invalid value for data type %s: '%s'." % (self.type, value)
+                )
+        else:
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
 
     def _validate_value_enum(self, value):
+        if not isinstance(value, str):
+            raise EDXMLValidationError(
+                "Data type %s cannot be used to store values of type '%s'." % (self.type, type(value).__name__)
+            )
         split_data_type = self.type.split(':')
         if value not in split_data_type[1:]:
-            raise EDXMLValidationError("Invalid value for data type %s: '%s'" % (self.type, value))
+            raise EDXMLValidationError("Invalid value string for data type %s: '%s'" % (self.type, value))
 
     def validate_object_value(self, value):
         """
@@ -1159,9 +1324,12 @@ class DataType(object):
         Validates the provided object value against
         the data type, raising an EDXMLValidationException
         when the value is invalid.
+        The value may be a native type like an integer or
+        a boolean. The value may also be a unicode encoded
+        string, as it would appear in EDXML data.
 
         Args:
-          value (str): Object value
+          value: Object value
         Raises:
           EDXMLValidationError
         Returns:
@@ -1171,9 +1339,6 @@ class DataType(object):
             raise EDXMLValidationError(
                 "Value of %s object is empty. Empty object values are not valid and must be omitted." % self.type
             )
-
-        if not isinstance(value, str):
-            raise EDXMLValidationError('Value for data type %s is not a string: %s' % (self.type, repr(value)))
 
         data_type_family = self.get_family()
 
