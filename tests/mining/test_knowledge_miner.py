@@ -14,6 +14,7 @@
 import os
 import pytest
 
+from dateutil.parser import parse
 from edxml.miner.knowledge import KnowledgeBase, KnowledgePullParser, KnowledgePushParser
 
 
@@ -28,6 +29,19 @@ def knowledge_base(request):
         parser = KnowledgePushParser(knowledge)
         parser.feed(open(os.path.dirname(__file__) + '/input.edxml', 'rb').read())
 
+    knowledge.mine()
+    return knowledge
+
+
+@pytest.fixture(params=('start', 'end'))
+def knowledge_base_timespan(request):
+    if request.param == 'start':
+        input_file = os.path.dirname(__file__) + '/input-timespan-start.edxml'
+    else:
+        input_file = os.path.dirname(__file__) + '/input-timespan-end.edxml'
+    knowledge = KnowledgeBase()
+    parser = KnowledgePullParser(knowledge)
+    parser.parse(input_file)
     knowledge.mine()
     return knowledge
 
@@ -64,6 +78,35 @@ def test_knowledge_base_basics(knowledge_base):
 
     # We have one container relation between pa and pd
     assert knowledge_base.get_containers_for('od', 'd') == {'oa': {'a'}}
+
+    time_lines = [attr.confidence_timeline for concept in results.concepts.values() for attr in concept.attributes]
+
+    assert len(time_lines) == 4
+
+    # Verify that all attribute time lines are empty,
+    # because the source event has no time information.
+    for time_spans in time_lines:
+        for time_span in time_spans:
+            assert time_span[0] is None
+            assert time_span[1] is None
+
+
+def test_knowledge_base_timespan(knowledge_base_timespan):
+
+    results = knowledge_base_timespan.concept_collection
+
+    assert len(results.concepts) == 3
+
+    time_lines = [attr.confidence_timeline for concept in results.concepts.values() for attr in concept.attributes]
+
+    assert len(time_lines) == 4
+
+    # Verify that all attribute time lines represent a single point in time,
+    # because the source event has just one time stamp.
+    for time_spans in time_lines:
+        for time_span in time_spans:
+            assert time_span[0] == parse('1978-06-17T13:14:15Z')
+            assert time_span[1] == parse('1978-06-17T13:14:15Z')
 
 
 def test_filter_concept(knowledge_base):

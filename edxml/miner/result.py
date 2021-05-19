@@ -12,10 +12,12 @@
 # ========================================================================================
 
 import json
+
 from collections import defaultdict
 from functools import reduce
 from operator import mul
 from typing import List, Dict, Optional
+from dateutil.parser import parse
 
 from edxml.miner.node import NodeCollection
 
@@ -27,13 +29,15 @@ class ConceptAttribute:
     specific seed. It holds the collection of inferred nodes
     that confirm the existence of the attribute.
     """
-    def __init__(self, name, value, confidence=1.0, concept_naming_priority=128, concept_names=None):
+    def __init__(self, name, value, confidence=1.0, confidence_timeline=(), concept_naming_priority=128,
+                 concept_names=None):
         """
 
         Args:
             name (str): Attribute name
             value (str): Attribute value
             confidence (float): Attribute Confidence
+            confidence_timeline (List[Tuple[datetime.datetime,datetime.datetime,float]]): Time line of confidences
             concept_naming_priority (int): Concept naming priority
             concept_names (Dict[str, float]): Concept names and confidences
 
@@ -45,6 +49,7 @@ class ConceptAttribute:
 
         self._cnp = concept_naming_priority
         self._confidence = confidence
+        self._confidence_timeline = list(confidence_timeline)
         self._concept_names = concept_names or dict()  # type: Optional[Dict[str, float]]
 
     def __repr__(self):
@@ -71,6 +76,18 @@ class ConceptAttribute:
             float: Confidence
         """
         return self._confidence
+
+    @property
+    def confidence_timeline(self):
+        """
+
+        The confidence timeline shows how the likelihood that the attribute
+        belongs to the concept changes over time.
+
+        Returns:
+            List[List[datetime.datetime,datetime.datetime, float]]: Confidence timeline
+        """
+        return self._confidence_timeline
 
     @property
     def concept_naming_priority(self):
@@ -128,6 +145,12 @@ class MinedConceptAttribute(ConceptAttribute):
         # Compute the net confidence of the attribute by combining
         # the confidences of all nodes that confirm its existence.
         return self.nodes.compute_net_confidence(self.seed_id)
+
+    @property
+    def confidence_timeline(self):
+        # Compute a timeline showing how the confidence of the attribute
+        # varies over time.
+        return self.nodes.compute_confidence_timeline(self.seed_id)
 
     @property
     def concept_names(self):
@@ -380,10 +403,18 @@ class ConceptInstanceCollection:
             attr_dicts = []
             for attribute in concept.attributes:
                 # Add the concept attribute
+                timeline = attribute.confidence_timeline
                 attr_dicts.append({
                     'name': attribute.name,
                     'value': attribute.value,
                     'confidence': attribute.confidence,
+                    'confidence_timeline': [
+                        {
+                            'start': item[0].isoformat() if item[0] else None,
+                            'end': item[1].isoformat() if item[1] else None,
+                            'confidence': item[2]
+                        } for item in timeline
+                    ],
                     'concept_names': attribute.concept_names,
                 })
 
@@ -446,6 +477,11 @@ def from_json(json_data):
     for concept_data in json.loads(json_data)['concepts']:
         concept = ConceptInstance(identifier=concept_data['id'])
         for attribute_data in concept_data['attributes']:
+            attribute_data['confidence_timeline'] = [
+                (parse(item['start']) if item['start'] else None,
+                 parse(item['end']) if item['end'] else None,
+                 item['confidence']) for item in attribute_data['confidence_timeline']
+            ]
             attribute = ConceptAttribute(**attribute_data)
             concept.add_attribute(attribute)
         for related_concept in concept_data['related']:

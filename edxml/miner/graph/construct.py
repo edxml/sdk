@@ -18,6 +18,8 @@ This module offers classes for constructing graphs for concept mining.
     :members:
     :show-inheritance:
 """
+from dateutil.parser import parse
+
 from edxml.miner.node import EventObjectNode
 from edxml.ontology import Ontology
 
@@ -49,10 +51,11 @@ class GraphConstructor(object):
 
         """
         event_type = self._ontology.get_event_type(event.get_type_name())
+        time_span = self._extract_time_span(event, event_type)
         nodes = {}
         for relation in event_type.relations:
             if relation.get_type() in ['inter', 'intra']:
-                nodes = self._add_relation_nodes(event_type, relation, event, nodes)
+                nodes = self._add_relation_nodes(event_type, relation, event, nodes, time_span)
 
         # Properties that are not part of a concept relation may still be associated
         # with a concept. Below, we check the remaining properties and process the
@@ -76,7 +79,8 @@ class GraphConstructor(object):
                         concept_association,
                         event_property.get_object_type_name(),
                         value,
-                        event_property.get_confidence()
+                        event_property.get_confidence(),
+                        time_span
                     )
                     if node.id in nodes:
                         node = nodes[node.id]
@@ -86,7 +90,7 @@ class GraphConstructor(object):
 
         self._next_event_id += 1
 
-    def _add_relation_nodes(self, event_type, relation, event, nodes):
+    def _add_relation_nodes(self, event_type, relation, event, nodes, time_span):
         source_property = event_type[relation.get_source()]
         target_property = event_type[relation.get_target()]
         concept_association_source = source_property.get_concept_associations()[relation.get_source_concept()]
@@ -100,7 +104,8 @@ class GraphConstructor(object):
                 concept_association_source,
                 source_property.get_object_type_name(),
                 value,
-                source_property.get_confidence()
+                source_property.get_confidence(),
+                time_span
             )
             if node.id in nodes:
                 node = nodes[node.id]
@@ -113,7 +118,8 @@ class GraphConstructor(object):
                 concept_association_target,
                 target_property.get_object_type_name(),
                 value,
-                target_property.get_confidence()
+                target_property.get_confidence(),
+                time_span
             )
             if node.id in nodes:
                 node = nodes[node.id]
@@ -126,6 +132,42 @@ class GraphConstructor(object):
                 self._graph.add(target_node)
                 source_node.link_relation(target_node, relation)
         return nodes
+
+    def _extract_time_span(self, event, event_type):
+        if event_type.is_timeless():
+            return None
+
+        timespan_prop_start = event_type.get_timespan_property_name_start()
+        timespan_prop_end = event_type.get_timespan_property_name_end()
+
+        event_timestamps = []
+        if timespan_prop_start is None or timespan_prop_end is None:
+            for property_name, prop in event_type.get_properties().items():
+                if prop.get_object_type().get_data_type().is_datetime():
+                    event_timestamps.extend(event.properties[property_name])
+
+        if timespan_prop_start is None:
+            if event_timestamps:
+                timespan_start = min(event_timestamps)
+            else:
+                timespan_start = None
+        else:
+            timespan_start = event.get_any(timespan_prop_start)
+
+        if timespan_prop_end is None:
+            if event_timestamps:
+                timespan_end = max(event_timestamps)
+            else:
+                timespan_end = None
+        else:
+            timespan_end = event.get_any(timespan_prop_end)
+
+        if isinstance(timespan_start, str):
+            timespan_start = parse(timespan_start)
+        if isinstance(timespan_end, str):
+            timespan_end = parse(timespan_end)
+
+        return timespan_start, timespan_end
 
     def update_ontology(self, ontology):
         """

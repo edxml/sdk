@@ -12,8 +12,11 @@
 # ========================================================================================
 
 import json
-
 import pytest
+
+from datetime import datetime
+from dateutil.parser import parse
+
 from edxml.miner.node import NodeCollection, EventObjectNode
 from edxml.miner.result import ConceptAttribute, MinedConceptAttribute, ConceptInstance, MinedConceptInstance, \
     ConceptInstanceCollection, from_json
@@ -61,7 +64,8 @@ def test_mined_concept_attribute_basics():
             concept_association=assoc,
             object_type_name='a',
             value='value',
-            confidence=0.5
+            confidence=0.5,
+            time_span=[None, None]
         )
     })
 
@@ -88,7 +92,8 @@ def test_concept_instance_basics():
         value='value',
         confidence=0.5,
         concept_naming_priority=13,
-        concept_names={'foo': 0.3}
+        concept_names={'foo': 0.3},
+        confidence_timeline=[(datetime(1978, 6, 17, 13, 14, 15), None, 0.5)]
     )
 
     concept = ConceptInstance(identifier='a')
@@ -102,6 +107,9 @@ def test_concept_instance_basics():
 
     assert concept.has_attribute('object.type.name:extension')
     assert concept.get_attributes('object.type.name:extension') == [attr]
+    assert concept.get_attributes('object.type.name:extension')[0].confidence_timeline == [
+        (datetime(1978, 6, 17, 13, 14, 15), None, 0.5)
+    ]
 
     assert repr(concept) == 'foo: value'
 
@@ -180,7 +188,8 @@ def test_mined_concept_instance_basics():
             concept_association=assoc,
             object_type_name='a',
             value='value',
-            confidence=0.5
+            confidence=0.5,
+            time_span=[datetime(1978, 6, 17, 13, 14, 15), None]
         )
     })
 
@@ -210,6 +219,9 @@ def test_mined_concept_instance_basics():
     assert concept.get_seed() == nodes['n1']
     assert concept.has_attribute('object.type.name:extension')
     assert concept.get_attributes('object.type.name:extension') == [attr]
+    assert concept.get_attributes('object.type.name:extension')[0].confidence_timeline == [
+        (datetime(1978, 6, 17, 13, 14, 15), None, 0.7)
+    ]
 
     assert repr(concept) == 'c1: value'
 
@@ -230,7 +242,8 @@ def test_mined_concept_instance_related_concepts():
             concept_association=p1_c1,
             object_type_name='a',
             value='value',
-            confidence=0.5
+            confidence=0.5,
+            time_span=[None, None]
     )
 
     n2 = EventObjectNode(
@@ -238,7 +251,8 @@ def test_mined_concept_instance_related_concepts():
             concept_association=p2_c1,
             object_type_name='a',
             value='value',
-            confidence=0.5
+            confidence=0.5,
+            time_span=[None, None]
     )
 
     nodes = NodeCollection({'n1': n1})
@@ -300,6 +314,13 @@ collection_json = {
                     "name": "object.type.name:extension",
                     "value": "a",
                     "confidence": 0.5,
+                    "confidence_timeline": [
+                        {
+                            "start": "1978-06-17T13:14:15",
+                            "end": None,
+                            "confidence": 0.5
+                        }
+                    ],
                     "concept_names": {"concept name": 0.7}
                 }
             ],
@@ -314,6 +335,7 @@ collection_json = {
                     "name": "object.type.name:extension",
                     "value": "b",
                     "confidence": 0.6,
+                    "confidence_timeline": [],
                     "concept_names": {}
                 }
             ],
@@ -333,6 +355,7 @@ def test_concept_instance_collection_to_json():
         name='object.type.name:extension',
         value='a',
         confidence=0.5,
+        confidence_timeline=[[parse('1978-06-17T13:14:15'), None, 0.5]],
         concept_names={'concept name': 0.7},
         concept_naming_priority=13
     )
@@ -341,6 +364,7 @@ def test_concept_instance_collection_to_json():
         name='object.type.name:extension',
         value='b',
         confidence=0.6,
+        confidence_timeline=[],
         concept_naming_priority=14
     )
 

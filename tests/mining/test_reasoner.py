@@ -70,8 +70,12 @@ def test_shared_object_inference_follows_specialized_concept():
     type_b_c12 = attach_concept_property(type_b, name='a', concept_name='c1.2')
 
     # Create nodes representing two events sharing a single object value.
-    node_a = EventObjectNode('e1', type_a_c1, object_type_name='a', value='value', confidence=10)
-    node_b = EventObjectNode('e2', type_b_c12, object_type_name='a', value='value', confidence=10)
+    node_a = EventObjectNode(
+        'e1', type_a_c1, object_type_name='a', value='value', confidence=10, time_span=[None, None]
+    )
+    node_b = EventObjectNode(
+        'e2', type_b_c12, object_type_name='a', value='value', confidence=10, time_span=[None, None]
+    )
 
     # Since the shared object is associated with the same generalized concept,
     # in both events we expect the mining process to take the jump from one
@@ -96,8 +100,12 @@ def test_shared_object_inference_ignores_unrelated_concept():
     type_b_c2 = attach_concept_property(type_b, name='a', concept_name='c2')
 
     # Create nodes representing two events sharing a single object value.
-    node_a = EventObjectNode('e1', type_a_c1, object_type_name='a', value='value', confidence=10)
-    node_b = EventObjectNode('e2', type_b_c2, object_type_name='a', value='value', confidence=10)
+    node_a = EventObjectNode(
+        'e1', type_a_c1, object_type_name='a', value='value', confidence=10, time_span=[None, None]
+    )
+    node_b = EventObjectNode(
+        'e2', type_b_c2, object_type_name='a', value='value', confidence=10, time_span=[None, None]
+    )
 
     # Since both shared objects are associated with unrelated concepts,
     # we expect the resulting concept attribute to be backed by just the
@@ -151,9 +159,9 @@ def test_heterogeneous_concepts():
     # is also an instance of c2 with a confidence of 2/10.
     relation_p1_p2 = p1.relate_intra('related to', 'p2', confidence=rel_confidence)
 
-    node_a = EventObjectNode('e1', type_a_p1_c1, object_type_name='a', value='a', confidence=10)
-    node_b = EventObjectNode('e1', type_a_p2_c2, object_type_name='a', value='b', confidence=10)
-    node_c = EventObjectNode('e2', type_b_p1_c2, object_type_name='a', value='b', confidence=10)
+    node_a = EventObjectNode('e1', type_a_p1_c1, object_type_name='a', value='a', confidence=10, time_span=[None, None])
+    node_b = EventObjectNode('e1', type_a_p2_c2, object_type_name='a', value='b', confidence=10, time_span=[None, None])
+    node_c = EventObjectNode('e2', type_b_p1_c2, object_type_name='a', value='b', confidence=10, time_span=[None, None])
 
     node_a.link_relation(node_b, relation_p1_p2)
 
@@ -194,8 +202,8 @@ def test_auto_mine():
     type_a_p1_c1 = attach_concept_property(type_a, name='p1', concept_name='c1')
     type_a_p2_c2 = attach_concept_property(type_a, name='p2', concept_name='c1')
 
-    node_a = EventObjectNode('e1', type_a_p1_c1, object_type_name='a', value='a', confidence=10)
-    node_b = EventObjectNode('e1', type_a_p2_c2, object_type_name='a', value='b', confidence=9)
+    node_a = EventObjectNode('e1', type_a_p1_c1, object_type_name='a', value='a', confidence=10, time_span=[None, None])
+    node_b = EventObjectNode('e1', type_a_p2_c2, object_type_name='a', value='b', confidence=9, time_span=[None, None])
 
     # Mine using node a as seed using a confidence threshold that is just below what is
     # needed for inference to use the intra-concept relation (confidence 2/10) but too high

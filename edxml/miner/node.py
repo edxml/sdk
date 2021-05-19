@@ -10,10 +10,11 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
-
+from datetime import datetime
 from functools import reduce
+from itertools import groupby
 from operator import mul
-from typing import Dict, Set, Optional, MutableMapping
+from typing import Dict, Set, Optional, MutableMapping, List
 from collections import defaultdict, UserDict
 
 from edxml.miner.inference import Inference
@@ -75,6 +76,10 @@ class Node(object):
         self.confidence = 0.1 * confidence
         """
         Confidence of the node
+        """
+        self.time_span = [None, None]  # type: List[Optional[datetime], Optional[datetime]]
+        """
+        Time line of node confidence
         """
 
         self._edges = set()                  # type: Set[Inference]
@@ -228,8 +233,9 @@ class EventObjectNode(Node):
     """
     Node representing a single instance of an object value.
     """
-    def __init__(self, event_id, concept_association, object_type_name, value, confidence):
+    def __init__(self, event_id, concept_association, object_type_name, value, confidence, time_span):
         super().__init__(object_type_name, value, confidence)
+        self.time_span = time_span  # type: Optional[List[Optional[datetime], Optional[datetime]]]
         self.event_id = event_id
         self.attribute_name = concept_association.get_attribute_name()
         self.concept_association = concept_association  # type: edxml.ontology.PropertyConcept
@@ -307,9 +313,10 @@ class NodeCollection(UserDict, MutableMapping[str, Node]):
     def compute_net_confidence(self, seed_id):
         """
 
-        Computes the net confidence of the nodes as viewed from
+        Computes the net confidence of all the nodes combined as viewed from
         the perspective of specified seed. The net confidence is
-        the likelihood that none of the nodes belongs to the concept.
+        the likelihood that any of the nodes belonged to the concept at
+        any point in time.
 
         Args:
             seed_id (str): Seed ID
@@ -321,3 +328,31 @@ class NodeCollection(UserDict, MutableMapping[str, Node]):
             return 1.0 - reduce(mul, [1.0 - node.seed_confidences.get(seed_id, 0) for node in self.values()])
         except TypeError:
             raise ValueError("None of the nodes in the collection is part of specified seed.")
+
+    def compute_confidence_timeline(self, seed_id):
+        """
+
+        Computes the confidences of the nodes over time, as viewed from
+        the perspective of specified seed. Returns a list of tuples. Each
+        tuple contains a confidence value followed by two datetime values
+        that constitute the time span in which that confidence has been
+        observed.
+
+        Args:
+            seed_id (str): Seed ID
+
+        Returns:
+            List[Tuple[float,datetime,datetime]]: Time line
+        """
+        timeline = []
+        for node in self.values():
+            if node.time_span:
+                timeline.append([*node.time_span, node.seed_confidences.get(seed_id, 0)])
+
+        timeline = sorted(timeline, key=lambda item: (str(item[0]), str(item[1])))
+        timeline = {tuple(key): list(items) for key, items in groupby(timeline, key=lambda item: item[0:2])}
+        timeline = [
+            (*key[0:2], 1.0 - reduce(mul, [1.0 - item[2] for item in items])) for key, items in timeline.items()
+        ]
+
+        return timeline
