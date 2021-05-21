@@ -136,11 +136,13 @@ def graphviz_concepts(concepts, graph=None):
 
     for seed_id, concept in concepts.concepts.items():
         for attribute in concept.attributes:
-            # We want to display just one graphviz node for each concept
-            # attribute value. So we can suffice to use just one of the
-            # object value nodes for each attribute.
-            node = next(iter(attribute.nodes.values()))
-            _graphviz_add_node_with_edges(graph, seeds, confidences, node, seed_id)
+            # While we want to display just one graphviz node for each concept
+            # attribute value we cannot suffice to use just one of the
+            # object value nodes for each attribute. The reason is that each node
+            # may have different edges attached to them. Picking one node means we
+            # may be missing edges between nodes.
+            for node in attribute.nodes.values():
+                _graphviz_add_node_with_edges(graph, seeds, confidences, node, seed_id)
 
     return graph
 
