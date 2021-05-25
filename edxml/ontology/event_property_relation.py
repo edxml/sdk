@@ -18,6 +18,8 @@ import edxml.template
 import edxml.ontology
 
 from lxml import etree
+
+from edxml import template
 from edxml.error import EDXMLValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
@@ -163,6 +165,33 @@ class PropertyRelation(OntologyElement):
           int:
         """
         return self.__attr['confidence'] or 10
+
+    def evaluate_description(self, event_properties, capitalize=True, colorize=False, ignore_value_errors=False):
+        """
+
+        Evaluates the description template of the relation using specified
+        event properties, returning the result.
+
+        Optionally, the output can be colorized. At his time this means that,
+        when printed on the terminal, the objects in the evaluated string will
+        be displayed using bold white characters.
+
+        When rendering of object values fails because the value is not valid for
+        its object type an exception is raised unless ignore_value_errors is enabled.
+
+        Args:
+          event_properties (Dict[str, Set]): the event properties to use
+          capitalize (bool): Capitalize evaluated template yes or no
+          colorize (bool): Colorize output or not
+          ignore_value_errors (bool): Ignore object value errors yes or no
+
+        Returns:
+          str:
+        """
+        return template.Template(self.get_description()).evaluate(
+            self.__event_type, event_properties=event_properties, event_attachments={},
+            capitalize=capitalize, colorize=colorize, ignore_value_errors=ignore_value_errors
+        )
 
     def because(self, reason):
         """

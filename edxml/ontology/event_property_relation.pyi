@@ -3,7 +3,7 @@
 import edxml
 
 from lxml import etree
-from typing import Any, Optional
+from typing import Any, Optional, Set
 from typing import Dict
 
 from edxml.ontology import OntologyElement
@@ -43,6 +43,9 @@ class PropertyRelation(OntologyElement):
     def get_predicate(self) -> str: ...
 
     def get_confidence(self) -> int: ...
+
+    def evaluate_description(self, event_properties: Dict[str, Set],
+                             capitalize=True, colorize=False, ignore_value_errors=False) -> str: ...
 
     def because(self, reason: str) -> 'PropertyRelation': ...
 
