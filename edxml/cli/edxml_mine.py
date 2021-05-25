@@ -58,6 +58,10 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--with-reasons', action='store_true', help='When used with --tell, prints the reasons for the findings.'
+    )
+
+    parser.add_argument(
         '--dump-json', action='store_true', help='Prints a JSON representation of the mined knowledge.'
     )
 
@@ -112,7 +116,7 @@ def main():
         concept = results.concepts[concept_id]
         if args.tell:
             instance_concepts[seed.id] = {(seed.concept_association.get_concept_name())}
-            instance_concepts = report_new_concept(ontology, seed.id, concept, instance_concepts)
+            instance_concepts = report_new_concept(ontology, seed.id, concept, instance_concepts, args.with_reasons)
         found_concepts.add(concept_id)
 
     if args.dump_json:
@@ -125,7 +129,7 @@ def main():
         graphviz_nodes(knowledge_base.concept_collection).render(filename=args.dump_mining_graph, format='png')
 
 
-def report_new_concept(ontology, seed_id, concept_instance, instance_concepts):
+def report_new_concept(ontology, seed_id, concept_instance, instance_concepts, with_reasons):
     concept = ontology.get_concept(concept_instance.get_best_concept_name())
     concept_dn = concept.get_display_name_singular()
 
@@ -137,25 +141,36 @@ def report_new_concept(ontology, seed_id, concept_instance, instance_concepts):
                 instance_concepts[seed_id].add(attr_concept)
                 alternative_concept_dn = ontology.get_concept(attr_concept).get_display_name_singular()
                 print(f"Discovery: this {concept_dn} is a {alternative_concept_dn}.")
+        descriptions = defaultdict(set)
         for node in attr.nodes.values():
-            if isinstance(node.reason, RelationInference):
-                relation = node.reason.relation
-                source_value = node.reason.source.value
-                target_value = node.reason.target.value
-                source_dn = node.reason.source.concept_association.get_attribute_display_name_singular()
-                target_dn = node.reason.target.concept_association.get_attribute_display_name_singular()
-                if relation.get_source() != node.reason.source.concept_association.get_property_name():
-                    # Node reason is in opposite direction with respect to the property relation. Unless
-                    # the relation itself has been reversed we need to swap the source / target data to
-                    # make sure that it fits the predicate.
-                    if not relation.reversed():
-                        source_dn, target_dn = target_dn, source_dn
-                        source_value, target_value = target_value, source_value
-                print(
-                    f"Found attribute: "
-                    f"'{source_value}' ({source_dn}) {relation.get_predicate()} '{target_value}' ({target_dn})"
+            if not isinstance(node.reason, RelationInference):
+                continue
+            relation = node.reason.relation
+            source_value = node.reason.source.value
+            target_value = node.reason.target.value
+            source_dn = node.reason.source.concept_association.get_attribute_display_name_singular()
+            target_dn = node.reason.target.concept_association.get_attribute_display_name_singular()
+            if relation.is_reversed():
+                # The node relation is reversed, which means that the source and target values come
+                # out in the wrong order when joining them together using the relation predicate.
+                source_dn, target_dn = target_dn, source_dn
+                source_value, target_value = target_value, source_value
+
+            description = "Found attribute: "
+            description += f"'{source_value}' ({source_dn}) {relation.get_predicate()} '{target_value}' ({target_dn})"
+            descriptions[description].add('')
+            if with_reasons:
+                reason = "\n                 Reason: "
+                reason += relation.evaluate_description(
+                    event_properties={
+                        relation.get_source(): {source_value},
+                        relation.get_target(): {target_value}
+                    }
                 )
-                break
+                descriptions[description].add(reason)
+
+        print(',\n'.join([description + ''.join(reasons) for description, reasons in descriptions.items()]))
+
     return instance_concepts
 
 
