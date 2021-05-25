@@ -161,11 +161,14 @@ class Template(object):
 
         return self
 
-    def evaluate(self, event_type, edxml_event, capitalize=True, colorize=False, ignore_value_errors=False):
+    def evaluate(self, event_type, event_properties, event_attachments,
+                 capitalize=True, colorize=False, ignore_value_errors=False):
         """
 
         Evaluates the EDXML template of an event type using
-        specified event, returning the result.
+        specified event, returning the result. The event_properties and event_attachments
+        parameters must be structured in the same way as they are obtained from EDXMLEvent
+        instances.
 
         Optionally, the output can be colorized. At his time this means that,
         when printed on the terminal, the objects in the evaluated string will
@@ -176,7 +179,8 @@ class Template(object):
 
         Args:
           event_type (edxml.ontology.EventType): the event type of the event
-          edxml_event (edxml.EDXMLEvent): the EDXML event to use
+          event_properties (Dict[str, Set]): the event properties to use
+          event_attachments (Dict[str, Dict[str, str]]): the event attachments to use
           capitalize (bool): Capitalize evaluated template yes or no
           colorize (bool): Colorize output or not
           ignore_value_errors (bool): Ignore object value errors yes or no
@@ -186,8 +190,8 @@ class Template(object):
         """
 
         evaluated = self._process_split_template(
-            self._split_template(self._template)[1], event_type, edxml_event.get_properties(),
-            edxml_event.get_attachments(), colorize, ignore_value_errors
+            self._split_template(self._template)[1], event_type, event_properties,
+            event_attachments, colorize, ignore_value_errors
         )
 
         return self._capitalize(evaluated) if capitalize else evaluated
@@ -218,14 +222,16 @@ class Template(object):
         """
         properties = {}
         for property_name, event_property in event_type.get_properties().items():
+            object_type = event_property.get_object_type()
             if event_property.is_single_valued():
-                properties[property_name] = 'some ' + event_property.get_object_type().get_display_name_singular()
+                properties[property_name] = {'some ' + object_type.get_display_name_singular()}
             else:
-                properties[property_name] = 'one or more ' + event_property.get_object_type().get_display_name_plural()
+                properties[property_name] = {'one or more ' + object_type.get_display_name_plural()}
 
         # Yield a complete evaluated template first.
-        event = edxml.event.EDXMLEvent(properties)
-        yield set(), Template(template).evaluate(event_type, event, colorize=colorize, ignore_value_errors=True)
+        yield set(), Template(template).evaluate(
+            event_type, properties, {}, colorize=colorize, ignore_value_errors=True
+        )
 
         while template != '':
             start, end, empty_prop_sets = cls._get_innermost_collapsing_property_sets(event_type, template)
@@ -234,15 +240,16 @@ class Template(object):
                 # On each iteration, the event gets less detailed.
                 partial_props = dict(properties)
                 for empty_prop in empty_prop_set:
-                    del partial_props[empty_prop]
-                event = edxml.event.EDXMLEvent(partial_props)
+                    if empty_prop in partial_props:
+                        del partial_props[empty_prop]
+                properties = partial_props
                 yield empty_prop_set, Template(template).evaluate(
-                    event_type, event, colorize=colorize, ignore_value_errors=True
+                    event_type, properties, {}, colorize=colorize, ignore_value_errors=True
                 )
 
             # Collapse inner scope and repeat.
             collapsed = template[:start] + Template(template[start:end]).evaluate(
-                    event_type, event, colorize=colorize, capitalize=False, ignore_value_errors=True
+                    event_type, properties, {}, colorize=colorize, capitalize=False, ignore_value_errors=True
                 ) + template[end:]
 
             if collapsed == template:
@@ -511,8 +518,8 @@ class Template(object):
 
                 try:
                     # Note that we use lexicographic sorting here.
-                    date_time_start = min(event_object_values[arguments[0]])
-                    date_time_end = min(event_object_values[arguments[1]])
+                    date_time_start = min(event_object_values.get(arguments[0], []))
+                    date_time_end = min(event_object_values.get(arguments[1], []))
                 except ValueError:
                     # An argument was missing or a property is missing an object
                     # value. This implies that we must return an empty string.
@@ -533,8 +540,8 @@ class Template(object):
 
                 try:
                     # Note that we use lexicographic sorting here.
-                    date_time_start = min(event_object_values[arguments[0]])
-                    date_time_end = min(event_object_values[arguments[1]])
+                    date_time_start = min(event_object_values.get(arguments[0], []))
+                    date_time_end = min(event_object_values.get(arguments[1], []))
                 except ValueError:
                     # An argument was missing or a property is missing an object
                     # value. This implies that we must return an empty string.
@@ -552,7 +559,7 @@ class Template(object):
 
             elif formatter == 'date_time':
 
-                for object_value in event_object_values[arguments[0]]:
+                for object_value in event_object_values.get(arguments[0], []):
                     try:
                         date_time = parse(object_value)
                     except ParserError:
@@ -584,19 +591,19 @@ class Template(object):
             elif formatter == 'url':
 
                 property_name, target_name = arguments
-                for object_value in event_object_values[arguments[0]]:
+                for object_value in event_object_values.get(arguments[0], []):
                     object_strings.append('%s (%s)' % (target_name, object_value))
 
             elif formatter == 'merge':
 
                 for property_name in arguments:
-                    for object_value in event_object_values[property_name]:
+                    for object_value in event_object_values.get(property_name, []):
                         object_strings.append(object_value)
 
             elif formatter == 'boolean_string_choice':
 
                 property_name, true, false = arguments
-                for object_value in event_object_values[arguments[0]]:
+                for object_value in event_object_values.get(arguments[0], []):
                     if object_value == 'true':
                         object_strings.append(true)
                     elif object_value == 'false':
@@ -610,7 +617,7 @@ class Template(object):
 
             elif formatter == 'boolean_on_off':
 
-                for object_value in event_object_values[arguments[0]]:
+                for object_value in event_object_values.get(arguments[0], []):
                     if object_value == 'true':
                         object_strings.append('on')
                     elif object_value == 'false':
@@ -624,7 +631,7 @@ class Template(object):
 
             elif formatter == 'boolean_is_is_not':
 
-                for object_value in event_object_values[arguments[0]]:
+                for object_value in event_object_values.get(arguments[0], []):
                     if object_value == 'true':
                         object_strings.append('is')
                     elif object_value == 'false':
@@ -651,7 +658,7 @@ class Template(object):
             elif formatter == 'unless_empty':
 
                 not_empty_string = arguments.pop()
-                if [value for property_name in arguments for value in event_object_values[property_name]]:
+                if [value for property_name in arguments for value in event_object_values.get(property_name, [])]:
                     object_strings.append(not_empty_string)
 
             else:
@@ -660,7 +667,7 @@ class Template(object):
                 # type implies an appropriate value format.
                 property_name = arguments[0]
                 if property_name in property_data_types and property_data_types[property_name].type == 'geo:point':
-                    for object_value in event_object_values[property_name]:
+                    for object_value in event_object_values.get(property_name, []):
                         try:
                             lat, long = object_value.split(',')
                             degrees = int(float(lat))
@@ -682,7 +689,7 @@ class Template(object):
 
                         object_strings.append(lat_long)
                 else:
-                    object_strings.extend(event_object_values[property_name])
+                    object_strings.extend(event_object_values.get(property_name, []))
 
             if len(object_strings) > 0:
                 if len(object_strings) > 1:

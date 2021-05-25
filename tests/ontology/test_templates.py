@@ -12,7 +12,7 @@
 # ========================================================================================
 
 import pytest
-from edxml import Template, EDXMLEvent
+from edxml import Template
 from edxml.error import EDXMLValidationError
 from edxml.ontology import Ontology, DataType
 
@@ -41,22 +41,17 @@ def event_type():
 
 def test_basic_interpolation(event_type):
 
-    event = EDXMLEvent({'p-string': 'foo'})
-
-    assert Template('Value is [[p-string]].').evaluate(event_type, event) == 'Value is foo.'
+    assert Template('Value is [[p-string]].').evaluate(event_type, {'p-string': {'foo'}}, {}) == 'Value is foo.'
 
 
 def test_colorized_interpolation(event_type):
 
-    event = EDXMLEvent({'p-string': 'foo Bar'})
-
-    assert Template('[[p-string]].')\
-        .evaluate(event_type, event, colorize=True) == '\x1b[1m\x1b[37m' + 'Foo Bar' + '\x1b[0m.'
-
-    event = EDXMLEvent({'p-string': ['foo', 'bar']})
+    assert Template('[[p-string]].').evaluate(
+        event_type, {'p-string': {'foo Bar'}}, {}, colorize=True
+    ) == '\x1b[1m\x1b[37m' + 'Foo Bar' + '\x1b[0m.'
 
     assert Template('value is [[p-string]].')\
-        .evaluate(event_type, event, colorize=True) in [
+        .evaluate(event_type, {'p-string': {'foo', 'bar'}}, {}, colorize=True) in [
         'Value is ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m.',
         'Value is ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m.',
     ]
@@ -68,312 +63,288 @@ def test_get_properties(event_type):
 
 def test_missing_property_collapse(event_type):
 
-    event = EDXMLEvent({})
-
-    assert Template('Value is [[p-string]].').evaluate(event_type, event) == ''
+    assert Template('Value is [[p-string]].').evaluate(event_type, {}, {}) == ''
 
 
 def test_missing_property_scoped_collapse(event_type):
 
-    event = EDXMLEvent({})
-
-    assert Template('Value{ is [[p-string]]}.').evaluate(event_type, event) == 'Value.'
-    assert Template('Value{ is{ [[p-string]]} {}}.').evaluate(event_type, event) == 'Value is .'
-    assert Template('Value{ is [[p-string]] or {[[p-string]]}.}').evaluate(event_type, event) == 'Value'
-
-    event = EDXMLEvent({'p-float': '1.200000E+000'})
-
-    assert Template('Value is {[[p-float]]{ and [[p-string]]}}.').evaluate(event_type, event) == 'Value is 1.200000.'
+    assert Template('Value{ is [[p-string]]}.').evaluate(event_type, {}, {}) == 'Value.'
+    assert Template('Value{ is{ [[p-string]]} {}}.').evaluate(event_type, {}, {}) == 'Value is .'
+    assert Template('Value{ is [[p-string]] or {[[p-string]]}.}').evaluate(event_type, {}, {}) == 'Value'
+    assert Template('Value is {[[p-float]]{ and [[p-string]]}}.').evaluate(
+        event_type, {'p-float': {'1.200000E+000'}}, {}
+    ) == 'Value is 1.200000.'
 
 
 def test_render_float(event_type):
 
-    event = EDXMLEvent({'p-float': '1.200000E+000'})
-
-    assert Template('Value is [[p-float]].').evaluate(event_type, event) == 'Value is 1.200000.'
+    assert Template('Value is [[p-float]].').evaluate(
+        event_type, {'p-float': {'1.200000E+000'}}, {}
+    ) == 'Value is 1.200000.'
 
 
 def test_render_float_invalid(event_type):
 
-    event = EDXMLEvent({'p-float': 'unknown'})
+    props = {'p-float': {'unknown'}}
 
     with pytest.raises(ValueError):
-        Template('Value is [[p-float]]').evaluate(event_type, event)
+        Template('Value is [[p-float]]').evaluate(event_type, props, {})
 
-    assert Template('Value is [[p-float]]').evaluate(event_type, event, ignore_value_errors=True) == 'Value is unknown'
+    assert Template('Value is [[p-float]]').evaluate(
+        event_type, props, {}, ignore_value_errors=True
+    ) == 'Value is unknown'
 
 
 def test_render_datetime(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T23:47:10.123456Z'})
+    props = {'p-time-start': {'2020-11-25T23:47:10.123456Z'}}
 
     assert Template('In [[date_time:p-time-start,year]].')\
-        .evaluate(event_type, event) == 'In 2020.'
+        .evaluate(event_type, props, {}) == 'In 2020.'
 
     assert Template('In [[date_time:p-time-start,month]].')\
-        .evaluate(event_type, event) == 'In November 2020.'
+        .evaluate(event_type, props, {}) == 'In November 2020.'
 
     assert Template('On [[date_time:p-time-start,date]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020.'
 
     assert Template('On [[date_time:p-time-start,hour]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23h.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020 at 23h.'
 
     assert Template('On [[date_time:p-time-start,minute]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47h.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020 at 23:47h.'
 
     assert Template('On [[date_time:p-time-start,second]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10h.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020 at 23:47:10h.'
 
     assert Template('On [[date_time:p-time-start,millisecond]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123h.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020 at 23:47:10.123h.'
 
     assert Template('On [[date_time:p-time-start,microsecond]].')\
-        .evaluate(event_type, event) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
+        .evaluate(event_type, props, {}) == 'On Wednesday, November 25 2020 at 23:47:10.123456h.'
 
     # Below we test for an issue in the strftime implementation in some older
     # versions of Python where dates before the year 1900 would raise a ValueError.
     # In recent versions this should not happen anymore.
 
-    event = EDXMLEvent({'p-time-start': '1720-11-25T23:47:10.123456Z'})
-    assert Template('In [[date_time:p-time-start,year]].').evaluate(event_type, event) == 'In 1720.'
+    assert Template('In [[date_time:p-time-start,year]].').evaluate(
+        event_type, {'p-time-start': {'1720-11-25T23:47:10.123456Z'}}, {}
+    ) == 'In 1720.'
 
 
 def test_render_datetime_invalid(event_type):
 
-    event = EDXMLEvent({'p-time-start': 'A long, long time ago'})
+    props = {'p-time-start': {'A long, long time ago'}}
 
     with pytest.raises(ValueError):
-        Template('[[date_time:p-time-start,year]].').evaluate(event_type, event)
+        Template('[[date_time:p-time-start,year]].').evaluate(event_type, props, {})
 
     assert Template('[[date_time:p-time-start,year]].')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'A long, long time ago.'
+        .evaluate(event_type, props, {}, ignore_value_errors=True) == 'A long, long time ago.'
 
 
 def test_render_time_span(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T14:23:54.000000Z'})
-
-    assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'Time span between 2020-11-25 11:47:10+00:00 and 2020-11-25 14:23:54+00:00.'
+    assert Template('Time span [[time_span:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-11-25T14:23:54.000000Z'}},
+        {}
+    ) == 'Time span between 2020-11-25 11:47:10+00:00 and 2020-11-25 14:23:54+00:00.'
 
 
 def test_render_time_span_missing_value(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z'})
-
     assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == ''
+        .evaluate(event_type, {'p-time-start': {'2020-11-25T11:47:10.000000Z'}}, {}) == ''
 
 
 def test_render_time_span_invalid(event_type):
 
-    event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
+    props = {'p-time-start': {'start'}, 'p-time-end': {'end'}}
 
     with pytest.raises(ValueError):
-        Template('Time span [[time_span:p-time-start,p-time-end]].').evaluate(event_type, event)
+        Template('Time span [[time_span:p-time-start,p-time-end]].').evaluate(event_type, props, {})
 
     assert Template('Time span [[time_span:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'Time span between start and end.'
+        .evaluate(event_type, props, {}, ignore_value_errors=True) == 'Time span between start and end.'
 
 
 def test_render_duration_seconds(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T11:47:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 2.0 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-11-25T11:47:12.000000Z'}},
+        {}
+    ) == 'It took 2.0 seconds.'
 
 
 def test_render_duration_minutes(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T11:48:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 1 minutes and 2 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-11-25T11:48:12.000000Z'}},
+        {}
+    ) == 'It took 1 minutes and 2 seconds.'
 
 
 def test_render_duration_hours(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-25T12:48:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 1 hours, 1 minutes and 2 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-11-25T12:48:12.000000Z'}},
+        {}
+    ) == 'It took 1 hours, 1 minutes and 2 seconds.'
 
 
 def test_render_duration_days(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-11-26T12:48:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 1 days, 1 hours, 1 minutes and 2 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-11-26T12:48:12.000000Z'}},
+        {}
+    ) == 'It took 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
 def test_render_duration_months(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2020-12-26T12:48:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2020-12-26T12:48:12.000000Z'}},
+        {}
+    ) == 'It took 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
 def test_render_duration_years(event_type):
 
-    event = EDXMLEvent({'p-time-start': '2020-11-25T11:47:10.000000Z', 'p-time-end': '2021-12-26T12:48:12.000000Z'})
-
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == 'It took 1 years, 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type,
+        {'p-time-start': {'2020-11-25T11:47:10.000000Z'}, 'p-time-end': {'2021-12-26T12:48:12.000000Z'}},
+        {}
+    ) == 'It took 1 years, 1 months, 1 days, 1 hours, 1 minutes and 2 seconds.'
 
 
 def test_render_duration_invalid(event_type):
 
-    event = EDXMLEvent({'p-time-start': 'start', 'p-time-end': 'end'})
+    props = {'p-time-start': {'start'}, 'p-time-end': {'end'}}
 
     with pytest.raises(ValueError):
-        Template('It took [[duration:p-time-start,p-time-end]].').evaluate(event_type, event)
+        Template('It took [[duration:p-time-start,p-time-end]].').evaluate(event_type, props, {})
 
-    assert Template('It took [[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'It took the time that passed between start and end.'
+    assert Template('It took [[duration:p-time-start,p-time-end]].').evaluate(
+        event_type, props, {}, ignore_value_errors=True
+    ) == 'It took the time that passed between start and end.'
 
 
 def test_render_duration_missing_value(event_type):
 
-    event = EDXMLEvent({})
-
     assert Template('[[duration:p-time-start,p-time-end]].')\
-        .evaluate(event_type, event) == ''
+        .evaluate(event_type, {}, {}) == ''
 
 
 def test_render_url(event_type):
 
-    event = EDXMLEvent({'p-url': 'http://site.com'})
-
     assert Template('It can be found [[url:p-url,here]].')\
-        .evaluate(event_type, event) == 'It can be found here (http://site.com).'
-
-    event = EDXMLEvent({})
+        .evaluate(event_type, {'p-url': {'http://site.com'}}, {}) == 'It can be found here (http://site.com).'
 
     assert Template('[[url:p-url,here]].')\
-        .evaluate(event_type, event) == ''
+        .evaluate(event_type, {}, {}) == ''
 
 
 def test_render_merge(event_type):
 
-    event = EDXMLEvent({'p-string': ['a', 'b'], 'p-url': 'c'})
+    assert Template('[[merge:p-string,p-url]].')\
+        .evaluate(event_type, {'p-string': {'a', 'b'}, 'p-url': {'c'}}, {}) in ['A, b and c.', 'B, a and c.']
 
     assert Template('[[merge:p-string,p-url]].')\
-        .evaluate(event_type, event) in ['A, b and c.', 'B, a and c.']
-
-    event = EDXMLEvent({})
-
-    assert Template('[[merge:p-string,p-url]].')\
-        .evaluate(event_type, event) == ''
+        .evaluate(event_type, {}, {}) == ''
 
 
 def test_render_boolean_string_choice(event_type):
 
-    event = EDXMLEvent({'p-bool': ['true', 'false']})
-
     assert Template('[[boolean_string_choice:p-bool,yes,no]]')\
-        .evaluate(event_type, event) in ['Yes and no', 'No and yes']
+        .evaluate(event_type, {'p-bool': ['true', 'false']}, {}) in ['Yes and no', 'No and yes']
 
 
 def test_render_boolean_string_choice_invalid(event_type):
 
-    event = EDXMLEvent({'p-bool': 'invalid'})
+    props = {'p-bool': {'invalid'}}
 
     with pytest.raises(ValueError):
-        Template('[[boolean_string_choice:p-bool,yes,no]]').evaluate(event_type, event)
+        Template('[[boolean_string_choice:p-bool,yes,no]]').evaluate(event_type, props, {})
 
     assert Template('[[boolean_string_choice:p-bool,yes,no]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'Yes or no'
+        .evaluate(event_type, props, {}, ignore_value_errors=True) == 'Yes or no'
 
 
 def test_render_boolean_on_off(event_type):
 
-    event = EDXMLEvent({'p-bool': ['true', 'false']})
-
     assert Template('[[boolean_on_off:p-bool]]')\
-        .evaluate(event_type, event) in ['On and off', 'Off and on']
+        .evaluate(event_type, {'p-bool': {'true', 'false'}}, {}) in ['On and off', 'Off and on']
 
 
 def test_render_boolean_on_off_invalid(event_type):
 
-    event = EDXMLEvent({'p-bool': 'invalid'})
+    props = {'p-bool': {'invalid'}}
 
     with pytest.raises(ValueError):
-        Template('[[boolean_on_off:p-bool]]').evaluate(event_type, event)
+        Template('[[boolean_on_off:p-bool]]').evaluate(event_type, props, {})
 
     assert Template('[[boolean_on_off:p-bool]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'On or off'
+        .evaluate(event_type, props, {}, ignore_value_errors=True) == 'On or off'
 
 
 def test_render_boolean_is_is_not(event_type):
 
-    event = EDXMLEvent({'p-bool': ['true', 'false']})
-
     assert Template('[[boolean_is_is_not:p-bool]]')\
-        .evaluate(event_type, event) in ['Is and is not', 'Is not and is']
+        .evaluate(event_type, {'p-bool': {'true', 'false'}}, {}) in ['Is and is not', 'Is not and is']
 
 
 def test_render_boolean_is_is_not_invalid(event_type):
 
-    event = EDXMLEvent({'p-bool': 'invalid'})
-
     with pytest.raises(ValueError):
-        Template('[[boolean_is_is_not:p-bool]]').evaluate(event_type, event)
+        Template('[[boolean_is_is_not:p-bool]]').evaluate(event_type, {'p-bool': 'invalid'}, {})
 
     assert Template('[[boolean_is_is_not:p-bool]]')\
-        .evaluate(event_type, event, ignore_value_errors=True) == 'Is or is not'
+        .evaluate(event_type, {'p-bool': {'invalid'}}, {}, ignore_value_errors=True) == 'Is or is not'
 
 
 def test_render_empty(event_type):
 
-    event = EDXMLEvent({'p-string': 'foo'})
+    assert Template('[[empty:p-string,nothing]]')\
+        .evaluate(event_type, {'p-string': {'foo'}}, {}) == ''
 
     assert Template('[[empty:p-string,nothing]]')\
-        .evaluate(event_type, event) == ''
-
-    event = EDXMLEvent({})
-
-    assert Template('[[empty:p-string,nothing]]')\
-        .evaluate(event_type, event) == 'Nothing'
+        .evaluate(event_type, {}, {}) == 'Nothing'
 
 
-def test_render_unless_empty():
-
-    event = EDXMLEvent({})
+def test_render_unless_empty(event_type):
 
     assert Template('{Value is {[[p-float]]}{ or [[p-string]]}}.}')\
-        .evaluate(event_type, event) == 'Value is .'
+        .evaluate(event_type, {}, {}) == 'Value is .'
     assert Template('{[[unless_empty:p-float,p-string,Value]] is {[[p-float]]}{ or [[p-string]]}.}')\
-        .evaluate(event_type, event) == ''
+        .evaluate(event_type, {}, {}) == ''
 
 
 def test_render_geo_point(event_type):
 
-    event = EDXMLEvent({'p-geo': '43.133122,115.734600'})
-
     assert Template('[[p-geo]]')\
-        .evaluate(event_type, event) == '43°7′59 N″ 115°44′4 E″'
+        .evaluate(event_type, {'p-geo': {'43.133122,115.734600'}}, {}) == '43°7′59 N″ 115°44′4 E″'
 
 
 def test_render_geo_point_invalid(event_type):
 
-    event = EDXMLEvent({'p-geo': 'invalid'})
+    props = {'p-geo': {'invalid'}}
 
     with pytest.raises(ValueError):
-        Template('[[p-geo]]').evaluate(event_type, event)
+        Template('[[p-geo]]').evaluate(event_type, props, {})
 
-    assert Template('[[p-geo]]').evaluate(event_type, event, ignore_value_errors=True) == 'Invalid'
+    assert Template('[[p-geo]]').evaluate(event_type, props, {}, ignore_value_errors=True) == 'Invalid'
 
 
 def test_render_attachment(event_type):
 
-    event = EDXMLEvent(properties={}, attachments={'foo': 'bar'})
-
     assert Template('[[attachment:foo]]')\
-        .evaluate(event_type, event) == '\n\nbar\n\n'
+        .evaluate(event_type, {}, {'foo': {'foo': 'bar'}}) == '\n\nbar\n\n'
 
 
 def test_validate_unbalanced_brackets(event_type):

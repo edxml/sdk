@@ -970,7 +970,9 @@ class EventType(VersionedOntologyElement, MutableMapping):
         Returns:
           str:
         """
-        return edxml.Template(self.__attr[which]).evaluate(self, edxml_event, capitalize, colorize)
+        return edxml.Template(self.__attr[which]).evaluate(
+            self, edxml_event.get_properties(), edxml_event.get_attachments(), capitalize, colorize
+        )
 
     def _validate_event_versioning(self):
         if self.__attr['event-version'] is None:
