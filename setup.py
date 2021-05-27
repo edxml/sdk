@@ -62,7 +62,7 @@ setup(
     # installed, specify them here. If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'edxml': ['schema/edxml-schema-3.0.0.rng', '**/*.pyi']
+        'edxml': ['**/*.pyi']
     },
 
     # Add entry points which will be installed as CLI utilities
@@ -89,7 +89,7 @@ setup(
     # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=['lxml>=3.8', 'python-dateutil',
+    install_requires=['lxml>=3.8', 'python-dateutil', 'edxml-schema',
                       'iso3166', 'pytz', 'termcolor', 'typing', 'pytest'],
 
     # Specify additional packages that are only installed for specific purposes,

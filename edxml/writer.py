@@ -45,7 +45,7 @@ This module contains the EDXMLWriter class, which is used
 to generate EDXML streams.
 
 """
-import os
+import edxml_schema
 import sys
 from collections import deque
 
@@ -307,9 +307,7 @@ class EDXMLWriter(object):
             #       The round trip to XML string and back works around this.
             edxml = etree.fromstring(etree.tostring(edxml))
             if not self.__schema:
-                self.__schema = etree.RelaxNG(
-                    etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
-                )
+                self.__schema = etree.RelaxNG(etree.parse(edxml_schema.SCHEMA_PATH_3_0))
             try:
                 self.__schema.assertValid(edxml)
             except (etree.DocumentInvalid, etree.XMLSyntaxError) as validation_error:

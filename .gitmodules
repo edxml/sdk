@@ -1,3 +1,0 @@
-[submodule "edxml/schema"]
-	path = edxml/schema
-	url = ../schema.git

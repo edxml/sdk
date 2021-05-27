@@ -7,7 +7,6 @@ dependencies:
 	python3 -m pip install --upgrade pip setuptools wheel
 	pip3 install flake8 pytest
 	pip3 install -r requirements.txt
-	git submodule update --init  edxml/schema
 
 dist:
 	python3 setup.py sdist bdist_wheel

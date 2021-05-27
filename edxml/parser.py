@@ -41,14 +41,15 @@
 """
 This module offers various classes for incremental parsing of EDXML data streams.
 """
-import os
 import re
+import edxml_schema
 
 from lxml.etree import XMLSyntaxError
 from typing import Dict, List, Any
 
 from collections import defaultdict
 from lxml import etree
+
 from edxml.error import EDXMLValidationError
 from edxml import ParsedEvent
 from edxml.ontology import Ontology
@@ -318,9 +319,7 @@ class EDXMLParserBase(object):
         # parsing is completed. At any other stage in the
         # parsing process, the tree structure is incomplete.
         if not self.__schema:
-            self.__schema = etree.RelaxNG(
-                etree.parse(os.path.dirname(os.path.realpath(__file__)) + '/schema/edxml-schema-3.0.0.rng')
-            )
+            self.__schema = etree.RelaxNG(etree.parse(edxml_schema.SCHEMA_PATH_3_0))
 
         if self.__root_element is None:
             # The root element is set as soon as the opening <edxml> tag
