@@ -161,11 +161,19 @@ class MinedConceptAttribute(ConceptAttribute):
         # confirms it with its own confidence.
         # We compute the net confidence for each concept by taking the opposite of the
         # probability that all confirmations are incorrect.
-        # TODO: Should we consider confirmations for concepts a.b and a.b.c both to be
-        #       confirmations of a.b?
         concept_confidences = defaultdict(list)
         for node in self.nodes.values():
             concept_confidences[node.concept_name].append(1.0 - node.seed_confidences.get(self.seed_id, 0))
+
+        for concept_name in concept_confidences.keys():
+            for generalized_concept_name in Concept.generate_generalizations(concept_name):
+                if generalized_concept_name in concept_confidences.keys():
+                    # Among the concept confidences we found a concept that is
+                    # a generalization of another concept name. A node that
+                    # confirms concept a.b.c is also a confirmation of the
+                    # generalization a.b. For that reason we add confirmations
+                    # to the generalized concept(s) as well.
+                    concept_confidences[generalized_concept_name].extend(concept_confidences[concept_name])
 
         return {name: 1.0 - reduce(mul, confidences) for name, confidences in concept_confidences.items()}
 
