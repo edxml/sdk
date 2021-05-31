@@ -35,7 +35,7 @@ def generate_valid_merge_sequence_fixture_params():
     for version_dir in versions:
         valid_dir = CORPUS_PATH + version_dir + '/valid/merge-multiple-files/'
         for test_dir in os.listdir(valid_dir):
-            if valid_dir + test_dir in glob(valid_dir + test_dir + dir_glob):
+            if valid_dir + test_dir in glob(valid_dir + dir_glob):
                 test_params = {'input_paths': []}
                 for filename in os.listdir(valid_dir + test_dir):
                     if filename.startswith('input'):
