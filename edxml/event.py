@@ -408,6 +408,16 @@ class EDXMLEvent(MutableMapping):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def _normalize_object_value(self, property_name, value):
+        if isinstance(value, str):
+            # Value contains illegal characters.
+            if not getattr(self, '_replace_invalid_characters', False):
+                raise
+            # Replace illegal characters with unicode replacement characters.
+            return re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), value)
+        else:
+            return to_edxml_object(property_name, value)
+
     def replace_invalid_characters(self, replace=True):
         """
         Enables automatic replacement of invalid unicode characters with
@@ -933,14 +943,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
             try:
                 etree.SubElement(props, '{http://edxml.org/edxml}' + key).text = v
             except (TypeError, ValueError):
-                if isinstance(v, str):
-                    # Value contains illegal characters.
-                    if not getattr(self, '_replace_invalid_characters', False):
-                        raise
-                    # Replace illegal characters with unicode replacement characters.
-                    props[-1].text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), v)
-                else:
-                    props[-1].text = to_edxml_object(key, v)
+                props[-1].text = self._normalize_object_value(key, v)
 
     def __update_attachment(self, attachment_name, attachment_id, value):
         attachments_element = self.find('{http://edxml.org/edxml}attachments')
@@ -1323,14 +1326,7 @@ class EventElement(EDXMLEvent):
             try:
                 etree.SubElement(props, key).text = v
             except (TypeError, ValueError):
-                if isinstance(v, str):
-                    # Value contains illegal characters.
-                    if not getattr(self, '_replace_invalid_characters', False):
-                        raise
-                    # Replace illegal characters with unicode replacement characters.
-                    props[-1].text = re.sub(EVIL_XML_CHARS_REGEXP, chr(0xfffd), v)
-                else:
-                    props[-1].text = to_edxml_object(key, v)
+                props[-1].text = self._normalize_object_value(key, v)
 
     def __update_attachment(self, attachment_name, attachment_id, value):
         try:
