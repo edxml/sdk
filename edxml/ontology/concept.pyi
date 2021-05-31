@@ -58,3 +58,6 @@ class Concept(OntologyElement):
 
     @classmethod
     def generate_specializations(cls, concept_name: str, parent_concept_name: Optional[str]= '') -> Generator[str]: ...
+
+    @classmethod
+    def generate_generalizations(cls, concept_name: str) -> Generator[str]: ...

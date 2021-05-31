@@ -429,3 +429,20 @@ class Concept(VersionedOntologyElement):
         while len(components) > 0:
             current_concept_name.append(components.pop(0))
             yield '.'.join(current_concept_name)
+
+    @classmethod
+    def generate_generalizations(cls, concept_name):
+        """
+        Generator yielding generalizations of a given concept. For example, when
+        given a concept name 'a.b.c' it will generate concept names 'a.b' and 'a'.
+
+        Args:
+            concept_name (str): Concept for which to generate generalizations
+
+        Yields:
+            str
+        """
+        components = concept_name.split('.')
+        while len(components) > 1:
+            components.pop()
+            yield '.'.join(components)
