@@ -44,6 +44,7 @@ def test_ontology_concept_visualization():
     # associated with concepts. The event types share a common object type, which means that both
     # event types will be interconnected by a common object type node.
 
+    TestTranscoder.TYPES = ['event-type.a', 'event-type.b']
     TestTranscoder.TYPE_MAP = {'selector a': 'event-type.a', 'selector b': 'event-type.b'}
     TestTranscoder.TYPE_PROPERTIES = {
         'event-type.a': {'property-a': 'object-type-string', 'property-b': 'object-type-string'},

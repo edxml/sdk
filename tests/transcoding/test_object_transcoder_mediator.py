@@ -69,6 +69,7 @@ def test_duplicate_registration_exception(object_transcoder):
 
 
 def test_register_wrong_record_type_exception(object_transcoder_mediator, object_transcoder, record):
+    object_transcoder.TYPES = ['test-event-type.a']
     object_transcoder.TYPE_MAP = {'wrong_record_type': 'test-event-type.a'}
 
     output = BytesIO()
@@ -80,6 +81,7 @@ def test_register_wrong_record_type_exception(object_transcoder_mediator, object
 
 
 def test_process_single_transcoder_single_event_type(object_transcoder_mediator, object_transcoder, record):
+    object_transcoder.TYPES = ['test-event-type.a']
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
@@ -105,6 +107,7 @@ def test_process_single_transcoder_single_event_type(object_transcoder_mediator,
 
 def test_log_fallback_transcoder(object_transcoder_mediator, object_transcoder, record, caplog):
 
+    object_transcoder.TYPES = ['test-event-type.a']
     object_transcoder.TYPE_MAP = {None: 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
@@ -142,6 +145,7 @@ def test_ontology_update(object_transcoder_mediator, object_transcoder, record):
                 self.add_event_source('/another/test/uri/')
                 self.source_added = True
 
+    object_transcoder.TYPES = ['test-event-type.a']
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
@@ -166,6 +170,7 @@ def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, 
 
     # Note that we use 'object-type.integer' as object type
     # while the values in the record are not integer.
+    object_transcoder.TYPES = ['test-event-type.a']
     object_transcoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.integer'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
@@ -189,6 +194,7 @@ def test_post_process(object_transcoder_mediator, object_transcoder, record):
             event['property-a'] = input_record['records']['b'][0]
             yield event
 
+    PostProcessingTranscoder.TYPES = ['test-event-type.a']
     PostProcessingTranscoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
@@ -215,6 +221,7 @@ def test_post_processor_invalid_event_exception(object_transcoder_mediator, obje
             event['nonexistent-property'] = 'test'
             yield event
 
+    PostProcessingTranscoder.TYPES = ['test-event-type.a']
     PostProcessingTranscoder.TYPE_MAP = {'test_record': 'test-event-type.a'}
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}

@@ -40,6 +40,9 @@ sources, and so on.
 ..  autoclass:: EventType
     :members:
     :show-inheritance:
+..  autoclass:: EventTypeFactory
+    :members:
+    :show-inheritance:
 ..  autoclass:: EventTypeParent
     :members:
     :show-inheritance:
@@ -69,8 +72,9 @@ from .event_type_parent import EventTypeParent
 from .event_type_attachment import EventTypeAttachment
 from .concept import Concept
 from .brick import Brick
+from .event_type_factory import EventTypeFactory
 
 
 __all__ = ['OntologyElement', 'DataType', 'EventType', 'EventProperty', 'PropertyRelation', 'EventSource',
            'EventTypeParent', 'ObjectType', 'Concept', 'Ontology', 'Brick', 'PropertyConcept', 'EventTypeAttachment',
-           'normalize_xml_token', 'VersionedOntologyElement']
+           'normalize_xml_token', 'VersionedOntologyElement', 'EventTypeFactory']

@@ -100,6 +100,7 @@ def create_transcoder(*event_type_names):
         """
         pass
 
+    TestTranscoder.TYPES = event_type_names
     TestTranscoder.TYPE_MAP = {name: name for name in event_type_names}
     TestTranscoder.TYPE_PROPERTIES = {name: {'property-a': 'object-type.string'} for name in event_type_names}
     t = TestTranscoder()

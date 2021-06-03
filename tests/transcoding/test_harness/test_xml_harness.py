@@ -17,6 +17,7 @@ class TestXmlTranscoder(XmlTranscoder):
     __test__ = False
 
     VERSION = 2
+    TYPES = ['test-event-type']
     TYPE_MAP = {'a': 'test-event-type'}
     TYPE_PROPERTIES = {'test-event-type': {'property1': 'object-type.string'}}
     PROPERTY_MAP = {'test-event-type': {'p1': 'property1'}}

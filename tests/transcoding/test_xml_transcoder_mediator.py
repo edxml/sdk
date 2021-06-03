@@ -59,6 +59,7 @@ def test_duplicate_registration_exception(xml_transcoder):
 
 
 def test_parse_single_transcoder_single_event_type(xml_transcoder, xml):
+    xml_transcoder.TYPES = ['test-event-type.a']
     xml_transcoder.TYPE_MAP = {'a': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
@@ -84,6 +85,7 @@ def test_parse_single_transcoder_single_event_type(xml_transcoder, xml):
 
 
 def test_generate(xml_transcoder, xml):
+    xml_transcoder.TYPES = ['test-event-type.a']
     xml_transcoder.TYPE_MAP = {'a': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
@@ -117,6 +119,7 @@ def test_parse_nested_transcoders(xml):
 
     # Below we create a record transcoder that we will register on /root/records/a. It
     # will transcode the elements that it is registered at (self, or '.')
+    InnerTranscoder.TYPES = ['inner.a']
     InnerTranscoder.TYPE_MAP = {'.': 'inner.a'}
     InnerTranscoder.TYPE_PROPERTIES = {'inner.a': {'property-a': 'object-type.string'}}
     InnerTranscoder.PROPERTY_MAP = {'inner.a': {'p1': 'property-a'}}
@@ -128,6 +131,7 @@ def test_parse_nested_transcoders(xml):
     # the /root/records/b elements to transcode while the /root/records/a elements
     # are gone. Except for the last one, because the mediator cannot remove the
     # element that it is currently processing. It removes the previous one.
+    OuterTranscoder.TYPES = ['outer.a', 'outer.b']
     OuterTranscoder.TYPE_MAP = {
         'a': 'outer.a',
         'b': 'outer.b'
@@ -210,6 +214,7 @@ def test_ontology_update(xml_transcoder, xml):
                 self.add_event_source('/another/test/uri/')
                 self.source_added = True
 
+    xml_transcoder.TYPES = ['test-event-type.a']
     xml_transcoder.TYPE_MAP = {'.': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
@@ -233,6 +238,7 @@ def test_invalid_event_exception(xml_transcoder, xml):
 
     # Note that we use 'object-type.integer' as object type
     # while the values in the XML are not integer.
+    xml_transcoder.TYPES = ['test-event-type.a']
     xml_transcoder.TYPE_MAP = {'.': 'test-event-type.a'}
     xml_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.integer'}}
     xml_transcoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
@@ -256,6 +262,7 @@ def test_post_process(xml_transcoder, xml):
             event['property-a'] = input_record.find('../b').attrib['attr']
             yield event
 
+    PostProcessingTranscoder.TYPES = ['test-event-type.a']
     PostProcessingTranscoder.TYPE_MAP = {'.': 'test-event-type.a'}
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
@@ -282,6 +289,7 @@ def test_post_processor_invalid_event_exception(xml_transcoder, xml):
             event['nonexistent-property'] = 'test'
             yield event
 
+    PostProcessingTranscoder.TYPES = ['test-event-type.a']
     PostProcessingTranscoder.TYPE_MAP = {'.': 'test-event-type.a'}
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'p1': 'property-a'}}
