@@ -693,7 +693,7 @@ class EDXMLPullParser(EDXMLParserBase):
         try:
             self._parse_edxml()
         except XMLSyntaxError as e:
-            raise EDXMLValidationError('Invalid XML: ' + str(e.error_log))
+            raise EDXMLValidationError('Invalid XML: ' + repr(e))
 
         return self
 
