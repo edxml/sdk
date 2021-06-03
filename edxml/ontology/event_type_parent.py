@@ -87,8 +87,7 @@ class EventTypeParent(OntologyElement):
         return cls(
             child_event_type,
             parent_event_type_name,
-            ','.join(['%s:%s' % (Child, Parent)
-                      for Child, Parent in property_map.items()]),
+            ','.join(['%s:%s' % (child, parent) for child, parent in property_map.items()]),
             parent_description,
             siblings_description
         )
@@ -140,14 +139,14 @@ class EventTypeParent(OntologyElement):
         parent_property_name = child_property_name if parent_property_name is None else parent_property_name
 
         try:
-            current = dict(Mapping.split(':')
-                           for Mapping in self._attr['property-map'].split(','))
+            current = dict(mapping.split(':')
+                           for mapping in self._attr['property-map'].split(','))
         except ValueError:
             current = {}
 
         current[child_property_name] = parent_property_name
         self._set_attr('property-map', ','.join(
-            ['%s:%s' % (Child, Parent) for Child, Parent in current.items()]))
+            ['%s:%s' % (child, parent) for child, parent in current.items()]))
         return self
 
     def get_event_type_name(self):
@@ -170,7 +169,7 @@ class EventTypeParent(OntologyElement):
         Returns:
           Dict[str,str]:
         """
-        return dict(Mapping.split(':') for Mapping in self._attr['property-map'].split(','))
+        return dict(mapping.split(':') for mapping in self._attr['property-map'].split(','))
 
     def get_parent_description(self):
         """
