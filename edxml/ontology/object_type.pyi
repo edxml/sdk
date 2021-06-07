@@ -16,7 +16,7 @@ class ObjectType(OntologyElement):
     def __init__(self, ontology: edxml.ontology.Ontology, name: str, display_name_singular: str = None,
                  display_name_plural: str = None, description: str = None,
                  data_type: str = 'string:0:mc:u', unit_name: str = None, unit_symbol: str = None,
-                 prefix_radix: int = None, compress: bool = False, fuzzy_matching: str = 'none',
+                 prefix_radix: int = None, compress: bool = False, xref: str = None, fuzzy_matching: str = 'none',
                  regex_hard: str = None, regex_soft=None) -> None:
 
         self.__versions = ... # type: Dict[int, 'ObjectType']
@@ -45,6 +45,8 @@ class ObjectType(OntologyElement):
 
     def is_compressible(self) -> bool: ...
 
+    def get_xref(self) -> Optional[str]: ...
+
     def get_fuzzy_matching(self) -> Optional[str]: ...
 
     def get_regex_hard(self) -> Optional[str]: ...
@@ -56,6 +58,8 @@ class ObjectType(OntologyElement):
     def set_description(self, description: str) -> 'ObjectType': ...
 
     def set_data_type(self, data_type: edxml.ontology.DataType) -> 'ObjectType': ...
+
+    def set_xref(self, url: str) -> 'ObjectType': ...
 
     def set_prefix_radix(self, radix: int) -> 'ObjectType': ...
 

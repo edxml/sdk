@@ -91,6 +91,16 @@ def test_compression_hint_upgrade():
     assert_valid_upgrade(a, b)
 
 
+def test_xref_upgrade():
+
+    o = Ontology()
+    a = o.create_object_type('a', data_type=DataType.float().type)
+    b = copy.deepcopy(a).set_xref('http://foo.bar').set_version(2)
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
 def test_unit_upgrade():
 
     o = Ontology()

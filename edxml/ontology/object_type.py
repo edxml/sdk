@@ -38,7 +38,7 @@ class ObjectType(VersionedOntologyElement):
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
                  data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=None, compress=False,
-                 fuzzy_matching=None, regex_hard=None, regex_soft=None):
+                 xref=None, fuzzy_matching=None, regex_hard=None, regex_soft=None):
 
         display_name_singular = display_name_singular or name.replace('.', ' ')
         display_name_plural = display_name_plural or display_name_singular + 's'
@@ -52,6 +52,7 @@ class ObjectType(VersionedOntologyElement):
             'unit-name': unit_name,
             'unit-symbol': unit_symbol,
             'prefix-radix': prefix_radix,
+            'xref': xref,
             'compress': bool(compress),
             'fuzzy-matching': fuzzy_matching,
             'regex-hard': regex_hard,
@@ -187,6 +188,18 @@ class ObjectType(VersionedOntologyElement):
 
         return self.__attr['compress']
 
+    def get_xref(self):
+        """
+
+        Returns the external reference to additional information
+        about the object type or None in case it does not define any.
+
+        Returns:
+          Optional[str]: xref
+        """
+
+        return self.__attr['xref']
+
     def get_fuzzy_matching(self):
         """
 
@@ -306,6 +319,21 @@ class ObjectType(VersionedOntologyElement):
           edxml.ontology.ObjectType: The ObjectType instance
         """
         self._set_attr('prefix-radix', radix)
+        return self
+
+    def set_xref(self, url):
+        """
+
+        Configure the URL pointing to additional information
+        about the object type.
+
+        Args:
+          url (int): URL
+
+        Returns:
+          edxml.ontology.ObjectType: The ObjectType instance
+        """
+        self._set_attr('xref', url)
         return self
 
     def set_display_name(self, singular, plural=None):
@@ -667,6 +695,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.get('unit-symbol'),
                 type_element.get('prefix-radix'),
                 type_element.get('compress', 'false') == 'true',
+                type_element.get('xref'),
                 type_element.get('fuzzy-matching'),
                 type_element.get('regex-hard'),
                 type_element.get('regex-soft')
@@ -706,7 +735,7 @@ class ObjectType(VersionedOntologyElement):
         # be changed freely between versions. We only need to know if they changed.
 
         for attr in ['display-name-singular', 'display-name-plural', 'description', 'compress', 'fuzzy-matching',
-                     'unit-name', 'unit-symbol', 'prefix-radix', 'regex-soft']:
+                     'xref', 'unit-name', 'unit-symbol', 'prefix-radix', 'regex-soft']:
             equal &= old.__attr[attr] == new.__attr[attr]
 
         # Check for illegal upgrade paths:
@@ -754,6 +783,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_display_name(object_type.get_display_name_singular(), object_type.get_display_name_plural())
             self.set_description(object_type.get_description())
             self.compress(object_type.is_compressible())
+            self.set_xref(object_type.get_xref())
             self.set_unit(object_type.get_unit_name(), object_type.get_unit_symbol())
             self.set_prefix_radix(object_type.__attr['prefix-radix'])
             self.set_regex_hard(object_type.get_regex_hard())
@@ -781,6 +811,9 @@ class ObjectType(VersionedOntologyElement):
 
         if attribs['compress'] == 'false':
             del attribs['compress']
+
+        if attribs['xref'] is None:
+            del attribs['xref']
 
         if attribs['regex-hard'] is None:
             del attribs['regex-hard']
