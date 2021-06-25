@@ -339,6 +339,10 @@ class EDXMLParserBase(object):
                 # produced by the RelaxNG validator.
                 for ontology_element in self.__root_element.iterfind('{http://edxml.org/edxml}ontology'):
                     self.__process_ontology(ontology_element)
+                # Ontology appears to be fine. Check if there are any event elements
+                # that are invalid.
+                for event_element in self.__root_element.iterfind('{http://edxml.org/edxml}event'):
+                    self.__parse_event(event_element)
 
             raise EDXMLValidationError(
                 "Invalid EDXML structure detected: %s\n"
@@ -585,6 +589,20 @@ class EDXMLParserBase(object):
                     self._ontology.get_event_type(event_type_name).validate_event_objects(event)
                     # Object values also check out alright. Let us check the attachments.
                     self._ontology.get_event_type(event_type_name).validate_event_attachments(event)
+
+                    for event_attrib_name, event_attrib_value in event.attrib.items():
+                        if event_attrib_name not in ['event-type', 'source-uri']:
+                            # Must be a faulty foreign attribute.
+                            if not event_attrib_name.startswith('{'):
+                                raise EDXMLEventValidationError(
+                                    f"Event contains a foreign attribute without a namespace: "
+                                    f"{event_attrib_name} = {event_attrib_value}"
+                                )
+                            if event_attrib_name.startswith('{http://edxml.org/edxml}'):
+                                raise EDXMLEventValidationError(
+                                    f"Event contains a foreign attribute with an EDXML namespace: "
+                                    f"{event_attrib_name} = {event_attrib_value}"
+                                )
 
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
