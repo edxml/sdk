@@ -17,7 +17,7 @@ from glob import glob
 import pytest
 
 from edxml import EDXMLPullParser
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLValidationError, EDXMLOntologyValidationError, EDXMLEventValidationError
 from edxml_test_corpus import CORPUS_PATH
 
 # List of corpus directories corresponding to the EDXML
@@ -86,10 +86,6 @@ def test_parse_invalid_structure(invalid_structure_corpus_item):
             # for foreign elements in the test corpus.
             parser.parse(invalid_structure_corpus_item['file'], ('without-namespace',))
     except EDXMLValidationError as ex:
-        # TODO: We should raise and catch more specific exceptions here:
-        #       Introduce InvalidEdxmlStructureError
-        #       Introduce InvalidEdxmlOntologyError
-        #       Introduce InvalidEdxmlEventError
         e = ex
 
     # Parser must have raised a validation error.
@@ -101,11 +97,7 @@ def test_parse_invalid_ontology(invalid_ontology_corpus_item):
     try:
         with EDXMLPullParser() as parser:
             parser.parse(invalid_ontology_corpus_item['file'])
-    except EDXMLValidationError as ex:
-        # TODO: We should raise and catch more specific exceptions here:
-        #       Introduce InvalidEdxmlStructureError
-        #       Introduce InvalidEdxmlOntologyError
-        #       Introduce InvalidEdxmlEventError
+    except EDXMLOntologyValidationError as ex:
         e = ex
 
     # Parser must have raised a validation error.
@@ -117,11 +109,7 @@ def test_parse_invalid_event(invalid_event_corpus_item):
     try:
         with EDXMLPullParser() as parser:
             parser.parse(invalid_event_corpus_item['file'])
-    except EDXMLValidationError as ex:
-        # TODO: We should raise and catch more specific exceptions here:
-        #       Introduce InvalidEdxmlStructureError
-        #       Introduce InvalidEdxmlOntologyError
-        #       Introduce InvalidEdxmlEventError
+    except EDXMLEventValidationError as ex:
         e = ex
 
     # Parser must have raised a validation error.

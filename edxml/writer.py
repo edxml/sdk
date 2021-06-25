@@ -53,7 +53,7 @@ from typing import Dict, Optional
 
 from lxml import etree
 from copy import deepcopy
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
 from edxml.event import ParsedEvent
 from edxml.ontology import Ontology
 from edxml.logger import log
@@ -224,7 +224,7 @@ class EDXMLWriter(object):
 
             # EventType validation did not find the issue. We have
             # no other option than to raise a RelaxNG validation error.
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 "At xpath location %s: %s" %
                 (
                     schema.error_log.last_error.path,
@@ -232,9 +232,9 @@ class EDXMLWriter(object):
                 )
             )
 
-        except EDXMLValidationError as exception:
+        except EDXMLEventValidationError as exception:
             self.__invalid_event_count += 1
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
                     etree.tostring(event_element, pretty_print=True, encoding='unicode'),
                     exception,
@@ -315,7 +315,7 @@ class EDXMLWriter(object):
                 # odd about it that our own validation did not detect. We have
                 # no choice but to generate the schema validation error, which
                 # may be slightly cryptic.
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     "Invalid EDXML ontology detected: %s\n"
                     "The RelaxNG validator generated the following error: %s\nDetails: %s" %
                     (
@@ -366,7 +366,7 @@ class EDXMLWriter(object):
         objects, it may try to remove invalid objects in case
         normalization fails.
 
-        Raises EDXMLValidationError in case the repair operation failed.
+        Raises EDXMLEventValidationError in case the repair operation failed.
 
         Args:
             event (edxml.EDXMLEvent): The event
@@ -382,7 +382,7 @@ class EDXMLWriter(object):
 
             try:
                 self._normalize_event(event)
-            except EDXMLValidationError as e:
+            except EDXMLEventValidationError as e:
                 last_error = schema.error_log.last_error
 
                 if last_error.path is None or \
@@ -422,16 +422,18 @@ class EDXMLWriter(object):
         normalize_exception = None
         try:
             # Try to repair the event by normalizing the object values. This throws
-            # an EDXMLValidationError in case any value does not make sense.
+            # an EDXMLEventValidationError in case any value does not make sense.
             self.__ontology.get_event_type(event.get_type_name())\
                 .normalize_event_objects(event, self.__allow_repair_normalize.get(event.get_type_name(), []))
-        except EDXMLValidationError as e:
+        except EDXMLEventValidationError as e:
             # Normalization failed, but it might have managed to correct one or more
             # objects before failing.
             normalize_exception = e
         if event.get_properties() == original_event.get_properties():
             # Properties did not change, normalization had no effect,
-            raise normalize_exception or EDXMLValidationError("Attempt to normalize invalid event objects failed.")
+            raise normalize_exception or EDXMLEventValidationError(
+                "Attempt to normalize invalid event objects failed."
+            )
 
     def add_event(self, event, sort=False):
         """
@@ -456,26 +458,26 @@ class EDXMLWriter(object):
         source_uri = event.get_source_uri()
 
         if event_type_name is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 'Attempt to add an event that has no event type set. '
                 'Please check that the event generator is configured '
                 'to set the event type for each output event.'
             )
 
         if source_uri is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 'Attempt to add an event that has no event source set. '
                 'Please check that the event generator is configured '
                 'to set the event source for each output event.'
             )
 
         if self.__ontology.get_event_type(event_type_name) is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 'Attempt to add an event using unknown event type: "%s"' % event_type_name
             )
 
         if self.__ontology.get_event_source(source_uri) is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 'Attempt to add an event using unknown source URI: "%s"' % source_uri
             )
 
@@ -503,7 +505,7 @@ class EDXMLWriter(object):
                     event = self._repair_event(event, schema)
                     log.info('Event validated after repairing it.')
                     event_element = event.get_element()
-                except EDXMLValidationError as error:
+                except EDXMLEventValidationError as error:
                     if self.__ignore_invalid_events:
                         if self.__log_invalid_events:
                             log.info(str(error) + '\n\nContinuing anyways.\n')

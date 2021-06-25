@@ -12,7 +12,7 @@
 # ========================================================================================
 
 import edxml
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.logger import log
 from edxml.ontology import EventTypeParent
 
@@ -552,7 +552,7 @@ class EventTypeFactory(object):
                     if attribute_details:
                         attr_object_type_name, attr_name_extension = attribute_details[0].split(':')
                         if event_type[property_name].get_object_type_name() != attr_object_type_name:
-                            raise EDXMLValidationError(
+                            raise EDXMLOntologyValidationError(
                                 f"The attribute name extension of concept {concept_name} associated with property "
                                 f"'{property_name}' of event type '{event_type_name}' must begin with "
                                 f"'{object_type_name}:' but it begins with '{attr_object_type_name}:'."

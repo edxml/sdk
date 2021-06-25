@@ -14,7 +14,7 @@
 from datetime import datetime
 
 import pytest
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError
 from edxml.ontology import DataType
 
 
@@ -22,7 +22,7 @@ def test_normalize_datetime():
     assert DataType.datetime().normalize_objects({'1978-06-17'}) == {'1978-06-17T00:00:00.000000Z'}
     assert DataType.datetime().normalize_objects({datetime(1978, 6, 17)}) == {'1978-06-17T00:00:00.000000Z'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.datetime().normalize_objects({'foo'})
 
 
@@ -39,7 +39,7 @@ def test_normalize_number_integer():
     for integer_type in integer_types:
         assert integer_type.normalize_objects({2}) == {'2'}
         assert integer_type.normalize_objects({'2'}) == {'2'}
-        with pytest.raises(EDXMLValidationError):
+        with pytest.raises(EDXMLEventValidationError):
             integer_type.normalize_objects({'foo'})
 
 
@@ -55,7 +55,7 @@ def test_normalize_number_float():
         assert float_type.normalize_objects({'01.000000E+0'}) == {'1.000000E+000'}
         assert float_type.normalize_objects({'1E+000'}) == {'1.000000E+000'}
         assert float_type.normalize_objects({'1'}) == {'1.000000E+000'}
-        with pytest.raises(EDXMLValidationError):
+        with pytest.raises(EDXMLEventValidationError):
             float_type.normalize_objects({'foo'})
 
 
@@ -66,7 +66,7 @@ def test_normalize_decimal():
     assert DataType.decimal(4, 2).normalize_objects({'01'}) == {'1.00'}
     assert DataType.decimal(4, 2).normalize_objects({'+1'}) == {'1.00'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.decimal(4, 2).normalize_objects({'foo'})
 
 
@@ -77,14 +77,14 @@ def test_normalize_currency():
     assert DataType.currency().normalize_objects({'01'}) == {'1.0000'}
     assert DataType.currency().normalize_objects({'+1'}) == {'1.0000'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.currency().normalize_objects({'foo'})
 
 
 def test_normalize_hex():
     assert DataType.hex(1).normalize_objects({'AA'}) == {'aa'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.hex(1).normalize_objects({2})
 
 
@@ -92,7 +92,7 @@ def test_normalize_uri():
     # Normalization should not touch percent encoded parts.
     assert DataType.uri().normalize_objects({'http:/www.dom%20ain.com'}) == {'http:/www.dom%20ain.com'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.uri().normalize_objects({2})
 
 
@@ -101,10 +101,10 @@ def test_normalize_ip():
     assert DataType.ip_v6()\
         .normalize_objects({'2001:db8::8a2e:370:7334'}) == {'2001:0db8:0000:0000:0000:8a2e:0370:7334'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.ip_v4().normalize_objects({'2001:db8::8a2e:370:7334'})
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.ip_v6().normalize_objects({'127.0.0.1'})
 
 
@@ -113,10 +113,10 @@ def test_normalize_geo():
     assert DataType.geo_point().normalize_objects({'-08.2,25.30'}) == {'-8.200000,25.300000'}
     assert DataType.geo_point().normalize_objects({'-08.2,+25.30'}) == {'-8.200000,25.300000'}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.geo_point().normalize_objects({'-8.200000,null'})
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         DataType.geo_point().normalize_objects({'0'})
 
 
@@ -130,7 +130,7 @@ def test_normalize_base64():
     assert DataType.base64().normalize_objects({'YW55IGNhcm5hbCBwbGVhcw=='}) == {'YW55IGNhcm5hbCBwbGVhcw=='}
     assert DataType.base64().normalize_objects({'YW55IGNhcm5hbCBwbGVhcw'}) == {'YW55IGNhcm5hbCBwbGVhcw=='}
 
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLEventValidationError):
         assert DataType.base64().normalize_objects({'z'})
 
 

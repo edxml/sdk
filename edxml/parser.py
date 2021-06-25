@@ -50,7 +50,7 @@ from typing import Dict, List, Any
 from collections import defaultdict
 from lxml import etree
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLValidationError, EDXMLEventValidationError, EDXMLOntologyValidationError
 from edxml import ParsedEvent
 from edxml.ontology import Ontology
 
@@ -357,7 +357,7 @@ class EDXMLParserBase(object):
         try:
             self._ontology.update(ontology_element)
             self.__event_type_schema_cache = {}
-        except EDXMLValidationError as exception:
+        except EDXMLOntologyValidationError as exception:
             exception.message = "Invalid ontology definition detected: %s\n%s" % (
                 etree.tostring(ontology_element, pretty_print=True, encoding='unicode'),
                 exception
@@ -564,11 +564,11 @@ class EDXMLParserBase(object):
         #       and ontology element. That will make event parsing more lightweight.
 
         if self._ontology.get_event_source(event_source_uri) is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 "An input event refers to source URI %s, which is not defined." % event_source_uri
             )
         if self._ontology.get_event_type(event_type_name) is None:
-            raise EDXMLValidationError(
+            raise EDXMLEventValidationError(
                 "An input event refers to event type %s, which is not defined." % event_type_name
             )
 
@@ -589,10 +589,10 @@ class EDXMLParserBase(object):
                     # EventType validation did not find the issue. We have
                     # no other option than to raise a RelaxNG error containing
                     # a undoubtedly cryptic error message.
-                    raise EDXMLValidationError(str(schema.error_log))
+                    raise EDXMLEventValidationError(str(schema.error_log))
 
-                except EDXMLValidationError as exception:
-                    raise EDXMLValidationError(
+                except EDXMLEventValidationError as exception:
+                    raise EDXMLEventValidationError(
                         'Event failed to validate:\n\n%s\nDetails:\n%s' % (
                             etree.tostring(event, pretty_print=True, encoding='unicode'), exception.args[0])
                     )

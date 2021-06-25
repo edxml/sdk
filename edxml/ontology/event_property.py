@@ -14,7 +14,7 @@
 import re
 import edxml.ontology
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from lxml import etree
 from typing import Dict
 from edxml.ontology import OntologyElement, normalize_xml_token
@@ -680,34 +680,34 @@ class EventProperty(OntologyElement):
     def _validate_attributes(self):
 
         if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Invalid property name in property definition: "%s"' % self.__attr['name']
             )
 
         if len(self.__attr['name']) > 64:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Property name is too long: "%s"' % self.__attr['name'])
 
         if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self.__attr['object-type']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Invalid object type name in property definition: "%s"' % self.__attr['object-type'])
 
         if not len(self.__attr['description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Property description is too long: "%s"' % self.__attr['description'])
 
         if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The description of property "%s" of event type "%s" contains illegal whitespace characters: "%s"' % (
                     self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
             )
 
         if not len(self.__attr['similar']) <= 64:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Property attribute is too long: similar="%s"' % self.__attr['similar'])
 
         if normalize_xml_token(self.__attr['similar']) != self.__attr['similar']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The similar attribute of property "%s" of event type "%s" contains illegal whitespace '
                 'characters: "%s"' % (
                     self.__event_type.get_name(), self.__attr['name'], self.__attr['description'])
@@ -720,7 +720,7 @@ class EventProperty(OntologyElement):
             if not self.get_data_type().is_numerical():
                 if not self.get_data_type().is_datetime():
                     if self.get_data_type().get_family() != 'sequence':
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'Property "%s" of event type "%s" has data type %s, which '
                             'cannot be used with merge strategy %s.' % (
                                 self.get_name(), self.__event_type.get_name(), self.get_data_type(),
@@ -730,7 +730,7 @@ class EventProperty(OntologyElement):
 
         if self.get_merge_strategy() == 'match':
             if self.get_object_type().get_data_type().type in ('number:float', 'number:double'):
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property "%s" of event type "%s" has data type %s, which '
                     'cannot be used with merge strategy %s.' % (
                         self.get_name(), self.__event_type.get_name(), self.get_data_type(),
@@ -748,7 +748,7 @@ class EventProperty(OntologyElement):
         check if the object type in the property actually exist.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.EventProperty: The EventProperty instance
 
@@ -756,22 +756,22 @@ class EventProperty(OntologyElement):
         self._validate_attributes()
 
         if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
-            raise EDXMLValidationError('Invalid property confidence: "%d"' % self.__attr['confidence'])
+            raise EDXMLOntologyValidationError('Invalid property confidence: "%d"' % self.__attr['confidence'])
 
         if self.__attr['merge'] in ('min', 'max') and self.is_optional():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Property "%s" cannot be optional due to its merge strategy' % self.__attr[
                     'name']
             )
 
         if self.__attr['merge'] in ('min', 'max', 'replace') and self.is_multi_valued():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Property "%s" cannot be multivalued due to its merge strategy' % self.__attr[
                     'name']
             )
 
         if not self.__attr['merge'] in ('any', 'add', 'replace', 'set', 'min', 'max', 'match'):
-            raise EDXMLValidationError('Invalid property merge strategy: "%s"' % self.__attr['merge'])
+            raise EDXMLOntologyValidationError('Invalid property merge strategy: "%s"' % self.__attr['merge'])
 
         self._validate_merge_strategy()
 
@@ -788,7 +788,7 @@ class EventProperty(OntologyElement):
             object_type = ontology.get_object_type(object_type_name)
 
             if not object_type:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property "%s" of event type "%s" refers to undefined object type "%s".' %
                     (name, parent_event_type.get_name(), object_type_name)
                 )
@@ -805,7 +805,7 @@ class EventProperty(OntologyElement):
                 property_element.attrib['confidence']
             )
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an event property from the following definition:\n" +
                 etree.tostring(property_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)
@@ -816,7 +816,7 @@ class EventProperty(OntologyElement):
             if element.tag == '{http://edxml.org/edxml}property-concept':
                 property_concept = edxml.ontology.PropertyConcept.create_from_xml(element, parent_event_type, property)
                 if property_concept.get_concept_name() in concept_names:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'EDXML <property-concept> element contains duplicate definition of "%s"' %
                         property_concept.get_concept_name()
                     )
@@ -849,7 +849,7 @@ class EventProperty(OntologyElement):
         is_valid_upgrade = True
 
         if old.__event_type.get_name() != new.__event_type.get_name():
-            raise EDXMLValidationError("Attempt to compare property definitions from two different event types")
+            raise EDXMLOntologyValidationError("Attempt to compare property definitions from two different event types")
 
         if old.get_name() != new.get_name():
             raise ValueError("Properties with different names are not comparable.")

@@ -23,7 +23,7 @@ from IPy import IP
 from lxml import etree
 from copy import deepcopy
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError
 from edxml.ontology import DataType
 
 
@@ -886,7 +886,7 @@ class EDXMLEvent(MutableMapping):
             event_type.validate_event_structure(self)
             event_type.validate_event_objects(self)
             event_type.validate_event_attachments(self)
-        except EDXMLValidationError:
+        except EDXMLEventValidationError:
             return False
         return True
 

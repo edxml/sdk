@@ -15,7 +15,7 @@ import pytest
 
 from io import BytesIO
 from edxml import EDXMLWriter, EventCollection, EDXMLEvent
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
 from edxml.ontology import Ontology, DataType
 from lxml import etree
 
@@ -170,7 +170,7 @@ def test_write_ontology(ontology):
 
 def test_write_invalid_ontology(invalid_ontology):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError):
+        with pytest.raises(EDXMLOntologyValidationError):
             writer.add_ontology(invalid_ontology).close()
 
 
@@ -186,7 +186,7 @@ def test_write_event(ontology, event):
 
 def test_write_event_before_ontology_fails(ontology, event):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError):
+        with pytest.raises(EDXMLEventValidationError):
             writer.add_event(event).add_ontology(ontology).close()
 
 
@@ -217,7 +217,7 @@ def test_write_no_pretty_print(ontology, event):
 
 def test_write_invalid_event(ontology, event_invalid_object):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='Invalid value for property'):
+        with pytest.raises(EDXMLEventValidationError, match='Invalid value for property'):
             writer.add_ontology(ontology).add_event(event_invalid_object).close()
 
 
@@ -234,7 +234,7 @@ def test_write_invalid_event_repair_normalize_fail(ontology, event_invalid_objec
     with EDXMLWriter(output=None) as writer:
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['a'])
-        with pytest.raises(EDXMLValidationError, match='Invalid value for property'):
+        with pytest.raises(EDXMLEventValidationError, match='Invalid value for property'):
             writer.add_ontology(ontology).add_event(event_invalid_object).close()
 
 
@@ -272,7 +272,7 @@ def test_write_invalid_event_repair_drop_fail(ontology, event_invalid_object):
         # Note: Property 'b' has the invalid object.
         writer.enable_auto_repair_normalize('ea', ['a'])
         writer.enable_auto_repair_drop('ea', ['a'])
-        with pytest.raises(EDXMLValidationError, match='Invalid value for property'):
+        with pytest.raises(EDXMLEventValidationError, match='Invalid value for property'):
             writer.add_ontology(ontology).add_event(event_invalid_object).close()
 
 
@@ -293,42 +293,42 @@ def test_write_invalid_event_repair_drop(ontology, event_invalid_object_beyond_r
 
 def test_write_event_without_type(ontology, event_without_type):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='no event type set'):
+        with pytest.raises(EDXMLEventValidationError, match='no event type set'):
             writer.add_ontology(ontology).add_event(event_without_type).close()
 
 
 def test_write_event_without_source(ontology, event_without_source):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='no event source set'):
+        with pytest.raises(EDXMLEventValidationError, match='no event source set'):
             writer.add_ontology(ontology).add_event(event_without_source).close()
 
 
 def test_write_event_unknown_type(ontology, event_unknown_type):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='unknown event type'):
+        with pytest.raises(EDXMLEventValidationError, match='unknown event type'):
             writer.add_ontology(ontology).add_event(event_unknown_type).close()
 
 
 def test_write_event_unknown_source(ontology, event_unknown_source):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='unknown source URI'):
+        with pytest.raises(EDXMLEventValidationError, match='unknown source URI'):
             writer.add_ontology(ontology).add_event(event_unknown_source).close()
 
 
 def test_write_event_unknown_attachment(ontology, event_unknown_attachment):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='event type has no such attachment'):
+        with pytest.raises(EDXMLEventValidationError, match='event type has no such attachment'):
             writer.add_ontology(ontology).add_event(event_unknown_attachment).close()
 
 
 def test_write_event_obscure_error(ontology, event_obscure_error):
     with EDXMLWriter(output=None) as writer:
-        with pytest.raises(EDXMLValidationError, match='Expecting element event, got weird'):
+        with pytest.raises(EDXMLEventValidationError, match='Expecting element event, got weird'):
             writer.add_ontology(ontology).add_event(event_obscure_error).close()
 
 
 def test_write_event_repair_obscure_error(ontology, event_obscure_error):
     with EDXMLWriter(output=None) as writer:
         writer.enable_auto_repair_normalize('ea', ['b'])
-        with pytest.raises(EDXMLValidationError, match='Expecting element event, got weird'):
+        with pytest.raises(EDXMLEventValidationError, match='Expecting element event, got weird'):
             writer.add_ontology(ontology).add_event(event_obscure_error).close()

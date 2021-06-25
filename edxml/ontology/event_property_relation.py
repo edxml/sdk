@@ -20,7 +20,7 @@ import edxml.ontology
 from lxml import etree
 
 from edxml import template
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
@@ -266,35 +266,35 @@ class PropertyRelation(OntologyElement):
         check if the properties in the relation actually exist.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.PropertyRelation: The PropertyRelation instance
 
         """
         if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['source']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['source'])
 
         if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['target']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['target'])
 
         if self.__attr['description'] is not None:
             if not len(self.__attr['description']) <= 255:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property relation description is too long: "%s"' % self.__attr['description']
                 )
 
             if normalize_xml_token(self.__attr['description']) != self.__attr['description']:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property relation description contains illegal whitespace characters: "%s"' %
                     self.__attr['description']
                 )
 
             try:
                 edxml.Template(self.__attr['description']).validate(self.__event_type)
-            except EDXMLValidationError as e:
-                raise EDXMLValidationError(
+            except EDXMLOntologyValidationError as e:
+                raise EDXMLOntologyValidationError(
                     'Relation between properties %s and %s has an invalid description: "%s" The validator said: %s' % (
                         self.__attr['source'], self.__attr['target'],
                         self.__attr['description'], str(e)
@@ -303,67 +303,67 @@ class PropertyRelation(OntologyElement):
 
         if self.__attr['predicate'] is not None:
             if not len(self.__attr['predicate']) <= 32:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property relation predicate is too long: "%s"' % self.__attr['predicate']
                 )
 
             if normalize_xml_token(self.__attr['predicate']) != self.__attr['predicate']:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Property relation predicate contains illegal whitespace characters: "%s"' % (
                         self.__attr['predicate']
                     )
                 )
 
         if self._type not in ['inter', 'intra', 'name', 'description', 'container', 'original', 'other']:
-            raise EDXMLValidationError('Invalid property relation type: "%s"' % self._type)
+            raise EDXMLOntologyValidationError('Invalid property relation type: "%s"' % self._type)
 
         if self.__attr['confidence'] is not None:
             if self.__attr['confidence'] < 1 or self.__attr['confidence'] > 10:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Invalid property relation confidence: "%d"' % self.__attr['confidence']
                 )
 
         if self.get_type() in ('inter', 'intra'):
             if self.__attr.get('source-concept') is None or self.__attr.get('target-concept') is None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s-concept relation between properties %s and %s does not specify both related concepts.' %
                     (self.get_type(), self.__attr['source'], self.__attr['target'])
                 )
         else:
             if self.__attr.get('source-concept') is not None or self.__attr.get('target-concept') is not None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The "%s" relation between properties %s and %s must not specify any concepts.' %
                     (self.get_type(), self.__attr['source'], self.__attr['target'])
                 )
 
         if self.get_type() in ['name', 'description', 'container', 'original']:
             if self.__attr['description'] is not None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s relation between properties %s and %s in event type %s '
                     'must not have a relation description.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
             if self.__attr['predicate'] is not None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s relation between properties %s and %s in event type %s '
                     'must not have a relation predicate.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
             if self.__attr['confidence'] is not None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s relation between properties %s and %s in event type %s '
                     'must not have a relation confidence.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
             if self.__event_type.get_properties()[self.get_source()].is_multi_valued():
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s relation between properties %s and %s in event type %s '
                     'must not have a multi-valued source property.' %
                     (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
             if self.get_type() in ['original']:
                 if self.__event_type.get_properties()[self.get_target()].is_multi_valued():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'The %s relation between properties %s and %s in event type %s '
                         'must not have a multi-valued target property.' %
                         (self.get_type(), self.get_source(), self.get_target(), self.__event_type.get_name())
@@ -376,13 +376,13 @@ class PropertyRelation(OntologyElement):
             target_concepts = self.__event_type[self.get_target()].get_concept_associations()
 
             if len(source_concepts) == 0 or len(target_concepts) == 0:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Both properties %s and %s in the inter/intra-concept relation in event type %s must '
                     'refer to a concept.' % (self.get_source(), self.get_target(), self.__event_type.get_name())
                 )
 
             if self.get_source_concept() not in source_concepts:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s-concept relation between properties %s and %s refers to source concept %s. '
                     'However, property %s is not associated with that concept.' %
                     (self.get_type(), self.__attr['source'], self.__attr['target'],
@@ -390,7 +390,7 @@ class PropertyRelation(OntologyElement):
                 )
 
             if self.get_target_concept() not in target_concepts:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s-concept relation between properties %s and %s refers to target concept %s. '
                     'However, property %s is not associated with that concept.' %
                     (self.get_type(), self.__attr['source'], self.__attr['target'],
@@ -404,21 +404,21 @@ class PropertyRelation(OntologyElement):
         try:
             source = relation_element.attrib['source']
         except KeyError:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Failed to parse definition of event type "%s": '
                 'It is missing the source property attribute (source)' % event_type.get_name()
             )
         try:
             target = relation_element.attrib['target']
         except KeyError:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Failed to parse definition of event type "%s": '
                 'It is missing the target property attribute (target)' % event_type.get_name()
             )
 
         for property_name in (source, target):
             if property_name not in event_type:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Event type "%s" contains a property relation referring to property "%s", which is not defined.' %
                     (event_type.get_name(), property_name))
 
@@ -429,11 +429,11 @@ class PropertyRelation(OntologyElement):
         target_concept = ontology.get_concept(target_concept_name)
 
         if source_concept_name is not None and source_concept is None:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Failed to instantiate a property relation, source concept "%s" does not exist.' % source_concept_name
             )
         if target_concept_name is not None and target_concept is None:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Failed to instantiate a property relation, target concept "%s" does not exist.' % target_concept_name
             )
 
@@ -450,7 +450,7 @@ class PropertyRelation(OntologyElement):
                 relation_element.attrib.get('confidence')
             )
         except (ValueError, KeyError) as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate a property relation from the following definition:\n" +
                 etree.tostring(relation_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute or illegal value: " + str(e)
@@ -480,7 +480,7 @@ class PropertyRelation(OntologyElement):
         is_valid_upgrade = True
 
         if old.__event_type.get_name() != new.__event_type.get_name():
-            raise EDXMLValidationError("Attempt to compare property relations from two different event types")
+            raise EDXMLOntologyValidationError("Attempt to compare property relations from two different event types")
 
         # Check for illegal upgrade paths:
 

@@ -18,7 +18,7 @@ from lxml import etree
 import edxml.template
 
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 
 
@@ -261,61 +261,61 @@ class EventTypeAttachment(OntologyElement):
         within the event type.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.EventTypeAttachment: The EventTypeAttachment instance
 
         """
 
         if not 1 <= len(self._attr['name']) <= 64:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" has an invalid name.' % self._attr['name']
             )
         if not re.match(self.NAME_PATTERN, self._attr['name']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" has an invalid name.' % self._attr['name']
             )
 
         if not 1 <= len(self._attr['description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An attachment definition contains a description attribute that is either empty or too long: "%s"'
                 % self._attr['description']
             )
 
         if normalize_xml_token(self._attr['description']) != self._attr['description']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The description of attachment "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['description'])
             )
 
         if not len(self._attr['display-name-singular']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The singular display name of attachment "%s" is too long: "%s"' % (
                     self._attr['name'], self._attr['display-name-singular'])
             )
 
         if not len(self._attr['display-name-plural']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The plural display name of attachment "%s" is too long: "%s"' % (
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
         if normalize_xml_token(self._attr['display-name-singular']) != self._attr['display-name-singular']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The singular display name of attachment "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['display-name-singular'])
             )
 
         if normalize_xml_token(self._attr['display-name-plural']) != self._attr['display-name-plural']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The plural display name of attachment "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
         try:
             edxml.Template(self._attr['description']).validate(self._event_type)
-        except EDXMLValidationError as e:
-            raise EDXMLValidationError(
+        except EDXMLOntologyValidationError as e:
+            raise EDXMLOntologyValidationError(
                 'The description template of attachment "%s" is invalid: "%s"\nThe validator said: %s' % (
                     self._attr['name'], self._attr['display-name-plural'], str(e))
             )
@@ -335,7 +335,7 @@ class EventTypeAttachment(OntologyElement):
                 element.attrib['encoding'] == 'base64'
             )
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an event attachment from the following definition:\n" +
                 etree.tostring(element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)
@@ -368,7 +368,7 @@ class EventTypeAttachment(OntologyElement):
             raise ValueError("Attachments with different names are not comparable.")
 
         if old._event_type.get_name() != new._event_type.get_name():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Attempt to compare event type attachment definitions from two different event types"
             )
 

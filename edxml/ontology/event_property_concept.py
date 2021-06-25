@@ -14,7 +14,7 @@
 from lxml import etree
 
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import OntologyElement, EventType, EventProperty, normalize_xml_token
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
@@ -219,14 +219,14 @@ class PropertyConcept(OntologyElement):
         check if the concept actually exist.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.PropertyConcept: The PropertyConcept instance
 
         """
 
         if self.__attr['confidence'] < 0 or self.__attr['confidence'] > 10:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The property / concept association between property %s in event type %s and concept %s has '
                 'an invalid confidence: "%d"' %
                 (self.__event_type.get_name(), self.__property.get_name(),
@@ -234,7 +234,7 @@ class PropertyConcept(OntologyElement):
             )
 
         if not 0 <= int(self.__attr['cnp']) < 256:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The property / concept association between property %s in event type %s and concept %s has '
                 'an invalid concept naming priority: "%d"' %
                 (self.__event_type.get_name(), self.__property.get_name(), self.__attr['name'], self.__attr['cnp'])
@@ -242,14 +242,14 @@ class PropertyConcept(OntologyElement):
 
         if self.get_attribute_name_extension() == '':
             if self.__attr['attr-display-name-singular'] != '' or self.__attr['attr-display-name-plural'] != '':
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The property / concept association between property %s in event type %s and concept %s has '
                     'a custom display name while it does not have a custom attribute name extension.' %
                     (self.__event_type.get_name(), self.__property.get_name(), self.__attr['name'])
                 )
 
         if normalize_xml_token(self.__attr['attr-display-name-singular']) != self.__attr['attr-display-name-singular']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The property / concept association between property %s in event type %s and concept %s has '
                 'a custom display name which contains illegal whitespace characters: "%s"' %
                 (self.__event_type.get_name(), self.__property.get_name(), self.__attr['name'],
@@ -257,7 +257,7 @@ class PropertyConcept(OntologyElement):
             )
 
         if normalize_xml_token(self.__attr['attr-display-name-plural']) != self.__attr['attr-display-name-plural']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The property / concept association between property %s in event type %s and concept %s has '
                 'a custom display name which contains illegal whitespace characters: "%s"' %
                 (self.__event_type.get_name(), self.__property.get_name(), self.__attr['name'],
@@ -286,7 +286,7 @@ class PropertyConcept(OntologyElement):
             return association
 
         except (ValueError, KeyError) as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate a property-concept association from the following definition:\n" +
                 etree.tostring(concept_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute or illegal value: " + str(e)
@@ -316,7 +316,7 @@ class PropertyConcept(OntologyElement):
         is_valid_upgrade = True
 
         if old.__event_type.get_name() != new.__event_type.get_name():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Attempt to compare property / concept associations from two different event types"
             )
 

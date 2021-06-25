@@ -13,7 +13,7 @@
 
 import pytest
 from edxml import Template
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import Ontology, DataType
 
 
@@ -348,135 +348,135 @@ def test_render_attachment(event_type):
 
 
 def test_validate_unbalanced_brackets(event_type):
-    with pytest.raises(EDXMLValidationError, match='Unbalanced curly brackets'):
+    with pytest.raises(EDXMLOntologyValidationError, match='Unbalanced curly brackets'):
         Template('{').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='Unbalanced curly brackets'):
+    with pytest.raises(EDXMLOntologyValidationError, match='Unbalanced curly brackets'):
         Template('}').validate(event_type)
 
 
 def test_validate_unknown_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='do not exist'):
+    with pytest.raises(EDXMLOntologyValidationError, match='do not exist'):
         Template('[[unknown-property]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='do not exist'):
+    with pytest.raises(EDXMLOntologyValidationError, match='do not exist'):
         Template('[[merge:unknown-property]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='do not exist'):
+    with pytest.raises(EDXMLOntologyValidationError, match='do not exist'):
         Template('[[unless_empty:unknown-property,test]]').validate(event_type)
 
 
 def test_validate_invalid_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='cannot be used'):
+    with pytest.raises(EDXMLOntologyValidationError, match='cannot be used'):
         Template('[[p-string]]').validate(event_type, property_names=['p-bool'])
-    with pytest.raises(EDXMLValidationError, match='cannot be used'):
+    with pytest.raises(EDXMLOntologyValidationError, match='cannot be used'):
         Template('[[merge:p-string]]').validate(event_type, property_names=['p-bool'])
 
 
 def test_validate_unknown_attachment(event_type):
-    with pytest.raises(EDXMLValidationError, match='is not defined'):
+    with pytest.raises(EDXMLOntologyValidationError, match='is not defined'):
         Template('[[attachment:unknown-attachment]]').validate(event_type)
 
 
 def test_validate_unknown_formatter(event_type):
-    with pytest.raises(EDXMLValidationError, match='Unknown formatter'):
+    with pytest.raises(EDXMLOntologyValidationError, match='Unknown formatter'):
         Template('[[FOO:p-string]]').validate(event_type)
 
 
 def test_validate_duration_missing_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 2 properties'):
         Template('[[duration:p-time-start]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 2 properties'):
         Template('[[duration:]]').validate(event_type)
 
 
 def test_validate_duration_wrong_data_type(event_type):
-    with pytest.raises(EDXMLValidationError, match='not a datetime'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a datetime'):
         Template('[[duration:p-time-start,p-string]]').validate(event_type)
 
 
 def test_validate_timespan_missing_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 2 properties'):
         Template('[[time_span:p-time-start]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='requires 2 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 2 properties'):
         Template('[[time_span:]]').validate(event_type)
 
 
 def test_validate_timespan_wrong_data_type(event_type):
-    with pytest.raises(EDXMLValidationError, match='not a datetime'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a datetime'):
         Template('[[time_span:p-time-start,p-string]]').validate(event_type)
 
 
 def test_validate_datetime_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 2 arguments'):
         Template('[[date_time:p-time-start]]').validate(event_type)
 
 
 def test_validate_datetime_extra_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 2 arguments'):
         Template('[[date_time:p-time-start,date,test]]').validate(event_type)
 
 
 def test_validate_datetime_wrong_data_type(event_type):
-    with pytest.raises(EDXMLValidationError, match='not a datetime'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a datetime'):
         Template('[[date_time:p-string,date]]').validate(event_type)
 
 
 def test_validate_datetime_wrong_accuracy_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='unknown accuracy option'):
+    with pytest.raises(EDXMLOntologyValidationError, match='unknown accuracy option'):
         Template('[[date_time:p-time-start,wrong]]').validate(event_type)
 
 
 def test_validate_url_missing_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 1 properties'):
         Template('[[url:]]').validate(event_type)
 
 
 def test_validate_url_extra_argument(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 2 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 2 arguments'):
         Template('[[url:p-url,foo,bar]]').validate(event_type)
 
 
 def test_validate_merge_missing_property(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires at least one property argument'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires at least one property argument'):
         Template('[[merge:]]').validate(event_type)
 
 
 def test_validate_attachment_missing_attachment_name(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments, but 0 were specified'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 1 arguments, but 0 were specified'):
         Template('[[attachment:]]').validate(event_type)
 
 
 def test_validate_boolean_wrong_data_type(event_type):
-    with pytest.raises(EDXMLValidationError, match='not a boolean'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a boolean'):
         Template('[[boolean_string_choice:p-string,yes,no]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='not a boolean'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a boolean'):
         Template('[[boolean_on_off:p-string]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='not a boolean'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not a boolean'):
         Template('[[boolean_is_is_not:p-string]]').validate(event_type)
 
 
 def test_validate_boolean_string_choice_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 3 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 3 arguments'):
         Template('[[boolean_string_choice:p-bool]]').validate(event_type)
-    with pytest.raises(EDXMLValidationError, match='accepts 3 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 3 arguments'):
         Template('[[boolean_string_choice:p-bool,yes,no,maybe]]').validate(event_type)
 
 
 def test_validate_boolean_on_off_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 1 arguments'):
         Template('[[boolean_on_off:p-bool,yes,no]]').validate(event_type)
 
 
 def test_validate_boolean_is_isnot_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='accepts 1 arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='accepts 1 arguments'):
         Template('[[boolean_is_is_not:p-bool,yes,no]]').validate(event_type)
 
 
 def test_validate_empty_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires 1 properties'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires 1 properties'):
         Template('[[empty:]]').validate(event_type)
 
 
 def test_validate_unless_empty_wrong_argument_count(event_type):
-    with pytest.raises(EDXMLValidationError, match='requires at least two arguments'):
+    with pytest.raises(EDXMLOntologyValidationError, match='requires at least two arguments'):
         Template('[[unless_empty:p-string]]').validate(event_type)
 
 

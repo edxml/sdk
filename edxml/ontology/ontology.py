@@ -14,7 +14,7 @@
 from typing import Dict
 
 from lxml import etree
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from .object_type import ObjectType
 from .concept import Concept
 from .event_type import EventType
@@ -694,7 +694,7 @@ class Ontology(OntologyElement):
         Checks if the defined ontology is a valid EDXML ontology.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
 
         Returns:
           edxml.ontology.Ontology: The ontology
@@ -712,7 +712,7 @@ class Ontology(OntologyElement):
         for event_type_name, event_type in self.__event_types.items():
             if event_type.get_parent() is not None:
                 if event_type.get_parent().get_event_type_name() not in self.__event_types:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type "%s" refers to parent event type "%s", which is not defined.' %
                         (event_type_name, event_type.get_parent().get_event_type_name()))
 
@@ -725,7 +725,7 @@ class Ontology(OntologyElement):
                     # any registered ontology bricks
                     self._import_object_type_from_brick(object_type_name)
                 if self.get_object_type(object_type_name) is None:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Property "%s" of event type "%s" refers to undefined object type "%s".' %
                         (property_name, event_type_name,
                          event_property.get_object_type_name())
@@ -740,7 +740,7 @@ class Ontology(OntologyElement):
                         # any registered ontology bricks
                         self._import_concept_from_brick(concept_name)
                     if self.get_concept(concept_name) is None:
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'Property "%s" of event type "%s" refers to undefined concept "%s".' %
                             (property_name, event_type_name, concept_name)
                         )
@@ -756,7 +756,7 @@ class Ontology(OntologyElement):
             for parent_property_name, parent_property in parent_event_type.get_properties().items():
                 if parent_property.is_hashed():
                     if parent_property_name not in event_type.get_parent().get_property_map().values():
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'Event type %s contains a parent definition which lacks '
                             'a mapping for unique parent property \'%s\'.' %
                             (event_type_name, parent_property_name)
@@ -766,7 +766,7 @@ class Ontology(OntologyElement):
 
                 # Check if child property exists
                 if child_property not in event_type.get_properties().keys():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type %s contains a parent definition which refers to unknown child property \'%s\'.' %
                         (event_type_name, child_property)
                     )
@@ -775,7 +775,7 @@ class Ontology(OntologyElement):
                 parent_event_type = self.get_event_type(event_type.get_parent().get_event_type_name())
                 if parent_property not in parent_event_type.get_properties() or \
                    parent_event_type[parent_property].get_merge_strategy() != 'match':
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type %s contains a parent definition which refers '
                         'to parent property "%s" of event type %s, '
                         'but this property is either not a hashed property or it does not exist.' %
@@ -784,7 +784,7 @@ class Ontology(OntologyElement):
 
                 # Check if child property has allowed merge strategy
                 if event_type[child_property].get_merge_strategy() not in ('match', 'any'):
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type %s contains a parent definition which refers to child property \'%s\'. '
                         'This property has merge strategy %s, which is not allowed for properties that are used in '
                         'parent definitions.' %
@@ -907,7 +907,7 @@ class Ontology(OntologyElement):
           validate (bool): Validate the resulting ontology
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
 
         Returns:
           edxml.ontology.Ontology: The ontology
@@ -935,8 +935,7 @@ class Ontology(OntologyElement):
                 elif element.tag == '{http://edxml.org/edxml}sources':
                     self.__parse_sources(element, validate)
                 else:
-                    raise EDXMLValidationError(
-                        'Unexpected ontology element: "%s"' % element.tag)
+                    raise EDXMLOntologyValidationError('Unexpected ontology element: "%s"' % element.tag)
 
             if validate:
                 self.validate()

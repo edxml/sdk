@@ -24,7 +24,17 @@ class EDXMLValidationError(EDXMLError):
     pass
 
 
-class EDXMLMergeConflictError(EDXMLError):
+class EDXMLOntologyValidationError(EDXMLValidationError):
+    """Exception for signaling EDXML ontology validation errors"""
+    pass
+
+
+class EDXMLEventValidationError(EDXMLValidationError):
+    """Exception for signaling EDXML event validation errors"""
+    pass
+
+
+class EDXMLMergeConflictError(EDXMLValidationError):
     """Exception for signalling EDXML merge conflicts"""
     def __init__(self, events):
         """

@@ -15,7 +15,7 @@ from abc import abstractmethod, ABC
 from functools import total_ordering
 from lxml import etree
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 
 
 def ontology_element_upgrade_error(element_name, old, new):
@@ -30,7 +30,7 @@ def ontology_element_upgrade_error(element_name, old, new):
         new (VersionedOntologyElement): New version
 
     Raises:
-        EDXMLValidationError
+        EDXMLOntologyValidationError
     """
 
     old_version = str(old.get_version())
@@ -43,7 +43,7 @@ def ontology_element_upgrade_error(element_name, old, new):
     if not versions_differ:
         new_version += ' (conflicting definition)'
 
-    raise EDXMLValidationError(
+    raise EDXMLOntologyValidationError(
         "Definitions of a {} ({}) are {} due to the following difference in their definitions:\n"
         "Version {}:\n{}\nVersion {}:\n{}".format(
             element_name,
@@ -84,7 +84,7 @@ def event_type_element_upgrade_error(element_name, old, new, old_type, new_type)
     if not versions_differ:
         new_version += ' (conflicting definition)'
 
-    raise EDXMLValidationError(
+    raise EDXMLOntologyValidationError(
         "Definitions of event type {} are {} due to the following difference in the definitions of a {} ({}):"
         "\nVersion {}:\n{}\nVersion {}:\n{}".format(
             old_type.get_name(),

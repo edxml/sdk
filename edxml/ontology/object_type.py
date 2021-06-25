@@ -19,7 +19,7 @@ from lxml import etree
 
 import edxml.ontology
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
 
 from .data_type import DataType
 from .ontology_element import VersionedOntologyElement, ontology_element_upgrade_error
@@ -528,7 +528,7 @@ class ObjectType(VersionedOntologyElement):
           value (str): Object value
 
         Raises:
-          EDXMLValidationError
+          EDXMLEventValidationError
 
         Returns:
            edxml.ontology.ObjectType: The ObjectType instance
@@ -543,7 +543,7 @@ class ObjectType(VersionedOntologyElement):
 
         if split_data_type[0] == 'string':
             if self.__attr['regex-hard'] is not None and not re.match('^%s$' % self.__attr['regex-hard'], value):
-                raise EDXMLValidationError(
+                raise EDXMLEventValidationError(
                     "Object value '%s' of object type %s does not match hard regex '%s' of the object type."
                     % (value, self.__attr['name'], self.__attr['regex-hard'])
                 )
@@ -558,39 +558,39 @@ class ObjectType(VersionedOntologyElement):
         check if other, conflicting object type definitions exist.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
 
         Returns:
           edxml.ontology.ObjectType: The ObjectType instance
 
         """
         if not len(self.__attr['name']) <= 64:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The name of object type "%s" is too long.' % self.__attr['name'])
         if not re.match(self.NAME_PATTERN, self.__attr['name']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" has an invalid name.' % self.__attr['name'])
 
         if not len(self.__attr['display-name-singular']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The singular display name of object type "%s" is too long: "%s".' % (
                     self.__attr['name'], self.__attr['display-name-singular'])
             )
 
         if not len(self.__attr['display-name-plural']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The plural display name of object type "%s" is too long: "%s".' % (
                     self.__attr['name'], self.__attr['display-name-plural'])
             )
 
         if self.__attr['unit-name'] is not None and len(self.__attr['unit-name']) > 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The unit name of object type "%s" is too long: "%s".' % (
                     self.__attr['name'], self.__attr['unit-name'])
             )
 
         if self.__attr['unit-symbol'] is not None and len(self.__attr['unit-symbol']) > 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The unit symbol of object type "%s" is too long: "%s".' % (
                     self.__attr['name'], self.__attr['unit-symbol'])
             )
@@ -599,31 +599,31 @@ class ObjectType(VersionedOntologyElement):
 
         for token_attribute in token_attributes:
             if normalize_xml_token(self.__attr[token_attribute] or '') != (self.__attr[token_attribute] or ''):
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s attribute of object type "%s" contains illegal whitespace characters: "%s"' %
                     (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
 
         if not len(self.__attr['description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The description of object type "%s" is too long: "%s"' % (
                     self.__attr['name'], self.__attr['description'])
             )
 
         if self.__attr['prefix-radix'] not in (None, 2, 10, 60):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The prefix radix of object type "%s" must be 2, 10 or 60, %s is not a valid value.' % (
                     self.__attr['name'], self.__attr['prefix-radix'])
             )
 
         if self.__attr['fuzzy-matching'] is not None:
             if self.get_data_type().get_family() != 'string':
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Object type "%s" specifies a fuzzy matching method while it does not have a string data type.' %
                     self.__attr['name']
                 )
             if not re.match(self.FUZZY_MATCHING_PATTERN, self.__attr['fuzzy-matching']):
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Object type "%s" has an invalid fuzzy-matching attribute: "%s"' %
                     (self.__attr['name'], self.__attr['fuzzy-matching'])
                 )
@@ -631,13 +631,13 @@ class ObjectType(VersionedOntologyElement):
                 try:
                     re.compile('%s' % self.__attr['fuzzy-matching'][10:])
                 except sre_constants.error:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Definition of object type %s has an invalid regular expression in its '
                         'fuzzy-matching attribute: "%s"' %
                         (self.__attr['name'], self.__attr['fuzzy-matching']))
 
         if type(self.__attr['compress']) != bool:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" has an invalid compress attribute: "%s"' % (
                     self.__attr['name'], repr(self.__attr['compress']))
             )
@@ -645,35 +645,35 @@ class ObjectType(VersionedOntologyElement):
         for soft_hard in ['soft', 'hard']:
             if self.__attr['regex-' + soft_hard] is not None:
                 if self.get_data_type().get_family() != 'string':
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Object type "%s" has a %s regular expression while its data type is not a string.' %
                         (self.__attr['name'], soft_hard)
                     )
                 try:
                     re.compile(self.__attr['regex-' + soft_hard])
                 except sre_constants.error:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Object type "%s" contains invalid %s regular expression: "%s"' %
                         (self.__attr['name'], soft_hard, self.__attr['regex-hard'])
                     )
 
         if self.__attr['unit-name'] is None and self.__attr['unit-symbol'] is not None:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" contains a unit symbol without a unit name.' % self.__attr['name']
             )
 
         if self.__attr['unit-symbol'] is None and self.__attr['unit-name'] is not None:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" contains a unit name without a unit symbol.' % self.__attr['name']
             )
 
         if self.__attr['unit-name'] is not None and self.get_data_type().get_family() != 'number':
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" specifies a unit name while it is not numeric.' % self.__attr['name']
             )
 
         if self.__attr['prefix-radix'] is not None and self.__attr['unit-name'] is None:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Object type "%s" specifies a prefix radix while not specifying a unit.' % self.__attr['name']
             )
 
@@ -701,7 +701,7 @@ class ObjectType(VersionedOntologyElement):
                 type_element.get('regex-soft')
             ).set_version(type_element.attrib['version'])
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an object type from the following definition:\n" +
                 etree.tostring(type_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)

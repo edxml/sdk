@@ -12,7 +12,7 @@
 # ========================================================================================
 
 from edxml.ontology import Ontology, EventSource
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 import pytest
 
 
@@ -48,5 +48,5 @@ def test_init_validuri(ontology, validuri):
 
 def test_init_invaliduri(ontology, invaliduri):
     es = EventSource(ontology, invaliduri)
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLOntologyValidationError):
         es.validate()

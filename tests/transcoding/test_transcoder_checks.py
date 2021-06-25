@@ -12,7 +12,7 @@
 # ========================================================================================
 
 import pytest
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 
 from edxml.ontology import EventProperty
 from conftest import create_transcoder
@@ -387,7 +387,7 @@ def test_wrong_concept_attribute_name_exception(transcoder):
     type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.string'}}
     type(transcoder).TYPE_PROPERTY_CONCEPTS = {'event-type.a': {'property-a': {'concept-a': 8}}}
     type(transcoder).TYPE_PROPERTY_ATTRIBUTES = {'event-type.a': {'property-a': {'concept-a': ['foo:attr']}}}
-    with pytest.raises(EDXMLValidationError, match="must begin with 'object-type.string:'"):
+    with pytest.raises(EDXMLOntologyValidationError, match="must begin with 'object-type.string:'"):
         dict(transcoder.generate_event_types())
 
 

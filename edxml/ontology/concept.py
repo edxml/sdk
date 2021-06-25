@@ -18,7 +18,7 @@ from lxml import etree
 
 import edxml.ontology
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import VersionedOntologyElement, normalize_xml_token
 from edxml.ontology.ontology_element import ontology_element_upgrade_error
 
@@ -252,51 +252,51 @@ class Concept(VersionedOntologyElement):
         check if other, conflicting concept definitions exist.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
 
         Returns:
           edxml.ontology.Concept: The Concept instance
 
         """
         if not len(self._attr['name']) <= 255:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The name of concept "%s" is too long.' % self._attr['name'])
         if not re.match(self.NAME_PATTERN, self._attr['name']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Concept "%s" has an invalid name.' % self._attr['name'])
 
         if not len(self._attr['display-name-singular']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The singular display name of concept "%s" is too long: "%s".' % (
                     self._attr['name'], self._attr['display-name-singular'])
             )
 
         if not len(self._attr['display-name-plural']) <= 32:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The plural display name of concept "%s" is too long: "%s".' % (
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
         if normalize_xml_token(self._attr['display-name-singular']) != self._attr['display-name-singular']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Singular display name of concept "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['display-name-singular'])
             )
 
         if normalize_xml_token(self._attr['display-name-plural']) != self._attr['display-name-plural']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Plural display name of concept "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['display-name-plural'])
             )
 
         if normalize_xml_token(self._attr['description']) != self._attr['description']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The description of concept "%s" contains illegal whitespace characters: "%s"' % (
                     self._attr['name'], self._attr['description'])
             )
 
         if not len(self._attr['description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The description of concept "%s" is too long: "%s"' % (
                     self._attr['name'], self._attr['description'])
             )
@@ -314,7 +314,7 @@ class Concept(VersionedOntologyElement):
                 type_element.attrib['description'],
             ).set_version(type_element.attrib['version'])
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate a concept from the following definition:\n" +
                 etree.tostring(type_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)

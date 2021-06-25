@@ -18,7 +18,7 @@ in ontology bricks works as expected.
 
 import pytest
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import Ontology, DataType
 
 
@@ -37,7 +37,7 @@ def test_valid_object_type_upgrade():
 
 def test_invalid_object_type_upgrade():
     o = Ontology()
-    with pytest.raises(EDXMLValidationError):
+    with pytest.raises(EDXMLOntologyValidationError):
         # Changing the data type should fail.
         o.create_object_type('a').set_data_type(DataType.boolean()).upgrade()
 

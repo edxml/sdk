@@ -17,7 +17,7 @@ import pytest
 from lxml import etree
 from conftest import edxml_extract
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError
 from edxml.ontology import DataType
 from edxml.transcode.object import ObjectTranscoderMediator, ObjectTranscoder
 
@@ -175,7 +175,7 @@ def test_invalid_event_exception(object_transcoder_mediator, object_transcoder, 
     object_transcoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.integer'}}
     object_transcoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    with pytest.raises(EDXMLValidationError, match='invalid event'):
+    with pytest.raises(EDXMLEventValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
             mediator.register('test_record', object_transcoder())
             mediator.add_event_source('/test/uri/')
@@ -226,7 +226,7 @@ def test_post_processor_invalid_event_exception(object_transcoder_mediator, obje
     PostProcessingTranscoder.TYPE_PROPERTIES = {'test-event-type.a': {'property-a': 'object-type.string'}}
     PostProcessingTranscoder.PROPERTY_MAP = {'test-event-type.a': {'records.a': 'property-a'}}
 
-    with pytest.raises(EDXMLValidationError, match='invalid event'):
+    with pytest.raises(EDXMLEventValidationError, match='invalid event'):
         with object_transcoder_mediator(BytesIO()) as mediator:
             mediator.register('test_record', PostProcessingTranscoder())
             mediator.add_event_source('/test/uri/')

@@ -16,7 +16,7 @@ import re
 import edxml.ontology
 
 from lxml import etree
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import OntologyElement, normalize_xml_token
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
@@ -202,50 +202,50 @@ class EventTypeParent(OntologyElement):
         actually exists.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.EventTypeParent: The EventTypeParent instance
 
         """
         if not len(self._attr['event-type']) <= 64:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
                 self._attr['event-type']
             )
         if not re.match(edxml.ontology.EventType.NAME_PATTERN, self._attr['event-type']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An implicit parent definition refers to a parent event type using an invalid event type name: "%s"' %
                 self._attr['event-type']
             )
 
         if not re.match(self.PROPERTY_MAP_PATTERN, self._attr['property-map']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An implicit parent definition contains an invalid property map: "%s"' % self._attr['property-map']
             )
 
         if not 1 <= len(self._attr['parent-description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An implicit parent definition contains an parent-description '
                 'attribute that is either empty or too long: "%s"'
                 % self._attr['parent-description']
             )
 
         if normalize_xml_token(self._attr['parent-description']) != self._attr['parent-description']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The parent-description attribute in the implicit parent definition of event type "%s" '
                 'contains illegal whitespace characters: "%s"' % (
                     self._child_event_type.get_name(), self._attr['parent-description'])
             )
 
         if not 1 <= len(self._attr['siblings-description']) <= 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'An implicit parent definition contains an siblings-description '
                 'attribute that is either empty or too long: "%s"'
                 % self._attr['siblings-description']
             )
 
         if normalize_xml_token(self._attr['siblings-description']) != self._attr['siblings-description']:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'The siblings-description attribute in the implicit parent definition of event type "%s" '
                 'contains illegal whitespace characters: "%s"' % (
                     self._child_event_type.get_name(), self._attr['siblings-description'])
@@ -264,7 +264,7 @@ class EventTypeParent(OntologyElement):
                 parent_element.attrib['siblings-description']
             )
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an event type parent from the following definition:\n" +
                 etree.tostring(parent_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)
@@ -294,7 +294,7 @@ class EventTypeParent(OntologyElement):
         is_valid_upgrade = True
 
         if old._child_event_type.get_name() != new._child_event_type.get_name():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Attempt to compare event type parent definitions from two different child event types"
             )
 

@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
 from edxml.ontology import DataType, Ontology
 from edxml.transcode.xml import XmlTranscoderTestHarness, XmlTranscoder
 
@@ -54,7 +54,7 @@ def test_harness_event_validation():
     # The value of element 'p1' in the XML is not a number while the property
     # data type is. Here we check that the harness validates the transcoder
     # output and a validation exception is raised.
-    with pytest.raises(EDXMLValidationError, match='Invalid value for property property1'):
+    with pytest.raises(EDXMLEventValidationError, match='Invalid value for property property1'):
         harness.process_xml(filename='test.xml')
 
 
@@ -105,7 +105,7 @@ def test_harness_ontology_upgrade_failure():
         transcoder_root='/root/records'
     )
 
-    with pytest.raises(EDXMLValidationError, match='not compatible'):
+    with pytest.raises(EDXMLOntologyValidationError, match='not compatible'):
         harness.close()
 
 

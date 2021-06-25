@@ -18,7 +18,7 @@ from lxml import etree
 
 import edxml.ontology
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import VersionedOntologyElement
 from edxml.ontology.ontology_element import ontology_element_upgrade_error
 
@@ -179,28 +179,28 @@ class EventSource(VersionedOntologyElement):
         Checks if the event source definition is valid.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           edxml.ontology.EventSource: The EventSource instance
 
         """
         if not re.match(self.SOURCE_URI_PATTERN, self._attr['uri']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event source has an invalid URI: "%s"' % self._attr['uri']
             )
 
         if self._attr['description'] == '':
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event source %s has an empty description.' % self._attr['uri'])
 
         if len(self._attr['description']) > 128:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event source %s has a description that is too long: "%s"' %
                 (self._attr['uri'], self._attr['description']))
 
         if self._attr['date-acquired'] is not None:
             if not re.match(self.ACQUISITION_DATE_PATTERN, self._attr['date-acquired']):
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Event source has an invalid acquisition date: "%s"' % self._attr['date-acquired']
                 )
 
@@ -216,7 +216,7 @@ class EventSource(VersionedOntologyElement):
                 source_element.attrib.get('date-acquired')
             ).set_version(source_element.attrib['version'])
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an event source from the following definition:\n" +
                 etree.tostring(source_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)

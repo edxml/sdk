@@ -18,7 +18,7 @@ import edxml
 from .ontology.event_type import EventType
 from dateutil import relativedelta
 from dateutil.parser import parse, ParserError
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 from termcolor import colored
 
 
@@ -74,7 +74,7 @@ class Template(object):
           property_names (Optional[List[str]]):
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
 
         """
 
@@ -90,9 +90,9 @@ class Template(object):
         for curly in [c for c in self._template if c in ['{', '}']]:
             nesting += curly_nestings[curly]
             if nesting < 0:
-                raise EDXMLValidationError('Unbalanced curly brackets')
+                raise EDXMLOntologyValidationError('Unbalanced curly brackets')
         if nesting != 0:
-            raise EDXMLValidationError('Unbalanced curly brackets')
+            raise EDXMLOntologyValidationError('Unbalanced curly brackets')
 
         placeholder_strings = re.findall(self.TEMPLATE_PATTERN, self._template)
 
@@ -100,17 +100,17 @@ class Template(object):
             formatter, _ = self._parse_placeholder(placeholder)
 
             if formatter is not None and formatter not in self.KNOWN_FORMATTERS:
-                raise EDXMLValidationError('Unknown formatter: %s' % formatter)
+                raise EDXMLOntologyValidationError('Unknown formatter: %s' % formatter)
 
             property_arguments, other_arguments = self._get_placeholder_arguments(placeholder)
 
             for property_name in property_arguments:
                 if property_name == '':
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Empty property name in %s formatter.' % formatter
                     )
                 if property_name not in properties.keys():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Template refers to a property named "%s" which either do not exist or '
                         'which cannot be used in this template.' % property_name
                     )
@@ -118,7 +118,7 @@ class Template(object):
             argument_count = self.FORMATTER_ARGUMENT_COUNTS.get(formatter)
 
             if argument_count is not None and len(property_arguments) + len(other_arguments) != argument_count:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s formatter accepts %d arguments, but %d were specified: %s' % (
                         formatter, argument_count, len(property_arguments) + len(other_arguments), placeholder
                     )
@@ -128,7 +128,7 @@ class Template(object):
                 # Check that both properties are datetime values
                 for property_name in property_arguments:
                     if str(properties[property_name].get_data_type()) != 'datetime':
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                              'Time related formatter (%s) used on property (%s) which is not a datetime value.' % (
                                 formatter, property_name
                              )
@@ -138,7 +138,7 @@ class Template(object):
                 # Check that property is a boolean
                 for property_name in property_arguments:
                     if str(properties[property_name].get_data_type()) != 'boolean':
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'The %s formatter was used on property %s which is not a boolean.' % (
                                 formatter, property_name
                             )
@@ -148,13 +148,13 @@ class Template(object):
                 if other_arguments[0] not in [
                     'year', 'month', 'date', 'hour', 'minute', 'second', 'millisecond', 'microsecond'
                 ]:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'A date_time formatter uses an unknown accuracy option: "%s".' % other_arguments[0]
                     )
 
             if formatter == 'attachment':
                 if other_arguments[0] not in event_type.get_attachments():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'A attachment formatter refers to event attachment "%s", '
                         'which is not defined.' % other_arguments[0]
                     )
@@ -775,14 +775,14 @@ class Template(object):
             # Variable property count.
             if formatter == 'merge':
                 if not arguments:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'String formatter (%s) requires at least one property argument.' % formatter
                     )
                 property_arguments = arguments
                 other_arguments = []
             elif formatter == 'unless_empty':
                 if len(arguments) < 2:
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'String formatter (%s) requires at least two arguments.' % formatter
                     )
                 property_arguments = arguments[:-1]
@@ -791,7 +791,7 @@ class Template(object):
                 raise Exception('FORMATTER_PROPERTY_COUNTS is missing count for %s formatter.' % formatter)
         else:
             if len(arguments) < property_count:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'String formatter (%s) requires %d properties, only %d properties were specified.' %
                     (formatter, property_count, len(arguments))
                 )

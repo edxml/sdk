@@ -14,7 +14,7 @@
 import copy
 import pytest
 
-from edxml.error import EDXMLValidationError
+from edxml.error import EDXMLOntologyValidationError
 
 
 def assert_valid_upgrade(old, new):
@@ -68,11 +68,11 @@ def assert_valid_ontology_upgrade(old, new):
 
 
 def assert_invalid_ontology_upgrade(old, new, match=None):
-    with pytest.raises(EDXMLValidationError, match=match):
-        new > old
+    with pytest.raises(EDXMLOntologyValidationError, match=match):
+        assert new > old
 
 
 def assert_incomparable(a, b):
     # An attempt to upgrade should now fail.
     with pytest.raises(ValueError):
-        a == b
+        assert a == b

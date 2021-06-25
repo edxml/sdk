@@ -33,7 +33,7 @@ from .event_type_parent import EventTypeParent
 from .event_property_relation import PropertyRelation
 from .event_type_attachment import EventTypeAttachment
 from .util import normalize_xml_token
-from edxml.error import EDXMLValidationError, EDXMLMergeConflictError
+from edxml.error import EDXMLOntologyValidationError, EDXMLEventValidationError, EDXMLMergeConflictError
 
 
 def _check_sub_element_upgrade(old, new, equal, is_valid_upgrade):
@@ -598,7 +598,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         for concept in (source_concept, target_concept):
             if concept is None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     "Attempt to create an %s-concept relation between the %s and %s properties of a %s while "
                     "one of the associated concepts (%s) is not defined." %
                     (relation_type, source, target, self.get_display_name_singular(), source_concept_name)
@@ -979,31 +979,31 @@ class EventType(VersionedOntologyElement, MutableMapping):
             # Nothing to do.
             return
         if not self.__attr['event-version'] in self.get_properties().keys():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event version '
                 'by means of property "%s", which does not exist.' %
                 (self.__attr['name'], self.__attr['event-version'])
             )
         if self.get_properties()[self.__attr['event-version']].get_data_type().get_family() != 'sequence':
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event version '
                 'by means of property "%s", which does not have the sequence data type.' %
                 (self.__attr['name'], self.__attr['event-version'])
             )
         if self.get_properties()[self.__attr['event-version']].get_merge_strategy() != 'max':
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event version '
                 'by means of property "%s", which does not have the "max" merge strategy.' %
                 (self.__attr['name'], self.__attr['event-version'])
             )
         if self.get_properties()[self.__attr['event-version']].is_optional():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event version '
                 'by means of property "%s", which is optional. Version properties must not be optional.' %
                 (self.__attr['name'], self.__attr['event-version'])
             )
         if self.get_properties()[self.__attr['event-version']].is_multi_valued():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event version '
                 'by means of property "%s", which is multi-valued. Version properties must not be multi-valued.' %
                 (self.__attr['name'], self.__attr['event-version'])
@@ -1014,25 +1014,25 @@ class EventType(VersionedOntologyElement, MutableMapping):
             # Nothing to do.
             return
         if not self.__attr['sequence'] in self.get_properties().keys():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event sequence numbers '
                 'by means of property "%s", which does not exist.' %
                 (self.__attr['name'], self.__attr['sequence'])
             )
         if self.get_properties()[self.__attr['sequence']].get_data_type().get_family() != 'sequence':
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event sequence numbers '
                 'by means of property "%s", which does not have the sequence data type.' %
                 (self.__attr['name'], self.__attr['sequence'])
             )
         if self.get_properties()[self.__attr['sequence']].is_optional():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event sequence numbers '
                 'by means of property "%s", which is optional. Sequences must not be optional.' %
                 (self.__attr['name'], self.__attr['sequence'])
             )
         if self.get_properties()[self.__attr['sequence']].is_multi_valued():
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" defines the event sequence numbers '
                 'by means of property "%s", which is multi-valued. Sequences must not be multi-valued.' %
                 (self.__attr['name'], self.__attr['sequence'])
@@ -1048,7 +1048,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         type that actually exists. Also, templates are not validated.
 
         Raises:
-          EDXMLValidationError
+          EDXMLOntologyValidationError
         Returns:
           EventType: The EventType instance
 
@@ -1058,12 +1058,12 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         for attribute_name, max_length in attribute_lengths.items():
             if len(self.__attr[attribute_name]) > max_length:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s attribute of event type "%s" is too long.' % attribute_name
                 )
 
         if not re.match(self.NAME_PATTERN, self.__attr['name']):
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 'Event type "%s" has an invalid name.' % self.__attr['name'])
 
         token_attributes = (
@@ -1072,7 +1072,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         for token_attribute in token_attributes:
             if normalize_xml_token(self.__attr[token_attribute]) != self.__attr[token_attribute]:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'The %s attribute of event type "%s" contains illegal whitespace characters: "%s"' %
                     (token_attribute, self.__attr['name'], self.__attr[token_attribute])
                 )
@@ -1080,13 +1080,13 @@ class EventType(VersionedOntologyElement, MutableMapping):
         for attribute_name in ('timespan-start', 'timespan-end'):
             if self.__attr[attribute_name] is not None:
                 if not self.__attr[attribute_name] in self.get_properties().keys():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type "%s" defines its event time spans '
                         'by means of property "%s", which does not exist.' %
                         (self.__attr['name'], self.__attr[attribute_name])
                     )
                 if not self.get_properties()[self.__attr[attribute_name]].get_data_type().is_datetime():
-                    raise EDXMLValidationError(
+                    raise EDXMLOntologyValidationError(
                         'Event type "%s" defines its event time spans '
                         'by means of property "%s", which does not have a datetime data type.' %
                         (self.__attr['name'], self.__attr[attribute_name])
@@ -1097,7 +1097,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         if [p for p in self.get_properties().values() if p.get_merge_strategy() == 'replace']:
             if self.get_version_property_name() is None:
-                raise EDXMLValidationError(
+                raise EDXMLOntologyValidationError(
                     'Event type "%s" defines one or more properties with merge strategy "replace" '
                     'but it does not have a property containing event versions.' % self.__attr['name']
                 )
@@ -1105,8 +1105,8 @@ class EventType(VersionedOntologyElement, MutableMapping):
         for attribute_name in ('summary', 'story'):
             try:
                 edxml.Template(self.__attr[attribute_name]).validate(self)
-            except EDXMLValidationError as e:
-                raise EDXMLValidationError(
+            except EDXMLOntologyValidationError as e:
+                raise EDXMLOntologyValidationError(
                     'The %s template of event type "%s" is invalid: "%s"\nThe validator said: %s' %
                     (attribute_name, self.__attr['name'], self.__attr['summary'], str(e))
                 )
@@ -1120,7 +1120,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
             for attachment in self.__attachments.values():
                 attachment.validate()
-        except EDXMLValidationError as exception:
+        except EDXMLOntologyValidationError as exception:
             exception.args = ('Event type "%s" is invalid: %s' % (self.__attr['name'], str(exception)),)
             raise
 
@@ -1143,7 +1143,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
              .set_version_property_name(type_element.attrib.get('event-version'))\
              .set_sequence_property_name(type_element.attrib.get('sequence'))
         except KeyError as e:
-            raise EDXMLValidationError(
+            raise EDXMLOntologyValidationError(
                 "Failed to instantiate an event type from the following definition:\n" +
                 etree.tostring(type_element, pretty_print=True, encoding='unicode') +
                 "\nMissing attribute: " + str(e)
@@ -1159,7 +1159,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 for property_element in element:
                     prop = EventProperty.create_from_xml(property_element, ontology, event_type)
                     if prop.get_name() in property_names:
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'EDXML <properties> element contains duplicate definition of "%s"' % prop.get_name()
                         )
                     event_type.add_property(prop)
@@ -1169,7 +1169,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 for relation_element in element:
                     relation = PropertyRelation.create_from_xml(relation_element, event_type, ontology)
                     if relation.get_persistent_id() in relation_ids:
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'EDXML <relations> element contains duplicate definition '
                             'of a "%s" relation between "%s" and "%s".' % (
                                 relation.get_type(),
@@ -1184,7 +1184,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                 for attachment_element in element:
                     attachment = EventTypeAttachment.create_from_xml(attachment_element, event_type)
                     if attachment.get_name() in attachments:
-                        raise EDXMLValidationError(
+                        raise EDXMLOntologyValidationError(
                             'EDXML <attachments> element contains duplicate definition of "%s"' % attachment.get_name()
                         )
                     event_type.add_attachment(attachment)
@@ -1382,7 +1382,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
           edxml_event (edxml.EDXMLEvent):
 
         Raises:
-          EDXMLValidationError
+          EDXMLEventValidationError
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -1390,7 +1390,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         for property_name, objects in edxml_event.items():
             if property_name not in self.get_properties():
-                raise EDXMLValidationError(
+                raise EDXMLEventValidationError(
                     ('An event of type %s contains an object of property %s, '
                      'but this property does not belong to the event type.') %
                     (self.__attr['name'], property_name)
@@ -1399,7 +1399,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         # Verify that match, min and max properties have an object.
         for property_name in self.get_mandatory_property_names():
             if property_name not in edxml_event:
-                raise EDXMLValidationError(
+                raise EDXMLEventValidationError(
                     'An event of type %s is missing an object for mandatory property %s.'
                     % (self.__attr['name'], property_name)
                 )
@@ -1409,7 +1409,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
         for property_name in self.get_singular_property_names():
             if property_name in edxml_event:
                 if len(edxml_event[property_name]) > 1:
-                    raise EDXMLValidationError(
+                    raise EDXMLEventValidationError(
                         ('An event of type %s has multiple objects of property %s, '
                          'while it is a single-valued property.') %
                         (self.__attr['name'], property_name)
@@ -1433,7 +1433,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
           property_name (str):
 
         Raises:
-          EDXMLValidationError
+          EDXMLEventValidationError
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -1447,15 +1447,15 @@ class EventType(VersionedOntologyElement, MutableMapping):
             try:
                 property_object_type = self.__properties[event_property_name].get_object_type()
             except KeyError:
-                raise EDXMLValidationError(
+                raise EDXMLEventValidationError(
                     'Event type %s has no property named "%s".' % (self.__attr['name'], event_property_name)
                 )
 
             for object_value in objects:
                 try:
                     property_object_type.validate_object_value(object_value)
-                except EDXMLValidationError as e:
-                    raise EDXMLValidationError(
+                except EDXMLEventValidationError as e:
+                    raise EDXMLEventValidationError(
                         'Invalid value for property %s of event type %s: %s' % (
                             event_property_name, self.__attr['name'], e)
                     )
@@ -1465,13 +1465,13 @@ class EventType(VersionedOntologyElement, MutableMapping):
     def validate_event_attachments(self, event):
         for attachment_name, attachment_values in event.get_attachments().items():
             if attachment_name not in self.__attachments.keys():
-                raise EDXMLValidationError(
+                raise EDXMLEventValidationError(
                     f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
                     f"while this event type has no such attachment."
                 )
             for attachment_id, attachment_value in attachment_values.items():
                 if attachment_value == '':
-                    raise EDXMLValidationError(
+                    raise EDXMLEventValidationError(
                         f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
                         f"which is empty."
                     )
@@ -1481,7 +1481,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
                     try:
                         base64.decodebytes(attachment_value.encode())
                     except binascii.Error as e:
-                        raise EDXMLValidationError(
+                        raise EDXMLEventValidationError(
                             f"An event of type {self.__attr['name']} has a base64 encoded attachment "
                             f"named '{attachment_name}' which is not a valid base64 string: '{e}'.\n\n"
                             f"Attachment value is:\n\n{attachment_value}"
@@ -1499,7 +1499,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
           property_names (List[str]):
 
         Raises:
-          EDXMLValidationError
+          EDXMLEventValidationError
 
         Returns:
           edxml.ontology.EventType: The EventType instance
@@ -1513,13 +1513,15 @@ class EventType(VersionedOntologyElement, MutableMapping):
             try:
                 property_object_type = self.__properties[property_name].get_object_type()
             except KeyError:
-                raise EDXMLValidationError("Event type '%s' has no property '%s'." % (self.get_name(), property_name))
+                raise EDXMLEventValidationError(
+                    "Event type '%s' has no property '%s'." % (self.get_name(), property_name)
+                )
 
             try:
                 event[property_name] = property_object_type.get_data_type(
                 ).normalize_objects(objects)
-            except EDXMLValidationError as e:
-                raise EDXMLValidationError(
+            except EDXMLEventValidationError as e:
+                raise EDXMLEventValidationError(
                     'Invalid value for property %s of event type %s: %s' % (
                         property_name, self.__attr['name'], e)
                 )
