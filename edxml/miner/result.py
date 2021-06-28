@@ -194,7 +194,10 @@ class ConceptInstance:
         """
 
     def __repr__(self):
-        return f"{self.get_best_concept_name()}: {self.get_instance_title()}"
+        concept_name = self.get_best_concept_name()
+        if len(concept_name.split('.')) > 3:
+            concept_name = '...' + '.'.join(concept_name.split('.')[-3:])
+        return f"{concept_name}: {self.get_instance_title()}"
 
     @property
     def id(self):
