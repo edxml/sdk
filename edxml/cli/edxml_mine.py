@@ -89,16 +89,16 @@ def main():
     input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 
     knowledge_base = KnowledgeBase()
-    KnowledgePullParser(knowledge_base).parse(input)
+    parser = KnowledgePullParser(knowledge_base).parse(input)
     logging.info("Graph complete.")
 
-    ontology = knowledge_base._ontology
+    ontology = parser._ontology
 
     found_concepts = set()
     instance_concepts = defaultdict(set)
 
     while True:
-        seed = knowledge_base._graph.find_optimal_seed()
+        seed = parser._graph.find_optimal_seed()
 
         if seed is None:
             # When the best seed we can find
@@ -109,7 +109,7 @@ def main():
         seed_dn = seed.concept_association.get_attribute_display_name_singular()
         logging.info(f"Selected seed: {seed_dn} = {seed.value}")
 
-        knowledge_base.mine(seed, min_confidence=min_confidence, max_depth=max_depth)
+        parser.mine(seed, min_confidence=min_confidence, max_depth=max_depth)
         results = knowledge_base.concept_collection
         # Find the ID of the newly created concept and report it.
         concept_id = next(iter(set(results.concepts.keys()) - found_concepts))

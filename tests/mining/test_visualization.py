@@ -24,7 +24,7 @@ def get_mining_result() -> MinedConceptInstanceCollection:
     parser = KnowledgePullParser(knowledge)
     parser.parse(os.path.dirname(__file__) + '/input.edxml')
 
-    knowledge.mine(min_confidence=0.001)
+    parser.mine(min_confidence=0.001)
     return knowledge.concept_collection
 
 

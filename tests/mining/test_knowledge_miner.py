@@ -29,7 +29,7 @@ def knowledge_base(request):
         parser = KnowledgePushParser(knowledge)
         parser.feed(open(os.path.dirname(__file__) + '/input.edxml', 'rb').read())
 
-    knowledge.mine()
+    parser.mine()
     return knowledge
 
 
@@ -42,7 +42,7 @@ def knowledge_base_timespan(request):
     knowledge = KnowledgeBase()
     parser = KnowledgePullParser(knowledge)
     parser.parse(input_file)
-    knowledge.mine()
+    parser.mine()
     return knowledge
 
 

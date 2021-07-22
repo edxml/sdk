@@ -45,13 +45,62 @@ class KnowledgeParserBase:
             knowledge_base (KnowledgeBase): Knowledge base to use
         """
         super().__init__()
+        self._ontology = Ontology()
+        self._graph = ConceptInstanceGraph()
+        self._constructor = GraphConstructor(self._graph)
         self._knowledge_base = knowledge_base  # type: KnowledgeBase
 
     def _parsed_ontology(self, ontology):
-        self._knowledge_base.add_ontology(ontology)
+        self._ontology.update(ontology)
+        self._constructor.update_ontology(ontology)
 
     def _parsed_event(self, event):
-        self._knowledge_base.add_event(event)
+        self._constructor.add(event)
+        self._mine_universals(event)
+
+    def _mine_universals(self, event: EDXMLEvent):
+        event_type = self._ontology.get_event_type(event.get_type_name())
+
+        universals = (
+            ('name', self._knowledge_base.add_universal_name),
+            ('description', self._knowledge_base.add_universal_description),
+            ('container', self._knowledge_base.add_universal_container)
+        )
+
+        for relation_type, add in universals:
+            for relation in event_type.get_property_relations(relation_type).values():
+                source = relation.get_source()
+                target = relation.get_target()
+                source_object_type = event_type.get_properties()[source].get_object_type_name()
+                target_object_type = event_type.get_properties()[target].get_object_type_name()
+                for target_object in event[target]:
+                    if event[source] != set():
+                        for source_object in event[source]:
+                            add(target_object_type, target_object, source_object_type, source_object)
+
+    def mine(self, seed=None, min_confidence=0.1, max_depth=10):
+        """
+
+        Mines the events for concept instances. When a seed is specified, only
+        the concept instance containing the specified seed is mined. When no
+        seed is specified, an optimum set of seeds will be selected and mined,
+        covering the full event data set. The algorithm will auto-select the
+        strongest concept identifiers. Any previously obtained concept mining
+        results will be discarded in the process.
+
+        After mining completes, the concept collection is updated to contain
+        the mined concept instances.
+
+        Concept instances are constructed within specified confidence and
+        recursion depth limits.
+
+        Args:
+            seed (EventObjectNode): Concept seed
+            min_confidence (float): Confidence cutoff
+            max_depth (int): Max recursion depth
+        """
+        self._graph.mine(seed, min_confidence, max_depth)
+        self._knowledge_base.concept_collection = self._graph.extract_result_set(min_confidence)
 
 
 class KnowledgePullParser(KnowledgeParserBase, EDXMLPullParser):
@@ -89,8 +138,6 @@ class KnowledgeBase:
     def __init__(self):
         super().__init__()
         self._ontology = Ontology()
-        self._graph = ConceptInstanceGraph()
-        self._constructor = GraphConstructor(self._graph)
         self._names = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
         self._descriptions = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
         self._containers = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
@@ -109,40 +156,6 @@ class KnowledgeBase:
         if len(self._containers) > 0:
             result.append('containers')
         return ', '.join(result)
-
-    def add_ontology(self, ontology):
-        """
-
-        Imports ontology information into the knowledge
-        base. This method is called by the knowledge parsers
-        to populate the knowledge base.
-
-        Args:
-            ontology (Ontology): Ontology to add
-
-        Returns:
-            KnowledgeBase:
-        """
-        self._ontology.update(ontology)
-        self._constructor.update_ontology(ontology)
-        return self
-
-    def add_event(self, event):
-        """
-
-        Imports information from an EDXML event into the knowledge
-        base. This method is called by the knowledge parsers
-        to populate the knowledge base.
-
-        Args:
-            event (EDXMLEvent): Event to add
-
-        Returns:
-            KnowledgeBase:
-        """
-        self._constructor.add(event)
-        self._mine_universals(event)
-        return self
 
     def get_names_for(self, object_type_name, value):
         """
@@ -196,6 +209,57 @@ class KnowledgeBase:
             Dict[str, Set]
         """
         return self._containers[object_type_name][value]
+
+    def add_universal_name(self, named_object_type, value, name_object_type, name):
+        """
+
+        Adds a name universal. A name universal associates a value with a name for
+        that value and is usually mined from EDXML name relations. The parameters
+        are two pairs of object type / value combinations, one for the value that
+        is being named and one for the name itself.
+
+        Args:
+            named_object_type (str): Object type of named object
+            value (str): value of named object
+            name_object_type (str): Object type of name
+            name (str): Name value
+
+        """
+        self._names[named_object_type][value][name_object_type].add(name)
+
+    def add_universal_description(self, described_object_type, value, description_object_type, description):
+        """
+
+        Adds a description universal. A description universal associates a value with
+        a description for that value and is usually mined from EDXML description
+        relations. The parameters are two pairs of object type / value combinations,
+        one for the value that is being described and one for the description itself.
+
+        Args:
+            described_object_type (str): Object type of described object
+            value (str): value of described object
+            description_object_type (str): Object type of description
+            description (str): Description value
+
+        """
+        self._descriptions[described_object_type][value][description_object_type].add(description)
+
+    def add_universal_container(self, contained_object_type, value, container_object_type, container):
+        """
+
+        Adds a container universal. A container universal associates a value with
+        another value that contains it and is usually mined from EDXML container
+        relations. The parameters are two pairs of object type / value combinations,
+        one for the value that is being contained and one for the container itself.
+
+        Args:
+            contained_object_type (str): Object type of contained object
+            value (str): value of contained object
+            container_object_type (str): Object type of container
+            container (str): Container value
+
+        """
+        self._containers[contained_object_type][value][container_object_type].add(container)
 
     def filter_concept(self, concept_name):
         """
@@ -267,51 +331,6 @@ class KnowledgeBase:
         filtered = KnowledgeBase()
         filtered.concept_collection = ConceptInstanceCollection(concepts)
         return filtered
-
-    def _mine_universals(self, event: EDXMLEvent):
-        event_type = self._ontology.get_event_type(event.get_type_name())
-
-        universals = (
-            ('name', self._names),
-            ('description', self._descriptions),
-            ('container', self._containers)
-        )
-
-        for relation_type, universal in universals:
-            for relation in event_type.get_property_relations(relation_type).values():
-                source = relation.get_source()
-                target = relation.get_target()
-                source_object_type = event_type.get_properties()[source].get_object_type_name()
-                target_object_type = event_type.get_properties()[target].get_object_type_name()
-                for target_object in event[target]:
-                    if event[source] != set():
-                        # Note that we actually build an inverted index designed for doing
-                        # lookups of names, descriptions, containers given an object value.
-                        universal[target_object_type][target_object][source_object_type].update(event[source])
-
-    def mine(self, seed=None, min_confidence=0.1, max_depth=10):
-        """
-
-        Mines the events for concept instances. When a seed is specified, only
-        the concept instance containing the specified seed is mined. When no
-        seed is specified, an optimum set of seeds will be selected and mined,
-        covering the full event data set. The algorithm will auto-select the
-        strongest concept identifiers. Any previously obtained concept mining
-        results will be discarded in the process.
-
-        After mining completes, the concept collection is updated to contain
-        the mined concept instances.
-
-        Concept instances are constructed within specified confidence and
-        recursion depth limits.
-
-        Args:
-            seed (EventObjectNode): Concept seed
-            min_confidence (float): Confidence cutoff
-            max_depth (int): Max recursion depth
-        """
-        self._graph.mine(seed, min_confidence, max_depth)
-        self.concept_collection = self._graph.extract_result_set(min_confidence)
 
     def to_json(self, as_string=True, **kwargs):
         """
