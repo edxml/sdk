@@ -8,32 +8,22 @@ EDXML SDK
 .. |coverage| image:: https://scrutinizer-ci.com/g/edxml/sdk/badges/coverage.png?b=experimental&s=f5b930dde8dc4f0f6c4a050cc4c107aa6ff6e921
 .. |pyversion| image::  https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
 
-EDXML_ is a versatile, simple and semantic data representation that facilitates
-complex data integration projects.
+EDXML_ is a data representation that transforms arbitrary data records into stories
+that machines can read and understand. Computers can read EDXML documents similar to
+how humans read a novel. This enables computers to actively assist human analysts
+in making sense of data, correlate data from multiple sources and connect the dots.
 
 This repository contains the **EDXML Software Development Kit (SDK)**. The
-SDK features the edxml Python_ package as well as a number of example Python
-applications, which demonstrate inspecting and validating EDXML data.
+SDK features the edxml Python package, which contains an implementation of the
+`EDXML specification <http://edxml.org/spec>`_. It also offers some command line
+tools to inspect EDXML documents and aid in application development.
 
-For developing EDXML processing scripts based on the Python classes offered by
-the edxml package, all you need to do is install the edxml package into the
-Python library path of your development system. Symlinking the edxml subdirectory
-to the location of your Python script will also work. Or just use 
-`Pip <http://pypi.python.org/pypi/edxml/>`_.
+The package can be installed using Pip::
+
+    pip install edxml
 
 * `Documentation <http://edxml-sdk.readthedocs.org/>`_ (Read the Docs)
 * `Installer <http://pypi.python.org/pypi/edxml/>`_ (PyPI)
 * `Source code <https://github.com/dtakken/edxml-sdk>`_ (Github)
 
-.. _Python: http://python.org/
 .. _EDXML: http://edxml.org/
-
-.. If you're reading this from the README.rst file in a source tree,
-   you can generate the HTML documentation by running "make doc" and browsing
-   to doc/_build/html/index.html to see the result.
-
-The SDK is distributed under the terms of the GNU Lesser General Public License,
-which means that both Open Source and commercial software can be based on it, as
-long as you meet the conditions outlined in the license document.
-
-Please visit `edxml.org <http://edxml.org/>`_ to learn more about EDXML.
