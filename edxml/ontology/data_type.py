@@ -42,10 +42,6 @@ class DataType(object):
     # Expression used for matching uuid datatypes
     UUID_PATTERN = re.compile(
         r"^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$")
-    # Expression used for matching valid EDXML floats (signed)
-    FLOAT_PATTERN_SIGNED = r'(-?[^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
-    # Expression used for matching valid EDXML floats (unsigned)
-    FLOAT_PATTERN_UNSIGNED = r'([^0]\.\d{6}E[+-]\d{3})|0\.000000E[+]000'
     # Expression used for matching valid EDXML datetime values
     DATETIME_PATTERN = r'(([2-9][0-9]{3})|(1(([6-9]\d{2})|(5((9\d)|(8[3-9]))))))-\d{2}-\d{2}T(([01]\d)|(2[0-3])).{13}Z'
 
@@ -517,14 +513,8 @@ class DataType(object):
                 else:
                     element = e.data(e.param(str(0), name='minInclusive'), type='double')
 
-            if len(split_data_type) > 2 and split_data_type[2] == 'signed':
-                # Assure that values are in 1.234567E+001 format, no leading
-                # plus sign is present and zero is not signed.
-                etree.SubElement(element, 'param', name='pattern').text = self.FLOAT_PATTERN_SIGNED
-            else:
-                # Assure that values are in 1.234567E+001 format and not leading
-                # plus sign is present.
-                etree.SubElement(element, 'param', name='pattern').text = self.FLOAT_PATTERN_UNSIGNED
+            # Assure that special values like NaN, +INF and -INF are not considered valid.
+            etree.SubElement(element, 'param', name='pattern').text = r'[+-]?\d+(\.\d+)?(E[+-]\d+)?'
 
             return element
 
@@ -805,12 +795,12 @@ class DataType(object):
             try:
                 normalized = set()
                 for value in values:
-                    value = '%.6E' % float(value)
-                    mantissa, exponent = value.split('E')
-                    if mantissa in ('0.000000', '-0.000000'):
-                        normalized.add('0.000000E+000')
-                    else:
-                        normalized.add('%sE%+04d' % (mantissa, int(exponent)))
+                    value = '%E' % float(value)
+                    if 'e' not in value.lower():
+                        # This happens for special values
+                        # like NaN or INF
+                        raise ValueError
+                    normalized.add('%E' % float(value))
             except ValueError:
                 raise EDXMLEventValidationError(
                     'Invalid floating point value in list: "%s"' % '","'.join([repr(value) for value in values])
@@ -1069,10 +1059,9 @@ class DataType(object):
             if isinstance(value, str):
                 try:
                     float(value)
+                    if 'e' not in ('%E' % float(value)).lower():
+                        raise ValueError
                 except ValueError:
-                    raise EDXMLEventValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
-                pattern = self.FLOAT_PATTERN_UNSIGNED if len(split_data_type) < 3 else self.FLOAT_PATTERN_SIGNED
-                if not re.match(r'^' + pattern + r'$', value):
                     raise EDXMLEventValidationError("Invalid value string for data type %s: '%s'." % (self.type, value))
                 value = float(value)
 

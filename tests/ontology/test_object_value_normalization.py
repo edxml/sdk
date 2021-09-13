@@ -46,15 +46,9 @@ def test_normalize_number_integer():
 def test_normalize_number_float():
 
     for float_type in [DataType.float(), DataType.double()]:
-        assert float_type.normalize_objects({1.0}) == {'1.000000E+000'}
-        assert float_type.normalize_objects({0}) == {'0.000000E+000'}
-        assert float_type.normalize_objects({'0.000000E+001'}) == {'0.000000E+000'}
-        assert float_type.normalize_objects({'-0.000000E+000'}) == {'0.000000E+000'}
-        assert float_type.normalize_objects({'+0.000000E+000'}) == {'0.000000E+000'}
-        assert float_type.normalize_objects({'1.000000E+0'}) == {'1.000000E+000'}
-        assert float_type.normalize_objects({'01.000000E+0'}) == {'1.000000E+000'}
-        assert float_type.normalize_objects({'1E+000'}) == {'1.000000E+000'}
-        assert float_type.normalize_objects({'1'}) == {'1.000000E+000'}
+        assert float_type.normalize_objects({1.0}) == {'1.000000E+00'}
+        assert float_type.normalize_objects({0}) == {'0.000000E+00'}
+        assert float_type.normalize_objects({'1'}) == {'1.000000E+00'}
         with pytest.raises(EDXMLEventValidationError):
             float_type.normalize_objects({'foo'})
 

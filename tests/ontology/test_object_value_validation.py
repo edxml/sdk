@@ -64,17 +64,11 @@ def test_validate_number_float():
         assert float_type.validate_object_value('0.000000E+000')
 
         with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('-0.000000E+000')
+            float_type.validate_object_value('NaN')
         with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('+1.000000E+000')
+            float_type.validate_object_value('-INF')
         with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('1.000000e+000')
-        with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('1.0E+000')
-        with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('1.000000E+0')
-        with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
-            float_type.validate_object_value('10.000000E+000')
+            float_type.validate_object_value('INF')
         with pytest.raises(EDXMLEventValidationError, match="Invalid value string"):
             float_type.validate_object_value('foo')
         with pytest.raises(EDXMLEventValidationError, match="value is negative"):
