@@ -86,7 +86,7 @@ class TranscoderMediator(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.close(write_ontology_update=exc_type is None)
 
     @property
     def _writer(self):
@@ -566,15 +566,22 @@ class TranscoderMediator(object):
         """
         return b''
 
-    def close(self):
+    def close(self, write_ontology_update=True):
         """
         Finalizes the transcoding process by flushing
         the output buffer. When the mediator is not used
         as a context manager, this method must be called
         explicitly to properly close the mediator.
 
+        By default the current ontology will be written to the
+        output if needed. This can be prevented by using the
+        method parameter.
+
         If no output was specified while instantiating this class,
         any generated XML data will be returned as bytes.
+
+        Args:
+            write_ontology_update (bool): Output ontology yes/no
 
         Returns:
           bytes: Generated output XML data
@@ -583,9 +590,10 @@ class TranscoderMediator(object):
         if self.__closed:
             return b''
 
-        # Make sure we output the ontology even
-        # when no events are output.
-        self._write_ontology_update()
+        if write_ontology_update:
+            # Make sure we output the ontology even
+            # when no events are output.
+            self._write_ontology_update()
 
         self._writer.close()
         self.__closed = True
