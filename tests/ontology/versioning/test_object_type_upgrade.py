@@ -185,7 +185,7 @@ def test_fuzzy_matching_upgrade():
     assert_valid_upgrade(a, b)
 
 
-def test_data_type_upgrade_fails():
+def test_data_type_upgrade_change_fails():
 
     o = Ontology()
     a = o.create_object_type('a')
@@ -193,6 +193,40 @@ def test_data_type_upgrade_fails():
 
     # Changing the data type is not allowed and makes both
     # versions incompatible, the cannot be compared.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_data_type_upgrade_enum_extend():
+
+    o = Ontology()
+    a = o.create_object_type('a').set_data_type(DataType.enum('yes', 'no'))
+    b = copy.deepcopy(a).set_data_type(DataType.enum('yes', 'no', 'maybe')).set_version(2)
+
+    # Now, b should be a valid upgrade of a and vice versa.
+    assert_valid_upgrade(a, b)
+
+
+def test_data_type_upgrade_enum_swap_components_fails():
+
+    o = Ontology()
+    a = o.create_object_type('a').set_data_type(DataType.enum('yes', 'no'))
+    b = copy.deepcopy(a).set_data_type(DataType.enum('no', 'yes')).set_version(2)
+
+    # Changing the ordering of the components of an enum the data type
+    # yields two distinct data types and makes both
+    # versions incompatible.
+    assert_invalid_ontology_upgrade(a, b)
+
+
+def test_data_type_upgrade_enum_swap_extend_components_fails():
+
+    o = Ontology()
+    a = o.create_object_type('a').set_data_type(DataType.enum('yes', 'no'))
+    b = copy.deepcopy(a).set_data_type(DataType.enum('no', 'yes', 'maybe')).set_version(2)
+
+    # Changing the ordering of the components of an enum the data type
+    # yields two distinct data types and makes both
+    # versions incompatible.
     assert_invalid_ontology_upgrade(a, b)
 
 

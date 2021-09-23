@@ -433,6 +433,32 @@ class DataType(object):
 
         return self.type.split(':')[0] == 'datetime'
 
+    def is_valid_upgrade_of(self, other):
+        """
+
+        Checks if the data type is a valid upgrade of
+        another data type.
+
+        Args:
+            other (DataType): The other data type
+
+        Returns:
+            bool:
+        """
+        if self.get_family() != 'enum':
+            return False
+        if other.get_family() != 'enum':
+            return False
+        if len(self.get_split()) <= len(other.get_split()):
+            return False
+
+        previous_length = len(other.type)
+
+        if self.type[:previous_length] != other.type[:previous_length]:
+            return False
+
+        return True
+
     def _generate_schema_datetime(self):
         # We use a a restricted dateTime data type,
         # which does not allow dates before 1583 or the 24th

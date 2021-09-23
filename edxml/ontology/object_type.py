@@ -748,8 +748,11 @@ class ObjectType(VersionedOntologyElement):
                 is_valid_upgrade = False
 
         if old.get_data_type().get() != new.get_data_type().get():
-            # The data types differ, no upgrade possible.
-            equal = is_valid_upgrade = False
+            # The data types differ
+            equal = False
+            if not new.get_data_type().is_valid_upgrade_of(old.get_data_type()):
+                # Data type cannot be upgraded like this.
+                is_valid_upgrade = False
 
         if equal:
             return 0
@@ -790,6 +793,7 @@ class ObjectType(VersionedOntologyElement):
             self.set_regex_soft(object_type.get_regex_soft())
             self.set_fuzzy_matching_attribute(object_type.get_fuzzy_matching())
             self.set_version(object_type.get_version())
+            self.set_data_type(object_type.get_data_type())
 
         return self
 
