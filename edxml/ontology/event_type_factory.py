@@ -321,9 +321,9 @@ class EventTypeFactory(object):
       Please refer to the EDXML specification for details about how parent property mappings work.
     """
 
-    TYPE_TIMESPANS = {}
+    TYPE_TIME_SPANS = {}
     """
-    The TYPE_TIMESPANS attribute contains the names of the properties that define the start and the end
+    The TYPE_TIME_SPANS attribute contains the names of the properties that define the start and the end
     of the time spans of the events. When no property is set that defines the start or end of the
     event time spans, the start or end is implicitly defined to be the smallest or largest datetime
     value in the event, regardless of the property that contains the datetime value. By setting
@@ -504,9 +504,9 @@ class EventTypeFactory(object):
             event_type.set_summary_template(cls.TYPE_SUMMARIES[event_type_name])
         if cls.TYPE_STORIES.get(event_type_name):
             event_type.set_story_template(cls.TYPE_STORIES[event_type_name])
-        if cls.TYPE_TIMESPANS.get(event_type_name):
-            event_type.set_timespan_property_name_start(cls.TYPE_TIMESPANS[event_type_name][0])
-            event_type.set_timespan_property_name_end(cls.TYPE_TIMESPANS[event_type_name][1])
+        if cls.TYPE_TIME_SPANS.get(event_type_name):
+            event_type.set_timespan_property_name_start(cls.TYPE_TIME_SPANS[event_type_name][0])
+            event_type.set_timespan_property_name_end(cls.TYPE_TIME_SPANS[event_type_name][1])
         if cls.TYPE_VERSIONS.get(event_type_name):
             event_type.set_version_property_name(cls.TYPE_VERSIONS.get(event_type_name))
 
@@ -775,7 +775,7 @@ class EventTypeFactory(object):
             'TYPE_DESCRIPTIONS', 'TYPE_DISPLAY_NAMES', 'TYPE_SUMMARIES', 'TYPE_STORIES', 'TYPE_PROPERTIES',
             'TYPE_PROPERTY_DESCRIPTIONS', 'TYPE_PROPERTY_SIMILARITY',
             'TYPE_PROPERTY_MERGE_STRATEGIES', 'TYPE_HASHED_PROPERTIES', 'PARENTS_CHILDREN',
-            'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIMESPANS', 'TYPE_VERSIONS', 'TYPE_ATTACHMENTS',
+            'CHILDREN_SIBLINGS', 'PARENT_MAPPINGS', 'TYPE_TIME_SPANS', 'TYPE_VERSIONS', 'TYPE_ATTACHMENTS',
             'TYPE_MULTI_VALUED_PROPERTIES', 'TYPE_OPTIONAL_PROPERTIES', 'TYPE_MANDATORY_PROPERTIES',
             'TYPE_ATTACHMENT_MEDIA_TYPES', 'TYPE_ATTACHMENT_DISPLAY_NAMES', 'TYPE_ATTACHMENT_DESCRIPTIONS',
             'TYPE_ATTACHMENT_ENCODINGS',

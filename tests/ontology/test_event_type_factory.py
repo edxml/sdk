@@ -135,7 +135,7 @@ def test_event_type_summary_template(factory):
 @pytest.mark.parametrize('factory', [(create_factory('event-type.a'))])
 def test_event_type_timespan_open(factory):
     type(factory).TYPE_PROPERTIES = {'event-type.a': {'timespan-start': 'datetime'}}
-    type(factory).TYPE_TIMESPANS = {'event-type.a': ['timespan-start', None]}
+    type(factory).TYPE_TIME_SPANS = {'event-type.a': ['timespan-start', None]}
 
     factory._ontology.create_object_type('datetime', data_type='datetime')
     event_types = dict(factory.generate_event_types())
@@ -147,7 +147,7 @@ def test_event_type_timespan_open(factory):
 @pytest.mark.parametrize('factory', [(create_factory('event-type.a'))])
 def test_event_type_timespan_closed(factory):
     type(factory).TYPE_PROPERTIES = {'event-type.a': {'timespan-start': 'datetime', 'timespan-end': 'datetime'}}
-    type(factory).TYPE_TIMESPANS = {'event-type.a': ['timespan-start', 'timespan-end']}
+    type(factory).TYPE_TIME_SPANS = {'event-type.a': ['timespan-start', 'timespan-end']}
 
     factory._ontology.create_object_type('datetime', data_type='datetime')
     event_types = dict(factory.generate_event_types())

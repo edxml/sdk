@@ -78,7 +78,7 @@ def test_spurious_type_story_exception(transcoder):
 
 
 def test_spurious_type_timespan_exception(transcoder):
-    type(transcoder).TYPE_TIMESPANS = {'spurious': [None, None]}
+    type(transcoder).TYPE_TIME_SPANS = {'spurious': [None, None]}
     with pytest.raises(ValueError, match='not in the TYPES attribute'):
         dict(transcoder.generate_event_types())
 
