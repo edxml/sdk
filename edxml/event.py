@@ -397,7 +397,7 @@ class EDXMLEvent(MutableMapping):
         if self.attachments != other.attachments:
             return False
 
-        if set(self.get_explicit_parents()) != set(other.get_explicit_parents()):
+        if set(self.get_parent_hashes()) != set(other.get_parent_hashes()):
             return False
 
         return True
@@ -591,7 +591,7 @@ class EDXMLEvent(MutableMapping):
         """
         return self._properties
 
-    def get_explicit_parents(self):
+    def get_parent_hashes(self):
         """
 
         Returns a list of sticky hashes of parent
@@ -1104,7 +1104,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         return {name: value for name, value in self.attrib.items()
                 if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
 
-    def get_explicit_parents(self):
+    def get_parent_hashes(self):
         parent_string = self.attrib.get('parents', '')
         # joining an empty list, e.g. ','.join([]), results in an empty string,
         # but splitting an empty string, e.g. ''.split(','), does not results in
@@ -1198,7 +1198,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         Returns:
           ParsedEvent:
         """
-        current = self.get_explicit_parents()
+        current = self.get_parent_hashes()
         return self.set_parents(current + parent_hashes)
 
     def set_parents(self, parent_hashes):
@@ -1453,7 +1453,7 @@ class EventElement(EDXMLEvent):
             event_type_name=event.get_type_name(),
             source_uri=event.get_source_uri(),
             attachments=event.get_attachments(),
-            parents=event.get_explicit_parents()
+            parents=event.get_parent_hashes()
         ).set_foreign_attributes(event.get_foreign_attributes())\
             .replace_invalid_characters(event._replace_invalid_characters)
 
@@ -1515,7 +1515,7 @@ class EventElement(EDXMLEvent):
         return {name: value for name, value in attr
                 if name.startswith('{') and not name.startswith('{http://edxml.org/edxml}')}
 
-    def get_explicit_parents(self):
+    def get_parent_hashes(self):
         parent_string = self.__element.attrib.get('parents', '')
         # joining an empty list, e.g. ','.join([]), results in an empty string,
         # but splitting an empty string, e.g. ''.split(','), does not results in
@@ -1602,7 +1602,7 @@ class EventElement(EDXMLEvent):
         Returns:
           EventElement:
         """
-        current = self.get_explicit_parents()
+        current = self.get_parent_hashes()
         return self.set_parents(current + parent_hashes)
 
     def set_parents(self, parent_hashes):

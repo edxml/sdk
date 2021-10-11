@@ -60,7 +60,7 @@ def create_event_element(event):
         event.get_properties(),
         event_type_name=event.get_type_name(),
         source_uri=event.get_source_uri(),
-        parents=event.get_explicit_parents(),
+        parents=event.get_parent_hashes(),
         attachments=event.get_attachments()
     ).set_foreign_attributes(event.get_foreign_attributes())
 
@@ -345,12 +345,12 @@ def test_deepcopy_event_attachments(event_with_attachment):
 
 
 def test_copy_event_parents(event_with_explicit_parent):
-    assert event_with_explicit_parent.copy().get_explicit_parents() == event_with_explicit_parent.get_explicit_parents()
+    assert event_with_explicit_parent.copy().get_parent_hashes() == event_with_explicit_parent.get_parent_hashes()
 
 
 def test_deepcopy_event_parents(event_with_explicit_parent):
-    assert deepcopy(event_with_explicit_parent).get_explicit_parents() == \
-           event_with_explicit_parent.get_explicit_parents()
+    assert deepcopy(event_with_explicit_parent).get_parent_hashes() == \
+           event_with_explicit_parent.get_parent_hashes()
 
 
 def test_copy_event_foreign_attributes(event_with_foreign_attribute):
@@ -458,31 +458,31 @@ def test_delete_attachment_from_property(event):
 
 
 def test_read_parents(event_with_explicit_parent, sha1_hash):
-    assert event_with_explicit_parent.get_explicit_parents() == [sha1_hash]
+    assert event_with_explicit_parent.get_parent_hashes() == [sha1_hash]
 
 
 def test_set_parents(event, sha1_hash):
-    assert event.get_explicit_parents() == []
+    assert event.get_parent_hashes() == []
     event.set_parents([sha1_hash])
-    assert event.get_explicit_parents() == [sha1_hash]
+    assert event.get_parent_hashes() == [sha1_hash]
     event.set_parents([])
-    assert event.get_explicit_parents() == []
+    assert event.get_parent_hashes() == []
 
 
 def test_add_parents(event, sha1_hash, another_sha1_hash):
-    assert event.get_explicit_parents() == []
+    assert event.get_parent_hashes() == []
     event.add_parents([sha1_hash])
-    assert event.get_explicit_parents() == [sha1_hash]
+    assert event.get_parent_hashes() == [sha1_hash]
     event.add_parents([another_sha1_hash])
-    assert set(event.get_explicit_parents()) == {sha1_hash, another_sha1_hash}
+    assert set(event.get_parent_hashes()) == {sha1_hash, another_sha1_hash}
 
 
 def test_add_duplicate_parents(event, sha1_hash):
-    assert event.get_explicit_parents() == []
+    assert event.get_parent_hashes() == []
     event.add_parents([sha1_hash])
-    assert event.get_explicit_parents() == [sha1_hash]
+    assert event.get_parent_hashes() == [sha1_hash]
     event.add_parents([sha1_hash])
-    assert event.get_explicit_parents() == [sha1_hash]
+    assert event.get_parent_hashes() == [sha1_hash]
 
 
 def test_read_foreign_attribute(event_with_foreign_attribute):

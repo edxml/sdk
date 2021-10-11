@@ -1753,7 +1753,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         # For each property we accumulate all values from all events.
         for event in events:
-            parents.update(event.get_explicit_parents())
+            parents.update(event.get_parent_hashes())
             for property_name, values in event.items():
                 event_properties[property_name].extend(values)
 
