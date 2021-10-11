@@ -359,10 +359,7 @@ class EDXMLEvent(MutableMapping):
         return f"Event of type {self.get_type_name()} from {self.get_source_uri()}"
 
     def __str__(self):
-        return "\n".join(
-            ['%20s:%s' % (property_name, ','.join(values))
-             for property_name, values in self._properties.items()]
-        )
+        return etree.tostring(self.get_element(), pretty_print=True)
 
     def __delitem__(self, key):
         del self._properties[key]
