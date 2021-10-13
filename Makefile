@@ -5,7 +5,7 @@ all: dependencies dist doc check test clean
 dependencies:
 	@echo "Installing dependencies:"
 	python3 -m pip install --upgrade pip setuptools wheel
-	pip3 install flake8 pytest
+	pip3 install flake8 pytest wheel twine
 	pip3 install -r requirements.txt
 
 dist: dependencies
