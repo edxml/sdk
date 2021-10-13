@@ -17,11 +17,11 @@ setup(
     version=__version__,
 
     # A description of your project
-    description='The EDXML Software Developers Kit',
-    long_description='Python classes and example applications for use with the EDXML specification at edxml.org',
+    description='The EDXML Software Development Kit',
+    long_description='Python implementation of the EDXML specification and tools for application development',
 
     # The project's main homepage
-    url='https://github.com/dtakken/edxml-sdk',
+    url='https://github.com/edxml/sdk',
 
     # Author details
     author='Dik Takken',
