@@ -8,11 +8,14 @@ dependencies:
 	pip3 install flake8 pytest
 	pip3 install -r requirements.txt
 
-dist:
+dist: dependencies
+	rm -rf build
 	python3 setup.py sdist bdist_wheel
 
-pypi:
-	python3 setup.py sdist bdist_wheel upload
+pypi: dist
+	# NOTE: twine will read TWINE_USERNAME and TWINE_PASSWORD from environment
+	@echo "Uploading to PyPI:"
+	twine upload dist/*
 
 doc:
 	pip3 install -e .[doc]
