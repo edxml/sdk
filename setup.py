@@ -25,7 +25,7 @@ setup(
 
     # Author details
     author='Dik Takken',
-    author_email='d.h.j.takken@xs4all.nl',
+    author_email='dik.takken@edxml.org',
 
     # Choose your license
     license='MIT',
