@@ -8,5 +8,5 @@ typing
 pytest
 ipy
 coverage
-edxml-schema==3.0.0.dev2
-edxml-test-corpus==3.0.0.dev2
+edxml-schema==3.0.0.dev3
+edxml-test-corpus==3.0.0.dev3
