@@ -89,8 +89,9 @@ setup(
     # See https://pip.pypa.io/en/latest/reference/pip_install.html#requirements-file-format
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=['lxml>=3.8', 'python-dateutil', 'edxml-schema',
-                      'iso3166', 'pytz', 'termcolor', 'typing', 'pytest'],
+    install_requires=['lxml>=3.8', 'python-dateutil', 'edxml-schema==3.0.0.dev3',
+                      'iso3166', 'pytz', 'termcolor', 'graphviz', 'typing', 'pytest',
+                      'ipy', 'coverage', 'edxml-test-corpus==3.0.0.dev4'],
 
     # Specify additional packages that are only installed for specific purposes,
     # like building documentation.
