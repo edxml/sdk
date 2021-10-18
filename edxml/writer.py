@@ -234,14 +234,19 @@ class EDXMLWriter(object):
 
         except EDXMLEventValidationError as exception:
             self.__invalid_event_count += 1
-            raise EDXMLEventValidationError(
-                'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
+            error_message = 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s\n\n%s' % (
                     etree.tostring(event_element, pretty_print=True, encoding='unicode'),
                     exception,
                     'Note that this exception is not fatal. You can recover by catching the EDXMLValidationError '
                     'and begin writing a new event.'
                 )
-            )
+
+            if property_name is not None:
+                error_message += '\n\nIt looks like the event contains an invalid property object. ' \
+                                 'The object could not be normalized automatically and the writer is not configured' \
+                                 ' to drop invalid objects.'
+
+            raise EDXMLEventValidationError(error_message)
 
     def __write_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
