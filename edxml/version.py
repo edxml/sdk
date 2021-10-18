@@ -17,5 +17,5 @@
 # 3) we can import it into your module module
 #
 # Version 3.0.0.dev0:
-__version_info__ = ('3', '0', '0', 'dev0')
+__version_info__ = ('3', '0', '0', 'dev1')
 __version__ = '.'.join(__version_info__)
