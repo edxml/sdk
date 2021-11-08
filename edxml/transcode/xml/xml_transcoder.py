@@ -208,7 +208,7 @@ class XmlTranscoder(edxml.transcode.RecordTranscoder):
                     out_strings.append(' '.join(string.text.split()))
         return out_strings if isinstance(strings, list) else out_strings[0]
 
-    def generate(self, element, xpath_selector, **kwargs):
+    def generate(self, element, record_selector, **kwargs):
         """
 
         Generates one or more EDXML events from the
@@ -216,7 +216,7 @@ class XmlTranscoder(edxml.transcode.RecordTranscoder):
         using the PROPERTY_MAP class property.
 
         When the record transcoder is the fallback transcoder,
-        xpath_selector will be None.
+        record_selector will be None.
 
         This method can be overridden to create a generic
         event generator, populating the output events with
@@ -228,7 +228,7 @@ class XmlTranscoder(edxml.transcode.RecordTranscoder):
 
         Args:
           element (etree.Element): XML element
-          xpath_selector (Optional[str]): The matching XPath selector
+          record_selector (Optional[str]): The matching XPath selector
           **kwargs: Arbitrary keyword arguments
 
         Yields:

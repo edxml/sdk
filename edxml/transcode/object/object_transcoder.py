@@ -55,7 +55,7 @@ class ObjectTranscoder(RecordTranscoder):
 
     """
 
-    def generate(self, input_object, record_type_name, **kwargs):
+    def generate(self, input_object, record_selector, **kwargs):
         """
 
         Generates one or more EDXML events from the
@@ -63,7 +63,7 @@ class ObjectTranscoder(RecordTranscoder):
         using the PROPERTY_MAP class property.
 
         When the record transcoder is the fallback transcoder,
-        record_type_name will be None.
+        record_selector will be None.
 
         The input record can be a dictionary or act like one, it can
         be an object, a dictionary containing objects or an object
@@ -83,7 +83,7 @@ class ObjectTranscoder(RecordTranscoder):
 
         Args:
           input_object (dict, object): Input object
-          record_type_name (Optional[str]): The record type of the input object
+          record_selector (Optional[str]): The name of the input record type
           **kwargs: Arbitrary keyword arguments
 
         Yields:
@@ -92,13 +92,13 @@ class ObjectTranscoder(RecordTranscoder):
 
         properties = {}
 
-        if record_type_name not in self.TYPE_MAP:
+        if record_selector not in self.TYPE_MAP:
             raise Exception(
-                f"{type(self).__name__} is registered as a transcoder for records of type '{record_type_name}' "
+                f"{type(self).__name__} is registered as a transcoder for records of type '{record_selector}' "
                 f"while its TYPE_MAP constant has no corresponding key for that record type."
             )
 
-        event_type_name = self.TYPE_MAP[record_type_name]
+        event_type_name = self.TYPE_MAP[record_selector]
 
         for selector, property_names in self.PROPERTY_MAP[event_type_name].items():
 
