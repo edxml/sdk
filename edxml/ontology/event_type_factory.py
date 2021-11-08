@@ -405,7 +405,7 @@ class EventTypeFactory(object):
     The TYPE_ATTACHMENT_DISPLAY_NAMES attribute is a dictionary mapping EDXML event type names
     to attachment display names. The attachment display names are a dictionary mapping attachment names
     to display names. Each display name is a list, containing the singular form, optionally followed
-    by the plural form, like this:
+    by the plural form, like this::
 
         {'event-type-name': {'my-attachment': ['attachment', 'attachments']}}
 
