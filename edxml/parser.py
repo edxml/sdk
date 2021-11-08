@@ -715,7 +715,7 @@ class EDXMLPushParser(EDXMLParserBase):
     def __init__(self, validate=True, foreign_element_tags=None):
         EDXMLParserBase.__init__(self, validate)
         self.__foreign_element_tags = foreign_element_tags or []
-        self.__inputParser = None
+        self.__input_parser = None
 
     def feed(self, data):
         """
@@ -730,7 +730,7 @@ class EDXMLPushParser(EDXMLParserBase):
 
         """
         if self._element_iterator is None:
-            self.__inputParser = etree.XMLPullParser(
+            self.__input_parser = etree.XMLPullParser(
                 events=_get_relevant_parser_events(self.__foreign_element_tags),
                 tag=self._VISITED_TAGS + self.__foreign_element_tags,
                 **self._LXML_PARSER_OPTIONS
@@ -745,11 +745,11 @@ class EDXMLPushParser(EDXMLParserBase):
                 lookup.get_namespace('http://edxml.org/edxml')['event'] = self._event_class
             else:
                 lookup.get_namespace('http://edxml.org/edxml')['event'] = ParsedEvent
-            self.__inputParser.set_element_class_lookup(lookup)
+            self.__input_parser.set_element_class_lookup(lookup)
 
-            self._element_iterator = self.__inputParser.read_events()
+            self._element_iterator = self.__input_parser.read_events()
 
-        self.__inputParser.feed(data)
+        self.__input_parser.feed(data)
 
         try:
             self._parse_edxml()
