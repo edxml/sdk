@@ -19,7 +19,6 @@ the output. By overriding various callbacks, the data can be modified before
 it is written, using an :class:`edxml.ontology.Ontology` instance to interpret it.
 
 """
-from typing import Optional
 from .parser import EDXMLParserBase, EDXMLPushParser, EDXMLPullParser
 from edxml.writer import EDXMLWriter
 
@@ -32,9 +31,9 @@ class EDXMLFilterBase(EDXMLParserBase):
     or EDXMLPushFilter.
     """
 
-    def __init__(self):
-        super().__init__()
-        self._writer = None  # type: Optional[EDXMLWriter]
+    def __init__(self, output, validate=True):
+        super().__init__(validate)
+        self._writer = self._writer = EDXMLWriter(output, validate)  # type: EDXMLWriter
 
     def __enter__(self):
         return self
@@ -88,8 +87,8 @@ class EDXMLPullFilter(EDXMLPullParser, EDXMLFilterBase):
     """
 
     def __init__(self, output, validate=True):
-        super().__init__()
-        self._writer = EDXMLWriter(output, validate)
+        EDXMLPullParser.__init__(self, validate)
+        EDXMLFilterBase.__init__(self, output, validate)
 
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
@@ -103,5 +102,4 @@ class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
 
     def __init__(self, output, validate=True):
         EDXMLPushParser.__init__(self, validate)
-        EDXMLFilterBase.__init__(self)
-        self._writer = EDXMLWriter(output, validate)
+        EDXMLFilterBase.__init__(self, output, validate)

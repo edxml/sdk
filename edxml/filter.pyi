@@ -6,7 +6,7 @@ from edxml.parser import EDXMLParserBase, EDXMLPullParser, EDXMLPushParser
 
 class EDXMLFilterBase(EDXMLParserBase):
 
-    def __init__(self) -> None:
+    def __init__(self, output, validate=True) -> None:
 
         self._writer = ...      # type: EDXMLWriter
         self.__groupOpen = ...  # type: bool
@@ -17,12 +17,7 @@ class EDXMLFilterBase(EDXMLParserBase):
 
 
 class EDXMLPullFilter(EDXMLPullParser, EDXMLFilterBase):
-
-    def __init__(self, output, validate=True):
-        self._writer = ...     # type: EDXMLWriter
-
+    ...
 
 class EDXMLPushFilter(EDXMLPushParser, EDXMLFilterBase):
-
-    def __init__(self, output, validate=True):
-        self._writer = ...     # type: EDXMLWriter
+    ...
