@@ -53,9 +53,7 @@ class EDXMLWriter(object):
     """
 
     class OutputBuffer(object):
-        """
-        A buffer for collecting the output of the lxml xml writer.
-        """
+        # A buffer for collecting the output of the lxml xml writer.
 
         def __init__(self):
             self.buffer = deque()
