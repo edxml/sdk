@@ -42,13 +42,11 @@ class TranscoderMediator(object):
         """
 
         Create a new transcoder mediator which will output streaming
-        EDXML data using specified output. The Output parameter is a
+        EDXML data using specified output. The output parameter is a
         file-like object that will be used to send the XML data to.
-        This file-like object can be pretty much anything, as long
-        as it has a write() method and a mode containing 'a' (opened
-        for appending). When the Output parameter is omitted, the
-        generated XML data will be returned or yielded by the methods
-        that generate output.
+        Note that the XML data is binary data, not string data. When
+        the output parameter is omitted, the generated XML data will
+        be returned by the methods that generate output.
 
         Args:
           output (file, optional): a file-like object

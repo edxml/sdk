@@ -126,7 +126,8 @@ class XmlTranscoderMediator(TranscoderMediator):
         please refer to the lxml documentation for details.
 
         If no output was specified while instantiating this class,
-        any generated XML data will be returned as bytes.
+        any generated XML data will be collected in a memory buffer and returned
+        when the transcoder is closed.
 
         Notes:
           Passing a file name rather than a file-like object
@@ -206,6 +207,9 @@ class XmlTranscoderMediator(TranscoderMediator):
           attribute_defaults (bool): read default attributes from DTD
           resolve_entities (bool): replace entities by their text value (default: True)
           input_file (Union[io.TextIOBase, file, str]):
+
+        Yields:
+            bytes: Generated output XML data
 
         """
         tags = self._get_tags()

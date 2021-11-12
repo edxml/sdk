@@ -15,15 +15,7 @@
 This sub-package implements a record transcoder to convert Python objects
 into EDXML output streams. The various classes in this package
 can be extended to implement transcoders for specific types of
-Python objects and route them records to the correct transcoder.
-
-..  autoclass:: ObjectTranscoder
-    :members:
-    :show-inheritance:
-
-..  autoclass:: ObjectTranscoderMediator
-    :members:
-    :show-inheritance:
+Python objects and route the records to the correct transcoder.
 """
 from .object_transcoder import ObjectTranscoder
 from .object_transcoder_mediator import ObjectTranscoderMediator
