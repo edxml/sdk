@@ -310,8 +310,8 @@ class EDXMLEvent(MutableMapping):
         Event['property-name'] = 'value'
 
     Note:
-      Properties are lists of object values. On assignment,
-      non-list values are automatically wrapped into lists.
+      Properties are sets of object values. On assignment,
+      single values are automatically wrapped into sets.
 
     """
 
@@ -438,6 +438,13 @@ class EDXMLEvent(MutableMapping):
 
     @property
     def properties(self):
+        """
+
+        Class property storing the properties of the event.
+
+        Returns:
+            PropertySet: Event properties
+        """
         return self.get_properties()
 
     @properties.setter
