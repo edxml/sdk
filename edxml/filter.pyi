@@ -9,7 +9,6 @@ class EDXMLFilterBase(EDXMLParserBase):
     def __init__(self, output, validate=True) -> None:
 
         self._writer = ...      # type: EDXMLWriter
-        self.__groupOpen = ...  # type: bool
 
     def _parsed_ontology(self, parsed_ontology: Ontology) -> None: ...
 
