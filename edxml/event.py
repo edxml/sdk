@@ -511,8 +511,9 @@ class EDXMLEvent(MutableMapping):
         Returns:
             etree.Element:
         """
+        replace_invalid_characters = getattr(self, '_replace_invalid_characters', False)
         return EventElement.create_from_event(self)\
-            .replace_invalid_characters(self._replace_invalid_characters)\
+            .replace_invalid_characters(replace_invalid_characters)\
             .get_element(sort)
 
     def copy(self):
@@ -1457,6 +1458,7 @@ class EventElement(EDXMLEvent):
           EventElement:
         """
 
+        replace_invalid_characters = getattr(event, '_replace_invalid_characters', False)
         return cls(
             event.get_properties(),
             event_type_name=event.get_type_name(),
@@ -1464,7 +1466,7 @@ class EventElement(EDXMLEvent):
             attachments=event.get_attachments(),
             parents=event.get_parent_hashes()
         ).set_foreign_attributes(event.get_foreign_attributes())\
-            .replace_invalid_characters(event._replace_invalid_characters)
+            .replace_invalid_characters(replace_invalid_characters)
 
     def _sort(self):
         """
