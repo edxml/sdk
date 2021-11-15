@@ -315,7 +315,7 @@ class EDXMLEvent(MutableMapping):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None,
+    def __init__(self, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None,
                  foreign_attribs=None):
         """
 
@@ -328,7 +328,7 @@ class EDXMLEvent(MutableMapping):
         the actual attachment strings.
 
         Args:
-          properties (Dict[str,Set[str]]): Dictionary of properties
+          properties (Optional[Dict[str,Set[str]]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -338,6 +338,8 @@ class EDXMLEvent(MutableMapping):
         Returns:
           EDXMLEvent
         """
+        if properties is None:
+            properties = {}
         self._properties = None
         self._attachments = None
         self._event_type_name = event_type_name
@@ -531,7 +533,7 @@ class EDXMLEvent(MutableMapping):
         )
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
+    def create(cls, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -547,7 +549,7 @@ class EDXMLEvent(MutableMapping):
           directly to create new events.
 
         Args:
-          properties (Dict[str,Union[str,List[str]]]): Dictionary of properties
+          properties (Optional[Dict[str,Union[str,List[str]]]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes
@@ -912,7 +914,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None,
+    def __init__(self, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None,
                  foreign_attribs=None):
         super().__init__(properties, event_type_name, source_uri, parents, attachments, foreign_attribs)
         raise NotImplementedError('ParsedEvent objects can only be created by parsers')
@@ -1025,7 +1027,7 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
         return deepcopy(self)
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
+    def create(cls, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         This override of the create() method of the EDXMLEvent class
@@ -1255,7 +1257,7 @@ class EventElement(EDXMLEvent):
     preferred over using EDXMLEvent if you intend to feed it to EDXMLWriter.
     """
 
-    def __init__(self, properties, event_type_name=None, source_uri=None, parents=None, attachments=None,
+    def __init__(self, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None,
                  foreign_attribs=None):
         """
 
@@ -1411,7 +1413,7 @@ class EventElement(EDXMLEvent):
         return deepcopy(self)
 
     @classmethod
-    def create(cls, properties, event_type_name=None, source_uri=None, parents=None, attachments=None):
+    def create(cls, properties=None, event_type_name=None, source_uri=None, parents=None, attachments=None):
         """
 
         Creates a new EDXML event. The Properties argument must be a
@@ -1424,7 +1426,7 @@ class EventElement(EDXMLEvent):
           directly to create new events.
 
         Args:
-          properties (Dict[str,Union[str,List[str]]]): Dictionary of properties
+          properties (Optional[Dict[str,Union[str,List[str]]]]): Dictionary of properties
           event_type_name (Optional[str]): Name of the event type
           source_uri (Optional[str]): Event source URI
           parents (Optional[List[str]]): List of explicit parent hashes

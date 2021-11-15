@@ -30,7 +30,8 @@ class AttachmentSet(OrderedDict):
 
 class EDXMLEvent(MutableMapping):
 
-    def __init__(self, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Optional[Dict[str, Union[Any, Set[Any]]]] = None,
+                 event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, Dict[str, str]] = None,
                  foreign_attribs: Dict[str, str]=None) -> None:
 
@@ -79,7 +80,8 @@ class EDXMLEvent(MutableMapping):
     def copy(self) -> 'EDXMLEvent': ...
 
     @classmethod
-    def create(cls, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
+    def create(cls, properties: Dict[str, Union[Any, Set[Any]]] = None,
+               event_type_name: str = None, source_uri: str = None,
                parents: List[str] = None, attachments: Dict[str, Dict[str, str]] = None) -> 'EDXMLEvent': ...
 
     def get_type_name(self) -> str: ...
@@ -116,10 +118,10 @@ class EDXMLEvent(MutableMapping):
 
     def compute_sticky_hash(self, event_type: EventType, encoding: str ='hex') -> str: ...
 
-
 class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
-    def __init__(self, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Dict[str, Union[Any, Set[Any]]] = None,
+                 event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, Dict[str, str]] = None,
                  foreign_attribs: Dict[str, str]=None) -> None:
         super().__init__(properties, event_type_name, source_uri, parents, attachments)
@@ -162,7 +164,8 @@ class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
 class EventElement(EDXMLEvent):
 
-    def __init__(self, properties: Dict[str, Union[Any, Set[Any]]], event_type_name: str = None, source_uri: str = None,
+    def __init__(self, properties: Dict[str, Union[Any, Set[Any]]] = None,
+                 event_type_name: str = None, source_uri: str = None,
                  parents: List[str] = None, attachments: Dict[str, Dict[str]] = None,
                  foreign_attribs: Dict[str, str]=None) -> None:
         super().__init__(properties, event_type_name, source_uri, parents, attachments)
