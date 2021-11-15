@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from edxml.ontology import EventType
+from edxml.ontology import EventType, Ontology
 
 from collections import MutableMapping, OrderedDict, MutableSet
 from lxml import etree
@@ -117,6 +117,8 @@ class EDXMLEvent(MutableMapping):
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'EDXMLEvent': ...
 
     def compute_sticky_hash(self, event_type: EventType, encoding: str ='hex') -> str: ...
+
+    def is_valid(self, ontology: Ontology) -> bool: ...
 
 class ParsedEvent(EDXMLEvent, etree.ElementBase):
 
