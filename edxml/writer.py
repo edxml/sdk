@@ -19,14 +19,14 @@ to generate EDXML streams.
 """
 import edxml_schema
 import sys
+
 from collections import deque
-
-from typing import Dict, Optional
-
+from typing import Optional
 from lxml import etree
 from copy import deepcopy
+
 from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
-from edxml.event import ParsedEvent
+from edxml.event_validator import EventValidator
 from edxml.ontology import Ontology
 from edxml.logger import log
 
@@ -66,8 +66,6 @@ class EDXMLWriter(object):
 
         self.__schema = None                    # type: Optional[etree.RelaxNG]
         self.__ontology = Ontology()            # type: Ontology
-        self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
-        self.__event_type_schema_cache_ns = {}  # type: Dict[str, etree.RelaxNG]
         self.__allow_repair_drop = {}
         self.__allow_repair_normalize = {}
         self.__ignore_invalid_events = False
@@ -80,6 +78,8 @@ class EDXMLWriter(object):
 
         self.__num_events_repaired = 0
         self.__num_events_produced = 0
+
+        self.__validator = EventValidator(self.__ontology)  # type: EventValidator
 
         if self.__output is None:
             # Create an output buffer to capture XML data
@@ -163,57 +163,21 @@ class EDXMLWriter(object):
     def get_output(self):
         return self.__output
 
-    def get_event_type_schema(self, event_type_name, namespaced):
-        if event_type_name not in self.__event_type_schema_cache:
-            self.__event_type_schema_cache[event_type_name] = etree.RelaxNG(
-                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology, namespaced=False)
+    def __generate_event_validation_exception(self, event_element):
+        error = self.__validator.get_last_error()
+        error_message = 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s' % (
+                etree.tostring(event_element, pretty_print=True, encoding='unicode'),
+                error.exception
             )
 
-        if event_type_name not in self.__event_type_schema_cache_ns:
-            self.__event_type_schema_cache_ns[event_type_name] = etree.RelaxNG(
-                self.__ontology.get_event_type(event_type_name).generate_relax_ng(self.__ontology, namespaced=True)
-            )
+        if error.property_name is not None:
+            error_message += '\n\nIt looks like the event contains an invalid property object. ' \
+                             'The object could not be normalized automatically and the writer is not configured' \
+                             ' to drop invalid objects.'
 
-        if namespaced:
-            return self.__event_type_schema_cache_ns.get(event_type_name)
-        else:
-            return self.__event_type_schema_cache.get(event_type_name)
+        self.__invalid_event_count += 1
 
-    def __generate_event_validation_exception(self, event, event_element, schema, property_name=None):
-        try:
-            if schema.error_log.last_error.path.startswith('/event/properties/'):
-                # Something is wrong with event properties.
-                self.__ontology.get_event_type(event.get_type_name()).validate_event_objects(event, property_name)
-            elif schema.error_log.last_error.path.startswith('/event/attachments/'):
-                # Something is wrong with event attachments.
-                self.__ontology.get_event_type(event.get_type_name()).validate_event_attachments(event)
-
-            # Something else is wrong.
-            self.__ontology.get_event_type(event.get_type_name()).validate_event_structure(event)
-
-            # EventType validation did not find the issue. We have
-            # no other option than to raise a RelaxNG validation error.
-            raise EDXMLEventValidationError(
-                "At xpath location %s: %s" %
-                (
-                    schema.error_log.last_error.path,
-                    schema.error_log.last_error.message
-                )
-            )
-
-        except EDXMLEventValidationError as exception:
-            self.__invalid_event_count += 1
-            error_message = 'An invalid event was produced:\n%s\n\nThe EDXML validator said: %s' % (
-                    etree.tostring(event_element, pretty_print=True, encoding='unicode'),
-                    exception
-                )
-
-            if property_name is not None:
-                error_message += '\n\nIt looks like the event contains an invalid property object. ' \
-                                 'The object could not be normalized automatically and the writer is not configured' \
-                                 ' to drop invalid objects.'
-
-            raise EDXMLEventValidationError(error_message)
+        raise EDXMLEventValidationError(error_message)
 
     def __write_coroutine(self):
         """Coroutine which performs the actual XML serialisation"""
@@ -299,9 +263,6 @@ class EDXMLWriter(object):
 
         self.__writer.send(ontology_element)
 
-        self.__event_type_schema_cache = {}
-        self.__event_type_schema_cache_ns = {}
-
         return self
 
     def close(self):
@@ -330,7 +291,7 @@ class EDXMLWriter(object):
 
         return self
 
-    def _repair_event(self, event, schema):
+    def _repair_event(self, event):
         """
 
         Tries to repair an invalid event by normalizing object
@@ -342,38 +303,37 @@ class EDXMLWriter(object):
 
         Args:
             event (edxml.EDXMLEvent): The event
-            schema (ElementTree): The RelaxNG schema for the event
         """
 
         # Do not modify the original event
         event = deepcopy(event)
 
-        while not schema.validate(event.get_element()):
+        valid = self.__validator.is_valid(event, event.get_element())
+
+        while not valid:
 
             original_event = deepcopy(event)
 
             try:
                 self._normalize_event(event)
             except EDXMLEventValidationError as e:
-                last_error = schema.error_log.last_error
+                last_error = self.__validator.get_last_error()
+                schema_error = last_error.schema_error
 
-                if last_error.path is None or \
-                        not last_error.path.startswith('/event/properties/'):
-                    # We have no idea what is wrong. Raise a validation exception.
-                    self.__generate_event_validation_exception(event, event.get_element(), schema)
+                if last_error.property_name is None:
+                    # We have no idea what is wrong. Raise the validation exception.
+                    raise last_error.exception
 
                 # Try removing the offending property object(s).
-                offending_property_name = last_error.path.split('/')[-1].split('[')[0]
+                offending_property_name = last_error.property_name
 
                 if offending_property_name not in self.__allow_repair_drop.get(event.get_type_name(), []):
                     # Offending property is not one that we should try to fix.
-                    # Raise a validation exception.
-                    self.__generate_event_validation_exception(
-                        event, event.get_element(), schema, offending_property_name
-                    )
+                    # Raise the validation exception.
+                    raise last_error.exception
 
                 offending_property_values_all = {str(v) for v in event[offending_property_name]}
-                offending_property_values_bad = [b.text for b in event.get_element().xpath(last_error.path)]
+                offending_property_values_bad = [b.text for b in event.get_element().xpath(schema_error.path)]
                 event[offending_property_name] = offending_property_values_all.difference(offending_property_values_bad)
                 log.info(
                     'Repaired invalid property %s of event type %s (%s): %s => %s\n' % (
@@ -384,6 +344,8 @@ class EDXMLWriter(object):
                         repr(event[offending_property_name])
                     )
                 )
+
+            valid = self.__validator.is_valid(event, event.get_element())
 
         self.__num_events_repaired += 1
 
@@ -456,34 +418,27 @@ class EDXMLWriter(object):
         event_element = event.get_element(sort)
 
         if self.__validate:
-            # Parsed events inherit the global namespace from the
-            # EDXML data stream that they originate from. Unfortunately,
-            # the lxml XML generator (specifically etree.xmlfile) is not
-            # so clever as to filter out these namespaces when writing into
-            # an output stream that already has a global namespace. So,
-            # for this specific case, we must write explicitly namespaced
-            # events and use a separate validation schema.
-            schema = self.get_event_type_schema(event_type_name, isinstance(event, ParsedEvent))
-
-            if not schema.validate(event_element):
+            try:
+                self.__validator.validate(event, event_element)
+            except EDXMLEventValidationError:
                 # Event does not validate.
                 if event_type_name not in self.__allow_repair_normalize and not self.__ignore_invalid_events:
-                    self.__generate_event_validation_exception(event, event_element, schema)
+                    self.__generate_event_validation_exception(event_element)
 
                 # We will try to repair the event. Note that, since event_element
                 # is a reference to the internal lxml element, the repair action will manipulate
                 # event_element.
                 try:
-                    event = self._repair_event(event, schema)
+                    event = self._repair_event(event)
                     log.info('Event validated after repairing it.')
                     event_element = event.get_element()
-                except EDXMLEventValidationError as error:
+                except EDXMLEventValidationError as repair_error:
                     if self.__ignore_invalid_events:
                         if self.__log_invalid_events:
-                            log.info(str(error) + '\n\nContinuing anyways.\n')
+                            log.info(str(repair_error) + '\n\nContinuing anyways.\n')
                         return self
                     else:
-                        raise
+                        self.__generate_event_validation_exception(event_element)
 
         self.__writer.send(event_element)
 

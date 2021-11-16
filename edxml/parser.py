@@ -25,6 +25,7 @@ from lxml import etree
 
 from edxml.error import EDXMLValidationError, EDXMLEventValidationError, EDXMLOntologyValidationError
 from edxml import ParsedEvent
+from edxml.event_validator import EventValidator
 from edxml.ontology import Ontology
 
 
@@ -76,10 +77,8 @@ class EDXMLParserBase(object):
         self.__parsed_initial_ontology = False
 
         self.__schema = None                 # type: etree.RelaxNG
-        self.__event_type_schema_cache = {}     # type: Dict[str, etree.RelaxNG]
-        self.__event_type_schema = None        # type: etree.RelaxNG
-
         self.__validate = validate           # type: bool
+        self.__validator = None              # type: EventValidator
 
     def __enter__(self):
         return self
@@ -253,25 +252,6 @@ class EDXMLParserBase(object):
         """
         return self._ontology or Ontology()
 
-    def get_event_type_schema(self, event_type_name):
-        """
-
-        Returns the RelaxNG schema that is used by the parser
-        to validate the specified event type. Returns None if
-        the event type is not known to the parser.
-
-        Args:
-          event_type_name (str):
-
-        Returns:
-          etree.RelaxNG:
-        """
-        if event_type_name not in self.__event_type_schema_cache:
-            self.__event_type_schema_cache[event_type_name] = etree.RelaxNG(
-                self._ontology.get_event_type(event_type_name).generate_relax_ng(self._ontology)
-            )
-        return self.__event_type_schema_cache.get(event_type_name)
-
     def __find_root_element(self, event_element):
         if event_element.tag == '{http://edxml.org/edxml}edxml' and event_element.getparent() is None:
             # The passed element is the root element.
@@ -333,7 +313,6 @@ class EDXMLParserBase(object):
 
         try:
             self._ontology.update(ontology_element)
-            self.__event_type_schema_cache = {}
         except EDXMLOntologyValidationError as exception:
             exception.message = "Invalid ontology definition detected: %s\n%s" % (
                 etree.tostring(ontology_element, pretty_print=True, encoding='unicode'),
@@ -549,44 +528,15 @@ class EDXMLParserBase(object):
                 "An input event refers to event type %s, which is not defined." % event_type_name
             )
 
-        schema = self.get_event_type_schema(event_type_name)
-
-        if self.__validate and schema is not None:
-            if not schema.validate(event):
-                # Event does not validate. Try to generate a validation
-                # exception that is more readable than the RelaxNG
-                # error is, by validating using the EventType class.
-                try:
-                    self._ontology.get_event_type(event_type_name).validate_event_structure(event)
-                    # EventType structure checks out alright. Let us check the object values.
-                    self._ontology.get_event_type(event_type_name).validate_event_objects(event)
-                    # Object values also check out alright. Let us check the attachments.
-                    self._ontology.get_event_type(event_type_name).validate_event_attachments(event)
-
-                    for event_attrib_name, event_attrib_value in event.attrib.items():
-                        if event_attrib_name not in ['event-type', 'source-uri']:
-                            # Must be a faulty foreign attribute.
-                            if not event_attrib_name.startswith('{'):
-                                raise EDXMLEventValidationError(
-                                    f"Event contains a foreign attribute without a namespace: "
-                                    f"{event_attrib_name} = {event_attrib_value}"
-                                )
-                            if event_attrib_name.startswith('{http://edxml.org/edxml}'):
-                                raise EDXMLEventValidationError(
-                                    f"Event contains a foreign attribute with an EDXML namespace: "
-                                    f"{event_attrib_name} = {event_attrib_value}"
-                                )
-
-                    # EventType validation did not find the issue. We have
-                    # no other option than to raise a RelaxNG error containing
-                    # a undoubtedly cryptic error message.
-                    raise EDXMLEventValidationError(str(schema.error_log))
-
-                except EDXMLEventValidationError as exception:
-                    raise EDXMLEventValidationError(
-                        'Event failed to validate:\n\n%s\nDetails:\n%s' % (
-                            etree.tostring(event, pretty_print=True, encoding='unicode'), exception.args[0])
-                    )
+        if self.__validate:
+            if self.__validator is None:
+                self.__validator = EventValidator(self._ontology)
+            if not self.__validator.is_valid(event):
+                raise EDXMLEventValidationError(
+                    'Event failed to validate:\n\n%s\nDetails:\n%s' % (
+                        etree.tostring(event, pretty_print=True, encoding='unicode'),
+                        self.__validator.get_last_error().exception.args[0])
+                )
 
         # Call all event handlers in order
         for handler in self._get_event_handlers(event_type_name, event_source_uri):
