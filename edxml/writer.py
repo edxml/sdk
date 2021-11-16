@@ -39,17 +39,16 @@ class EDXMLWriter(object):
     Class for generating EDXML streams
 
     The output parameter is a file-like object that will be used to send the XML data to.
-    This file-like object can be pretty much anything, as long as it has a write() method
-    and a mode containing 'a' (opened for appending). When the output parameter is omitted,
-    the generated XML data will be returned by the methods that generate output.
+    When the output parameter is set to None, the generated XML data will be returned by
+    the methods that generate output.
 
     The optional validate parameter controls if the generated EDXML stream should be auto-validated
     or not. Automatic validation is enabled by default.
 
     Args:
-        output (file, optional): File-like output object
-        validate (bool, optional): Enable output validation (True) or not (False)
-        log_repaired_events (bool, optional): Log repaired events (True) or not (False)
+        output (file): File-like output object
+        validate (bool): Enable output validation (True) or not (False)
+        log_repaired_events (bool): Log repaired events (True) or not (False)
     """
 
     class OutputBuffer(object):
@@ -115,7 +114,7 @@ class EDXMLWriter(object):
             property_names (List[str]):
 
         Returns:
-            edxml.EDXMLWriter
+            edxml.EDXMLWriter: The EDXMLWriter instance
         """
         self.__allow_repair_normalize[event_type_name] = property_names
         return self
@@ -133,7 +132,7 @@ class EDXMLWriter(object):
             property_names (List[str]):
 
         Returns:
-            edxml.EDXMLWriter
+            edxml.EDXMLWriter: The EDXMLWriter instance
         """
         self.__allow_repair_drop[event_type_name] = property_names
         return self
@@ -151,7 +150,7 @@ class EDXMLWriter(object):
           This has no effect when event validation is disabled.
 
         Args:
-          warn (bool`, optional): Print warnings or not
+          warn (bool): Print warnings or not
 
         Returns:
            EDXMLWriter: The EDXMLWriter instance
@@ -262,7 +261,7 @@ class EDXMLWriter(object):
           ontology (edxml.ontology.Ontology): The ontology
 
         Returns:
-            edxml.writer.EDXMLWriter:
+            edxml.writer.EDXMLWriter: The EDXMLWriter instance
         """
 
         # Below update triggers an exception in case the added
@@ -313,7 +312,7 @@ class EDXMLWriter(object):
         Finalizes the output data stream.
 
         Returns:
-            edxml.writer.EDXMLWriter:
+            edxml.writer.EDXMLWriter: The EDXMLWriter instance
 
         """
         if self.__writer is None:
@@ -427,7 +426,7 @@ class EDXMLWriter(object):
           sort (bool): Sort event components yes or no
 
         Returns:
-            edxml.writer.EDXMLWriter:
+            edxml.writer.EDXMLWriter: The EDXMLWriter instance
         """
         event_type_name = event.get_type_name()
         source_uri = event.get_source_uri()
@@ -503,7 +502,7 @@ class EDXMLWriter(object):
           element (etree._Element): The element
 
         Returns:
-            edxml.writer.EDXMLWriter:
+            edxml.writer.EDXMLWriter: The EDXMLWriter instance
         """
         self.__writer.send(element)
 
