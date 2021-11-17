@@ -23,7 +23,7 @@ from IPy import IP
 from lxml import etree
 from copy import deepcopy
 
-from edxml.error import EDXMLEventValidationError
+from edxml.event_validator import EventValidator
 from edxml.ontology import DataType
 
 
@@ -884,18 +884,7 @@ class EDXMLEvent(MutableMapping):
         Returns:
             bool: True if the event is valid
         """
-        event_type = ontology.get_event_type(self.get_type_name())
-
-        if event_type is None:
-            return False
-
-        try:
-            event_type.validate_event_structure(self)
-            event_type.validate_event_objects(self)
-            event_type.validate_event_attachments(self)
-        except EDXMLEventValidationError:
-            return False
-        return True
+        return EventValidator(ontology).is_valid(self)
 
 
 class ParsedEvent(EDXMLEvent, etree.ElementBase):
