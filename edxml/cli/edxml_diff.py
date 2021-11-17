@@ -77,7 +77,7 @@ class EdxmlDiffer(object):
         edxml_a = self._a.generate_sorted_edxml()
         edxml_b = self._b.generate_sorted_edxml()
 
-        diff = list(unified_diff(edxml_a.split(b'\n'), edxml_b.split(b'\n')))
+        diff = list(unified_diff(edxml_a.decode().split('\n'), edxml_b.decode().split('\n')))
 
         print('\n'.join(diff))
 
