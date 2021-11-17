@@ -140,7 +140,9 @@ class TranscoderTestHarness(TranscoderMediator):
             try:
                 self._base_ontology.validate()
             except EDXMLOntologyValidationError as e:
-                raise Exception("The base ontology provided to the test harness is not valid: " + str(e))
+                raise EDXMLOntologyValidationError(
+                    'The base ontology provided to the test harness is not valid: ' + str(e)
+                )
 
             try:
                 self._base_ontology.__cmp__(self.events.ontology)
