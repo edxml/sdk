@@ -78,38 +78,6 @@ def object_transcoder_mediator():
     return TestObjectTranscoderMediator
 
 
-def create_transcoder(*event_type_names):
-    """
-
-    Helper function to generate a record transcoder for generating
-    events of specified event type name(s).
-
-    Args:
-        *event_type_names (str):
-
-    Returns:
-        edxml.transcode.RecordTranscoder:
-    """
-    class TestTranscoder(RecordTranscoder):
-        """
-        This extension of RecordTranscoder allows us to set class attributes
-        on it that last for just one unit test, making sure that unit
-        tests are free of side effects. Setting class attributes on the
-        RecordTranscoder class would cause side effects because that class is
-        shared by all tests.
-        """
-        pass
-
-    TestTranscoder.TYPES = event_type_names
-    TestTranscoder.TYPE_MAP = {name: name for name in event_type_names}
-    TestTranscoder.TYPE_PROPERTIES = {name: {'property-a': 'object-type.string'} for name in event_type_names}
-    t = TestTranscoder()
-    ontology = Ontology()
-    ontology.create_object_type('object-type.string')
-    t.set_ontology(ontology)
-    return t
-
-
 def edxml_extract(edxml, path):
     # Below, we remove the EDXML namespace from all
     # tags, allowing us to use simple XPath expressions
