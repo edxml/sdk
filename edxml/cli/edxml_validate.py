@@ -74,7 +74,7 @@ def main():
         print(e.args[0])
         exit(1)
 
-    print("Input data is valid.\n")
+    print("Input data is valid.")
 
 
 if __name__ == "__main__":
