@@ -169,12 +169,6 @@ class EDXMLWriter(object):
                 etree.tostring(event_element, pretty_print=True, encoding='unicode'),
                 error.exception
             )
-
-        if error.property_name is not None:
-            error_message += '\n\nIt looks like the event contains an invalid property object. ' \
-                             'The object could not be normalized automatically and the writer is not configured' \
-                             ' to drop invalid objects.'
-
         self.__invalid_event_count += 1
 
         raise EDXMLEventValidationError(error_message)
