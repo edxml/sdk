@@ -112,7 +112,6 @@ class EDXMLParserBase(object):
         self.__parsed_initial_ontology = False
         self.__parsing = False
         self.__root_element = None
-        self.__num_parsed_events = 0
         self._close()
         return self
 
