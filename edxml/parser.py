@@ -88,17 +88,10 @@ class EDXMLParserBase(object):
             # Parser already closed.
             return
 
-        # Note that, below, we check if an exception occurred.
-        # We only perform the final global document structure
-        # validation when no error occurred, because the validator
-        # may not have consumed all of its input due to this
-        # exception. Python will destruct the parser context before
-        # the exception reaches its handler. Validation might throw
-        # a second exception complaining about the document being
-        # invalid, masking the original problem.
-        if exc_type is None:
-            self.__validate_root_element()
-            self.close()
+        if self.__root_element is None:
+            raise EDXMLValidationError('Invalid EDXML structure detected. No <edxml> root tag found.')
+
+        self.close()
 
     def close(self):
         """
@@ -266,10 +259,7 @@ class EDXMLParserBase(object):
                 'Invalid EDXML structure detected: Could not find the edxml root tag.'
             )
 
-    def __validate_root_element(self):
-        # Note that this method can only be called after
-        # parsing is completed. At any other stage in the
-        # parsing process, the tree structure is incomplete.
+    def __validate_ontology_element(self):
         if not self.__schema:
             self.__schema = etree.RelaxNG(etree.parse(edxml_schema.SCHEMA_PATH_3_0))
 
@@ -289,22 +279,13 @@ class EDXMLParserBase(object):
                 # an ontology element in the tree and try to process it. That
                 # will yield a better exception message than the errors
                 # produced by the RelaxNG validator.
+                if not self.__schema.error_log.last_error.path.startswith('/ontology/'):
+                    # Ontology appears to be fine. In that case the validation error can
+                    # be caused by incomplete input. Since parsing is incremental, there
+                    # may be an incomplete <event> element in the tree.
+                    return
                 for ontology_element in self.__root_element.iterfind('{http://edxml.org/edxml}ontology'):
                     self.__process_ontology(ontology_element)
-                # Ontology appears to be fine. Check if there are any event elements
-                # that are invalid.
-                for event_element in self.__root_element.iterfind('{http://edxml.org/edxml}event'):
-                    self.__parse_event(event_element)
-
-            raise EDXMLValidationError(
-                "Invalid EDXML structure detected: %s\n"
-                "The RelaxNG validator generated the following error: %s\nDetails: %s" %
-                (
-                    etree.tostring(self.__root_element, encoding='unicode', pretty_print=True),
-                    str(validation_error),
-                    str(validation_error.error_log)
-                )
-            )
 
     def __process_ontology(self, ontology_element):
         if self._ontology is None:
@@ -424,7 +405,7 @@ class EDXMLParserBase(object):
                 # Before parsing the ontology information, we validate
                 # the generic structure of the ontology element, using
                 # the RelaxNG schema.
-                self.__validate_root_element()
+                self.__validate_ontology_element()
 
                 # We survived XML structure validation. We can proceed
                 # and process the new ontology information.
