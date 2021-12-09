@@ -12,5 +12,5 @@
 # ========================================================================================
 
 
-def test_event_collector():
-    from edxml.examples import event_collector  # noqa: F401
+def test_parser_pull():
+    from edxml.examples import parser_pull  # noqa: F401

@@ -6,37 +6,11 @@
 The edxml Python package
 ========================
 
-This site documents the edxml Python package, which is part of the `EDXML Software Developers Kit <https://github.com/dtakken/edxml-sdk/>`_. This package offers a reference implementation of the `EDXML specification <http://edxml.org/>`_ as well as classes for generating, validating and processing of EDXML data streams.
-
-EDXML is a versatile data representation which facilitates implementing data integration solutions. It joins data with semantics to allow data sources to specify the exact meaning of the data they produce. This yields a data representation that combines a broad representational scope with a simple data structure.
-
-Example applications that use this package can be obtained from `Github <https://github.com/dtakken/edxml-sdk/>`_ while the EDXML Python package itself can be installed using Pip:
+This package offers a Python implementation of the `EDXML specification <http://edxml.org/>`_ as well as command line tools to inspect EDXML documents and to aid in application development. It can be installed using Pip:
 
 ::
 
     pip install edxml
-
-Tutorials
-=========
-
-*Some guides to get you started.*
-
-.. toctree::
-   :glob:
-   :titlesonly:
-
-   tutorial/*
-
-EDXML Patterns
-==============
-
-*Cookbook solutions for common engineering problems.*
-
-.. toctree::
-   :glob:
-   :titlesonly:
-
-   patterns/*
 
 Reference Manual
 ================
@@ -44,14 +18,22 @@ Reference Manual
 *Full documentation of all Python classes in the SDK.*
 
 .. toctree::
-   :maxdepth: 0
+   :maxdepth: 1
 
    writing
    reading
    filtering
-   mining
-   ontology
+   transcoding
    event
+   ontology
+   bricks
+   event_type_factory
+   mining
+
+Command Line Utilities
+======================
+
+An overview of included command line utilities can be found :doc:`here <cli>`.
 
 Indices and tables
 ==================

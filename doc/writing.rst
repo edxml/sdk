@@ -1,44 +1,22 @@
-Generating EDXML Data Streams
-=============================
+Writing EDXML Data
+==================
 
-The EDXML SDK features several classes and subpackages for producing EDXML data streams, all based on the excellent `lxml library <http://lxml.de/>`_. Data generation is incremental, which allows for developing efficient system components that generate a never ending stream of events. The EDXMLWriter_ class is the prime, low level EDXML generator.
+The EDXML SDK features several components for producing EDXML data, all based on the excellent `lxml library <http://lxml.de/>`_. Data generation is incremental, which allows for developing efficient system components that generate or process EDXML data in a streaming fashion.
 
-For the specific task of generating EDXML data from JSON, the `JSON transcoder module`_ can be used. It provides convenient features for mapping JSON records to EDXML event types and for using multiple separate transcoders to process input containing a mix of several types of JSON records.
+EDXMLWriter
+-----------
 
-- EDXMLWriter_
-- `JSON transcoder module`_
+The EDXMLWriter_ class is the prime, low level EDXML generator. For most practical use cases a :doc:`transcoder <transcoding>` offers a superior means for generating EDXML data.
 
-edxml.EDXMLWriter
------------------
-.. _EDXMLWriter:
+Using the EDXML writer is pretty straight forward, as the following example demonstrates:
+
+.. literalinclude:: ../edxml/examples/event_writer.py
+  :language: Python
+
+Class Documentation
+^^^^^^^^^^^^^^^^^^^
+.. _`EDXMLWriter`:
 
 .. autoclass:: edxml.EDXMLWriter
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.transcode module
-----------------------
-
-.. automodule:: edxml.transcode
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.transcode.object module
----------------------------
-.. _`JSON transcoder module`:
-
-.. automodule:: edxml.transcode.object
-    :special-members: __init__
-    :members:
-    :show-inheritance:
-
-edxml.transcode.xml module
---------------------------
-.. _`XML transcoder module`:
-
-.. automodule:: edxml.transcode.xml
-    :special-members: __init__
     :members:
     :show-inheritance:

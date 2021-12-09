@@ -10,16 +10,21 @@ The graph can be mined in two different ways. Either the graph is mined from a s
 
 Obtaining concept mining results is done by means of the :func:`extract_result_set <edxml.miner.graph.ConceptInstanceGraph.extract_result_set>` method of the `ConceptInstanceGraph`_ class. It returns a :class:`MinedConceptInstanceCollection` instance which is covered in detail :doc:`here <mining_result>`.
 
-edxml.miner.graph.ConceptInstanceGraph
---------------------------------------
+Class Documentation
+-------------------
+
+The class documentation can be found below.
+
+ConceptInstanceGraph
+^^^^^^^^^^^^^^^^^^^^
 .. _ConceptInstanceGraph:
 
 .. autoclass:: edxml.miner.graph.ConceptInstanceGraph
     :members:
     :show-inheritance:
 
-edxml.miner.Node
-----------------
+Node
+^^^^
 .. _Node:
 
 .. autoclass:: edxml.miner.Node
@@ -27,8 +32,8 @@ edxml.miner.Node
     :show-inheritance:
 
 
-edxml.miner.node.EventObjectNode
---------------------------------
+EventObjectNode
+^^^^^^^^^^^^^^^
 .. _EventObjectNode:
 
 .. autoclass:: edxml.miner.node.EventObjectNode
@@ -36,8 +41,8 @@ edxml.miner.node.EventObjectNode
     :show-inheritance:
 
 
-edxml.miner.inference.Inference
--------------------------------
+Inference
+^^^^^^^^^
 .. _Inference:
 
 .. autoclass:: edxml.miner.inference.Inference
