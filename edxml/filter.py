@@ -36,12 +36,6 @@ class EDXMLFilterBase(EDXMLParserBase):
         self._writer = self._writer = EDXMLWriter(output, validate)  # type: EDXMLWriter
         """EDXML Writer"""
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._close()
-
     def _close(self):
         self._writer.close()
 
