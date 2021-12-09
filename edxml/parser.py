@@ -49,7 +49,11 @@ class EDXMLParserBase(object):
     ]
 
     _LXML_PARSER_OPTIONS = {
-        'no_network': True, 'resolve_entities': False, 'remove_comments': True, 'remove_pis': True
+        'no_network': True,
+        'resolve_entities': False,
+        'remove_comments': True,
+        'remove_pis': True,
+        'remove_blank_text': True
     }
 
     def __init__(self, validate=True):
