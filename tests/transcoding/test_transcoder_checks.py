@@ -397,3 +397,11 @@ def test_event_type_version_property_is_not_string(transcoder):
     type(transcoder).TYPE_VERSIONS = {'event-type.a': ['version']}
     with pytest.raises(ValueError, match="not a string"):
         dict(transcoder.generate_event_types())
+
+
+def test_merge_add_on_single_valued_property(transcoder):
+    type(transcoder).TYPES = ['event-type.a']
+    type(transcoder).TYPE_PROPERTIES = {'event-type.a': {'property-a': 'object-type.sequence'}}
+    type(transcoder).TYPE_PROPERTY_MERGE_STRATEGIES = {'event-type.a': {'property-a': EventProperty.MERGE_ADD}}
+    with pytest.raises(ValueError, match="not listed in TYPE_MULTI_VALUED_PROPERTIES as a multi-valued property"):
+        dict(transcoder.generate_event_types())

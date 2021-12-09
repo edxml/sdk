@@ -14,7 +14,7 @@
 import edxml
 from edxml.error import EDXMLOntologyValidationError
 from edxml.logger import log
-from edxml.ontology import EventTypeParent
+from edxml.ontology import EventTypeParent, EventProperty
 
 
 class EventTypeFactory(object):
@@ -736,6 +736,16 @@ class EventTypeFactory(object):
                         f"{cls.__name__}.TYPE_VERSIONS contains a version property for event type {event_type_name} "
                         f"which is not a string."
                     )
+
+            if event_type_name in cls.TYPE_PROPERTY_MERGE_STRATEGIES:
+                for property_name, strategy in cls.TYPE_PROPERTY_MERGE_STRATEGIES[event_type_name].items():
+                    if strategy == EventProperty.MERGE_ADD and \
+                            property_name not in cls.TYPE_MULTI_VALUED_PROPERTIES.get(event_type_name, []):
+                        raise ValueError(
+                            f"{cls.__name__}.TYPE_PROPERTY_MERGE_STRATEGIES indicates that "
+                            f"the {property_name} property of event type {event_type_name} has merge strategy 'add' "
+                            f"while it is not listed in TYPE_MULTI_VALUED_PROPERTIES as a multi-valued property."
+                        )
 
             if event_type_name in cls.PARENT_MAPPINGS:
                 parent_event_type_name = None
