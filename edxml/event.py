@@ -837,16 +837,20 @@ class EDXMLEvent(MutableMapping):
         self._foreign_attribs = attribs
         return self
 
-    def compute_sticky_hash(self, event_type, encoding='hex'):
+    def compute_sticky_hash(self, event_type, hash_function=hashlib.sha1, encoding='hex'):
         """
 
         Computes the sticky hash of the event. By default, the hash
-        will be encoded into a hexadecimal string. The encoding can
-        be adjusted by setting the encoding argument to any string
-        encoding that is supported by the str.encode() method.
+        will be computed using the SHA1 hash function and encoded
+        into a hexadecimal string. The hashing function can be
+        adjusted to any of the hashing functions in the hashlib
+        module. The encoding can be adjusted by setting the
+        encoding argument to any string encoding that is supported
+        by the str.encode() method.
 
         Args:
           event_type (edxml.ontology.EventType): The event type
+          hash_function (callable): The hashlib hash function to use
           encoding (str): Desired output encoding
 
         Returns:
@@ -864,7 +868,7 @@ class EDXMLEvent(MutableMapping):
         # Now we compute the SHA1 hash value of the byte
         # string representation of the event, and output in hex
 
-        return codecs.encode(hashlib.sha1(
+        return codecs.encode(hash_function(
             (
                 b'%s\n%s\n%s' % (
                     self.get_source_uri().encode(),

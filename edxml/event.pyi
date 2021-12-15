@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import hashlib
 
 from edxml.ontology import EventType, Ontology
 
@@ -116,7 +117,8 @@ class EDXMLEvent(MutableMapping):
 
     def set_foreign_attributes(self, attribs: Dict[str,str]) -> 'EDXMLEvent': ...
 
-    def compute_sticky_hash(self, event_type: EventType, encoding: str ='hex') -> str: ...
+    def compute_sticky_hash(self, event_type: EventType, hash_function: callable = hashlib.sha1, encoding: str ='hex')\
+            -> str: ...
 
     def is_valid(self, ontology: Ontology) -> bool: ...
 
