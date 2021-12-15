@@ -17,6 +17,7 @@
 #  EDXML file or input stream. The hashes are printed to standard output.
 
 import argparse
+import hashlib
 import sys
 
 from edxml.cli import configure_logger
@@ -25,9 +26,13 @@ from edxml.parser import EDXMLPullParser
 
 class EDXMLEventHasher(EDXMLPullParser):
 
+    def __init__(self, hash_function):
+        super().__init__()
+        self.hash_function = hash_function
+
     def _parsed_event(self, event):
         event_type = self.get_ontology().get_event_type(event.get_type_name())
-        print(event.compute_sticky_hash(event_type))
+        print(event.compute_sticky_hash(event_type, hash_function=self.hash_function))
 
 
 def main():
@@ -45,6 +50,10 @@ def main():
     )
 
     parser.add_argument(
+        '--sha256', action='store_true', help='Output SHA256 hashes in stead of SHA1.'
+    )
+
+    parser.add_argument(
         '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
     )
 
@@ -59,7 +68,7 @@ def main():
     event_input = args.file or sys.stdin.buffer
 
     try:
-        EDXMLEventHasher().parse(event_input)
+        EDXMLEventHasher(hash_function=hashlib.sha256 if args.sha256 else hashlib.sha1).parse(event_input)
     except KeyboardInterrupt:
         sys.exit()
 
