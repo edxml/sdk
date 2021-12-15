@@ -30,20 +30,17 @@ from edxml.writer import EDXMLWriter
 
 class EDXMLDummyDataGenerator(EDXMLWriter):
 
-    def __init__(self, args):
+    def __init__(self, args, validate=False):
 
         self.event_counter = 0
-
         self.args = args
-
         self.generate_collisions = args.collision_rate > 0
-        self.event_source_uri_list = ('/source-a/', '/source-b/')
         self.random_content_characters = 'abcdefghijklmnop  '
         self.random_content_characters_length = len(self.random_content_characters)
         self.time_start = time.time()
 
         # Call parent class constructor
-        EDXMLWriter.__init__(self, sys.stdout.buffer, validate=False)
+        EDXMLWriter.__init__(self, validate=validate)
 
     def __enter__(self):
         return self
@@ -64,6 +61,8 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
     def write_events(self):
 
         interval_correction = 0
+        requested_time_interval = 0
+
         random_content_characters = self.random_content_characters * \
             (int(self.args.content_size / self.random_content_characters_length) + 1)
         random_property_characters = self.random_content_characters * \
@@ -76,132 +75,97 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # Set the default object values
         property_objects = {
             'property-a': ['value'],
-            'property-c': ['value'],
-            'property-g': ['10.000000000'],
-            'property-h': ['100.000000000']
+            'property-b': ['value'],
+            'property-c': ['10.000000000'],
+            'property-d': ['100.000000000']
         }
 
-        if not self.args.unordered:
-            # This property requires ordering to be
-            # preserved.
-            property_objects['property-b'] = ['value']
-
         # To prevent colliding events from accumulating arbitrary
-        # numbers of property 'property-c' (which has merge
+        # numbers of property 'property-b' (which has merge
         # strategy 'add'), we generate a small collection of random
         # strings for assigning to this property.
         add_property_values = [''.join(random.sample(
             random_property_characters, self.args.object_size)) for _ in range(10)]
 
-        if self.generate_collisions:
-            unique_property_values = [''.join(random.sample(
-                random_property_characters, self.args.object_size)) for _ in range(self.args.collision_diversity)]
-            random_unique_property_values = random.sample(list(range(self.args.collision_diversity)), int(
-                self.args.collision_diversity * (1.0 - (self.args.collision_rate / 100.0))))
-        else:
-            random_unique_property_values = []
+        colliding_unique_property_values = [
+            ''.join(random.sample(random_property_characters, self.args.object_size))
+            for _ in range(self.args.collision_diversity)
+        ]
 
         if self.args.rate > 0:
             requested_time_interval = 1.0 / self.args.rate
 
-        try:
-            while self.event_counter < self.args.limit or self.args.limit == 0:
+        time_start = time.time()
 
-                # Generate random content
-                if self.args.random_content:
-                    content = ''.join(random.sample(
-                        random_content_characters, self.args.content_size))
+        while self.event_counter < self.args.limit or self.args.limit == 0:
 
-                # Generate random property values for the entries
-                # in the random value table that have been selected
-                # as being random.
-                if self.generate_collisions:
-                    for ValueIndex in random_unique_property_values:
-                        unique_property_values[ValueIndex] = ''.join(random.sample(
-                            random_property_characters, self.args.object_size))
+            # Generate random content
+            if self.args.random_content:
+                content = ''.join(random.sample(
+                    random_content_characters, self.args.content_size))
 
-                # Generate random property values
-                if self.args.random_objects:
+            # Generate random property values
+            if self.args.random_objects:
 
-                    # The unique property is a completely random string
-                    property_objects['property-a'] = [''.join(random.sample(self.random_content_characters * (int(
-                        self.args.object_size / self.random_content_characters_length) + 1),
-                        self.args.object_size))]
+                # A random string from a fixed set
+                property_objects['property-b'] = [
+                    random.choice(add_property_values)]
 
-                    if not self.args.unordered and random.random() < 0.9:
-                        # We add the 'property-b' only if the output requires
-                        # the ordering of the events to be preserved. And even
-                        # then, we omit the property once in a while, removing
-                        # it in case of a collision.
-                        property_objects['property-b'] = [''.join(random.sample(self.random_content_characters * (int(
-                            self.args.object_size / self.random_content_characters_length) + 1),
-                            self.args.object_size))]
+                for property_name in ['c', 'd']:
+                    # Random values in range [-0.5,0.5]
+                    property_objects['property-' + property_name] = ['%1.9f' % (random.random() - 0.5)]
 
-                    # A random string from a fixed set
-                    property_objects['property-c'] = [
-                        random.choice(add_property_values)]
+            if self.generate_collisions:
+                property_objects['version'] = self.event_counter
 
-                    for property_name in ['g', 'h']:
-                        # Random values in range [-0.5,0.5]
-                        property_objects['property-' + property_name] = ['%1.9f' % (random.random() - 0.5)]
+            if self.generate_collisions and random.random() * 100.0 < self.args.collision_rate:
+                # The unique property is picked from a list of possible values, which
+                # results in event collisions.
+                property_objects['property-a'] = random.choice(colliding_unique_property_values)
+            else:
+                # The unique property is a completely random string
+                property_objects['property-a'] = ''.join(random.sample(self.random_content_characters * (int(
+                    self.args.object_size / self.random_content_characters_length) + 1),
+                    self.args.object_size))
 
-                if self.generate_collisions:
-                    # For property-a, which is the unique property, we
-                    # need to pick values from our random value table,
-                    # which has been prepared to generate collisions
-                    # at the requested rate.
-                    property_objects['property-a'] = [
-                        random.choice(unique_property_values)]
-                    pass
-
-                # Take time measurement for rate control
-                if self.args.rate > 0:
-                    time_start = time.time()
-
-                # Output one event
-                self.add_event(
-                    EDXMLEvent(
-                        property_objects,
-                        event_type_name=self.args.event_type_name,
-                        source_uri=self.event_source_uri_list[self.event_counter % 2],
-                        attachments={'content': content}
-                    )
+            # Output one event
+            self.add_event(
+                EDXMLEvent(
+                    property_objects,
+                    event_type_name=self.args.event_type_name,
+                    source_uri='/edxml-ddgen/',
+                    attachments={'content': content} if content != '' else {}
                 )
-                self.event_counter += 1
+            )
+            self.event_counter += 1
 
-                if self.args.rate > 0:
-                    # An event rate is specified, which means we
-                    # need to keep track of time and use time.sleep()
-                    # to generate delays between events.
+            if self.args.rate > 0:
+                # An event rate is specified, which means we
+                # need to keep track of time and use time.sleep()
+                # to generate delays between events.
 
-                    current_time = time.time()
-                    time_delay = requested_time_interval - \
-                        (current_time - time_start)
-                    if time_delay + interval_correction > 0:
-                        sys.stdout.flush()
-                        time.sleep(time_delay + interval_correction)
+                current_time = time.time()
+                time_delay = self.event_counter * requested_time_interval - (current_time - time_start)
+                if time_delay + interval_correction > 0:
+                    sys.stdout.flush()
+                    time.sleep(time_delay + interval_correction)
 
-                    # Check if our output rate is significantly lower than requested,
-                    # print informative message is rate is too low.
+                # Check if our output rate is significantly lower than requested,
+                # print informative message is rate is too low.
+                if self.event_counter > 10:
                     if (self.event_counter / (current_time - self.time_start)) < 0.8 * self.args.rate:
-                        sys.stdout.write(
-                            'Cannot keep up with requested event rate!\n')
+                        sys.stderr.write('Cannot keep up with requested event rate!\n')
 
-                    # Compute correction, to be added to the delay we pass to sleep.sleep().
-                    # We compare the mean time interval between events with the time interval
-                    # we are trying to achieve. Based on that, we compute the next time
-                    # interval correction. We need a correction, because the accuracy of our
-                    # time measurements is limited, which means time.sleep() may sleep slightly
-                    # longer than necessary.
-                    mean_time_interval = (
-                        current_time - self.time_start) / self.event_counter
-                    interval_correction = 0.5 * \
-                        ((interval_correction + (requested_time_interval -
-                                                 mean_time_interval)) + interval_correction)
-
-        except KeyboardInterrupt:
-            # Abort event generation.
-            return
+                # Compute correction, to be added to the delay we pass to sleep.sleep().
+                # We compare the mean time interval between events with the time interval
+                # we are trying to achieve. Based on that, we compute the next time
+                # interval correction. We need a correction, because the accuracy of our
+                # time measurements is limited, which means time.sleep() may sleep slightly
+                # longer than necessary.
+                if self.event_counter > 0:
+                    current_time = time.time()
+                    mean_time_interval = (current_time - self.time_start) / self.event_counter
+                    interval_correction = 0.5 * (interval_correction + (requested_time_interval - mean_time_interval))
 
     def write_definitions(self):
 
@@ -209,18 +173,14 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         # the merge strategies of all properties to cause collisions
         # requiring all possible merge strategies to be applied in
         # order to merge them. The event merges effectively compute
-        # the product, minimum value, maximum value etc from
+        # the product, minimum value, maximum value etc. from
         # the individual objects in all input events.
 
         if self.generate_collisions:
-            any_or_match = 'match'
-            any_or_replace = 'replace'
             any_or_add = 'add'
             any_or_min = 'min'
             any_or_max = 'max'
         else:
-            any_or_match = 'any'
-            any_or_replace = 'any'
             any_or_add = 'any'
             any_or_min = 'any'
             any_or_max = 'any'
@@ -228,30 +188,29 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
         ontology = edxml.ontology.Ontology()
 
         ontology.create_object_type(self.args.object_type_name + '.a',
-                                    data_type='string:%d:cs' % self.args.object_size)
+                                    data_type='string:%d:mc' % self.args.object_size)
         ontology.create_object_type(self.args.object_type_name + '.b', data_type='number:bigint:signed')
         ontology.create_object_type(self.args.object_type_name + '.c', data_type='number:decimal:12:9:signed')
 
         event_type = ontology.create_event_type(self.args.event_type_name)
-        event_type.create_property('property-a', self.args.object_type_name + '.a').set_merge_strategy(any_or_match)
+        event_type.create_property('property-a', self.args.object_type_name + '.a').set_merge_strategy('match')
+        event_type.create_property('property-b', self.args.object_type_name + '.a').set_merge_strategy(any_or_add)
+        event_type.create_property('property-c', self.args.object_type_name + '.c').set_merge_strategy(any_or_min)
+        event_type.create_property('property-d', self.args.object_type_name + '.c').set_merge_strategy(any_or_max)
 
-        if not self.args.unordered:
-            event_type.create_property('property-b', self.args.object_type_name +
-                                       '.a').set_merge_strategy(any_or_replace)
-
-        event_type.create_property('property-c', self.args.object_type_name + '.a').set_merge_strategy(any_or_add)
-        event_type.create_property('property-g', self.args.object_type_name + '.c').set_merge_strategy(any_or_min)
-        event_type.create_property('property-h', self.args.object_type_name + '.c').set_merge_strategy(any_or_max)
+        if self.generate_collisions:
+            ontology.create_object_type('version-number', data_type='sequence')
+            event_type.create_property('version', 'version-number').set_merge_strategy('max')
+            event_type.set_version_property_name('version')
 
         event_type.create_attachment('content')
 
-        for uri in self.event_source_uri_list:
-            ontology.create_event_source(uri)
+        ontology.create_event_source('/edxml-ddgen/')
 
         self.add_ontology(ontology)
 
 
-def main():
+def main(validate=False):
     parser = argparse.ArgumentParser(description="Generate dummy events for testing purposes.")
 
     parser.add_argument(
@@ -362,23 +321,16 @@ def main():
              'desired object type name prefix as its argument.'
     )
 
-    parser.add_argument(
-        '--unordered',
-        action='store_true',
-        help='By default, output events will feature an implicit ordering in case event '
-             'collisions are generated. When this switch is added, no event properties '
-             'with merge strategy "replace" will be generated, which means that colliding '
-             'events will not change when they are merged in a different order. This may be '
-             'useful for testing parallel EDXML stream processing.'
-    )
-
     args = parser.parse_args()
 
     configure_logger(args)
 
-    with EDXMLDummyDataGenerator(args) as generator:
+    with EDXMLDummyDataGenerator(args, validate) as generator:
         generator.start()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, BrokenPipeError):
+        sys.exit(1)
