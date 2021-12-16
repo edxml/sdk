@@ -13,67 +13,76 @@
 #                                                                                        =
 # ========================================================================================
 
-#  This utility reads an EDXML stream from standard input and filters it according
-#  to the user supplied parameters. The result is sent to standard output.
+#  This utility reads an EDXML document from a file or from standard input and filters it
+#  according to the user supplied parameters. The result is sent to standard output.
 
 
 import argparse
 import sys
 import re
 
+from copy import deepcopy
 from edxml.cli import configure_logger
 from edxml.filter import EDXMLPullFilter
+from edxml.logger import log
 
 
-class EDXMLEventGroupFilter(EDXMLPullFilter):
-    def __init__(self, source_uri_pattern, event_type_name):
-        super().__init__(sys.stdout, False)
-        self.__source_uri_pattern = source_uri_pattern
-        self.__event_type_name = event_type_name
-        self.__pass_through = True
+class EDXMLFilter(EDXMLPullFilter):
+    def __init__(self, source_uri_regex, event_type_name_regex):
+        super().__init__(output=sys.stdout.buffer)
+        self.__source_uri_regex = source_uri_regex
+        self.__event_type_name_regex = event_type_name_regex
+        self.__deleted_event_types = []
+        self.__deleted_sources = []
+        self.__num_processed = 0
+        self.__num_deleted = 0
 
-    def _parsed_ontology(self, parsed_ontology):
-        filtered_event_types = []
-        filtered_sources = []
+    def _parsed_ontology(self, parsed_ontology, filtered_ontology=None):
+        for event_type_name in parsed_ontology.get_event_type_names():
+            if re.match(self.__event_type_name_regex, event_type_name) is None:
+                self.__deleted_event_types.append(event_type_name)
 
-        if self.__event_type_name:
-            for event_type_name in parsed_ontology.get_event_type_names():
-                if event_type_name != self.__event_type_name:
-                    filtered_event_types.append(event_type_name)
+        for source_uri, source in parsed_ontology.get_event_sources().items():
+            if re.match(self.__source_uri_regex, source_uri) is None:
+                self.__deleted_sources.append(source_uri)
 
-        for sourceUri, source in parsed_ontology.get_event_sources().items():
-            if re.match(self.__source_uri_pattern, sourceUri) is not None:
-                filtered_sources.append(sourceUri)
+        # Now we need to check for any event types that were removed while
+        # being the parent of another event type. That yields an invalid
+        # ontology.
 
-        for event_type_name in filtered_event_types:
-            parsed_ontology.delete_event_type(event_type_name)
-        for eventSource in filtered_sources:
-            parsed_ontology.delete_event_source(eventSource)
+        for event_type_name, event_type in parsed_ontology.get_event_types().items():
+            if event_type.get_parent() is not None:
+                if event_type.get_parent().get_event_type_name() in self.__deleted_event_types:
+                    # The parent of a child event type is about to be deleted. That would yield
+                    # an invalid ontology, so we will not delete it.
+                    self.__deleted_event_types.remove(event_type.get_parent().get_event_type_name())
 
-        parsed_ontology.validate()
+        filtered_ontology = deepcopy(parsed_ontology)
 
-        super()._parsed_ontology(parsed_ontology)
+        for event_type_name in self.__deleted_event_types:
+            filtered_ontology.delete_event_type(event_type_name)
+        for uri in self.__deleted_sources:
+            filtered_ontology.delete_event_source(uri)
 
-    def _open_event_group(self, event_type_name, event_source_uri):
+        filtered_ontology.validate()
 
-        if self.get_ontology().get_event_source(event_source_uri) is None:
-            # Source is gone, turn filter output off.
-            self.__pass_through = False
-            event_type_name = None
-            event_source_uri = None
-
-        if self.get_ontology().get_event_type(event_type_name) is None:
-            # Event type is gone, turn filter output off.
-            self.__pass_through = False
-            event_type_name = None
-            event_source_uri = None
-
-        if self.__pass_through:
-            super()._open_event_group(event_type_name, event_source_uri)
+        super()._parsed_ontology(parsed_ontology, filtered_ontology)
 
     def _parsed_event(self, event):
-        if self.__pass_through:
-            super()._parsed_event(event)
+        self.__num_processed += 1
+
+        if event.get_type_name() in self.__deleted_event_types:
+            self.__num_deleted += 1
+            return
+        if event.get_source_uri() in self.__deleted_sources:
+            self.__num_deleted += 1
+            return
+
+        super()._parsed_event(event)
+
+    def _close(self):
+        super()._close()
+        log.info(f"Processed {self.__num_processed} events, deleted {self.__num_deleted}.")
 
 
 def parse_args():
@@ -94,14 +103,14 @@ def parse_args():
         '-s',
         '--source-uri',
         type=str,
-        help='A regular expression that will be used to filter the event source URI in the input events.'
+        help='A regular expression matching the source URIs of events that will be copied to the output.'
     )
 
     parser.add_argument(
         '-e',
         '--event-type',
         type=str,
-        help='An event type name that will be used to filter the event types in the input events.'
+        help='A regular expression matching the types of events that will be copied to the output.'
     )
 
     parser.add_argument(
@@ -123,8 +132,9 @@ def main():
     event_input = open(args.file, 'rb') if args.file else sys.stdin.buffer
 
     source_filter = re.compile(args.source_uri or '.*')
+    type_filter = re.compile(args.event_type or '.*')
 
-    with EDXMLEventGroupFilter(source_filter, args.event_type) as event_filter:
+    with EDXMLFilter(source_filter, type_filter) as event_filter:
         try:
             event_filter.parse(event_input)
         except KeyboardInterrupt:
@@ -132,4 +142,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, BrokenPipeError):
+        exit(1)
