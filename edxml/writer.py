@@ -273,6 +273,7 @@ class EDXMLWriter(object):
             return
 
         self.__writer.close()
+        self.__output.write(b'\n')
 
         if self.__num_events_produced > 0 and (100 * self.__num_events_repaired) / self.__num_events_produced > 10:
             log.warning(

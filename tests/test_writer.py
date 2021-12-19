@@ -148,7 +148,7 @@ def test_write():
     output = writer.flush()
 
     assert output == b'<?xml version=\'1.0\' encoding=\'utf-8\'?>\n' \
-                     b'<edxml xmlns="http://edxml.org/edxml" version="3.0.0"></edxml>'
+                     b'<edxml xmlns="http://edxml.org/edxml" version="3.0.0"></edxml>\n'
 
 
 def test_write_external_output():
@@ -157,7 +157,7 @@ def test_write_external_output():
     output.seek(0)
 
     assert output.read() == b'<?xml version=\'1.0\' encoding=\'utf-8\'?>\n' \
-                            b'<edxml xmlns="http://edxml.org/edxml" version="3.0.0"></edxml>'
+                            b'<edxml xmlns="http://edxml.org/edxml" version="3.0.0"></edxml>\n'
 
 
 def test_write_ontology(ontology):
