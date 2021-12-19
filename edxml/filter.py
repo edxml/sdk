@@ -39,20 +39,21 @@ class EDXMLFilterBase(EDXMLParserBase):
     def _close(self):
         self._writer.close()
 
-    def _parsed_ontology(self, parsed_ontology):
+    def _parsed_ontology(self, parsed_ontology, filtered_ontology=None):
         """
 
         Callback that writes the parsed ontology into
         the output. By overriding this method and calling
-        the parent method after changing the ontology, the
-        ontology in the output stream can be modified.
+        the parent method while passing a modified copy of
+        the parsed ontology the output stream can be modified.
 
         Args:
-          parsed_ontology (edxml.ontology.Ontology): The ontology
+          parsed_ontology (edxml.ontology.Ontology): The input ontology
+          filtered_ontology (edxml.ontology.Ontology): The output ontology
 
         """
         super()._parsed_ontology(parsed_ontology)
-        self._writer.add_ontology(parsed_ontology)
+        self._writer.add_ontology(filtered_ontology or parsed_ontology)
 
     def _parsed_event(self, event):
         """
