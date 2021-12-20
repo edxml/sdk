@@ -55,7 +55,7 @@ class SortingParser(EDXMLPullParser):
         # Generate EDXML data by adding the events sorted by sticky hash.
         with EDXMLWriter(edxml) as writer:
             writer.add_ontology(self.get_ontology())
-            for hash, event in sorted(self._events_by_hash.items()):
+            for _, event in sorted(self._events_by_hash.items()):
                 # NOTE: Below we use EventElement.create_from_event() to get rid of the
                 #       XML namespaces that all ParsedEvent instances have.
                 writer.add_event(EventElement.create_from_event(event), sort=True)
@@ -79,7 +79,8 @@ class EdxmlDiffer(object):
 
         diff = list(unified_diff(edxml_a.decode().split('\n'), edxml_b.decode().split('\n')))
 
-        print('\n'.join(diff))
+        if diff:
+            print('\n'.join(diff))
 
         return diff != []
 
