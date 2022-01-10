@@ -49,7 +49,6 @@ class Template(object):
 
     FORMATTER_ARGUMENT_COUNTS = {
         'time_span': 2,
-        'DATE': 1,
         'date_time': 2,
         'duration': 2,
         'boolean_string_choice': 3,
