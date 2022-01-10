@@ -35,6 +35,7 @@ def event_type():
     event_type.create_property('p-bool', 'bool').make_optional()
     event_type.create_property('p-geo', 'geo').make_optional()
     event_type.create_property('p-optional', 'string').make_optional()
+    event_type.create_property('p-also-optional', 'string').make_optional()
     event_type.create_property('p-mandatory', 'string').make_mandatory()
     return event_type
 
@@ -537,18 +538,31 @@ def test_generate_collapsed_scopes(event_type):
     ]
 
 
+def test_generate_collapsed_scopes_multiple_property_appearances(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[p-string]] {[[p-string]]}'
+        )
+    )
+    assert results == [
+        (set(), 'Some string some string'),
+        ({'p-string'}, '')
+    ]
+
+
 def test_generate_collapsed_mandatory_property(event_type):
     results = list(
         Template.generate_collapsed_templates(
             event_type,
-            '[[p-optional]] {[[p-optional]]}'
+            '[[p-optional]] {[[p-also-optional]]}'
         )
     )
     # Both properties can be omitted. In both cases the
     # template collapses completely.
     assert results == [
         (set(), 'Some string some string'),
-        ({'p-optional'}, ''),
+        ({'p-also-optional'}, 'Some string '),
         ({'p-optional'}, '')
     ]
 
@@ -586,10 +600,37 @@ def test_generate_collapsed_placeholder_empty(event_type):
             '[[empty:p-optional,empty]]'
         )
     )
-    # The property can be omitted but this will not
-    # trigger a collapse. So, no collapsed evaluated
-    # templates should be generated.
-    assert results == [(set(), '')]
+    # In case of the empty formatter the property is initially empty
+    # and is then populated to trigger collapse.
+    assert results == [(set(), ''), ({'p-optional'}, 'Empty')]
+
+
+def test_generate_collapsed_placeholder_empty_multiple_scopes(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '{[[empty:p-optional,empty]]}{[[p-string]]}'
+        )
+    )
+    assert results == [
+        (set(), 'Some string'),
+        ({'p-optional'}, 'Emptysome string'),
+        ({'p-string'}, 'Empty')
+    ]
+
+
+def test_generate_collapsed_placeholder_empty_multiple_prop_occurrences(event_type):
+
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[empty:p-string,empty]]{ [[p-string]]}'
+        )
+    )
+    assert results == [
+        (set(), ''),
+        ({'p-string'}, 'Empty')
+    ]
 
 
 def test_generate_collapsed_placeholder_unless_empty(event_type):

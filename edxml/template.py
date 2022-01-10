@@ -221,42 +221,58 @@ class Template(object):
         """
         properties = {}
         for property_name, event_property in event_type.get_properties().items():
-            object_type = event_property.get_object_type()
-            if event_property.is_single_valued():
-                properties[property_name] = {'some ' + object_type.get_display_name_singular()}
-            else:
-                properties[property_name] = {'one or more ' + object_type.get_display_name_plural()}
+            properties[property_name] = cls._get_object_value_placeholders(event_property)
 
         # Yield a complete evaluated template first.
         yield set(), Template(template).evaluate(
             event_type, properties, {}, colorize=colorize, ignore_value_errors=True
         )
 
-        while template != '':
-            start, end, empty_prop_sets = cls._get_innermost_collapsing_property_sets(event_type, template)
-            for empty_prop_set in empty_prop_sets:
-                # Create a new event with one or more omitted properties.
-                # On each iteration, the event gets less detailed.
-                partial_props = dict(properties)
-                for empty_prop in empty_prop_set:
-                    if empty_prop in partial_props:
-                        del partial_props[empty_prop]
-                properties = partial_props
-                yield empty_prop_set, Template(template).evaluate(
-                    event_type, properties, {}, colorize=colorize, ignore_value_errors=True
-                )
+        iterations = []
+        collapsed = template
+
+        while True:
+            start, end, prop_sets = cls._get_innermost_collapsing_property_sets(event_type, collapsed)
+
+            if prop_sets is None:
+                break
+
+            iterations.append(prop_sets)
 
             # Collapse inner scope and repeat.
-            collapsed = template[:start] + Template(template[start:end]).evaluate(
-                    event_type, properties, {}, colorize=colorize, capitalize=False, ignore_value_errors=True
-                ) + template[end:]
+            collapsed_new = collapsed[:start] + collapsed[end:]
 
-            if collapsed == template:
+            if collapsed_new == collapsed:
                 # No more scopes in template. We are done.
-                return
+                break
 
             # Iterate using collapsed template.
-            template = collapsed
+            collapsed = collapsed_new
+
+        for prop_sets in iterations:
+            for prop_set in prop_sets:
+                # Create a new dict of event properties with one or more
+                # properties omitted to trigger (or prevent) a template collapse.
+                # On each iteration, the property dict gets smaller.
+                partial_props = dict(properties)
+
+                for empty_prop in prop_set:
+                    if empty_prop in partial_props:
+                        del partial_props[empty_prop]
+
+                if partial_props != properties:
+                    properties = partial_props
+                    yield prop_set, Template(template).evaluate(
+                        event_type, properties, {}, colorize=colorize, ignore_value_errors=True
+                    )
+
+    @staticmethod
+    def _get_object_value_placeholders(event_property):
+        object_type = event_property.get_object_type()
+        if event_property.is_single_valued():
+            return {'some ' + object_type.get_display_name_singular()}
+        else:
+            return {'one or more ' + object_type.get_display_name_plural()}
 
     @classmethod
     def _get_innermost_collapsing_property_sets(cls, event_type, template):
@@ -272,13 +288,21 @@ class Template(object):
         Returns:
             Tuple:
         """
-        _, offset, _, substring = cls._find_innermost_part(cls._split_template(template)[1])
+        _, offset, _, substring = cls._find_innermost_part(
+            cls._split_template(template, preserve_scope_brackets=True)[1]
+        )
 
-        placeholders = re.findall(r'\[\[[^]]*]]', substring)
+        if substring is None:
+            property_sets = None
+            substring = ''
+        else:
+            placeholders = re.findall(r'\[\[[^]]*]]', substring)
+            property_sets = cls._find_collapsable_property_sets(placeholders, event_type)
+
         return (
             offset,
-            offset + len(substring),
-            cls._find_collapsable_property_sets(placeholders, event_type)
+            offset + len(substring)-1,
+            property_sets
         )
 
     @classmethod
@@ -307,11 +331,8 @@ class Template(object):
                 deeper_level, deeper_offset, offset, deeper_part = cls._find_innermost_part(
                     part, initial_level + 1, offset
                 )
-                # Note that the curly brackets are stripped
-                # from split templates. Here, we compensate
-                # for that.
-                offset += 1
-                deeper_part = '{' + deeper_part + '}'
+                if deeper_part is None:
+                    continue
             else:
                 deeper_level = initial_level
                 deeper_offset = offset
@@ -319,12 +340,14 @@ class Template(object):
                 offset += len(part)
 
             if deeper_level > deepest_level or deepest_part is None:
-                # We found a part that is at nested
+                # We found a part that is nested a level
                 # deeper. Or, if this is the first part
-                # we looked at so fat, we will accept anything.
-                deepest_level = deeper_level
-                deepest_part = deeper_part
-                deepest_offset = deeper_offset
+                # we looked at so far, we will accept anything.
+                # We also make sure not to return empty scopes.
+                if deeper_part not in ('{', '}'):
+                    deepest_level = deeper_level
+                    deepest_part = deeper_part
+                    deepest_offset = deeper_offset
 
         return deepest_level, deepest_offset, offset, deepest_part
 
@@ -333,7 +356,7 @@ class Template(object):
         """
 
         Returns a list of sets of property names from specified placeholders
-        that will trigger a collapse when its values are omitted.
+        that will either trigger or prevent a collapse when its values are omitted.
 
         Args:
             placeholders (List[str]): The placeholders
@@ -348,9 +371,9 @@ class Template(object):
         for placeholder in placeholders:
             formatter, arguments = cls._parse_placeholder(placeholder)
             if formatter == 'empty':
-                # Cannot collapse
-                continue
-            if formatter == 'unless_empty':
+                if arguments[1] not in mandatory_properties:
+                    collapsable_property_sets.append(set(arguments[:-1]))
+            elif formatter == 'unless_empty':
                 # Collapses when all specified properties empty.
                 if any(arg for arg in arguments[:-1] if arg in mandatory_properties):
                     # There are mandatory properties amongst the arguments,
@@ -370,12 +393,14 @@ class Template(object):
                     properties = arguments
                 else:
                     properties = arguments[:cls.FORMATTER_PROPERTY_COUNTS[formatter]]
-                collapsable_property_sets.extend({prop, } for prop in properties if prop not in mandatory_properties)
+                collapsable_property_sets.extend(
+                    {prop, } for prop in properties if prop not in mandatory_properties
+                )
 
         return collapsable_property_sets
 
     @classmethod
-    def _split_template(cls, template, offset=0):
+    def _split_template(cls, template, offset=0, preserve_scope_brackets=False):
 
         elements = []
         length = len(template)
@@ -395,7 +420,7 @@ class Template(object):
                 else:
                     # Found closing bracket. Add substring and return
                     # to caller.
-                    substring = template[offset:pos2]
+                    substring = template[offset:pos2+1] if preserve_scope_brackets else template[offset:pos2]
                     offset = pos2 + 1
                     elements.append(substring)
                     break
@@ -412,17 +437,17 @@ class Template(object):
                     if pos1 < pos2:
                         # Opening bracket comes first, which means we should
                         # iterate.
-                        substring = template[offset:pos1]
+                        substring = template[offset:pos1+1] if preserve_scope_brackets else template[offset:pos1]
                         offset = pos1 + 1
 
                         elements.append(substring)
-                        offset, parsed = cls._split_template(template, offset)
+                        offset, parsed = cls._split_template(template, offset, preserve_scope_brackets)
                         elements.append(parsed)
                     else:
                         # closing bracket comes first, which means we found
                         # an innermost substring. Add substring and return
                         # to caller.
-                        substring = template[offset:pos2]
+                        substring = template[offset:pos2+1] if preserve_scope_brackets else template[offset:pos2]
                         offset = pos2 + 1
                         elements.append(substring)
                         break
