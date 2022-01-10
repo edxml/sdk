@@ -54,7 +54,7 @@ class Template(object):
         'boolean_string_choice': 3,
         'boolean_on_off': 1,
         'boolean_is_is_not': 1,
-        'empty': 1,
+        'empty': 2,
         'attachment': 1,
         'url': 2
     }
