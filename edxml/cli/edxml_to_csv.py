@@ -25,6 +25,10 @@ from edxml.cli import configure_logger
 from edxml.parser import EDXMLPullParser
 
 
+def escape(value, separator):
+    return value.replace(separator, '\\' + separator).replace('\n', '\\n').replace('\r', '\\r')
+
+
 class EDXML2CSV(EDXMLPullParser):
 
     def __init__(self, event_type_name, column_names, attachment_names, column_separator, print_header_line):
@@ -36,7 +40,7 @@ class EDXML2CSV(EDXMLPullParser):
         self.__output_column_names = column_names
         self.__output_attachment_names = attachment_names or []
         self.__print_header_line = print_header_line
-        self.__first_line_written = False
+        self.__header_written = False
         super().__init__()
 
     def _parsed_ontology(self, ontology):
@@ -53,7 +57,7 @@ class EDXML2CSV(EDXMLPullParser):
 
         # Filter the available properties using
         # the list of requested output columns.
-        if len(self.__output_column_names) > 0:
+        if self.__output_column_names is not None:
             for property_name in self.__output_column_names:
                 if property_name in property_names:
                     self.__property_names.append(property_name)
@@ -66,19 +70,14 @@ class EDXML2CSV(EDXMLPullParser):
 
         # Filter the available attachments using
         # the list of requested output columns.
-        if len(self.__output_attachment_names) > 0:
-            for attachment_name in self.__output_attachment_names:
-                if attachment_name in attachment_names:
-                    self.__attachment_names.append(attachment_name)
+        for attachment_name in self.__output_attachment_names:
+            if attachment_name in attachment_names:
+                self.__attachment_names.append(attachment_name)
 
         # Output a header line containing the output column names
-        if self.__print_header_line and not self.__first_line_written:
-            print(
-                'event type' +
-                self.__column_separator +
-                self.__column_separator.join(self.__property_names) +
-                self.__column_separator.join(self.__attachment_names)
-            )
+        if self.__print_header_line and not self.__header_written:
+            print(self.__column_separator.join(self.__property_names + self.__attachment_names))
+            self.__header_written = True
 
     def _parsed_event(self, event):
 
@@ -88,103 +87,83 @@ class EDXML2CSV(EDXMLPullParser):
         column_values = {}
         for property_name in self.__property_names:
             column_values[property_name] = []
-
         for attachment_name in self.__attachment_names:
-            escaped_value = event.get_attachments().get(attachment_name).replace(
-                        self.__column_separator, '\\' + self.__column_separator
-            )
-            escaped_value = escaped_value.replace('\n', '\\n').replace('\r', '\\r')
-            column_values['a:' + attachment_name] = [escaped_value]
+            column_values['a:' + attachment_name] = []
 
         for property_name, objects in event.get_properties().items():
             if property_name in self.__property_names:
-                for event_object in objects:
-                    escaped_value = event_object.replace(
-                        self.__column_separator, '\\' + self.__column_separator)
-                    column_values[property_name].append(escaped_value)
+                column_values[property_name].extend([escape(value, self.__column_separator) for value in objects])
 
-                self.__iterate_generate_lines(
-                    self.__property_names + ['a:' + a for a in self.__attachment_names],
+        for attachment_name in self.__attachment_names:
+            for attachment in event.get_attachments().get(attachment_name, {}).values():
+                column_values['a:' + attachment_name].append(escape(attachment, self.__column_separator))
+
+        for line in self.__recurse_generate_lines(
+                    list(column_values.keys()),
                     column_values,
-                    line_start=event.get_type_name() + self.__column_separator,
-                    line_end='',
+                    line=[],
                     start_column=0
-                )
+                ):
+            print(self.__column_separator.join(line))
 
-    def __iterate_generate_lines(self, columns, column_values, line_start, line_end, start_column):
+    def __recurse_generate_lines(self, column_names, column_values, line, start_column):
 
-        start_col_property_name = columns[start_column]
-
-        if len(column_values[start_col_property_name]) == 0:
-            # Property has no objects, iterate.
-            line = line_start + self.__column_separator
-            if len(columns) > start_column + 1:
-                self.__iterate_generate_lines(
-                    columns, column_values, line, line_end, start_column + 1)
+        if start_column >= len(column_names):
+            yield line
             return
 
-        for object_value in column_values[start_col_property_name]:
+        for column_index in range(start_column, len(column_names)):
 
-            # Add object value to the current output line
-            line = line_start + object_value + self.__column_separator
+            column_name = column_names[column_index]
+            num_property_objects = len(column_values[column_name])
 
-            for column in range(start_column + 1, len(columns)):
+            if num_property_objects == 0:
+                # Property has no objects. Produce empty column value.
+                line.append('')
+            elif num_property_objects == 1:
+                # We have exactly one object for this property.
+                line.append(column_values[column_name][0])
+            else:
+                # We have multiple objects for this property,
+                # which means we need to generate multiple output
+                # lines. For each object value we recurse taking
+                # the previously processed columns plus
+                # the current object value as starting point.
+                for value in column_values[column_name]:
+                    yield from self.__recurse_generate_lines(
+                        column_names, column_values, line + [value], column_index + 1
+                    )
+                return
 
-                column_property = columns[column]
-                num_property_objects = len(column_values[column_property])
-
-                if num_property_objects == 0:
-
-                    # Property has no objects.
-                    line += self.__column_separator
-
-                elif num_property_objects == 1:
-
-                    # We have exactly one object for this property.
-                    line += column_values[column_property][0] + \
-                            self.__column_separator
-
-                else:
-
-                    # We have multiple objects for this property,
-                    # which means we need to generate multiple output
-                    # lines. Iterate.
-                    self.__iterate_generate_lines(
-                        columns, column_values, line, line_end, column)
-                    return
-
-            print(line + line_end)
-            self.__first_line_written = True
+        yield line
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='This utility accepts EDXML data as input and writes the events to standard output, formatted '
-                    'in rows and columns. For every event property, a output column is generated. If one property '
-                    'has multiple objects, multiple  output lines are generated.'
+                    'in rows and columns. For every event property, an output column is generated. If one property '
+                    'has multiple objects, multiple lines of output are generated.'
     )
 
     parser.add_argument(
         '-f',
         '--file',
         type=str,
-        help='By default, input is read from standard input. This option can be used to read from a '
-             'file in stead.'
+        help='By default, input is read from standard input. This option can be used to read from a file in stead.'
     )
 
     parser.add_argument(
-        '-e',
-        '--event-type',
+        'event_type',
         type=str,
-        help='The name of the event type of that will be output.'
+        help='The name of the type of event that will be output.'
     )
 
     parser.add_argument(
-        '-c',
-        '--columns',
+        '-p',
+        '--properties',
         type=str,
-        help='Specifies which columns to produce, and in what order. By default, all columns are printed. '
-             'When this option is used, only the specified columns are printed, in the order you specify. '
+        help='Specifies which properties to output, and in what order. By default, all properties are printed. '
+             'When this option is used, only the specified properties are printed, in the order you specify. '
              'The argument should be a comma separated list of property names.'
     )
 
@@ -225,18 +204,22 @@ def main():
 
     event_input = args.file or sys.stdin.buffer
 
-    if args.columns is None or args.columns == '':
-        columns = None
+    if args.properties is None:
+        property_columns = None
+    elif args.properties == '':
+        property_columns = []
     else:
-        columns = args.columns.split(',')
+        property_columns = args.properties.split(',')
 
     if args.attachments is None or args.attachments == '':
-        attachments = None
+        attachment_columns = None
     else:
-        attachments = args.attachments.split(',')
+        attachment_columns = args.attachments.split(',')
 
     try:
-        EDXML2CSV(args.event_type, columns, attachments, args.separator, args.with_header).parse(event_input)
+        EDXML2CSV(
+            args.event_type, property_columns, attachment_columns, args.separator, args.with_header
+        ).parse(event_input)
     except KeyboardInterrupt:
         sys.exit()
 
