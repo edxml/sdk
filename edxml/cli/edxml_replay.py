@@ -21,17 +21,18 @@
 import argparse
 import sys
 import time
+from collections import defaultdict
 from datetime import datetime
 
 import pytz
 from dateutil.parser import parse
 
 from edxml.cli import configure_logger
-from edxml.filter import EDXMLPullFilter
+from edxml.filter import EDXMLPushFilter
 from edxml.ontology import DataType
 
 
-class EDXMLReplay(EDXMLPullFilter):
+class EDXMLReplay(EDXMLPushFilter):
 
     class UnbufferedStdout(object):
         # This is a wrapper to create an unbuffered
@@ -44,83 +45,104 @@ class EDXMLReplay(EDXMLPullFilter):
             self.stream.write(data)
             self.stream.flush()
 
-        def __getattr__(self, attr):
-            return getattr(self.stream, attr)
+    def __init__(self, speed_multiplier):
 
-    def __init__(self, speed_multiplier, buffer_stuffer_enabled):
-
-        self.time_shift = None
+        self.time_prev_event_input = None
         self.speed_multiplier = speed_multiplier
-        self.buffer_stuffer_enabled = buffer_stuffer_enabled
-        self.date_time_properties = []
-        self.known_properties = []
-        self.current_event_type_name = None
+        self.date_time_properties = defaultdict(list)
+        self.known_properties = defaultdict(list)
 
         # Call parent class constructor
-        super().__init__(EDXMLReplay.UnbufferedStdout(sys.stdout))
+        super().__init__(EDXMLReplay.UnbufferedStdout(sys.stdout.buffer))
+
+    def _parsed_ontology(self, parsed_ontology, filtered_ontology=None):
+        self.known_properties = defaultdict(list)
+        self.date_time_properties = defaultdict(list)
+        super()._parsed_ontology(parsed_ontology)
 
     def _parsed_event(self, event):
 
-        date_time_strings = []
-        date_time_objects = []
-        new_event_objects = []
+        timespan_start, timespan_end = self._get_event_timespan_info(event)
 
-        if self.buffer_stuffer_enabled:
-            # Generate a 4K comment.
-            print('<!-- ' + 'x' * 4096 + ' -->')
+        if timespan_start is not None:
+            timespan_start_property, start = timespan_start
+            if start is not None:
+                if self.time_prev_event_input:
+                    delay = (start - self.time_prev_event_input).total_seconds() / self.speed_multiplier
 
-        # Find all timestamps in event
-        for property_name, objects in event.get_properties().items():
-            if property_name not in self.known_properties:
-                datatype = self._ontology.get_event_type(self.current_event_type_name)[property_name].get_data_type()
+                    if delay >= 0:
+                        time.sleep(delay)
+
+                # Now we set the event property that represents
+                # the start of the event time span to the current
+                # time. Then we also time shift any other datetime
+                # properties accordingly. This way we keep relative
+                # time within the event intact, except that we do take
+                # the speed multiplier into account.
+                now = datetime.now(tz=pytz.utc)
+                event[timespan_start_property] = DataType.format_utc_datetime(now)
+
+                if timespan_end is not None:
+                    timespan_end_property, end = timespan_end
+                    event[timespan_end_property] = DataType.format_utc_datetime(
+                        now + (end - start) / self.speed_multiplier
+                    )
+
+                self.time_prev_event_input = start
+
+        EDXMLPushFilter._parsed_event(self, event)
+
+    def _get_event_timespan_info(self, event):
+        event_type_name = event.get_type_name()
+        event_type = self._ontology.get_event_type(event.get_type_name())
+        start, end = event_type.get_timespan_property_names()
+
+        timespan_start = None
+        timespan_end = None
+
+        if start is not None and start in event:
+            timespan_start = (start, parse(next(iter(event[start]))))
+        if end is not None and end in event:
+            timespan_end = (end, max([parse(value) for value in event[end]]))
+
+        if timespan_start is not None and timespan_end is not None:
+            return timespan_start, timespan_end
+
+        # We do not have a complete time span yet as
+        # the time span is not fully defined explicitly.
+        # We will proceed to consider all datetime values
+        # in the event and find their range.
+
+        if event_type_name not in self.known_properties:
+            for property_name, objects in event.get_properties().items():
+                datatype = self._ontology.get_event_type(event.get_type_name())[property_name].get_data_type()
                 if str(datatype) == 'datetime':
-                    self.date_time_properties.append(property_name)
-                self.known_properties.append(property_name)
+                    self.date_time_properties[event_type_name].append(property_name)
+                self.known_properties[event_type_name].append(property_name)
 
-            if property_name in self.date_time_properties:
-                date_time_objects.append((property_name, objects))
-                date_time_strings.extend(objects)
-            else:
-                # We copy all event objects, except
-                # for the timestamps
-                new_event_objects.extend(objects)
+        date_time_strings = []
 
-        if len(date_time_strings) > 0:
-            # We will use the smallest timestamp
-            # as the event timestamp. Note that we
-            # use lexicographical ordering here.
-            current_event_date_time = parse(min(date_time_strings))
-            if self.time_shift:
+        for property_name in self.date_time_properties[event_type_name]:
+            if property_name in event:
+                date_time_strings.append((property_name, [parse(value) for value in event[property_name]]))
 
-                # Determine how much time remains before
-                # the event should be output.
-                delay = (current_event_date_time - datetime.now(pytz.UTC)
-                         ).total_seconds() + self.time_shift
-                if delay >= 0:
-                    time.sleep(delay * self.speed_multiplier)
+        if len(date_time_strings) == 0:
+            # There is no time data in the event.
+            return None, None
 
-                    # If SpeedMultiplier < 1, it means we will wait shorter
-                    # than the time between current and previous event. That
-                    # means that the next event will be farther away in the
-                    # future, and require longer delays. All delays that we
-                    # skip due to the SpeedMultiplier will add up, event output
-                    # speed will drop. To compensate for this effect, we also
-                    # shift the entire dataset back in time. If SpeedMultiplier
-                    # is larger than 1, the opposite effect occurs.
-                    self.time_shift += (self.speed_multiplier - 1.0) * delay
-            else:
-                # Determine the global time shift between
-                # the input dataset and the current time.
-                self.time_shift = (datetime.now(pytz.UTC) -
-                                   current_event_date_time).total_seconds()
+        # Find the smallest / greatest datetime value for
+        # any missing timespan start or end.
+        # Note that we use lexicographical ordering here.
 
-            # Now we add the timestamp objects, replacing
-            # their values with the current time.
-            for property_name, objects in date_time_objects:
-                event[property_name] = [DataType.format_utc_datetime(
-                    datetime.now(tz=pytz.utc)) for _ in objects]
+        if timespan_start is None:
+            date_time_strings = list(sorted(date_time_strings, key=lambda item: min(item[1])))
+            timespan_start = (date_time_strings[0][0], min(date_time_strings[0][1]))
 
-        EDXMLPullFilter._parsed_event(self, event)
+        if timespan_end is None:
+            date_time_strings = list(sorted(date_time_strings, key=lambda item: max(item[1])))
+            timespan_end = (date_time_strings[-1][0], max(date_time_strings[-1][1]))
+
+        return timespan_start, timespan_end
 
 
 def main():
@@ -149,16 +171,6 @@ def main():
     )
 
     parser.add_argument(
-        '-b',
-        '--with-buffer-stuffer',
-        action='store_true',
-        help='Enable the "Buffer Stuffer", which inserts bogus comments between the output events. '
-             'Some applications may buffer their input, resulting in high response latency when '
-             'feeding them with events at very low rates. This option may help to "write through" '
-             'their input buffer.'
-    )
-
-    parser.add_argument(
         '--verbose', '-v', action='count', help='Increments the output verbosity of logging messages on standard error.'
     )
 
@@ -170,14 +182,17 @@ def main():
 
     configure_logger(args)
 
-    input = open(args.file, 'rb') if args.file else sys.stdin
+    data = open(args.file, 'rb') if args.file else sys.stdin.buffer
 
-    with EDXMLReplay(args.speed, args.with_buffer_stuffer) as replay:
-        try:
-            replay.parse(input)
-        except KeyboardInterrupt:
-            sys.exit()
+    with EDXMLReplay(args.speed) as replay:
+        line = None
+        while line != b'':
+            line = data.readline()
+            replay.feed(line)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, BrokenPipeError):
+        sys.exit()
