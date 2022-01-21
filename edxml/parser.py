@@ -395,6 +395,11 @@ class EDXMLParserBase(object):
                 # currently processing can lead to crashes in lxml. So, we only delete
                 # the second event, which is the third child of the root.
                 if self.__num_parsed_events > 1:
+                    # Note that deleting the element here while there are still
+                    # references to it elsewhere orphans the element from the tree.
+                    # this causes lxml to copy the namespace that it inherits from
+                    # the tree into the element and makes all of its sub-elements
+                    # explicitly namespaced.
                     del self.__root_element[1]
 
             elif elem.tag == '{http://edxml.org/edxml}ontology':
