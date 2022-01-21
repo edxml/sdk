@@ -195,7 +195,13 @@ class EventCollection(List[EDXMLEvent]):
                 self.event_set._ontology.update(parsed_ontology)
 
             def _parsed_event(self, event):
-                self.event_set.append(event)
+                # We store a copy of the event because the parser
+                # will dereference it after calling this method. In
+                # the process, each event is given its own namespace.
+                # This in turn makes the events unnecessarily verbose
+                # when serialized back to EDXML and makes computing a
+                # meaningful diff between two events much harder.
+                self.event_set.append(event.copy())
 
             def _parsed_foreign_element(self, element):
                 self.event_set.add_foreign_element(element)
