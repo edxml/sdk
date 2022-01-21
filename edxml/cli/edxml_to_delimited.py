@@ -25,18 +25,18 @@ from edxml.cli import configure_logger
 from edxml.parser import EDXMLPullParser
 
 
-def escape(value, separator):
-    return value.replace(separator, '\\' + separator).replace('\n', '\\n').replace('\r', '\\r')
+def escape(value, delimiter):
+    return value.replace(delimiter, '\\' + delimiter).replace('\n', '\\n').replace('\r', '\\r')
 
 
-class EDXML2CSV(EDXMLPullParser):
+class EDXML2DelimitedText(EDXMLPullParser):
 
-    def __init__(self, event_type_name, column_names, attachment_names, column_separator, print_header_line):
+    def __init__(self, event_type_name, column_names, attachment_names, column_delimiter, print_header_line):
 
         self.__event_type_name = event_type_name
         self.__property_names = []
         self.__attachment_names = []
-        self.__column_separator = column_separator
+        self.__column_delimiter = column_delimiter
         self.__output_column_names = column_names
         self.__output_attachment_names = attachment_names or []
         self.__print_header_line = print_header_line
@@ -76,7 +76,7 @@ class EDXML2CSV(EDXMLPullParser):
 
         # Output a header line containing the output column names
         if self.__print_header_line and not self.__header_written:
-            print(self.__column_separator.join(self.__property_names + self.__attachment_names))
+            print(self.__column_delimiter.join(self.__property_names + self.__attachment_names))
             self.__header_written = True
 
     def _parsed_event(self, event):
@@ -92,11 +92,11 @@ class EDXML2CSV(EDXMLPullParser):
 
         for property_name, objects in event.get_properties().items():
             if property_name in self.__property_names:
-                column_values[property_name].extend([escape(value, self.__column_separator) for value in objects])
+                column_values[property_name].extend([escape(value, self.__column_delimiter) for value in objects])
 
         for attachment_name in self.__attachment_names:
             for attachment in event.get_attachments().get(attachment_name, {}).values():
-                column_values['a:' + attachment_name].append(escape(attachment, self.__column_separator))
+                column_values['a:' + attachment_name].append(escape(attachment, self.__column_delimiter))
 
         for line in self.__recurse_generate_lines(
                     list(column_values.keys()),
@@ -104,7 +104,7 @@ class EDXML2CSV(EDXMLPullParser):
                     line=[],
                     start_column=0
                 ):
-            print(self.__column_separator.join(line))
+            print(self.__column_delimiter.join(line))
 
     def __recurse_generate_lines(self, column_names, column_values, line, start_column):
 
@@ -177,11 +177,11 @@ def main():
     )
 
     parser.add_argument(
-        '-s',
-        '--separator',
+        '-d',
+        '--delimiter',
         type=str,
         default='\t',
-        help='By default, columns are separated by tabs. Using this option, you can specify a different separator.'
+        help='By default, columns are tab delimited. Using this option, you can specify a different delimiter.'
     )
 
     parser.add_argument(
@@ -217,8 +217,8 @@ def main():
         attachment_columns = args.attachments.split(',')
 
     try:
-        EDXML2CSV(
-            args.event_type, property_columns, attachment_columns, args.separator, args.with_header
+        EDXML2DelimitedText(
+            args.event_type, property_columns, attachment_columns, args.delimiter, args.with_header
         ).parse(event_input)
     except KeyboardInterrupt:
         sys.exit()

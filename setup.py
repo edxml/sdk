@@ -76,7 +76,7 @@ setup(
             'edxml-merge=edxml.cli.edxml_merge:main',
             'edxml-replay=edxml.cli.edxml_replay:main',
             'edxml-stats=edxml.cli.edxml_stats:main',
-            'edxml-to-csv=edxml.cli.edxml_to_csv:main',
+            'edxml-to-delimited=edxml.cli.edxml_to_delimited:main',
             'edxml-to-text=edxml.cli.edxml_to_text:main',
             'edxml-validate=edxml.cli.edxml_validate:main',
             'edxml-mine=edxml.cli.edxml_mine:main',
