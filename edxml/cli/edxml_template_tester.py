@@ -92,12 +92,19 @@ def main():
             for property_name in event_type.get_properties().keys():
                 if property_name not in template_properties:
                     print(f"Warning: property {property_name} is missing in template.")
-        for omitted_properties, evaluated in Template.generate_collapsed_templates(
+        for omitted_properties, omitted_attachments, evaluated in Template.generate_collapsed_templates(
                 event_type, template, colorize=args.colored):
-            if len(omitted_properties) == 0:
-                print('Evaluated with all properties present:')
+            if len(omitted_properties) + len(omitted_attachments) == 0:
+                how = 'with all properties and attachments present'
             else:
-                print('Evaluated again after omitting ' + ', '.join(omitted_properties) + ':')
+                how = 'again after omitting '
+                omissions = []
+                if len(omitted_properties) > 0:
+                    omissions.append('property ' + ', '.join(omitted_properties))
+                if len(omitted_attachments) > 0:
+                    omissions.append('attachment ' + ', '.join(omitted_attachments))
+                how += ' and '.join(omissions)
+            print(f"Evaluated {how}:")
             print('"' + evaluated + '"\n')
 
 

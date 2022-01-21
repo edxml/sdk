@@ -37,6 +37,7 @@ def event_type():
     event_type.create_property('p-optional', 'string').make_optional()
     event_type.create_property('p-also-optional', 'string').make_optional()
     event_type.create_property('p-mandatory', 'string').make_mandatory()
+    event_type.create_attachment('a')
     return event_type
 
 
@@ -489,8 +490,8 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'Some string'),
-        ({'p-string'}, '')
+        (set(), set(), 'Some string'),
+        ({'p-string'}, set(), '')
     ]
 
     results = list(
@@ -500,8 +501,8 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'One or more strings'),
-        ({'p-string-multi-valued'}, '')
+        (set(), set(), 'One or more strings'),
+        ({'p-string-multi-valued'}, set(), '')
     ]
 
     results = list(
@@ -511,9 +512,9 @@ def test_generate_collapsed(event_type):
         )
     )
     assert results == [
-        (set(), 'Some string some bool'),
-        ({'p-string'}, ''),
-        ({'p-bool'}, '')
+        (set(), set(), 'Some string some bool'),
+        ({'p-string'}, set(), ''),
+        ({'p-bool'}, set(), '')
     ]
 
 
@@ -529,12 +530,12 @@ def test_generate_collapsed_scopes(event_type):
     # That allows generating as many variants as possible before the template
     # collapses into an empty string.
     assert results == [
-        (set(), 'Some string some bool some float some time some time'),
-        ({'p-time-start'}, 'Some string some bool some float '),
-        ({'p-time-end'}, 'Some string some bool some float '),
-        ({'p-bool'}, 'Some string  some float '),
-        ({'p-float'}, 'Some string  '),
-        ({'p-string'}, '')
+        (set(), set(), 'Some string some bool some float some time some time'),
+        ({'p-time-start'}, set(), 'Some string some bool some float '),
+        ({'p-time-end'}, set(), 'Some string some bool some float '),
+        ({'p-bool'}, set(), 'Some string  some float '),
+        ({'p-float'}, set(), 'Some string  '),
+        ({'p-string'}, set(), '')
     ]
 
 
@@ -546,8 +547,8 @@ def test_generate_collapsed_scopes_multiple_property_appearances(event_type):
         )
     )
     assert results == [
-        (set(), 'Some string some string'),
-        ({'p-string'}, '')
+        (set(), set(), 'Some string some string'),
+        ({'p-string'}, set(), '')
     ]
 
 
@@ -561,9 +562,9 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Both properties can be omitted. In both cases the
     # template collapses completely.
     assert results == [
-        (set(), 'Some string some string'),
-        ({'p-also-optional'}, 'Some string '),
-        ({'p-optional'}, '')
+        (set(), set(), 'Some string some string'),
+        ({'p-also-optional'}, set(), 'Some string '),
+        ({'p-optional'}, set(), '')
     ]
 
     results = list(
@@ -575,8 +576,8 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Only one property can be omitted, resulting
     # in the template collapsing.
     assert results == [
-        (set(), 'Some string some string'),
-        ({'p-optional'}, ''),
+        (set(), set(), 'Some string some string'),
+        ({'p-optional'}, set(), ''),
     ]
 
     results = list(
@@ -588,8 +589,35 @@ def test_generate_collapsed_mandatory_property(event_type):
     # Only the property in the scope can be omitted,
     # resulting in a partial collapse.
     assert results == [
-        (set(), 'Some string some string'),
-        ({'p-optional'}, 'Some string '),
+        (set(), set(), 'Some string some string'),
+        ({'p-optional'}, set(), 'Some string '),
+    ]
+
+
+def test_generate_collapsed_placeholder_attachment(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[attachment:a]]'
+        )
+    )
+    assert results == [
+        (set(), set(), "\n\nzero or more 'a' attachments\n\n"),
+        (set(), {'a'}, '')
+    ]
+
+
+def test_generate_collapsed_placeholder_attachment_property(event_type):
+    results = list(
+        Template.generate_collapsed_templates(
+            event_type,
+            '[[attachment:a]][[p-optional]]'
+        )
+    )
+    assert results == [
+        (set(), set(), "\n\nzero or more 'a' attachments\n\nsome string"),
+        (set(), {'a'}, ''),
+        ({'p-optional'}, set(), '')
     ]
 
 
@@ -602,7 +630,7 @@ def test_generate_collapsed_placeholder_empty(event_type):
     )
     # In case of the empty formatter the property is initially empty
     # and is then populated to trigger collapse.
-    assert results == [(set(), ''), ({'p-optional'}, 'Empty')]
+    assert results == [(set(), set(), ''), ({'p-optional'}, set(), 'Empty')]
 
 
 def test_generate_collapsed_placeholder_empty_multiple_scopes(event_type):
@@ -613,9 +641,9 @@ def test_generate_collapsed_placeholder_empty_multiple_scopes(event_type):
         )
     )
     assert results == [
-        (set(), 'Some string'),
-        ({'p-optional'}, 'Emptysome string'),
-        ({'p-string'}, 'Empty')
+        (set(), set(), 'Some string'),
+        ({'p-optional'}, set(), 'Emptysome string'),
+        ({'p-string'}, set(), 'Empty')
     ]
 
 
@@ -628,8 +656,8 @@ def test_generate_collapsed_placeholder_empty_multiple_prop_occurrences(event_ty
         )
     )
     assert results == [
-        (set(), ''),
-        ({'p-string'}, 'Empty')
+        (set(), set(), ''),
+        ({'p-string'}, set(), 'Empty')
     ]
 
 
@@ -641,7 +669,7 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
         )
     )
     # One property cannot be omitted so a collapse cannot occur.
-    assert results == [(set(), 'Test')]
+    assert results == [(set(), set(), 'Test')]
 
     results = list(
         Template.generate_collapsed_templates(
@@ -652,8 +680,8 @@ def test_generate_collapsed_placeholder_unless_empty(event_type):
     # Only when both properties are empty a collapse can
     # occur.
     assert results == [
-        (set(), 'Test'),
-        ({'p-string', 'p-bool'}, '')
+        (set(), set(), 'Test'),
+        ({'p-string', 'p-bool'}, set(), '')
     ]
 
 
@@ -667,8 +695,8 @@ def test_generate_collapsed_placeholder_merge(event_type):
     # Both properties can be omitted but only when both are
     # omitted a collapse occurs.
     assert results == [
-        (set(), 'Some time and some time'),
-        ({'p-time-start', 'p-time-end'}, ''),
+        (set(), set(), 'Some time and some time'),
+        ({'p-time-start', 'p-time-end'}, set(), ''),
     ]
 
     # When we make one of both mandatory a collapse cannot occur.
@@ -683,7 +711,7 @@ def test_generate_collapsed_placeholder_merge(event_type):
 
     # Now only one of the two properties can be omitted and
     # a collapse cannot occur.
-    assert results == [(set(), 'Some time and some time')]
+    assert results == [(set(), set(), 'Some time and some time')]
 
 
 def test_generate_collapsed_placeholder_boolean_string_choice(event_type):
@@ -694,8 +722,8 @@ def test_generate_collapsed_placeholder_boolean_string_choice(event_type):
         )
     )
     assert results == [
-        (set(), 'Choose one or the other'),
-        ({'p-bool'}, '')
+        (set(), set(), 'Choose one or the other'),
+        ({'p-bool'}, set(), '')
     ]
 
 
@@ -707,8 +735,8 @@ def test_generate_collapsed_placeholder_boolean_on_off(event_type):
         )
     )
     assert results == [
-        (set(), 'The alarm is on or off.'),
-        ({'p-bool'}, '')
+        (set(), set(), 'The alarm is on or off.'),
+        ({'p-bool'}, set(), '')
     ]
 
 
@@ -720,8 +748,8 @@ def test_generate_collapsed_placeholder_boolean_is_is_not(event_type):
         )
     )
     assert results == [
-        (set(), 'The alarm is or is not active.'),
-        ({'p-bool'}, '')
+        (set(), set(), 'The alarm is or is not active.'),
+        ({'p-bool'}, set(), '')
     ]
 
 
@@ -733,8 +761,8 @@ def test_generate_collapsed_placeholder_geo_point(event_type):
         )
     )
     assert results == [
-        (set(), 'The shipment is located at some geo.'),
-        ({'p-geo'}, '')
+        (set(), set(), 'The shipment is located at some geo.'),
+        ({'p-geo'}, set(), '')
     ]
 
 
@@ -746,8 +774,8 @@ def test_generate_collapsed_placeholder_date_time(event_type):
         )
     )
     assert results == [
-        (set(), 'Some time'),
-        ({'p-time-start'}, '')
+        (set(), set(), 'Some time'),
+        ({'p-time-start'}, set(), '')
     ]
 
 
@@ -761,9 +789,9 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     # Both properties can be omitted and in both cases
     # the template will collapse.
     assert results == [
-        (set(), 'Between some time and some time'),
-        ({'p-time-start'}, ''),
-        ({'p-time-end'}, ''),
+        (set(), set(), 'Between some time and some time'),
+        ({'p-time-start'}, set(), ''),
+        ({'p-time-end'}, set(), ''),
     ]
 
     # When we make one of both mandatory a collapse can only
@@ -778,8 +806,8 @@ def test_generate_collapsed_placeholder_time_span(event_type):
     )
 
     assert results == [
-        (set(), 'Between some time and some time'),
-        ({'p-time-end'}, ''),
+        (set(), set(), 'Between some time and some time'),
+        ({'p-time-end'}, set(), ''),
     ]
 
 
@@ -793,9 +821,9 @@ def test_generate_collapsed_placeholder_duration(event_type):
     # Both properties can be omitted and in both cases
     # the template will collapse.
     assert results == [
-        (set(), 'The time that passed between some time and some time'),
-        ({'p-time-start'}, ''),
-        ({'p-time-end'}, ''),
+        (set(), set(), 'The time that passed between some time and some time'),
+        ({'p-time-start'}, set(), ''),
+        ({'p-time-end'}, set(), ''),
     ]
 
     # When we make one of both mandatory a collapse can only
@@ -810,6 +838,6 @@ def test_generate_collapsed_placeholder_duration(event_type):
     )
 
     assert results == [
-        (set(), 'The time that passed between some time and some time'),
-        ({'p-time-end'}, ''),
+        (set(), set(), 'The time that passed between some time and some time'),
+        ({'p-time-end'}, set(), ''),
     ]

@@ -200,16 +200,19 @@ class Template(object):
         """
 
         Generates a sequence of progressively degraded evaluated templates by
-        iteratively omitting object values for the event properties that are
-        mentioned in the template.
+        iteratively omitting object and attachment values for the event
+        properties and attachments that are mentioned in the template.
 
         On the first iteration, a complete evaluated template is generated,
-        without omitting any properties. The last iteration yields a fully
+        without omitting anything. The last iteration yields a fully
         collapsed template.
 
-        Yields tuples containing two items each. The first item is the set
-        of property names that have been omitted. The second item is the
-        evaluated template.
+        Each iteration yields a tuple containing three items each. The first
+        item is the set of property names that have been omitted in the
+        iteration. Properties omitted in preceding iterations are not included.
+        The second item is the set of attachment names that have been omitted
+        in the iteration. Attachments omitted in preceding iterations are not
+        included. The last item is the evaluated template.
 
         Args:
             event_type (EventType): The associated event type
@@ -217,27 +220,31 @@ class Template(object):
             colorize (bool): Produce colorized output yes or no
 
         Yields:
-            Tuple[Set, str]:
+            Tuple[Set, Set, str]:
         """
         properties = {}
         for property_name, event_property in event_type.get_properties().items():
             properties[property_name] = cls._get_object_value_placeholders(event_property)
 
+        attachments = {}
+        for attachment_name, attachment in event_type.get_attachments().items():
+            attachments[attachment_name] = {'id': f"zero or more '{attachment_name}' attachments"}
+
         # Yield a complete evaluated template first.
-        yield set(), Template(template).evaluate(
-            event_type, properties, {}, colorize=colorize, ignore_value_errors=True
+        yield set(), set(), Template(template).evaluate(
+            event_type, properties, attachments, colorize=colorize, ignore_value_errors=True
         )
 
         iterations = []
         collapsed = template
 
         while True:
-            start, end, prop_sets = cls._get_innermost_collapsing_property_sets(event_type, collapsed)
+            start, end, collapse_sets = cls.get_innermost_collapse_sets(event_type, collapsed)
 
-            if prop_sets is None:
+            if collapse_sets is None:
                 break
 
-            iterations.append(prop_sets)
+            iterations.append(collapse_sets)
 
             # Collapse inner scope and repeat.
             collapsed_new = collapsed[:start] + collapsed[end:]
@@ -249,11 +256,12 @@ class Template(object):
             # Iterate using collapsed template.
             collapsed = collapsed_new
 
-        for prop_sets in iterations:
-            for prop_set in prop_sets:
-                # Create a new dict of event properties with one or more
-                # properties omitted to trigger (or prevent) a template collapse.
-                # On each iteration, the property dict gets smaller.
+        for collapse_sets in iterations:
+            for collapse_set in collapse_sets:
+                prop_set, attachment_set = collapse_set
+                # Create a new dict of event properties and attachments with one or more
+                # values omitted to trigger (or prevent) a template collapse.
+                # On each iteration, the property and attachment dicts gets smaller.
                 partial_props = dict(properties)
 
                 for empty_prop in prop_set:
@@ -262,8 +270,20 @@ class Template(object):
 
                 if partial_props != properties:
                     properties = partial_props
-                    yield prop_set, Template(template).evaluate(
-                        event_type, properties, {}, colorize=colorize, ignore_value_errors=True
+                    yield prop_set, set(), Template(template).evaluate(
+                        event_type, properties, attachments, colorize=colorize, ignore_value_errors=True
+                    )
+
+                partial_attachments = dict(attachments)
+
+                for empty_attachment in attachment_set:
+                    if empty_attachment in partial_attachments:
+                        del partial_attachments[empty_attachment]
+
+                if partial_attachments != attachments:
+                    attachments = partial_attachments
+                    yield set(), attachment_set, Template(template).evaluate(
+                        event_type, properties, attachments, colorize=colorize, ignore_value_errors=True
                     )
 
     @staticmethod
@@ -275,11 +295,11 @@ class Template(object):
             return {'one or more ' + object_type.get_display_name_plural()}
 
     @classmethod
-    def _get_innermost_collapsing_property_sets(cls, event_type, template):
+    def get_innermost_collapse_sets(cls, event_type, template):
         """
 
-        Finds sets of properties that, when its object values are omitted,
-        trigger a collapse in the deepest available scope of the template.
+        Finds sets of properties and attachments that, when its values are omitted,
+        trigger or prevent a collapse in the deepest available scope of the template.
 
         Args:
             event_type (EventType): The event type
@@ -293,16 +313,16 @@ class Template(object):
         )
 
         if substring is None:
-            property_sets = None
+            collapse_sets = None
             substring = ''
         else:
             placeholders = re.findall(r'\[\[[^]]*]]', substring)
-            property_sets = cls._find_collapsable_property_sets(placeholders, event_type)
+            collapse_sets = cls._find_collapse_sets(placeholders, event_type)
 
         return (
             offset,
             offset + len(substring)-1,
-            property_sets
+            collapse_sets
         )
 
     @classmethod
@@ -352,7 +372,7 @@ class Template(object):
         return deepest_level, deepest_offset, offset, deepest_part
 
     @classmethod
-    def _find_collapsable_property_sets(cls, placeholders, event_type):
+    def _find_collapse_sets(cls, placeholders, event_type):
         """
 
         Returns a list of sets of property names from specified placeholders
@@ -367,19 +387,19 @@ class Template(object):
         """
         mandatory_properties = event_type.get_mandatory_property_names()
 
-        collapsable_property_sets = []
+        collapse_sets = []
         for placeholder in placeholders:
             formatter, arguments = cls._parse_placeholder(placeholder)
             if formatter == 'empty':
                 if arguments[1] not in mandatory_properties:
-                    collapsable_property_sets.append(set(arguments[:-1]))
+                    collapse_sets.append((set(arguments[:-1]), set()))
             elif formatter == 'unless_empty':
                 # Collapses when all specified properties empty.
                 if any(arg for arg in arguments[:-1] if arg in mandatory_properties):
                     # There are mandatory properties amongst the arguments,
                     # so no collapse can occur.
                     continue
-                collapsable_property_sets.append(set(arguments[:-1]))
+                collapse_sets.append((set(arguments[:-1]), set()))
             elif formatter == 'merge':
                 # Can only collapse when all of its
                 # arguments are empty properties
@@ -387,17 +407,19 @@ class Template(object):
                     # There are mandatory properties amongst the arguments,
                     # so no collapse can occur.
                     continue
-                collapsable_property_sets.append(set(arguments))
+                collapse_sets.append((set(arguments), set()))
+            elif formatter == 'attachment':
+                collapse_sets.append((set(), set(arguments)))
             else:
                 if formatter is None:
                     properties = arguments
                 else:
                     properties = arguments[:cls.FORMATTER_PROPERTY_COUNTS[formatter]]
-                collapsable_property_sets.extend(
-                    {prop, } for prop in properties if prop not in mandatory_properties
+                collapse_sets.extend(
+                    ({prop, }, set()) for prop in properties if prop not in mandatory_properties
                 )
 
-        return collapsable_property_sets
+        return collapse_sets
 
     @classmethod
     def _split_template(cls, template, offset=0, preserve_scope_brackets=False):
