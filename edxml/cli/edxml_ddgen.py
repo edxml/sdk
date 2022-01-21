@@ -21,10 +21,12 @@ import logging
 import sys
 import time
 import random
+from datetime import datetime
 
 import edxml.ontology
 from edxml import EDXMLEvent
 from edxml.cli import configure_logger
+from edxml.ontology import DataType
 from edxml.writer import EDXMLWriter
 
 
@@ -128,6 +130,8 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                     self.args.object_size / self.random_content_characters_length) + 1),
                     self.args.object_size))
 
+            property_objects['property-e'] = DataType.format_utc_datetime(datetime.utcnow())
+
             # Output one event
             self.add_event(
                 EDXMLEvent(
@@ -191,12 +195,17 @@ class EDXMLDummyDataGenerator(EDXMLWriter):
                                     data_type='string:%d:mc' % self.args.object_size)
         ontology.create_object_type(self.args.object_type_name + '.b', data_type='number:bigint:signed')
         ontology.create_object_type(self.args.object_type_name + '.c', data_type='number:decimal:12:9:signed')
+        ontology.create_object_type('time', data_type='datetime')
 
         event_type = ontology.create_event_type(self.args.event_type_name)
         event_type.create_property('property-a', self.args.object_type_name + '.a').set_merge_strategy('match')
         event_type.create_property('property-b', self.args.object_type_name + '.a').set_merge_strategy(any_or_add)
         event_type.create_property('property-c', self.args.object_type_name + '.c').set_merge_strategy(any_or_min)
         event_type.create_property('property-d', self.args.object_type_name + '.c').set_merge_strategy(any_or_max)
+        event_type.create_property('property-e', 'time').set_merge_strategy(any_or_min)
+
+        event_type.set_timespan_property_name_start('property-e')
+        event_type.set_timespan_property_name_end('property-e')
 
         if self.generate_collisions:
             ontology.create_object_type('version-number', data_type='sequence')
