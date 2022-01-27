@@ -108,6 +108,8 @@ class TranscoderTestHarness(TranscoderMediator):
           selector: The selector that matched the record
         """
 
+        super().process(record)
+
         for event in self.transcoder.generate(record, selector):
             if self._output_source_uri:
                 event.set_source(self._output_source_uri)

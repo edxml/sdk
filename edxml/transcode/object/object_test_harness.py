@@ -37,7 +37,7 @@ class ObjectTranscoderTestHarness(TranscoderTestHarness):
         """
         super().__init__(transcoder, record_selector, base_ontology=base_ontology, register=register)
 
-    def process_object(self, fixture_object, selector=None):
+    def process_object(self, fixture_object, selector=None, close=True):
         """
         Parses specified object and transcodes it to produce output
         events. The output events are added to the event set.
@@ -49,9 +49,14 @@ class ObjectTranscoderTestHarness(TranscoderTestHarness):
         output events it will be fetched from the TYPE_MAP constant of the record
         transcoder.
 
+        By default, the test harness is automatically closed after processing the
+        record. When processing multiple input records this can be prevented.
+        Note that the harness must be closed before using it in assertions.
+
         Args:
             fixture_object: The object to use as input record fixture
             selector:
+            close (bool): Close test harness after processing yes / no
         """
         if selector is None:
             if len(self.transcoder.TYPE_MAP.keys()) > 1:
@@ -63,4 +68,6 @@ class ObjectTranscoderTestHarness(TranscoderTestHarness):
             selector = list(self.transcoder.TYPE_MAP.keys())[0]
 
         self.process(fixture_object, selector)
-        self.close()
+
+        if close:
+            self.close()

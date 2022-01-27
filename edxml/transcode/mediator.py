@@ -562,6 +562,8 @@ class TranscoderMediator(object):
           bytes: Generated output XML data
 
         """
+        if self.__closed:
+            raise Exception('Failed to process record, the mediator has been closed.')
         return b''
 
     def close(self, write_ontology_update=True):
