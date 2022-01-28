@@ -135,7 +135,7 @@ class EventValidator:
             elif schema.error_log.last_error.path.startswith('/event/attachments/'):
                 # Something is wrong with event attachments.
                 attachment_name = schema.error_log.last_error.path.split('/')[-1].split('[')[0]
-                self.__ontology.get_event_type(event.get_type_name()).validate_event_attachments(event)
+                self.__ontology.get_event_type(event.get_type_name()).validate_event_attachments(event, attachment_name)
 
             # Maybe there is a problem with the event structure, like a single-valued
             # property having multiple object values.

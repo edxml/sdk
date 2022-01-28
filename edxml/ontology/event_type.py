@@ -1462,28 +1462,32 @@ class EventType(VersionedOntologyElement, MutableMapping):
 
         return self
 
-    def validate_event_attachments(self, event):
-        for attachment_name, attachment_values in event.get_attachments().items():
-            if attachment_name not in self.__attachments.keys():
+    def validate_event_attachments(self, event, attachment_name=None):
+        for event_attachment_name, attachment_values in event.get_attachments().items():
+            if attachment_name is not None and attachment_name != event_attachment_name:
+                # We are not asked to check this attachment
+                continue
+
+            if event_attachment_name not in self.__attachments.keys():
                 raise EDXMLEventValidationError(
-                    f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
+                    f"An event of type {self.__attr['name']} has an attachment named '{event_attachment_name}' "
                     f"while this event type has no such attachment."
                 )
             for attachment_id, attachment_value in attachment_values.items():
                 if attachment_value == '':
                     raise EDXMLEventValidationError(
-                        f"An event of type {self.__attr['name']} has an attachment named '{attachment_name}' "
+                        f"An event of type {self.__attr['name']} has an attachment named '{event_attachment_name}' "
                         f"which is empty."
                     )
 
-                attachment = self.__attachments[attachment_name]
+                attachment = self.__attachments[event_attachment_name]
                 if attachment.is_base64_string():
                     try:
                         base64.decodebytes(attachment_value.encode())
                     except binascii.Error as e:
                         raise EDXMLEventValidationError(
                             f"An event of type {self.__attr['name']} has a base64 encoded attachment "
-                            f"named '{attachment_name}' which is not a valid base64 string: '{e}'.\n\n"
+                            f"named '{event_attachment_name}' which is not a valid base64 string: '{e}'.\n\n"
                             f"Attachment value is:\n\n{attachment_value}"
                         )
 
