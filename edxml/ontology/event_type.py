@@ -1463,6 +1463,27 @@ class EventType(VersionedOntologyElement, MutableMapping):
         return self
 
     def validate_event_attachments(self, event, attachment_name=None):
+        """
+
+        Validates the attachment values in the event by comparing
+        to the event type definition. Generates exceptions
+        that are much more readable than standard XML validation
+        exceptions.
+
+        Optionally the validation can be limited to a specific
+        attachment only by setting the attachment_name argument.
+
+        Args:
+            event (edxml.EDXMLEvent):
+            attachment_name (str):
+
+        Raises:
+          EDXMLEventValidationError
+
+        Returns:
+          edxml.ontology.EventType: The EventType instance
+
+        """
         for event_attachment_name, attachment_values in event.get_attachments().items():
             if attachment_name is not None and attachment_name != event_attachment_name:
                 # We are not asked to check this attachment
