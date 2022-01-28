@@ -1512,6 +1512,8 @@ class EventType(VersionedOntologyElement, MutableMapping):
                             f"Attachment value is:\n\n{attachment_value}"
                         )
 
+            return self
+
     def normalize_event_objects(self, event, property_names):
         """
 
