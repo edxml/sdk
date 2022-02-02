@@ -37,6 +37,12 @@ class XmlTranscoderMediator(TranscoderMediator):
         self._last_parent_xpath = None
         self._xpath_matchers = {}
         self._transcoder_tags = {}
+        self._warned_large_tree = False
+        self._root = None
+
+    def _close(self):
+        super(XmlTranscoderMediator, self)._close()
+        self._root = None
 
     def register(self, xpath_expression, transcoder, tag=None):
         """
@@ -160,13 +166,14 @@ class XmlTranscoderMediator(TranscoderMediator):
             huge_tree=huge_tree, schema=schema, resolve_entities=resolve_entities
         )
 
-        root = None
+        root = self._root
 
         for action, elem in element_iterator:
             if root is None:
                 root = elem
                 while root.getparent() is not None:
                     root = root.getparent()
+                self._root = root
 
             tree = etree.ElementTree(root)
             self.process(elem, tree)
@@ -221,13 +228,14 @@ class XmlTranscoderMediator(TranscoderMediator):
             recover=recover, huge_tree=huge_tree, schema=schema, resolve_entities=resolve_entities
         )
 
-        root = None
+        root = self._root
 
         for action, elem in element_iterator:
             if root is None:
                 root = elem
                 while root.getparent() is not None:
                     root = root.getparent()
+                self._root = root
 
             tree = etree.ElementTree(root)
             yield self.process(elem, tree)
@@ -289,30 +297,7 @@ class XmlTranscoderMediator(TranscoderMediator):
                 )
 
             self._transcode(element, element_xpath, matching_element_xpath, transcoder)
-
-            # Delete previously transcoded elements to keep the in-memory XML
-            # tree small and processing efficient. Note that lxml only allows us
-            # to delete children of a parent element by index. Also, we cannot delete
-            # the element that we are currently processing, we always delete the
-            # previously transcoded element. To this end, we keep track of the
-            # indices of the last transcoded element inside its parent element.
-            parent = element.getparent()
-            parent_xpath = tree.getpath(parent)
-            if self._last_parent_xpath is not None:
-                last_parent, last_transcoded = self._transcoder_positions.get(self._last_parent_xpath, (None, None))
-                if last_transcoded is not None:
-                    del last_parent[last_transcoded]
-
-            index = parent.index(element)
-            self._transcoder_positions[parent_xpath] = (parent, index)
-            self._last_parent_xpath = parent_xpath
-
-            if index > 100:
-                log.warning(
-                    "The element at xpath %s contains many child elements that have no associated record transcoder. "
-                    "These elements are clogging the in-memory XML tree, slowing down processing." % parent_xpath
-                )
-
+            self._clean_after_transcode(tree, element)
         else:
             if self._warn_no_transcoder:
                 log.warning(
@@ -324,6 +309,70 @@ class XmlTranscoderMediator(TranscoderMediator):
         self._num_input_records_processed += 1
 
         return self._writer.flush()
+
+    def _clean_after_transcode(self, tree, element):
+        # Delete previously transcoded elements to keep the in-memory XML
+        # tree small and processing efficient. Note that lxml only allows us
+        # to delete children of a parent element by index. Also, we cannot delete
+        # the element that we are currently processing, we always delete the
+        # previously transcoded element. To this end, we keep track of the
+        # indices of the last transcoded element inside its parent element.
+        parent = element.getparent()
+        parent_xpath = tree.getpath(parent)
+        if self._last_parent_xpath is not None:
+            last_parent, last_transcoded = self._transcoder_positions[self._last_parent_xpath]
+            # We recorded the index of the previously transcoded
+            # element. We can always safely delete that one.
+            del last_parent[last_transcoded]
+
+            if last_parent == parent:
+                # Previously transcoded element is child of same
+                # parent as the currently transcoded element.
+                # So, we can try to delete any of the elements
+                # in between.
+                self._clean_child_elements(tree, parent, last_transcoded, parent.index(element) - 1)
+            else:
+                # Previously transcoded element is in a different
+                # parent element. Try to delete all remaining
+                # child elements. Also, we delete any elements
+                # in the current parent preceding the element we
+                # just transcoded.
+                self._clean_child_elements(tree, last_parent, last_transcoded, len(last_parent) - 1)
+                self._clean_child_elements(tree, parent, 0, parent.index(element) - 1)
+
+        index = parent.index(element)
+        self._transcoder_positions[parent_xpath] = (parent, index)
+        self._last_parent_xpath = parent_xpath
+
+        if index > 100:
+            self._warn_large_tree(tree, parent, index)
+
+    def _clean_child_elements(self, tree, parent, first, last):
+        for i in range(last, first - 1, -1):
+            # Get the XPath location of the child and remove any
+            # index specifiers like '[1]'. Then we can check if
+            # the child is inside an element that is associated
+            # with the Null transcoder.
+            child_path = re.sub(r'\[\d+]', '', tree.getpath(parent[i]))
+            for discard_path in self._discard_selectors:
+                if child_path.startswith(discard_path):
+                    # Element is associated with the Null transcoder
+                    # and can be safely discarded.
+                    del parent[i]
+                    break
+
+    def _warn_large_tree(self, tree, parent, index):
+        if self._warned_large_tree:
+            return
+
+        tags = [element.tag for element in parent[:index]]
+        tag_counts = sorted([(tag, tags.count(tag)) for tag in set(tags)], key=lambda item: item[1], reverse=True)
+        log.warning(
+            "The element at xpath %s contains many child elements that have no associated record transcoder. "
+            "These elements are clogging the in memory XML tree, slowing down processing. Worst offenders are: %s." %
+            (tree.getpath(parent), ','.join([f"{tag} ({count})" for tag, count in tag_counts[:5]]))
+        )
+        self._warned_large_tree = True
 
     def _get_tags(self):
         """

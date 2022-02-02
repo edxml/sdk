@@ -211,3 +211,13 @@ class RecordTranscoder(EventTypeFactory):
                     processed.extend(self.TYPE_PROPERTY_POST_PROCESSORS[event_type_name][property_name](value))
                 properties[property_name] = processed
         return properties
+
+
+class NullTranscoder(RecordTranscoder):
+    """
+    This is a pseudo-transcoder that is used to indicate input records
+    that should be discarded rather than transcoder into output events.
+    By registering this transcoder for transcoding particular types of
+    input records, those records will be ignored.
+    """
+    ...

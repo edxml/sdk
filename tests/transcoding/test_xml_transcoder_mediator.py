@@ -18,6 +18,7 @@ from lxml import etree
 
 from conftest import edxml_extract
 from edxml.error import EDXMLEventValidationError
+from edxml.transcode import NullTranscoder
 from edxml.transcode.xml import XmlTranscoderMediator, XmlTranscoder
 
 
@@ -34,6 +35,41 @@ def xml():
         '      <p1>a2</p1>'
         '    </a>'
         '    <b attr="b2"/>'
+        '  </records>'
+        '</root>', encoding='utf-8'
+    )
+
+
+@pytest.fixture()
+def xml2():
+    return bytes(
+        '<root>'
+        '  <records>'
+        '    <a/>'
+        '    <b/>'
+        '    <a/>'
+        '    <b/>'
+        '    <c/>'
+        '  </records>'
+        '  <records>'
+        '    <b/>'
+        '    <a/>'
+        '    <b/>'
+        '    <a/>'
+        '  </records>'
+        '</root>', encoding='utf-8'
+    )
+
+
+@pytest.fixture()
+def xml3():
+    return bytes(
+        '<root>'
+        '  <records>'
+        '    <a/>' +
+        '    <b/>' * 50 +
+        '    <c/>' * 100 +
+        '    <a/>'
         '  </records>'
         '</root>', encoding='utf-8'
     )
@@ -99,6 +135,49 @@ def test_generate(xml_transcoder, xml):
     edxml = etree.fromstring(b''.join(output_strings))
 
     assert len(edxml_extract(edxml, '/edxml/event')) == 2
+
+
+def test_clean_tree(xml_transcoder, xml2):
+    with XmlTranscoderMediator() as mediator:
+        mediator.register('records/a', xml_transcoder())
+        mediator.add_event_source('/test/uri/')
+        mediator.set_event_source('/test/uri/')
+        list(mediator.generate(BytesIO(xml2)))
+
+    # All 'a' records except last one should be deleted.
+    # All other records should remain in the tree.
+    assert len(mediator._root.xpath('records/a')) == 1
+    assert len(mediator._root.xpath('records/b')) == 4
+    assert len(mediator._root.xpath('records/c')) == 1
+
+
+def test_clean_tree_null_transcoder(xml_transcoder, xml2):
+    with XmlTranscoderMediator() as mediator:
+        mediator.register('/root/records/a', xml_transcoder())
+        mediator.register('/root/records/b', NullTranscoder())
+        mediator.register('/root/records/c', NullTranscoder())
+        mediator.add_event_source('/test/uri/')
+        mediator.set_event_source('/test/uri/')
+        list(mediator.generate(BytesIO(xml2)))
+
+    # All 'a' records except last one should be deleted.
+    # All other records should be cleaned as well due to
+    # association with Null transcoder.
+    assert len(mediator._root.xpath('records/a')) == 1
+    assert len(mediator._root.xpath('records/b')) == 0
+    assert len(mediator._root.xpath('records/c')) == 0
+
+
+def test_large_tree_warning(xml_transcoder, xml3, caplog):
+    with XmlTranscoderMediator() as mediator:
+        mediator.register('/root/records/a', xml_transcoder())
+        mediator.add_event_source('/test/uri/')
+        mediator.set_event_source('/test/uri/')
+        list(mediator.generate(BytesIO(xml3)))
+
+        assert 'xpath /root/records contains many child elements' in caplog.text
+        assert 'that have no associated record transcoder' in caplog.text
+        assert 'Worst offenders are: c (100),b (50)' in caplog.text
 
 
 def test_parse_nested_transcoders(xml):

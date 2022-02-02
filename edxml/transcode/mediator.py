@@ -16,7 +16,7 @@ from graphviz import Digraph
 
 import edxml
 from edxml.logger import log
-from edxml.transcode import RecordTranscoder
+from edxml.transcode import RecordTranscoder, NullTranscoder
 from edxml.ontology import Ontology
 from edxml.ontology.visualization import generate_graph_property_concepts
 from edxml.ontology.description import describe_producer_rst
@@ -69,7 +69,8 @@ class TranscoderMediator(object):
         self.__allow_repair_normalize = {}
         self.__log_repaired_events = False
 
-        self.__transcoders = {}              # type: Dict[any, edxml.transcode.RecordTranscoder]
+        self._transcoders = {}              # type: Dict[any, edxml.transcode.RecordTranscoder]
+        self._discard_selectors = set()
 
         self.__closed = False
         self.__output = output
@@ -141,12 +142,18 @@ class TranscoderMediator(object):
           record_selector: Record type selector
           record_transcoder (edxml.transcode.RecordTranscoder): Record transcoder instance
         """
-        if record_selector in self.__transcoders:
+        if record_selector in self._transcoders:
             raise Exception(
                 "Attempt to register multiple record transcoders for record selector '%s'" % record_selector
             )
 
-        self.__transcoders[record_selector] = record_transcoder
+        if isinstance(record_transcoder, NullTranscoder):
+            # The records that match the selector are supposed
+            # to be discarded.
+            self._discard_selectors.add(record_selector)
+            return
+
+        self._transcoders[record_selector] = record_transcoder
 
         for event_type_name, property_names in record_transcoder.TYPE_AUTO_REPAIR_NORMALIZE.items():
             self.enable_auto_repair_normalize(event_type_name, property_names)
@@ -349,7 +356,7 @@ class TranscoderMediator(object):
           Optional[RecordTranscoder]:
         """
 
-        return self.__transcoders.get(record_selector)
+        return self._transcoders.get(record_selector)
 
     def _populate_ontology(self):
 
@@ -361,7 +368,7 @@ class TranscoderMediator(object):
 
         # First, we accumulate the object types into an
         # empty ontology.
-        for transcoder in self.__transcoders.values():
+        for transcoder in self._transcoders.values():
             object_types = Ontology()
             transcoder.set_ontology(object_types)
             transcoder.create_object_types()
@@ -370,7 +377,7 @@ class TranscoderMediator(object):
 
         # Then, we accumulate the concepts into an
         # empty ontology.
-        for transcoder in self.__transcoders.values():
+        for transcoder in self._transcoders.values():
             concepts = Ontology()
             transcoder.set_ontology(concepts)
             transcoder.create_concepts()
@@ -378,7 +385,7 @@ class TranscoderMediator(object):
             self.__ontology.update(concepts)
 
         # Now, we allow each of the record transcoders to create their event types.
-        for transcoder in self.__transcoders.values():
+        for transcoder in self._transcoders.values():
             transcoder.set_ontology(self.__ontology)
             list(transcoder.generate_event_types())
 
