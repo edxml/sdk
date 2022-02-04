@@ -53,7 +53,7 @@ class TranscoderMediator(object):
         """
 
         super().__init__()
-        self._debug = False
+
         self._warn_no_transcoder = False
         self._warn_fallback = False
         self._warn_invalid_events = False
@@ -184,7 +184,6 @@ class TranscoderMediator(object):
         Returns:
           TranscoderMediator:
         """
-        self._debug = True
         self._warn_no_transcoder = warn_no_transcoder
         self._warn_fallback = warn_fallback
         self.__log_repaired_events = log_repaired_events
