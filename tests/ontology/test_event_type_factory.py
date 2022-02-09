@@ -299,6 +299,24 @@ def test_optional_mandatory_properties_b(factory):
         assert event_type.get_properties()['property-b'].is_mandatory()
 
 
+def test_property_versions(factory):
+    type(factory).TYPES = ['event-type.a']
+    type(factory).TYPE_PROPERTIES = {
+        'event-type.a': {
+            'property-a': 'object-type.sequence',
+            'property-b': 'object-type.string'
+        }
+    }
+    type(factory).TYPE_PROPERTY_MERGE_STRATEGIES = {'event-type.a': {'property-a': 'max'}}
+    type(factory).TYPE_VERSIONS = {'event-type.a': 'property-a'}
+
+    event_types = dict(factory.generate_event_types())
+    factory._ontology.validate()
+
+    for event_type in event_types.values():
+        assert event_type.get_version_property_name() == 'property-a'
+
+
 def test_universals_relations(factory):
     type(factory).TYPES = ['event-type.a']
     type(factory).TYPE_PROPERTIES = {'event-type.a': {
