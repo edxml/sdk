@@ -971,6 +971,9 @@ class EventProperty(OntologyElement):
         if attribs['similar'] == '':
             del attribs['similar']
 
+        if attribs['merge'] == 'any':
+            del attribs['merge']
+
         prop = etree.Element('property', attribs)
 
         for concept_name in sorted(self.__concepts.keys()):
