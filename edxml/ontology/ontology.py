@@ -545,7 +545,7 @@ class Ontology(OntologyElement):
         Returns:
            List[str]: List of event type names
         """
-        return self.__event_types.keys()
+        return list(self.__event_types.keys())
 
     def get_object_type_names(self):
         """
@@ -556,7 +556,7 @@ class Ontology(OntologyElement):
         Returns:
            List[str]: List of object type names
         """
-        return self.__object_types.keys()
+        return list(self.__object_types.keys())
 
     def get_event_source_uris(self):
         """
@@ -567,7 +567,7 @@ class Ontology(OntologyElement):
         Returns:
            List[str]: List of source URIs
         """
-        return self.__sources.keys()
+        return list(self.__sources.keys())
 
     def get_concept_names(self):
         """
@@ -578,7 +578,7 @@ class Ontology(OntologyElement):
         Returns:
            List[str]: List of concept names
         """
-        return self.__concepts.keys()
+        return list(self.__concepts.keys())
 
     def get_event_type(self, name):
         """
