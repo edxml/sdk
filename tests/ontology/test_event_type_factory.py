@@ -306,6 +306,22 @@ def test_property_versions(factory):
         assert event_type.get_version_property_name() == 'property-a'
 
 
+def test_property_sequences(factory):
+    type(factory).TYPES = ['event-type.a']
+    type(factory).TYPE_PROPERTIES = {
+        'event-type.a': {
+            'property-a': 'object-type.sequence',
+            'property-b': 'object-type.string'
+        }
+    }
+    type(factory).TYPE_SEQUENCES = {'event-type.a': 'property-a'}
+
+    event_types = factory.create_validate_event_types()
+
+    for event_type in event_types.values():
+        assert event_type.get_sequence_property_name() == 'property-a'
+
+
 def test_universals_relations(factory):
     type(factory).TYPES = ['event-type.a']
     type(factory).TYPE_PROPERTIES = {'event-type.a': {
@@ -417,6 +433,12 @@ def test_spurious_type_timespan_exception(factory):
 
 def test_spurious_type_version_property_exception(factory):
     type(factory).TYPE_VERSIONS = {'spurious': None}
+    with pytest.raises(ValueError, match='not in the TYPES attribute'):
+        factory.generate_ontology()
+
+
+def test_spurious_type_sequence_property_exception(factory):
+    type(factory).TYPE_SEQUENCES = {'spurious': None}
     with pytest.raises(ValueError, match='not in the TYPES attribute'):
         factory.generate_ontology()
 

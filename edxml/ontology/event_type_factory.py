@@ -340,6 +340,17 @@ class EventTypeFactory(object):
       {'event-type-name': 'version'}
     """
 
+    TYPE_SEQUENCES = {}
+    """
+    The TYPE_SEQUENCES attribute contains the names of the properties that define the sequence numbers of
+    the events. Together with event time spans, sequence numbers determine logical event order.
+
+    The attribute is a dictionary mapping EDXML event type names to the names of the event properties
+    that contain the sequence number. Example::
+
+      {'event-type-name': 'sequence'}
+    """
+
     TYPE_ATTACHMENTS = {}
     """
     The TYPE_ATTACHMENTS attribute is a dictionary mapping EDXML event type names to attachment names.
@@ -517,6 +528,8 @@ class EventTypeFactory(object):
             event_type.set_timespan_property_name_end(cls.TYPE_TIME_SPANS[event_type_name][1])
         if cls.TYPE_VERSIONS.get(event_type_name):
             event_type.set_version_property_name(cls.TYPE_VERSIONS.get(event_type_name))
+        if cls.TYPE_SEQUENCES.get(event_type_name):
+            event_type.set_sequence_property_name(cls.TYPE_SEQUENCES.get(event_type_name))
 
         if cls.TYPE_HASHED_PROPERTIES.get(event_type_name, {}) == {}:
             log.warning(
@@ -799,7 +812,7 @@ class EventTypeFactory(object):
             'TYPE_ATTACHMENT_ENCODINGS',
             'TYPE_UNIVERSALS_NAMES', 'TYPE_UNIVERSALS_CONTAINERS',
             'TYPE_PROPERTY_CONCEPTS', 'TYPE_PROPERTY_CONCEPTS_CNP', 'TYPE_PROPERTY_ATTRIBUTES',
-            'TYPE_UNIVERSALS_DESCRIPTIONS'
+            'TYPE_UNIVERSALS_DESCRIPTIONS', 'TYPE_SEQUENCES'
         ]
 
         for constant_name in const_with_event_type_keys:
