@@ -13,7 +13,6 @@
 
 import pytest
 
-from edxml.ontology import Ontology
 from edxml.transcode.object import ObjectTranscoder
 
 
@@ -27,12 +26,10 @@ def object_transcoder():
         ObjectTranscoder class would cause side effects because that class is
         shared by all tests.
         """
-        pass
-    t = TestObjectTranscoder()
-    ontology = Ontology()
-    ontology.create_object_type('object-type.string')
-    t.set_ontology(ontology)
-    return t
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type.string')
+
+    return TestObjectTranscoder()
 
 
 def test_transcode_string_object_attribute(object_transcoder, record):

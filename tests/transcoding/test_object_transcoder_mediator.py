@@ -43,9 +43,9 @@ def object_transcoder():
         ObjectTranscoder class would cause side effects because that class is
         shared by all tests.
         """
-        def create_object_types(self):
-            self._ontology.create_object_type('object-type.string')
-            self._ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type.string')
+            ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
 
         @classmethod
         def create_event_type(cls, event_type_name, ontology):

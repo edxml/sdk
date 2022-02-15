@@ -19,7 +19,7 @@ import pytest
 
 from lxml import objectify
 
-from edxml.ontology import Ontology, DataType
+from edxml.ontology import DataType
 from edxml.transcode import RecordTranscoder
 from edxml.transcode.object import ObjectTranscoderMediator
 from edxml.transcode.xml import XmlTranscoder
@@ -42,15 +42,14 @@ def transcoder():
         RecordTranscoder class would cause side effects because that class is
         shared by all tests.
         """
-        pass
+        def create_concepts(self, ontology):
+            ontology.create_concept('concept-a', 'concept')
 
-    t = TestTranscoder()
-    ontology = Ontology()
-    ontology.create_concept('concept-a', 'concept')
-    ontology.create_object_type('object-type.string')
-    ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
-    t.set_ontology(ontology)
-    return t
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type.string')
+            ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
+
+    return TestTranscoder()
 
 
 @pytest.fixture()
@@ -63,9 +62,9 @@ def xml_transcoder():
         XmlTranscoder class would cause side effects because that class is
         shared by all tests.
         """
-        def create_object_types(self):
-            self._ontology.create_object_type('object-type.string')
-            self._ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type.string')
+            ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
 
     return TestXmlTranscoder
 

@@ -22,9 +22,9 @@ class TestXmlTranscoder(XmlTranscoder):
     TYPE_PROPERTIES = {'test-event-type': {'property1': 'object-type.string'}}
     PROPERTY_MAP = {'test-event-type': {'p1': 'property1'}}
 
-    def create_object_types(self):
-        self._ontology.create_object_type('object-type.string')
-        self._ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
+    def create_object_types(self, ontology):
+        ontology.create_object_type('object-type.string')
+        ontology.create_object_type('object-type.integer', data_type=DataType.int().get())
 
 
 def test_harness_basics():

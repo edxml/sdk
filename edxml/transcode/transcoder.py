@@ -11,7 +11,6 @@
 #                                                                                        =
 # ========================================================================================
 
-import edxml
 from edxml.ontology.event_type_factory import EventTypeFactory
 
 
@@ -93,18 +92,6 @@ class RecordTranscoder(EventTypeFactory):
       {'event-type-name': ['some-property']}
     """
 
-    def __init__(self):
-        super().__init__()
-
-        self._ontology = None  # type: edxml.ontology.Ontology
-
-    def set_ontology(self, ontology):
-        self._ontology = ontology
-        return self
-
-    def update_ontology(self, ontology, validate=True):
-        self._ontology.update(ontology, validate)
-
     def generate(self, record, record_selector, **kwargs):
         """
 
@@ -144,20 +131,6 @@ class RecordTranscoder(EventTypeFactory):
           edxml.EDXMLEvent:
         """
         yield from ()
-
-    def create_concepts(self):
-        """
-        This method may be used to generate generic EDXML
-        concepts that are used by all record transcoders.
-        """
-        pass
-
-    def create_object_types(self):
-        """
-        This method may be used to generate generic EDXML
-        object types that are used by all record transcoders.
-        """
-        pass
 
     @classmethod
     def check_class_attributes(cls):

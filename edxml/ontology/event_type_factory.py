@@ -11,10 +11,9 @@
 #                                                                                        =
 # ========================================================================================
 
-import edxml
 from edxml.error import EDXMLOntologyValidationError
 from edxml.logger import log
-from edxml.ontology import EventTypeParent, EventProperty
+from edxml.ontology import EventTypeParent, EventProperty, Ontology
 
 
 class EventTypeFactory(object):
@@ -22,13 +21,6 @@ class EventTypeFactory(object):
     This class allows for the creation of event types in a declarative fashion. To
     this end it provides a collection of class constants from which one or more
     event types can be generated.
-
-    The class constants describe the event type(s). The generate_event_types() method
-    is the factory method that will construct the event types using the information
-    in the class constants. Any details of the event type definitions that cannot be
-    specified using the class constants can be set on the generated event types by
-    overriding the generate_event_types() method and edit the event type definitions
-    that it generates.
     """
 
     VERSION = 1
@@ -433,47 +425,63 @@ class EventTypeFactory(object):
       {'event-type-name': {'my-attachment': 'unicode'}}
     """
 
-    def __init__(self):
-        super().__init__()
-
-        self._ontology = None  # type: edxml.ontology.Ontology
-
-    def set_ontology(self, ontology):
-        self._ontology = ontology
-        return self
-
-    def update_ontology(self, ontology, validate=True):
-        self._ontology.update(ontology, validate)
-
-    def create_concepts(self):
+    def generate_ontology(self, target_ontology=None):
         """
-        This method may be used to generate generic EDXML
-        concepts that are used by all record transcoders.
+
+        Generates the ontology elements, adding them to a
+        target ontology. The target ontology is returned.
+        By default, the target ontology is an empty ontology
+        which is not validated after populating it. When
+        another target ontology is passed, it will be
+        updated using the generated ontology elements. This
+        update operation does trigger ontology validation.
+
+        Args:
+            target_ontology (edxml.ontology.Ontology)
+
+        Returns:
+            edxml.ontology.Ontology: The resulting ontology
+        """
+        self.check_class_attributes()
+
+        ontology = Ontology()
+        self.create_object_types(ontology)
+        self.create_concepts(ontology)
+        for event_type_name in set(self.TYPES):
+            self.create_event_type(event_type_name, ontology)
+
+        if target_ontology:
+            target_ontology.update(ontology)
+            return target_ontology
+
+        return ontology
+
+    def create_concepts(self, ontology):
+        """
+        This method may be used to define EDXML concepts that
+        are referred to by the generated event types.
         """
         pass
 
-    def create_object_types(self):
+    def create_object_types(self, ontology):
         """
-        This method may be used to generate generic EDXML
-        object types that are used by all record transcoders.
+        This method may be used to define EDXML object types that
+        are referred to by the generated event types.
         """
         pass
 
-    def generate_event_types(self):
+    def create_event_types(self, ontology):
         """
 
         This method generates all event types using the class constants of this
-        event type factory. Yields tuples containing pairs of event type
-        names and event type instances.
-
-        Yields:
-          tuple[str, edxml.ontology.EventType]:
+        event type factory. The event types are created in specified ontology.
+        This ontology must have all required object types and concepts.
         """
 
         self.check_class_attributes()
 
         for event_type_name in set(self.TYPES):
-            yield event_type_name, self.create_event_type(event_type_name, self._ontology)
+            self.create_event_type(event_type_name, ontology)
 
     @classmethod
     def create_event_type(cls, event_type_name, ontology):

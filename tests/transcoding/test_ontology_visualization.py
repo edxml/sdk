@@ -34,11 +34,11 @@ def test_ontology_concept_visualization():
             else:
                 event_type.get_properties()['property-a'].relate_inter('related to', 'property-b')
 
-        def create_object_types(self):
-            self._ontology.create_object_type('object-type-string')
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type-string')
 
-        def create_concepts(self):
-            self._ontology.create_concept('concept-a')
+        def create_concepts(self, ontology):
+            ontology.create_concept('concept-a')
 
     # Below we define two event types each having two properties. The properties are
     # associated with concepts. The event types share a common object type, which means that both

@@ -183,8 +183,8 @@ def test_large_tree_warning(xml_transcoder, xml3, caplog):
 def test_parse_nested_transcoders(xml):
 
     class InnerTranscoder(XmlTranscoder):
-        def create_object_types(self):
-            self._ontology.create_object_type('object-type.string')
+        def create_object_types(self, ontology):
+            ontology.create_object_type('object-type.string')
 
     class OuterTranscoder(InnerTranscoder):
         pass

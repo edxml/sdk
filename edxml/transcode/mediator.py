@@ -369,8 +369,7 @@ class TranscoderMediator(object):
         # empty ontology.
         for transcoder in self._transcoders.values():
             object_types = Ontology()
-            transcoder.set_ontology(object_types)
-            transcoder.create_object_types()
+            transcoder.create_object_types(object_types)
             # Add the object types to the main mediator ontology
             self.__ontology.update(object_types)
 
@@ -378,15 +377,13 @@ class TranscoderMediator(object):
         # empty ontology.
         for transcoder in self._transcoders.values():
             concepts = Ontology()
-            transcoder.set_ontology(concepts)
-            transcoder.create_concepts()
+            transcoder.create_concepts(concepts)
             # Add the concepts to the main mediator ontology
             self.__ontology.update(concepts)
 
         # Now, we allow each of the record transcoders to create their event types.
         for transcoder in self._transcoders.values():
-            transcoder.set_ontology(self.__ontology)
-            list(transcoder.generate_event_types())
+            transcoder.create_event_types(self.__ontology)
 
         # Note that below validation also triggers loading of
         # ontology bricks that contain definitions referred to
