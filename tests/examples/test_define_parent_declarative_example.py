@@ -10,15 +10,15 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
-from edxml.ontology import Brick, Ontology
-
 
 def test_event_type_factory():
-    class TestBrick(Brick):
-        @classmethod
-        def generate_object_types(cls, target_ontology):
-            yield target_ontology.create_object_type('my.object.type')
+    from edxml.examples.define_parent_declarative import FileSystemTypes
 
-    Ontology.register_brick(TestBrick)
+    class TestFactory(FileSystemTypes):
+        def create_object_types(self, ontology):
+            ontology.create_object_type('filesystem-name')
 
-    from edxml.examples import event_type_factory  # noqa:
+    ontology = TestFactory().generate_ontology()
+    ontology.validate()
+
+    assert ontology.get_event_type('file').get_parent() is not None

@@ -1,17 +1,24 @@
 import pytest
+
 from edxml.transcode.object import ObjectTranscoderTestHarness, ObjectTranscoder
+from edxml_bricks.computing.generic import ComputingBrick
 
 
 class TestObjectTranscoder(ObjectTranscoder):
     __test__ = False
 
-    TYPES = ['system.user']
-    TYPE_MAP = {'user': 'system.user'}
-    TYPE_PROPERTIES = {'system.user': {'user.name': 'object-type.string'}}
-    PROPERTY_MAP = {'system.user': {'name': 'user.name'}}
-
-    def create_object_types(self):
-        self._ontology.create_object_type('object-type.string')
+    TYPES = ['com.acme.staff.account']
+    TYPE_MAP = {'user': 'com.acme.staff.account'}
+    PROPERTY_MAP = {
+        'com.acme.staff.account': {
+            'name': 'user.name'
+        }
+    }
+    TYPE_PROPERTIES = {
+        'com.acme.staff.account': {
+            'user.name': ComputingBrick.OBJECT_USER_NAME
+        }
+    }
 
 
 @pytest.fixture()

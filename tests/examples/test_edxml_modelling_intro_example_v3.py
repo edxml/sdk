@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # ========================================================================================
 #                                                                                        =
 #              Copyright (c) 2010 D.H.J. Takken (d.h.j.takken@xs4all.nl)                 =
@@ -13,21 +11,8 @@
 #                                                                                        =
 # ========================================================================================
 
-import edxml
 
+def test_intro_example_v3():
+    from edxml.examples.edxml_modelling.intro_example_v3 import FtpTypeFactory
 
-class ExampleBrick(edxml.ontology.Brick):
-    """
-    Example brick that defines one concept.
-    """
-
-    CONCEPT_COMPUTER = 'computer'
-
-    @classmethod
-    def generate_concepts(cls, target_ontology):
-        yield target_ontology.create_concept('computer') \
-            .set_description('some kind of a computing device') \
-            .set_display_name('computer')
-
-
-edxml.ontology.Ontology.register_brick(ExampleBrick)
+    FtpTypeFactory().generate_ontology().validate()

@@ -10,7 +10,7 @@ A quick example to illustrate:
 
 The EventTypeFactory class is also the base of the :class:`RecordTranscoder <edxml.transcode.RecordTranscoder>` class and its extensions. These classes combine ontology generation with event generation and are the most convenient way to generate EDXML data.
 
-Of course there are many more class constants that can be used to create more complex ontologies. These can be found in the below class documentation.
+Of course there are many more class constants corresponding to many other EDXML ontology features. These can be found in the below class documentation. More extensive examples of using an EventTypeFactory can be found in :doc:`transcoding` and in :doc:`edxml-modelling/intro`.
 
 edxml.ontology.EventTypeFactory
 -------------------------------

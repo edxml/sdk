@@ -81,7 +81,7 @@ class TranscoderTestHarness(TranscoderMediator):
             register (bool): Register the transcoder yes or no
         """
         self._base_ontology = base_ontology
-        self.events: EventCollection = EventCollection()  #: The resulting event collection
+        self.events: edxml.EventCollection = EventCollection()  #: The resulting event collection
         parser = TestHarnessParser(self.events)
         # Below we use the parser as output of the mediator. The
         # parser will populate self.events.

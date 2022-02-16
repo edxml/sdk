@@ -2,7 +2,9 @@ import sys
 from io import BytesIO
 
 from edxml.transcode.xml import XmlTranscoder, XmlTranscoderMediator
+from edxml_bricks.computing.generic import ComputingBrick
 
+# Define an input document
 xml = bytes(
     '<records>'
     '  <users>'
@@ -14,25 +16,29 @@ xml = bytes(
 )
 
 
+# Define a transcoder for user records
 class UserTranscoder(XmlTranscoder):
-    TYPES = ['test-event-type']
-    TYPE_MAP = {'user': 'test-event-type'}
-    TYPE_PROPERTIES = {'test-event-type': {'user.name': 'my.object.type'}}
-    PROPERTY_MAP = {'test-event-type': {'name': 'user.name'}}
+    TYPES = ['com.acme.staff.account']
+    TYPE_MAP = {'.': 'com.acme.staff.account'}
+    PROPERTY_MAP = {
+        'com.acme.staff.account': {
+            'name': 'user.name'
+        }
+    }
+    TYPE_PROPERTIES = {
+        'com.acme.staff.account': {
+            'user.name': ComputingBrick.OBJECT_USER_NAME
+        }
+    }
 
-    def create_object_types(self):
-        self._ontology.create_object_type('my.object.type')
 
-
-# Create a transcoder
-transcoder = UserTranscoder()
-
+# Transcode the input document
 with XmlTranscoderMediator(output=sys.stdout.buffer) as mediator:
     # Register transcoder
-    mediator.register('users', UserTranscoder())
+    mediator.register('/records/users/user', UserTranscoder())
     # Define an EDXML event source
-    mediator.add_event_source('/test/uri/')
+    mediator.add_event_source('/acme/offices/amsterdam/')
     # Set the source as current source for all output events
-    mediator.set_event_source('/test/uri/')
+    mediator.set_event_source('/acme/offices/amsterdam/')
     # Parse the XML data
     mediator.parse(BytesIO(xml))

@@ -10,15 +10,9 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
-from edxml.ontology import Brick, Ontology
 
 
-def test_event_type_factory():
-    class TestBrick(Brick):
-        @classmethod
-        def generate_object_types(cls, target_ontology):
-            yield target_ontology.create_object_type('my.object.type')
+def test_intro_example_v1():
+    from edxml.examples.edxml_modelling.intro_example_v1 import FtpTypeFactory
 
-    Ontology.register_brick(TestBrick)
-
-    from edxml.examples import event_type_factory  # noqa:
+    FtpTypeFactory().generate_ontology().validate()

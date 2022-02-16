@@ -1,21 +1,17 @@
 from edxml.transcode.object import ObjectTranscoder
+from edxml_bricks.computing.generic import ComputingBrick
 
 
 class UserTranscoder(ObjectTranscoder):
-    TYPE_MAP = {'user': 'test-event-type'}
-    PROPERTY_MAP = {'test-event-type': {'name': 'user.name'}}
-
-    def create_object_types(self):
-        self._ontology.create_object_type('my.object.type')
-
-
-class UserRecord:
-    name = 'Alice'
-
-
-# Create a transcoder and an input record
-transcoder = UserTranscoder()
-record = UserRecord()
-
-# Generate output events
-events = list(transcoder.generate(record, record_selector='user'))
+    TYPES = ['com.acme.staff.account']
+    TYPE_MAP = {'user': 'com.acme.staff.account'}
+    PROPERTY_MAP = {
+        'com.acme.staff.account': {
+            'name': 'user.name'
+        }
+    }
+    TYPE_PROPERTIES = {
+        'com.acme.staff.account': {
+            'user.name': ComputingBrick.OBJECT_USER_NAME
+        }
+    }

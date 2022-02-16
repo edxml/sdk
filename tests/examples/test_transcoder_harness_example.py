@@ -15,7 +15,7 @@ import pytest
 
 
 def test_transcoder_harness():
-    pytest.main(
+    assert pytest.main(
         [os.path.dirname(__file__) + '/../../edxml/examples/transcoder_harness.py', '-p', 'no:terminal'],
         plugins=[]
-    )
+    ) == 0

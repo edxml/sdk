@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<edxml xmlns="http://edxml.org/edxml" version="3.0.0">
+<ontology xmlns="http://edxml.org/edxml">
+  <object-types>
+    <object-type name="datetime"
+                 display-name-singular="time stamp"
+                 display-name-plural="time stamps"
+                 description="a date and time in ISO 8601 format"
+                 data-type="datetime"
+                 version="1"/>
+  </object-types>
+  <concepts/>
+  <event-types>
+    <event-type name="org.myorganization.logs.ftp"
+                display-name-singular="org myorganization logs ftp"
+                display-name-plural="org myorganization logs ftps"
+                description="org.myorganization.logs.ftp"
+                summary="no description available"
+                story="no description available"
+                version="1">
+      <properties>
+        <property name="time"
+                  object-type="datetime"
+                  description="time"
+                  optional="false"
+                  multivalued="false"
+                  confidence="10"/>
+      </properties>
+    </event-type>
+  </event-types>
+  <sources/>
+</ontology>
+</edxml>

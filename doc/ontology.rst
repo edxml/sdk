@@ -86,7 +86,7 @@ EventProperty
     :show-inheritance:
 
 PropertyConcept
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 .. _`property concept associations`:
 .. _PropertyConcept:
 
