@@ -15,7 +15,8 @@ import os
 import pytest
 
 from dateutil.parser import parse
-from edxml.miner.knowledge import KnowledgeBase, KnowledgePullParser, KnowledgePushParser
+from edxml.miner.knowledge import KnowledgeBase
+from edxml.miner.parser import KnowledgePullParser, KnowledgePushParser
 
 
 @pytest.fixture(params=('push', 'pull'))
@@ -29,7 +30,7 @@ def knowledge_base(request):
         parser = KnowledgePushParser(knowledge)
         parser.feed(open(os.path.dirname(__file__) + '/input.edxml', 'rb').read())
 
-    parser.mine()
+    parser.miner.mine()
     return knowledge
 
 
@@ -42,7 +43,7 @@ def knowledge_base_timespan(request):
     knowledge = KnowledgeBase()
     parser = KnowledgePullParser(knowledge)
     parser.parse(input_file)
-    parser.mine()
+    parser.miner.mine()
     return knowledge
 
 

@@ -14,7 +14,8 @@
 import os
 import re
 
-from edxml.miner.knowledge import KnowledgePullParser, KnowledgeBase
+from edxml.miner.knowledge import KnowledgeBase
+from edxml.miner.parser import KnowledgePullParser
 from edxml.miner.graph.visualize import graphviz_concepts, graphviz_nodes
 from edxml.miner.result import MinedConceptInstanceCollection
 
@@ -24,7 +25,7 @@ def get_mining_result() -> MinedConceptInstanceCollection:
     parser = KnowledgePullParser(knowledge)
     parser.parse(os.path.dirname(__file__) + '/input.edxml')
 
-    parser.mine(min_confidence=0.001)
+    parser.miner.mine(min_confidence=0.001)
     return knowledge.concept_collection
 
 

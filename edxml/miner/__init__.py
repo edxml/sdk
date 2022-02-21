@@ -13,5 +13,6 @@
 
 from .graph.construct import GraphConstructor
 from .node import Node
+from .miner import Miner
 
-__all__ = ['GraphConstructor', 'Node']
+__all__ = ['GraphConstructor', 'Node', 'Miner']
