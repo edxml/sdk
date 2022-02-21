@@ -105,6 +105,7 @@ def main():
                     omissions.append('attachment ' + ', '.join(omitted_attachments))
                 how += ' and '.join(omissions)
             print(f"Evaluated {how}:")
+            print(('=' * 80) + '\n')
             print('"' + evaluated + '"\n')
 
 
