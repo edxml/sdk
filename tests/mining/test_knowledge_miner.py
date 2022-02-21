@@ -58,18 +58,30 @@ def test_knowledge_base_basics(knowledge_base):
     assert len(results.concepts) == 3
 
     # Check that we have 4 attributes ('a', 'b', 'c' and 'd')
-    attributes = [repr(attr) for concept in results.concepts.values() for attr in concept.attributes]
+    attributes = [attr for concept in results.concepts.values() for attr in concept.attributes]
+    attribute_repr = [repr(attr) for attr in attributes]
 
     assert len(attributes) == 4
-    assert 'oa: = a' in attributes
-    assert 'ob: = b' in attributes
-    assert 'oc: = c' in attributes
-    assert 'od: = d' in attributes
+    assert 'oa: = a' in attribute_repr
+    assert 'ob: = b' in attribute_repr
+    assert 'oc: = c' in attribute_repr
+    assert 'od: = d' in attribute_repr
 
     # The concept instances that contain attributes 'a' and 'd' are related (in both ways)
     related = [repr(related) for concept in results.concepts.values() for related in concept.get_related_concepts()]
 
     assert len(related) == 2
+
+    # Check that the attribute confidences are correct. Properties a, c and d should
+    # be selected as seeds and have a confidence of 1.0 for that reason.
+    # Property a is intra related to b, yielding attribute 'ob:' Its confidence
+    # must be computed from just the relation confidence (0.2) and the property
+    # confidence of property b (0.8). The concept association confidence (0.9)
+    # and property confidence of property a (the seed, 0.7) is irrelevant.
+    assert attributes[0].confidence == 1.0
+    assert attributes[1].confidence == 1.0 - (1.0 - (0.2 * 0.8))
+    assert attributes[2].confidence == 1.0
+    assert attributes[3].confidence == 1.0
 
     # We have one name relation between pa and pb
     assert knowledge_base.get_names_for('ob', 'b') == {'oa': {'a'}}

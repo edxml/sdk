@@ -28,10 +28,10 @@
       <event-type name="ea" description="a" display-name-singular="a" display-name-plural="a" summary="[[pa]]" story="[[pa]]" version="6">
         <properties>
           <property name="time-start" object-type="time" description="description" optional="true" multivalued="false" confidence="10" merge="match"/>
-          <property name="pa" object-type="oa" description="description" optional="true" multivalued="false" confidence="10" merge="match">
+          <property name="pa" object-type="oa" description="description" optional="true" multivalued="false" confidence="7" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
-          <property name="pb" object-type="ob" description="b" optional="true" multivalued="true" confidence="10" merge="match">
+          <property name="pb" object-type="ob" description="b" optional="true" multivalued="true" confidence="8" merge="match">
             <property-concept name="ca" confidence="9" cnp="9"/>
           </property>
           <property name="pc" object-type="oc" description="c" optional="true" multivalued="true" confidence="10" merge="match">
