@@ -69,11 +69,11 @@ def describe_producer_rst(ontology, producer_name, input_description):
             concept_dn = ontology.get_concept(concept_name).get_display_name_plural()
             expansions[concept_dn].update(attribute_names)
 
-        for concept_dn, attribute_names in expansions.items():
+        for concept_dn, attribute_names in sorted(expansions.items()):
             description += f"\n:{concept_dn.capitalize()}: Discovering new " + _list_strings(attribute_names)
 
     if concept_combinations:
-        description += f"\n\nThe {producer_name} identifies:\n" + '\n'.join(set(concept_combinations.values()))
+        description += f"\n\nThe {producer_name} identifies:\n" + '\n'.join(sorted(set(concept_combinations.values())))
 
     value_names = set()
     value_descriptions = set()
@@ -140,16 +140,16 @@ def _describe_object_types(ontology: Ontology):
 
 def _describe_event_types(ontology: Ontology):
     type_names = []
-    for event_type_name in ontology.get_event_type_names():
+    for event_type_name in sorted(ontology.get_event_type_names()):
         type_names.append(ontology.get_event_type(event_type_name).get_display_name_plural())
     return _list_strings(type_names)
 
 
 def _describe_inter_concept_relations(ontology: Ontology):
     relations = defaultdict(lambda: defaultdict(set))
-    for event_type_name in ontology.get_event_type_names():
+    for event_type_name in sorted(ontology.get_event_type_names()):
         event_type = ontology.get_event_type(event_type_name)
-        for relation in event_type.relations:
+        for relation in sorted(event_type.relations, key=lambda rel: rel.get_persistent_id()):
             if relation.get_type() != 'inter':
                 continue
             relations[relation.get_source_concept()][relation.get_target_concept()].add(event_type_name)
@@ -158,9 +158,9 @@ def _describe_inter_concept_relations(ontology: Ontology):
 
 def _describe_intra_concept_relations(ontology: Ontology):
     relations = defaultdict(set)
-    for event_type_name in ontology.get_event_type_names():
+    for event_type_name in sorted(ontology.get_event_type_names()):
         event_type = ontology.get_event_type(event_type_name)
-        for relation in event_type.relations:
+        for relation in sorted(event_type.relations, key=lambda rel: rel.get_persistent_id()):
             if relation.get_type() != 'intra':
                 continue
             relations[relation.get_source_concept()].add(
@@ -225,6 +225,7 @@ def _describe_concept_universals(ontology: Ontology, item_template):
 
 
 def _list_strings(strings):
+    strings = sorted(strings)
     if len(strings) > 1:
         last = strings.pop()
         return ', '.join(strings) + ' and ' + last
