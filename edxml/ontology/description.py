@@ -69,8 +69,8 @@ def describe_producer_rst(ontology, producer_name, input_description):
             concept_dn = ontology.get_concept(concept_name).get_display_name_plural()
             expansions[concept_dn].update(attribute_names)
 
-        for concept_dn, object_types in expansions.items():
-            description += f"\n:{concept_dn.capitalize()}: Discovering new " + _list_strings(object_types)
+        for concept_dn, attribute_names in expansions.items():
+            description += f"\n:{concept_dn.capitalize()}: Discovering new " + _list_strings(attribute_names)
 
     if concept_combinations:
         description += f"\n\nThe {producer_name} identifies:\n" + '\n'.join(set(concept_combinations.values()))
