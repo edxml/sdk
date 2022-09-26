@@ -238,7 +238,10 @@ class Concept(VersionedOntologyElement):
         if new_version > self.__versions[self._attr['version']]:
             self.set_version(self._attr['version'] + 1)
         else:
-            raise Exception('Cannot upgrade when current version is not greater than previous version.')
+            raise Exception(
+                'Cannot upgrade concept. '
+                'Apparently no changes were made since the last time the version number changed.'
+            )
 
         return self
 
