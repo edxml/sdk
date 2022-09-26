@@ -264,6 +264,14 @@ class PropertyConcept(OntologyElement):
                  self.__attr['attr-display-name-plural'])
             )
 
+        if len(self.__attr['attr-extension']) > 16:
+            raise EDXMLOntologyValidationError(
+                'The property / concept association between property %s in event type %s and concept %s has '
+                'an attribute extension that is too long: "%s"' %
+                (self.__event_type.get_name(), self.__property.get_name(), self.__attr['name'],
+                 self.__attr['attr-extension'])
+            )
+
         return self
 
     @classmethod
