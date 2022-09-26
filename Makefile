@@ -38,4 +38,4 @@ coverage-report:
 
 clean:
 	find . -name '*.py[co]' -delete
-	rm -rf build dist edxml.egg-info
+	rm -rf build dist .coverage htmlcov edxml.egg-info
