@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 from os import path
 
 here = path.abspath(path.dirname(__file__))
-# Get the long description from the relevant file
-# with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
-#  long_description = f.read()
+
+with open("README.rst", "r") as fh:
+    long_description = fh.read()
 
 # Explicitly state a version to please flake8
 __version__ = 1.0
@@ -18,7 +18,8 @@ setup(
 
     # A description of your project
     description='The EDXML Software Development Kit',
-    long_description='Python implementation of the EDXML specification and tools for application development',
+    long_description=long_description,
+    long_description_content_type='text/x-rst',
 
     # The project's main homepage
     url='https://github.com/edxml/sdk',
