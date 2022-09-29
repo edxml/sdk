@@ -1,19 +1,21 @@
-.PHONY: all dependencies dist pypi doc check test coverage coverage-report clean
+.PHONY: all dependencies dist pypi doc check test coverage coverage-report dist-clean clean
 
 all: dependencies dist doc check test clean
 
 dependencies:
 	@echo "Installing dependencies:"
 	python3 -m pip install --upgrade pip setuptools wheel
-	pip3 install flake8 pytest wheel twine
+	pip3 install flake8 pytest
 	pip3 install -r requirements.txt
 
-dist: dependencies
-	rm -rf build
+dist: dist-clean
+	pip3 install wheel
 	python3 setup.py sdist bdist_wheel
 
 pypi: dist
 	# NOTE: twine will read TWINE_USERNAME and TWINE_PASSWORD from environment
+	pip3 install twine
+	twine check dist/*
 	@echo "Uploading to PyPI:"
 	twine upload dist/*
 
@@ -36,6 +38,9 @@ coverage: dependencies
 coverage-report:
 	coverage html
 
-clean:
+dist-clean:
+	rm -rf build dist edxml.egg-info
+
+clean: dist-clean
 	find . -name '*.py[co]' -delete
-	rm -rf build dist .coverage htmlcov edxml.egg-info
+	rm -rf .coverage htmlcov
