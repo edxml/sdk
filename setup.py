@@ -92,15 +92,17 @@ setup(
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
     install_requires=['lxml>=3.8', 'python-dateutil', 'edxml-schema~=3.0.0',
                       'iso3166', 'pytz', 'termcolor', 'graphviz', 'typing', 'pytest',
-                      'ipy', 'coverage', 'edxml-test-corpus~=3.0.0', 'edxml-bricks-computing~=3.0.0',
-                      'edxml-bricks-computing-networking~=3.0.0', 'edxml-bricks-generic~=3.0.0'],
+                      'ipy', 'coverage', 'edxml-test-corpus~=3.0.0'],
 
     # Specify additional packages that are only installed for specific purposes,
     # like building documentation.
     extras_require={
         'doc': [
             'sphinx',
-            'sphinxcontrib-napoleon'
+            'sphinxcontrib-napoleon',
+            'edxml-bricks-computing~=3.0.0',
+            'edxml-bricks-computing-networking~=3.0.0',
+            'edxml-bricks-generic~=3.0.0'
         ]
     }
 )

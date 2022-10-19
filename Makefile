@@ -1,4 +1,4 @@
-.PHONY: all dependencies dist pypi pypi-test doc check test coverage coverage-report dist-clean clean
+.PHONY: all dependencies dependencies-docs dist pypi pypi-test doc check test test-docs coverage coverage-report dist-clean clean
 
 all: dependencies dist doc check test clean
 
@@ -7,6 +7,10 @@ dependencies:
 	python3 -m pip install --upgrade pip setuptools wheel
 	pip3 install flake8 pytest
 	pip3 install -r requirements.txt
+
+dependencies-docs:
+	@echo "Installing documentation dependencies:"
+	pip3 install -e .[doc]
 
 dist: dist-clean
 	pip3 install wheel
@@ -26,8 +30,7 @@ pypi: dist
 	@echo "Uploading to PyPI:"
 	twine upload dist/*
 
-doc:
-	pip3 install -e .[doc]
+doc: dependencies-docs
 	python3 setup.py build_sphinx
 
 check:
@@ -36,7 +39,11 @@ check:
 
 test: dependencies
 	@echo "Running tests:"
-	@python3 -m pytest tests -W ignore::DeprecationWarning
+	@python3 -m pytest tests --ignore=tests/examples -W ignore::DeprecationWarning
+
+test-docs: dependencies-docs
+	@echo "Running documentation tests:"
+	@python3 -m pytest tests/examples
 
 coverage: dependencies
 	@echo "Gathering coverage data:"
