@@ -14,6 +14,7 @@
 """
 This module offers various classes for incremental parsing of EDXML data streams.
 """
+import copy
 import re
 import edxml_schema
 
@@ -274,22 +275,25 @@ class EDXMLParserBase(object):
             raise EDXMLValidationError('Failed to parse EDXML data. Either the data is not EDXML or it is empty.')
 
         try:
-            self.__schema.assertValid(self.__root_element)
+            # We are specifically aiming to find ontology validation problems,
+            # so we generate a minimal XML tree containing just ontology elements.
+            ontology_tree = copy.copy(self.__root_element)
+            for element in ontology_tree.findall('./*'):
+                if element.tag != '{http://edxml.org/edxml}ontology':
+                    element.getparent().remove(element)
+            self.__schema.assertValid(ontology_tree)
         except (etree.DocumentInvalid, etree.XMLSyntaxError) as validation_error:
-            # XML syntax is incorrect or the structure does not validate against the RelaxNG schema.
-            if isinstance(validation_error, etree.DocumentInvalid):
-                # Document is not valid according to schema. This is most likely
-                # due to a problem with an <ontology> element. See if we have
-                # an ontology element in the tree and try to process it. That
-                # will yield a better exception message than the errors
-                # produced by the RelaxNG validator.
-                if not self.__schema.error_log.last_error.path.startswith('/ontology/'):
-                    # Ontology appears to be fine. In that case the validation error can
-                    # be caused by incomplete input. Since parsing is incremental, there
-                    # may be an incomplete <event> element in the tree.
-                    return
-                for ontology_element in self.__root_element.iterfind('{http://edxml.org/edxml}ontology'):
-                    self.__process_ontology(ontology_element)
+            # Document is not valid according to schema. This is most likely
+            # due to a problem with an <ontology> element. See if we have
+            # an ontology element in the tree and try to process it. That
+            # will yield a better exception message than the errors
+            # produced by the RelaxNG validator.
+            for ontology_element in self.__root_element.iterfind('{http://edxml.org/edxml}ontology'):
+                self.__process_ontology(ontology_element)
+
+            # And if we did not identify the problem, we have no choice
+            # but throw an exception showing the schema validation error.
+            raise EDXMLOntologyValidationError("An EDXML validation error occurred: " + str(validation_error))
 
     def __process_ontology(self, ontology_element):
         if self._ontology is None:
