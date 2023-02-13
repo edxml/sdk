@@ -269,11 +269,13 @@ class EventTypeAttachment(OntologyElement):
 
         if not 1 <= len(self._attr['name']) <= 64:
             raise EDXMLOntologyValidationError(
-                'Event type "%s" has an invalid name.' % self._attr['name']
+                'An attachment of event type "%s" has an invalid name: "%s"' %
+                (self._event_type.get_name(), self._attr['name'])
             )
         if not re.match(self.NAME_PATTERN, self._attr['name']):
             raise EDXMLOntologyValidationError(
-                'Event type "%s" has an invalid name.' % self._attr['name']
+                'An attachment of event type "%s" has an invalid name: "%s"' %
+                (self._event_type.get_name(), self._attr['name'])
             )
 
         if not 1 <= len(self._attr['description']) <= 128:

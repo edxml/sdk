@@ -681,7 +681,7 @@ class EventProperty(OntologyElement):
 
         if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
             raise EDXMLOntologyValidationError(
-                'Invalid property name in property definition: "%s"' % self.__attr['name']
+                'Property "%s" has an invalid name.' % self.__attr['name']
             )
 
         if len(self.__attr['name']) > 64:
