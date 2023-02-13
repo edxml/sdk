@@ -129,7 +129,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
     """
 
     NAME_PATTERN = re.compile("^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$")
-    CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
                  summary='no description available', story='no description available', parent=None):
