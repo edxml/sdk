@@ -33,8 +33,7 @@ class ObjectType(VersionedOntologyElement):
 
     NAME_PATTERN = re.compile('^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$')
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
-    FUZZY_MATCHING_PATTERN = re.compile(
-        r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\])|(\[:[0-9]{1,2}\])$")
+    FUZZY_MATCHING_PATTERN = re.compile(r"^|(phonetic)|(substring:.*)|(\[[0-9]{1,2}:\\])|(\[:[0-9]{1,2}\\])$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,
                  data_type='string:0:mc:u', unit_name=None, unit_symbol=None, prefix_radix=None, compress=False,
