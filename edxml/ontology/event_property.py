@@ -688,6 +688,10 @@ class EventProperty(OntologyElement):
             raise EDXMLOntologyValidationError(
                 'Property name is too long: "%s"' % self.__attr['name'])
 
+        if self.__attr['name'].startswith('xml'):
+            raise EDXMLOntologyValidationError(
+                'Property name must not be a reserved XML tag name: "%s"' % self.__attr['name'])
+
         if not re.match(edxml.ontology.ObjectType.NAME_PATTERN, self.__attr['object-type']):
             raise EDXMLOntologyValidationError(
                 'Invalid object type name in property definition: "%s"' % self.__attr['object-type'])
