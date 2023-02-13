@@ -128,7 +128,7 @@ class EventType(VersionedOntologyElement, MutableMapping):
     the event property, the value is the property itself.
     """
 
-    NAME_PATTERN = re.compile("^[a-z0-9.-]*$")
+    NAME_PATTERN = re.compile("^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$")
     CLASS_LIST_PATTERN = re.compile("^[a-z0-9, ]*$")
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None,

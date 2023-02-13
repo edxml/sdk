@@ -28,7 +28,7 @@ class Concept(VersionedOntologyElement):
     Class representing an EDXML concept
     """
 
-    NAME_PATTERN = re.compile('^[a-z0-9.-]{1,255}$')
+    NAME_PATTERN = re.compile('^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$')
 
     def __init__(self, ontology, name, display_name_singular=None, display_name_plural=None, description=None):
 

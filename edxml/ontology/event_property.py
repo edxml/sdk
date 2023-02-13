@@ -26,7 +26,7 @@ class EventProperty(OntologyElement):
     Class representing an EDXML event property
     """
 
-    EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z0-9-]+(.[a-z0-9-]+)*$')
+    EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$')
 
     MERGE_MATCH = 'match'
     """Merge strategy 'match'"""

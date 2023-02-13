@@ -27,7 +27,7 @@ class EventTypeAttachment(OntologyElement):
     Class representing an EDXML event attachment definition
     """
 
-    NAME_PATTERN = re.compile("^[a-z0-9-]*$")
+    NAME_PATTERN = re.compile("^[a-z][a-z0-9-]*$")
     DISPLAY_NAME_PATTERN = re.compile("^[ a-zA-Z0-9]*/[ a-zA-Z0-9]*$")
 
     def __init__(self, event_type, name='default', media_type='text/plain', display_name_singular=None,
