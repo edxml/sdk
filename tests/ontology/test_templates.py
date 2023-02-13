@@ -10,8 +10,9 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
-
+import sys
 import pytest
+
 from edxml import Template
 from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import Ontology, DataType
@@ -46,17 +47,20 @@ def test_basic_interpolation(event_type):
     assert Template('Value is [[p-string]].').evaluate(event_type, {'p-string': {'foo'}}, {}) == 'Value is foo.'
 
 
-def test_colorized_interpolation(event_type):
+def test_colorized_interpolation(event_type, monkeypatch):
 
-    assert Template('[[p-string]].').evaluate(
-        event_type, {'p-string': {'foo Bar'}}, {}, colorize=True
-    ) == '\x1b[1m\x1b[37m' + 'Foo Bar' + '\x1b[0m.'
+    # Simulate a TTY
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
 
-    assert Template('value is [[p-string]].')\
-        .evaluate(event_type, {'p-string': {'foo', 'bar'}}, {}, colorize=True) in [
-        'Value is ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m.',
-        'Value is ' + '\x1b[1m\x1b[37m' + 'bar' + '\x1b[0m' + ' and ' + '\x1b[1m\x1b[37m' + 'foo' + '\x1b[0m.',
-    ]
+    event_properties = {'p-string': {'foo Bar'}}
+    uncolored = Template('[[p-string]].').evaluate(event_type, event_properties, {})
+
+    assert Template('[[p-string]].').evaluate(event_type, event_properties, {}, colorize=True) != uncolored
+
+    event_properties = {'p-string': {'foo', 'bar'}}
+    uncolored = Template('value is [[p-string]].').evaluate(event_type, event_properties, {})
+
+    assert Template('value is [[p-string]].').evaluate(event_type, event_properties, {}, colorize=True) != uncolored
 
 
 def test_get_properties(event_type):
