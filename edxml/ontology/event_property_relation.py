@@ -271,11 +271,11 @@ class PropertyRelation(OntologyElement):
           edxml.ontology.PropertyRelation: The PropertyRelation instance
 
         """
-        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['source']):
+        if not re.match(edxml.ontology.EventProperty.NAME_PATTERN, self.__attr['source']):
             raise EDXMLOntologyValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['source'])
 
-        if not re.match(edxml.ontology.EventProperty.EDXML_PROPERTY_NAME_PATTERN, self.__attr['target']):
+        if not re.match(edxml.ontology.EventProperty.NAME_PATTERN, self.__attr['target']):
             raise EDXMLOntologyValidationError(
                 'Invalid property name in property relation: "%s"' % self.__attr['target'])
 

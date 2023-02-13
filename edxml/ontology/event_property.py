@@ -26,7 +26,7 @@ class EventProperty(OntologyElement):
     Class representing an EDXML event property
     """
 
-    EDXML_PROPERTY_NAME_PATTERN = re.compile('^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$')
+    NAME_PATTERN = re.compile('^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)*$')
 
     MERGE_MATCH = 'match'
     """Merge strategy 'match'"""
@@ -679,7 +679,7 @@ class EventProperty(OntologyElement):
 
     def _validate_attributes(self):
 
-        if not re.match(self.EDXML_PROPERTY_NAME_PATTERN, self.__attr['name']):
+        if not re.match(self.NAME_PATTERN, self.__attr['name']):
             raise EDXMLOntologyValidationError(
                 'Property "%s" has an invalid name.' % self.__attr['name']
             )
