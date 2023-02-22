@@ -1826,11 +1826,6 @@ class EventType(VersionedOntologyElement, MutableMapping):
             # Now we check for each property if the object sets of all
             # events that share a version are mutually consistent.
             for property_name, object_sets in property_object_sets.items():
-                strategy = self.__properties[property_name].get_merge_strategy()
-                if strategy in [EventProperty.MERGE_MATCH, EventProperty.MERGE_ANY]:
-                    # No conflict possible because the object values are either identical (match)
-                    # or any differences are insignificant (drop)
-                    continue
                 if len(object_sets) > 1:
                     # There is more than one unique set of object values
                     # for this property.
