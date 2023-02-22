@@ -10,6 +10,7 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
+import os
 
 from edxml import EventCollection
 from edxml.error import EDXMLMergeConflictError
@@ -24,22 +25,23 @@ corpus_path = CORPUS_PATH + '/conflict'
 
 def test_parse_conflict():
     for version_dir in versions:
-        conflict_dir = CORPUS_PATH + version_dir + '/conflict'
-        collection = EventCollection.from_edxml(open(conflict_dir + '/conflict.edxml', 'rb').read())
-        e = None
-        try:
-            collection.resolve_collisions()
-        except EDXMLMergeConflictError as ex:
-            e = ex
+        conflict_dir = CORPUS_PATH + version_dir + '/conflict/conflicting/'
+        for filename in os.listdir(conflict_dir):
+            collection = EventCollection.from_edxml(open(conflict_dir + filename, 'rb').read())
+            e = None
+            try:
+                collection.resolve_collisions()
+            except EDXMLMergeConflictError as ex:
+                e = ex
 
-        # Parser must have raised a conflict error.
-        assert e is not None
+            # Parser must have raised a conflict error.
+            assert e is not None
 
 
 def test_parse_non_conflict():
     for version_dir in versions:
-        non_conflict_dir = CORPUS_PATH + version_dir + '/conflict'
-        collection = EventCollection.from_edxml(open(non_conflict_dir + '/no-conflict.edxml', 'rb').read())
-
-        # Not a conflict, no exception raised.
-        collection.resolve_collisions()
+        non_conflict_dir = CORPUS_PATH + version_dir + '/conflict/non-conflicting/'
+        for filename in os.listdir(non_conflict_dir):
+            collection = EventCollection.from_edxml(open(non_conflict_dir + filename, 'rb').read())
+            # Not a conflict, no exception raised.
+            collection.resolve_collisions()
