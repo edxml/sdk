@@ -99,7 +99,6 @@ setup(
     extras_require={
         'doc': [
             'sphinx',
-            'sphinxcontrib-napoleon',
             'edxml-bricks-computing~=3.0.0',
             'edxml-bricks-computing-networking~=3.0.0',
             'edxml-bricks-generic~=3.0.0'
