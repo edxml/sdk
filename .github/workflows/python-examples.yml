@@ -4,7 +4,10 @@
 name: Test Example Code
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
   schedule:
     - cron: "0 8 1 * *"
 
