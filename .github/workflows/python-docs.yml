@@ -1,0 +1,24 @@
+# This workflow will install Python doc dependencies and build the documentation.
+
+name: Build Documentation
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Build docs
+      run: |
+        make doc
