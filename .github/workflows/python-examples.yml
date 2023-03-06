@@ -5,6 +5,8 @@ name: Test Example Code
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 8 1 * *"
 
 jobs:
   build:
