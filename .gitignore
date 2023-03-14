@@ -12,3 +12,4 @@ edxml.egg-info/
 .vscode/
 .coverage
 htmlcov/
+coverage.json

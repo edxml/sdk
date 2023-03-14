@@ -1,4 +1,4 @@
-.PHONY: all dependencies dependencies-docs dist pypi pypi-test doc check test test-docs coverage coverage-report dist-clean clean
+.PHONY: all dependencies dependencies-docs dist pypi pypi-test doc check test test-docs coverage coverage-report coverage-json dist-clean clean
 
 all: dependencies dist doc check test clean
 
@@ -47,14 +47,17 @@ test-docs: dependencies-docs
 
 coverage: dependencies
 	@echo "Gathering coverage data:"
-	@python3 -m coverage run --omit '*/venv/*' -m pytest tests -W ignore::DeprecationWarning
+	@python3 -m coverage run --omit '*/venv/*' -m pytest tests --ignore=tests/examples -W ignore::DeprecationWarning
 
 coverage-report:
 	coverage html
+
+coverage-json:
+	coverage json
 
 dist-clean:
 	rm -rf build dist edxml.egg-info
 
 clean: dist-clean
 	find . -name '*.py[co]' -delete
-	rm -rf .coverage htmlcov
+	rm -rf .coverage htmlcov coverage.json
