@@ -14,7 +14,7 @@
 import re
 import unicodedata
 
-from typing import Dict
+from typing import Dict # noqa
 
 import edxml.transcode
 

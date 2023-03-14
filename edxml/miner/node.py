@@ -10,14 +10,14 @@
 #                         https://opensource.org/licenses/MIT                            =
 #                                                                                        =
 # ========================================================================================
-from datetime import datetime
+from datetime import datetime # noqa
 from functools import reduce
 from itertools import groupby
 from operator import mul
-from typing import Dict, Set, Optional, MutableMapping, List
+from typing import Dict, Set, Optional, MutableMapping, List # noqa
 from collections import defaultdict, UserDict
 
-from edxml.miner.inference import Inference
+from edxml.miner.inference import Inference # noqa
 from edxml.ontology import Concept
 
 import edxml.miner.inference

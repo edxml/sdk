@@ -15,7 +15,8 @@ from lxml import etree
 
 
 from edxml.error import EDXMLOntologyValidationError
-from edxml.ontology import OntologyElement, EventType, EventProperty, normalize_xml_token
+from edxml.ontology import EventType, EventProperty # noqa
+from edxml.ontology import OntologyElement, normalize_xml_token
 from edxml.ontology.ontology_element import event_type_element_upgrade_error
 
 

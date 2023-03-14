@@ -22,7 +22,7 @@ import logging
 import operator
 import sys
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional # noqa
 
 from dateutil.parser import parse
 from edxml.cli import configure_logger

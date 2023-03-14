@@ -21,7 +21,7 @@ import edxml_schema
 import sys
 
 from collections import deque
-from typing import Optional
+from typing import Optional # noqa
 from lxml import etree
 from copy import deepcopy
 

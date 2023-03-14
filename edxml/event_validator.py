@@ -11,7 +11,7 @@
 #                                                                                        =
 # ========================================================================================
 from lxml import etree
-from typing import Dict, Optional
+from typing import Dict, Optional # noqa
 
 import edxml
 from edxml.error import EDXMLEventValidationError

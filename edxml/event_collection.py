@@ -13,7 +13,7 @@
 
 from io import BytesIO
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List # noqa
 
 from edxml import EDXMLWriter, EDXMLPullParser, EDXMLEvent
 from edxml.ontology import Ontology

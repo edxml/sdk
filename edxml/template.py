@@ -12,9 +12,9 @@
 # ========================================================================================
 
 import re
-from typing import Dict
+from typing import Dict # noqa
 
-import edxml
+import edxml # noqa
 from .ontology.event_type import EventType
 from dateutil import relativedelta
 from dateutil.parser import parse, ParserError

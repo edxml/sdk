@@ -16,7 +16,7 @@ import json
 from collections import defaultdict
 from functools import reduce
 from operator import mul
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional # noqa
 from dateutil.parser import parse
 
 from edxml.miner.node import NodeCollection

@@ -21,7 +21,8 @@ from IPy import IP
 from lxml import etree
 
 from edxml import EventCollection
-from edxml.event import EDXMLEvent, ParsedEvent, EventElement
+from edxml.event import EDXMLEvent, EventElement
+from edxml.event import ParsedEvent # noqa
 from edxml.logger import log
 from edxml.ontology import Ontology
 import pytest

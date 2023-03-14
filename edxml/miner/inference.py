@@ -11,7 +11,7 @@
 #                                                                                        =
 # ========================================================================================
 
-import edxml.miner
+import edxml.miner # noqa
 
 
 class Inference(object):

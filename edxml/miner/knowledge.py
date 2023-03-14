@@ -21,7 +21,7 @@ This module contains the knowledge base implementation.
 import json
 from collections import defaultdict
 
-import edxml
+import edxml # noqa
 
 from edxml.miner.result import ConceptInstanceCollection
 from edxml.miner.result import from_json as concept_collection_from_json

@@ -11,10 +11,10 @@
 #                                                                                        =
 # ========================================================================================
 
-from typing import Dict, Optional
+from typing import Dict, Optional # noqa
 from graphviz import Digraph
 
-import edxml
+import edxml # noqa
 from edxml.logger import log
 from edxml.transcode import RecordTranscoder, NullTranscoder
 from edxml.ontology import Ontology

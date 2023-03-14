@@ -22,7 +22,7 @@ This module offers classes for constructing graphs for concept mining.
     :members:
     :show-inheritance:
 """
-import edxml
+import edxml # noqa
 from edxml import EDXMLPullParser, EDXMLPushParser
 from edxml.miner import Miner
 

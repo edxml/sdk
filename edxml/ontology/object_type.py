@@ -17,7 +17,7 @@ import sre_constants
 
 from lxml import etree
 
-import edxml.ontology
+import edxml.ontology # noqa
 
 from edxml.error import EDXMLEventValidationError, EDXMLOntologyValidationError
 

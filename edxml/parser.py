@@ -19,7 +19,7 @@ import re
 import edxml_schema
 
 from lxml.etree import XMLSyntaxError
-from typing import Dict, List, Any
+from typing import Dict, List, Any # noqa
 
 from collections import defaultdict
 from lxml import etree

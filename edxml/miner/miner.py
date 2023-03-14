@@ -14,7 +14,7 @@
 from edxml import EDXMLEvent
 from edxml.miner.graph.construct import GraphConstructor
 from edxml.miner.graph import ConceptInstanceGraph
-from edxml.miner.knowledge import KnowledgeBase
+from edxml.miner.knowledge import KnowledgeBase # noqa
 from edxml.ontology import Ontology
 
 

@@ -11,7 +11,7 @@
 #                                                                                        =
 # ========================================================================================
 
-from typing import Dict
+from typing import Dict # noqa
 
 from lxml import etree
 from edxml.error import EDXMLOntologyValidationError

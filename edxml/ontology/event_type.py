@@ -14,7 +14,7 @@
 import base64
 import binascii
 from decimal import Decimal
-from typing import Dict
+from typing import Dict # noqa
 
 import re
 

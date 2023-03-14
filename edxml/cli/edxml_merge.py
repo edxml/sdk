@@ -26,9 +26,9 @@
 import argparse
 import sys
 import time
-from typing import Dict, List
+from typing import Dict, List # noqa
 
-from edxml import EDXMLEvent
+from edxml import EDXMLEvent # noqa
 from edxml.cli import configure_logger
 from edxml.filter import EDXMLPullFilter, EDXMLPushFilter
 from edxml.error import EDXMLValidationError

@@ -16,7 +16,7 @@ import re
 
 from lxml import etree
 
-import edxml.ontology
+import edxml.ontology # noqa
 
 from edxml.error import EDXMLOntologyValidationError
 from edxml.ontology import VersionedOntologyElement, normalize_xml_token

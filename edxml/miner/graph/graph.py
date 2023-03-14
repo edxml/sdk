@@ -13,7 +13,7 @@
 
 from collections import defaultdict
 from functools import reduce
-from typing import Dict, Set, Iterable
+from typing import Dict, Set, Iterable # noqa
 
 from edxml.ontology import Ontology
 from edxml.miner.node import Node, EventObjectHub, EventObjectNode
