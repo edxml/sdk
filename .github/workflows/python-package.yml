@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: tests
+name: Test Library Code
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
     - cron: "0 8 1 * *"
 
 jobs:
-  build:
+  tests:
 
     runs-on: ubuntu-20.04
     strategy:
@@ -35,4 +35,51 @@ jobs:
         make check
     - name: Test with pytest
       run: |
-        make test
+        make coverage
+    - name: "Upload coverage data"
+      uses: actions/upload-artifact@v3
+      with:
+        name: covdata
+        path: .coverage
+
+  coverage:
+    name: Coverage
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v2"
+
+      - name: "Set up Python"
+        uses: "actions/setup-python@v2"
+        with:
+          python-version: "3.10"
+
+      - name: "Install dependencies"
+        run: |
+          make dependencies
+
+      - name: "Download coverage data"
+        uses: actions/download-artifact@v3
+        with:
+          name: covdata
+
+      - name: "Compute"
+        run: |
+          make coverage-json
+          export TOTAL=$(python -c "import json;print(json.load(open('coverage.json'))['totals']['percent_covered_display'])")
+          echo "total=$TOTAL" >> $GITHUB_ENV
+          echo "### Total coverage: ${TOTAL}%" >> $GITHUB_STEP_SUMMARY
+
+      - name: "Make badge"
+        uses: schneegans/dynamic-badges-action@v1.4.0
+        with:
+          # GIST_TOKEN is a GitHub personal access token with scope "gist".
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 35971300c60a5a54c91084fc80da9b49
+          filename: covbadge.json
+          label: Coverage
+          message: ${{ env.total }}%
+          minColorRange: 50
+          maxColorRange: 90
+          valColorRange: ${{ env.total }}

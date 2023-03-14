@@ -6,7 +6,7 @@ EDXML SDK
 .. |license| image::  https://img.shields.io/badge/License-MIT-blue.svg
 .. |tests| image::    https://github.com/edxml/sdk/workflows/tests/badge.svg
 .. |docs| image::     https://readthedocs.org/projects/edxml-sdk/badge/?version=master
-.. |coverage| image:: https://scrutinizer-ci.com/g/edxml/sdk/badges/coverage.png?b=experimental&s=f5b930dde8dc4f0f6c4a050cc4c107aa6ff6e921
+.. |coverage| image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dtakken/35971300c60a5a54c91084fc80da9b49/raw/covbadge.json
 .. |pyversion| image::  https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9%20%7C%203.10-blue
 
 EDXML_ is a data representation that transforms arbitrary data records into stories
