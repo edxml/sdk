@@ -25,6 +25,6 @@ The package can be installed using Pip::
 
 * `Documentation <http://edxml-sdk.readthedocs.org/>`_ (Read the Docs)
 * `Installer <http://pypi.python.org/pypi/edxml/>`_ (PyPI)
-* `Source code <https://github.com/dtakken/edxml-sdk>`_ (Github)
+* `Source code <https://github.com/edxml/sdk>`_ (Github)
 
 .. _EDXML: http://edxml.org/
