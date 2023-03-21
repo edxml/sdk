@@ -1,7 +1,7 @@
 Introduction to EDXML Data Modelling
 ====================================
 
-EDXML is about transforming data into stories. Stories that both humans and machines can understand and reason about. This enables machines to read data much in the same way as a human being reads a novel, to learn while reading. Learning what the story is about and learning more and more as one paragraph is followed by another.
+EDXML is about transforming data into stories. Stories that both humans and machines can understand and reason about. This enables machines to read data much in the same way as a human being reads a novel, to learn while reading. Learning what the story is about and learning more and more as one paragraph is followed by another. Check `<https://edxml.org>`_ to learn more about this.
 
 Modelling data in EDXML is the process of realizing what story the data tells and casting that into a model. EDXML has no predefined model. It provides the means to define whatever model fits your data best. This introduction will show what the process of data modelling looks like.
 
@@ -76,7 +76,7 @@ In order to convert the date into something slightly more human friendly, we can
   *On [[date_time:time,second]], a user named '[[user]]' issued command '[[command]]' on FTP server [[server]]. The command was issued from a device having IP address [[client]].*
 
 .. note::
-  The EDXML specification lists a number of string formatters that you can use.
+  The `EDXML specification <https://edxml.org/spec>`_ lists a number of string formatters that you can use.
 
 In our example, we assume that all JSON fields are present in every input JSON record. This makes writing down a template quite straight forward. EDXML story templates also supports creating dynamic event stories that change depending on which fields have a value and which do not. Refer to the full specification for details.
 
@@ -246,4 +246,4 @@ EDXML requires outputting the ontology before outputting any events. As event so
 
 .. epigraph::
 
-  A full working version of the examples shown on this page can be found `on Github <http://github.com/edxml/examples/edxml_modelling/intro_example_full.py>`_.
+  A full working version of the examples shown on this page can be found `on Github <https://github.com/edxml/sdk/blob/master/edxml/examples/edxml_modelling/intro_example_full.py>`_.
