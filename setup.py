@@ -98,7 +98,7 @@ setup(
     # like building documentation.
     extras_require={
         'doc': [
-            'sphinx',
+            'sphinx<7.0',
             'edxml-bricks-computing~=3.0.0',
             'edxml-bricks-computing-networking~=3.0.0',
             'edxml-bricks-generic~=3.0.0'
